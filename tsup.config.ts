@@ -1,8 +1,8 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
-  // stories are excluded by entry; ensure they're not pulled in via re-exports either
+  entry: ["src/index.ts", "src/style.css"],
+  // style.css bundles token @theme block for consumers who don't use @mediact/tailwind-preset
 
   format: ["esm"],
   dts: true,

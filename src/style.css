@@ -1,0 +1,11 @@
+/* Mediact Design System — design tokens
+ *
+ * Import once in your app's entry CSS after @import "tailwindcss":
+ *
+ *   @import "tailwindcss";
+ *   @import "@mediact/react/style.css";
+ *
+ * Override brand palette to retheme:
+ *   :root { --color-brand: #0B77C6; --color-brand-hover: #085a99; }
+ */
+@import "../../tokens/src/theme.css";
