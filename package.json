@@ -1,12 +1,14 @@
 {
   "name": "@mediact/react",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "description": "React components for Mediact Design System (Tailwind v4 + Radix)",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -14,7 +16,9 @@
     },
     "./style.css": "./dist/style.css"
   },
-  "sideEffects": ["**/*.css"],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
