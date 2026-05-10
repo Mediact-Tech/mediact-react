@@ -1,0 +1,80 @@
+import * as React from "react";
+import * as RadixTabs from "@radix-ui/react-tabs";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../lib/cn";
+
+const Tabs = RadixTabs.Root;
+
+const tabsListVariants = cva("inline-flex items-center", {
+  variants: {
+    variant: {
+      underline:
+        "w-full justify-start gap-1 border-b border-border-default",
+      pill: "gap-1 rounded-md bg-gray-100 p-1",
+    },
+  },
+  defaultVariants: { variant: "underline" },
+});
+
+const tabsTriggerVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all outline-none disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand/40",
+  {
+    variants: {
+      variant: {
+        underline:
+          "px-3 pb-2 pt-1 -mb-px border-b-2 border-transparent text-text-tertiary hover:text-brand data-[state=active]:border-brand data-[state=active]:text-brand",
+        pill: "rounded-sm px-3 py-1.5 text-text-tertiary hover:text-brand data-[state=active]:bg-white data-[state=active]:text-brand data-[state=active]:shadow-sm",
+      },
+    },
+    defaultVariants: { variant: "underline" },
+  },
+);
+
+type TabsListProps = React.ComponentProps<typeof RadixTabs.List> &
+  VariantProps<typeof tabsListVariants>;
+
+const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
+  function TabsList({ className, variant, ...props }, ref) {
+    return (
+      <RadixTabs.List
+        ref={ref}
+        data-tabs-variant={variant ?? "underline"}
+        className={cn(tabsListVariants({ variant }), className)}
+        {...props}
+      />
+    );
+  },
+);
+
+type TabsTriggerProps = React.ComponentProps<typeof RadixTabs.Trigger> &
+  VariantProps<typeof tabsTriggerVariants>;
+
+const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
+  function TabsTrigger({ className, variant, ...props }, ref) {
+    return (
+      <RadixTabs.Trigger
+        ref={ref}
+        className={cn(tabsTriggerVariants({ variant }), className)}
+        {...props}
+      />
+    );
+  },
+);
+
+const TabsContent = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<typeof RadixTabs.Content>
+>(function TabsContent({ className, ...props }, ref) {
+  return (
+    <RadixTabs.Content
+      ref={ref}
+      className={cn(
+        "mt-4 outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
+
+export { Tabs, TabsList, TabsTrigger, TabsContent };
