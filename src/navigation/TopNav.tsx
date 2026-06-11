@@ -485,6 +485,10 @@ function UserMenuItemButton({ item }: { item: UserMenuItem }) {
   );
 }
 
+TopNav.displayName = "TopNav";
+TopNavBrand.displayName = "TopNavBrand";
+NotificationBell.displayName = "NotificationBell";
+
 export {
   TopNav,
   TopNavBrand,

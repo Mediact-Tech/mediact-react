@@ -32,10 +32,29 @@ export type AvatarProps = Omit<
     fallback?: React.ReactNode;
   };
 
-/** Compute up to 2 uppercase initials from a name string. */
+/** Honorific/title prefixes stripped before computing initials (dots ignored). */
+const TITLE_PREFIXES = new Set([
+  // Thai medical / academic / honorific
+  "นพ", "พญ", "ทพ", "ทพญ", "ภก", "ภกญ", "สพ", "สพญ",
+  "ดร", "ผศ", "รศ", "ศ", "นาย", "นาง", "นางสาว", "นส",
+  // English
+  "mr", "mrs", "ms", "miss", "dr", "prof",
+]);
+
+/**
+ * Compute up to 2 uppercase initials from a name string.
+ * Leading titles (e.g. "นพ.", "พญ.", "Dr.") are skipped, so
+ * "นพ. วรวิทย์ ตันสกุล" → "วต" and "Dr. John Smith" → "JS".
+ */
 function initials(name?: string) {
   if (!name) return "";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+  let parts = name.trim().split(/\s+/).filter(Boolean);
+  while (
+    parts.length > 1 &&
+    TITLE_PREFIXES.has(parts[0]!.replace(/\./g, "").toLowerCase())
+  ) {
+    parts = parts.slice(1);
+  }
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
@@ -59,7 +78,9 @@ const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
         />
       )}
       <RadixAvatar.Fallback
-        delayMs={src ? 200 : 0}
+        // undefined (not 0) when no image — renders immediately incl. SSR;
+        // 0 would defer to a client timer and skip server-rendered initials
+        delayMs={src ? 200 : undefined}
         className="flex size-full items-center justify-center font-semibold"
       >
         {fallback ?? initials(name)}

@@ -117,6 +117,11 @@ const DialogDescription = React.forwardRef<
   );
 });
 
+DialogOverlay.displayName = "DialogOverlay";
+DialogContent.displayName = "DialogContent";
+DialogTitle.displayName = "DialogTitle";
+DialogDescription.displayName = "DialogDescription";
+
 export {
   Dialog,
   DialogTrigger,

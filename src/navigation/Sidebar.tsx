@@ -322,4 +322,6 @@ function SidebarGroup({
   );
 }
 
+Sidebar.displayName = "Sidebar";
+
 export { Sidebar, SidebarItem, SidebarGroup };

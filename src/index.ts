@@ -164,5 +164,8 @@ export {
   DropdownMenuSubContent,
 } from "./overlay/DropdownMenu";
 
+// Schedule (ตารางเวร — ShiftTable / TimeGrid + primitives)
+export * from "./schedule/index";
+
 // Utilities
 export { cn } from "./lib/cn";

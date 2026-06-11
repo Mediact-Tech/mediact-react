@@ -168,6 +168,15 @@ const DropdownMenuSubContent = React.forwardRef<
   );
 });
 
+DropdownMenuContent.displayName = "DropdownMenuContent";
+DropdownMenuItem.displayName = "DropdownMenuItem";
+DropdownMenuCheckboxItem.displayName = "DropdownMenuCheckboxItem";
+DropdownMenuRadioItem.displayName = "DropdownMenuRadioItem";
+DropdownMenuLabel.displayName = "DropdownMenuLabel";
+DropdownMenuSeparator.displayName = "DropdownMenuSeparator";
+DropdownMenuSubTrigger.displayName = "DropdownMenuSubTrigger";
+DropdownMenuSubContent.displayName = "DropdownMenuSubContent";
+
 export {
   DropdownMenu,
   DropdownMenuTrigger,

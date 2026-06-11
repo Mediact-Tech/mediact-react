@@ -319,6 +319,7 @@ var Input = React2.forwardRef(function Input2({
     }
   );
 });
+Input.displayName = "Input";
 
 // src/ui/Textarea.tsx
 import * as React3 from "react";
@@ -419,6 +420,7 @@ var Textarea = React3.forwardRef(
     );
   }
 );
+Textarea.displayName = "Textarea";
 
 // src/ui/Checkbox.tsx
 import * as React4 from "react";
@@ -487,6 +489,7 @@ var Checkbox = React4.forwardRef(
     ] });
   }
 );
+Checkbox.displayName = "Checkbox";
 
 // src/ui/Switch.tsx
 import * as React5 from "react";
@@ -558,6 +561,7 @@ var Switch = React5.forwardRef(function Switch2({
     hasError && /* @__PURE__ */ jsx6("p", { role: "alert", className: "text-xs font-medium text-cherry-red-600", children: error })
   ] });
 });
+Switch.displayName = "Switch";
 
 // src/ui/RadioGroup.tsx
 import * as React6 from "react";
@@ -697,6 +701,7 @@ var RadioGroupItem = React6.forwardRef(
     );
   }
 );
+RadioGroupItem.displayName = "RadioGroupItem";
 
 // src/ui/Select.tsx
 import * as React7 from "react";
@@ -818,6 +823,7 @@ var SelectItem = React7.forwardRef(
     );
   }
 );
+SelectItem.displayName = "SelectItem";
 
 // src/ui/Chip.tsx
 import * as React8 from "react";
@@ -896,6 +902,7 @@ var Chip = React8.forwardRef(function Chip2({
     }
   );
 });
+Chip.displayName = "Chip";
 
 // src/ui/Avatar.tsx
 import * as React9 from "react";
@@ -917,9 +924,38 @@ var avatarVariants = cva3(
     defaultVariants: { size: "md" }
   }
 );
+var TITLE_PREFIXES = /* @__PURE__ */ new Set([
+  // Thai medical / academic / honorific
+  "\u0E19\u0E1E",
+  "\u0E1E\u0E0D",
+  "\u0E17\u0E1E",
+  "\u0E17\u0E1E\u0E0D",
+  "\u0E20\u0E01",
+  "\u0E20\u0E01\u0E0D",
+  "\u0E2A\u0E1E",
+  "\u0E2A\u0E1E\u0E0D",
+  "\u0E14\u0E23",
+  "\u0E1C\u0E28",
+  "\u0E23\u0E28",
+  "\u0E28",
+  "\u0E19\u0E32\u0E22",
+  "\u0E19\u0E32\u0E07",
+  "\u0E19\u0E32\u0E07\u0E2A\u0E32\u0E27",
+  "\u0E19\u0E2A",
+  // English
+  "mr",
+  "mrs",
+  "ms",
+  "miss",
+  "dr",
+  "prof"
+]);
 function initials(name) {
   if (!name) return "";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+  let parts = name.trim().split(/\s+/).filter(Boolean);
+  while (parts.length > 1 && TITLE_PREFIXES.has(parts[0].replace(/\./g, "").toLowerCase())) {
+    parts = parts.slice(1);
+  }
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -943,7 +979,7 @@ var Avatar = React9.forwardRef(function Avatar2({ className, size, src, name, fa
         /* @__PURE__ */ jsx11(
           RadixAvatar.Fallback,
           {
-            delayMs: src ? 200 : 0,
+            delayMs: src ? 200 : void 0,
             className: "flex size-full items-center justify-center font-semibold",
             children: fallback ?? initials(name)
           }
@@ -983,6 +1019,7 @@ var PopoverContent = React10.forwardRef(
     ) });
   }
 );
+PopoverContent.displayName = "PopoverContent";
 
 // src/navigation/_app-icons/data.ts
 var medi_careDataUrl = "data:image/webp;base64,UklGRioEAABXRUJQVlA4IB4EAADQFwCdASpLAFEAPo04mUelI6KhMjabEKARiWwAz5g0xofDeafTP7r4wO0SNtXm9QHmDfqT0l/Ml53WmzegB0w/7lejNms1oHG0HN3ZuVVSSxifQyYUUN6P3wbI0jDa1tm/WYmELhq32T65qA1LG351qSQeAiX+JiKDAqsYoL54n7MuPVHCLYWeAi+0dTN9xzMs8POYaeXw+O7F8ke1ay0l5mUaACIQD1dy8UjlNwTs1zvMCvaNcID7gxsvvFf3NvyYjcYqC4MAAP76vJbp3uMBTJ/TTZggCAY4t0lyb533iFuwh//RL0Ppd0jpuhY/DzQq+7nqeL17Qjv0cCVCtEOPFRQlo1GBuuBtx992pxbnnLPdatMoix7eDE1feefkpv/NIn61we5GNKRYyFagSTZs1EQHOZLRuzy+lXtmZwnaHyNsbdq6NdG/3I26AT/GT/+x1Wk/xt+w7tZO6LbxVXuLcQgeoia02NPB2t9UVQVzgcs2ol87esTpJQXzwPRgwvLxj8kLY4BBMaCkoGDGJGZs2fYRKrDiE2MPdO3hqWqrMLFiCAUktHjT3j+XHz4HmcovWnCrAwCImtHPRrVzFSe1vQyRSt9ETaISOCOLBUgMfCUJY0NdOq+d5RVrKL3lABWI6QLsPtlAqxuepVRG32Nhv4dyJ7RTuIjtXOtdtrGx6J1rm8gFeG3O99Qx+1Erv9ldgOq+yXTvoD0mkEgE/6eiZ/KnztELBibEBE+qRoaJ0r55Dwyzt/wcc0UIu3XKkg+720NzRez98X++b3A9UeBvs2XRhCEukYkLR0ppN9oB1/89kurJYJZJVTBGJ5aY00XI0cOUB/pIWrBI77+bRq9u2u8+0X5rZV2X5y1q3C1dYRiebmNgd9bkELkuVqTmo5oUsg/+eFV12+rLxQmy2GJ7cSQJ8dTc482Fv+pqPW1I919bBOdINQSmnqVa92P3kCVMYTfgDkc1uocUjYsZotxzsGTW6veFjDS0jAbvRL6XMgT4rHbaMXtvw63RKloo6NCqt91pa/C+nTOW4XHPPffiOMG3EKfLl0q/m1N2qiRGGQmpXGeBv32s6fo0UubvdqB9u+t/toczoZMIBZDfXLm0CbZ0b4UAT/woNlStMpwtFL8a7+GKzfQI+mZoJci8U5gnD8RGozlqp3gPYxlPUaW7ZDlWboCE3N2uQP3y3Bn9/HqdomNCvg5D5TfJd0vfjbjO4vdS9dpLNLXkms8KnGw8cuV8lcd3kbZRGssusLXP4w1102cR3xmsY8y6zpMBfq8r3mzCJ8Ey8ml4EuDMifTjggNT3HRC65lYzoFQiXgi4lXCKWCiSHVRgtDsAobFOTXFcULwrYDA58qU7USMvs7rrR8MiMsZhDFbidV4tnwLEP86F66AEX4AAAAAAAAA";
@@ -1293,6 +1330,9 @@ function UserMenuItemButton({ item }) {
   }
   return /* @__PURE__ */ jsx13("button", { type: "button", onClick: item.onClick, className, children: item.label });
 }
+TopNav.displayName = "TopNav";
+TopNavBrand.displayName = "TopNavBrand";
+NotificationBell.displayName = "NotificationBell";
 
 // src/navigation/Sidebar.tsx
 import * as React12 from "react";
@@ -1484,6 +1524,7 @@ function SidebarGroup({
     )
   ] });
 }
+Sidebar.displayName = "Sidebar";
 
 // src/form/DatePicker.tsx
 import * as React13 from "react";
@@ -2298,6 +2339,14 @@ var TableCaption = React17.forwardRef(function TableCaption2({ className, ...pro
     }
   );
 });
+Table.displayName = "Table";
+TableHeader.displayName = "TableHeader";
+TableBody.displayName = "TableBody";
+TableFooter.displayName = "TableFooter";
+TableRow.displayName = "TableRow";
+TableHead.displayName = "TableHead";
+TableCell.displayName = "TableCell";
+TableCaption.displayName = "TableCaption";
 
 // src/data/DataTable.tsx
 import * as React19 from "react";
@@ -2338,6 +2387,7 @@ var Skeleton = React18.forwardRef(
     );
   }
 );
+Skeleton.displayName = "Skeleton";
 
 // src/feedback/EmptyState.tsx
 import { jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
@@ -2696,6 +2746,7 @@ var CardFooter = ({ className, ...props }) => /* @__PURE__ */ jsx23(
     ...props
   }
 );
+Card.displayName = "Card";
 
 // src/layout/Tabs.tsx
 import * as React21 from "react";
@@ -2762,6 +2813,9 @@ var TabsContent = React21.forwardRef(function TabsContent2({ className, ...props
     }
   );
 });
+TabsList.displayName = "TabsList";
+TabsTrigger.displayName = "TabsTrigger";
+TabsContent.displayName = "TabsContent";
 
 // src/layout/Breadcrumb.tsx
 import * as React22 from "react";
@@ -2868,6 +2922,7 @@ var BreadcrumbLink = React22.forwardRef(function BreadcrumbLink2({ className, as
     }
   );
 });
+BreadcrumbLink.displayName = "BreadcrumbLink";
 
 // src/layout/Stepper.tsx
 import { Check as Check5 } from "lucide-react";
@@ -3047,6 +3102,7 @@ function LoadingScreen({
     }
   );
 }
+Spinner2.displayName = "Spinner";
 
 // src/feedback/Toast.tsx
 import { Toaster as SonnerToaster } from "sonner";
@@ -3191,6 +3247,10 @@ var DialogDescription = React24.forwardRef(function DialogDescription2({ classNa
     }
   );
 });
+DialogOverlay.displayName = "DialogOverlay";
+DialogContent.displayName = "DialogContent";
+DialogTitle.displayName = "DialogTitle";
+DialogDescription.displayName = "DialogDescription";
 
 // src/overlay/ConfirmDialog.tsx
 import * as React25 from "react";
@@ -3376,6 +3436,7 @@ function Tooltip({
     }
   ) });
 }
+TooltipContent.displayName = "TooltipContent";
 
 // src/overlay/DropdownMenu.tsx
 import * as React27 from "react";
@@ -3513,8 +3574,735 @@ var DropdownMenuSubContent = React27.forwardRef(function DropdownMenuSubContent2
     }
   );
 });
+DropdownMenuContent.displayName = "DropdownMenuContent";
+DropdownMenuItem.displayName = "DropdownMenuItem";
+DropdownMenuCheckboxItem.displayName = "DropdownMenuCheckboxItem";
+DropdownMenuRadioItem.displayName = "DropdownMenuRadioItem";
+DropdownMenuLabel.displayName = "DropdownMenuLabel";
+DropdownMenuSeparator.displayName = "DropdownMenuSeparator";
+DropdownMenuSubTrigger.displayName = "DropdownMenuSubTrigger";
+DropdownMenuSubContent.displayName = "DropdownMenuSubContent";
+
+// src/schedule/ScheduleAvatar.tsx
+import * as React28 from "react";
+
+// src/schedule/types.ts
+var ASSIGNMENT_COLOR_CLASSES = {
+  blue: "bg-info-blue-100 text-info-blue-800",
+  green: "bg-success-green-200 text-text-dark-green",
+  orange: "bg-active-yellow-100 text-text-brown",
+  yellow: "bg-warning-yellow-100 text-warning-yellow-800",
+  red: "bg-cherry-red-200 text-cherry-red-800",
+  teal: "bg-surface text-teal-500",
+  gray: "bg-gray-200 text-gray-700"
+};
+
+// src/schedule/ScheduleAvatar.tsx
+import { jsx as jsx34 } from "react/jsx-runtime";
+var ScheduleAvatar = React28.forwardRef(
+  function ScheduleAvatar2({ color, label, className, ...props }, ref) {
+    return /* @__PURE__ */ jsx34(
+      Avatar,
+      {
+        ref,
+        fallback: label,
+        className: cn(ASSIGNMENT_COLOR_CLASSES[color], className),
+        ...props
+      }
+    );
+  }
+);
+ScheduleAvatar.displayName = "ScheduleAvatar";
+
+// src/schedule/StatusBadge.tsx
+import * as React29 from "react";
+import { cva as cva6 } from "class-variance-authority";
+import { jsx as jsx35, jsxs as jsxs28 } from "react/jsx-runtime";
+var statusBadgeVariants = cva6(
+  "inline-flex items-center gap-1.5 rounded-full font-medium",
+  {
+    variants: {
+      tone: {
+        neutral: "bg-nuetral-light-50 text-text-secondary",
+        success: "bg-success-green-50 text-success-green-800",
+        warning: "bg-warning-yellow-50 text-warning-yellow-800",
+        danger: "bg-cherry-red-50 text-cherry-red-800",
+        info: "bg-info-blue-50 text-info-blue-800"
+      },
+      size: {
+        sm: "h-6 px-2.5 text-xs",
+        md: "h-7 px-3 text-sm"
+      }
+    },
+    defaultVariants: { tone: "neutral", size: "sm" }
+  }
+);
+var StatusBadge = React29.forwardRef(
+  function StatusBadge2({ className, tone, size, hideDot, children, ...props }, ref) {
+    return /* @__PURE__ */ jsxs28(
+      "span",
+      {
+        ref,
+        className: cn(statusBadgeVariants({ tone, size }), className),
+        ...props,
+        children: [
+          !hideDot && /* @__PURE__ */ jsx35(
+            "span",
+            {
+              "aria-hidden": "true",
+              className: "size-1.5 shrink-0 rounded-full bg-current"
+            }
+          ),
+          children
+        ]
+      }
+    );
+  }
+);
+StatusBadge.displayName = "StatusBadge";
+
+// src/schedule/DateNavigator.tsx
+import * as React30 from "react";
+import { ChevronLeft as ChevronLeft3, ChevronRight as ChevronRight4 } from "lucide-react";
+import { cva as cva7 } from "class-variance-authority";
+import { jsx as jsx36, jsxs as jsxs29 } from "react/jsx-runtime";
+var dateNavigatorVariants = cva7(
+  "inline-flex items-center justify-between rounded-lg border border-border-default bg-white",
+  {
+    variants: {
+      size: {
+        sm: "h-9 gap-1 px-1",
+        md: "h-11 gap-2 px-1.5"
+      }
+    },
+    defaultVariants: { size: "md" }
+  }
+);
+var DateNavigator = React30.forwardRef(
+  function DateNavigator2({
+    className,
+    size,
+    label,
+    onPrev,
+    onNext,
+    prevDisabled,
+    nextDisabled,
+    prevLabel = "\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32",
+    nextLabel = "\u0E16\u0E31\u0E14\u0E44\u0E1B",
+    ...props
+  }, ref) {
+    const arrowClass = "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4";
+    return /* @__PURE__ */ jsxs29(
+      "div",
+      {
+        ref,
+        className: cn(dateNavigatorVariants({ size }), className),
+        ...props,
+        children: [
+          /* @__PURE__ */ jsx36(
+            "button",
+            {
+              type: "button",
+              "aria-label": prevLabel,
+              disabled: prevDisabled,
+              onClick: onPrev,
+              className: arrowClass,
+              children: /* @__PURE__ */ jsx36(ChevronLeft3, {})
+            }
+          ),
+          /* @__PURE__ */ jsx36("span", { className: "min-w-28 text-center text-sm font-semibold text-text-primary", children: label }),
+          /* @__PURE__ */ jsx36(
+            "button",
+            {
+              type: "button",
+              "aria-label": nextLabel,
+              disabled: nextDisabled,
+              onClick: onNext,
+              className: arrowClass,
+              children: /* @__PURE__ */ jsx36(ChevronRight4, {})
+            }
+          )
+        ]
+      }
+    );
+  }
+);
+DateNavigator.displayName = "DateNavigator";
+
+// src/schedule/AssignmentChip.tsx
+import * as React31 from "react";
+import { jsx as jsx37, jsxs as jsxs30 } from "react/jsx-runtime";
+var AssignmentChip = React31.forwardRef(
+  function AssignmentChip2({ slot, hideOrder, onClick, className, disabled, ...props }, ref) {
+    const interactive = Boolean(onClick) && !disabled;
+    const Comp = interactive ? "button" : "div";
+    return /* @__PURE__ */ jsxs30(
+      Comp,
+      {
+        ref,
+        ...interactive ? { type: "button", onClick: () => onClick?.(slot) } : {},
+        className: cn(
+          "flex w-full items-center gap-2 rounded-lg border border-border-default bg-gray-50 px-2 py-1.5 text-left text-sm text-text-primary transition-colors",
+          interactive && "cursor-pointer hover:border-brand hover:bg-brand-subtle",
+          className
+        ),
+        ...props,
+        children: [
+          !hideOrder && /* @__PURE__ */ jsx37("span", { className: "flex size-5 shrink-0 items-center justify-center rounded-md bg-brand text-xs font-bold text-brand-foreground", children: slot.order }),
+          /* @__PURE__ */ jsx37(
+            ScheduleAvatar,
+            {
+              size: "xs",
+              color: slot.color,
+              name: slot.name,
+              label: slot.avatarLabel,
+              src: slot.src
+            }
+          ),
+          /* @__PURE__ */ jsx37("span", { className: "truncate font-medium", children: slot.name })
+        ]
+      }
+    );
+  }
+);
+AssignmentChip.displayName = "AssignmentChip";
+
+// src/schedule/AddSlotButton.tsx
+import * as React32 from "react";
+import { Plus } from "lucide-react";
+import { jsx as jsx38, jsxs as jsxs31 } from "react/jsx-runtime";
+var AddSlotButton = React32.forwardRef(
+  function AddSlotButton2({ className, label = "\u0E40\u0E1E\u0E34\u0E48\u0E21", icon, ...props }, ref) {
+    return /* @__PURE__ */ jsxs31(
+      "button",
+      {
+        ref,
+        type: "button",
+        className: cn(
+          "flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong px-2 py-1.5 text-sm text-text-tertiary transition-colors hover:border-brand hover:bg-brand-subtle hover:text-brand disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4",
+          className
+        ),
+        ...props,
+        children: [
+          icon ?? /* @__PURE__ */ jsx38(Plus, {}),
+          label
+        ]
+      }
+    );
+  }
+);
+AddSlotButton.displayName = "AddSlotButton";
+
+// src/schedule/ShiftTable.tsx
+import * as React33 from "react";
+import { Pencil } from "lucide-react";
+import { jsx as jsx39, jsxs as jsxs32 } from "react/jsx-runtime";
+var ShiftTable = React33.forwardRef(
+  function ShiftTable2({
+    className,
+    columns,
+    days,
+    onSlotClick,
+    onAddSlot,
+    onEditColumn,
+    addLabel = "\u0E40\u0E1E\u0E34\u0E48\u0E21",
+    dayColumnLabel = "\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48",
+    stickyHeader = true,
+    maxHeight,
+    ...props
+  }, ref) {
+    const gridTemplateColumns = `88px repeat(${Math.max(columns.length, 1)}, minmax(220px, 1fr))`;
+    return /* @__PURE__ */ jsxs32(
+      "div",
+      {
+        ref,
+        role: "grid",
+        "aria-label": props["aria-label"] ?? "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E01\u0E30",
+        className: cn(
+          "overflow-auto rounded-xl border border-border-default bg-white",
+          className
+        ),
+        style: { maxHeight },
+        ...props,
+        children: [
+          /* @__PURE__ */ jsxs32(
+            "div",
+            {
+              role: "row",
+              className: cn(
+                "grid border-b border-border-default bg-gray-50",
+                stickyHeader && "sticky top-0 z-10"
+              ),
+              style: { gridTemplateColumns },
+              children: [
+                /* @__PURE__ */ jsx39(
+                  "div",
+                  {
+                    role: "columnheader",
+                    className: "flex items-center justify-center px-2 py-3 text-sm font-semibold text-text-secondary",
+                    children: dayColumnLabel
+                  }
+                ),
+                columns.map((column) => /* @__PURE__ */ jsx39(
+                  "div",
+                  {
+                    role: "columnheader",
+                    className: "border-l border-border-default px-3 py-2",
+                    children: /* @__PURE__ */ jsxs32("div", { className: "flex items-start justify-between gap-2", children: [
+                      /* @__PURE__ */ jsxs32("div", { className: "min-w-0", children: [
+                        /* @__PURE__ */ jsx39("div", { className: "truncate text-sm font-semibold text-text-primary", children: column.name }),
+                        /* @__PURE__ */ jsxs32("div", { className: "text-xs text-text-tertiary", children: [
+                          column.timeRange,
+                          " \xB7 ",
+                          column.slotCount,
+                          " \u0E25\u0E33\u0E14\u0E31\u0E1A"
+                        ] })
+                      ] }),
+                      onEditColumn && /* @__PURE__ */ jsx39(
+                        "button",
+                        {
+                          type: "button",
+                          "aria-label": `\u0E41\u0E01\u0E49\u0E44\u0E02 ${column.name}`,
+                          onClick: () => onEditColumn(column.id),
+                          className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-brand-subtle hover:text-brand [&_svg]:size-3.5",
+                          children: /* @__PURE__ */ jsx39(Pencil, {})
+                        }
+                      )
+                    ] })
+                  },
+                  column.id
+                ))
+              ]
+            }
+          ),
+          days.map((day) => /* @__PURE__ */ jsxs32(
+            "div",
+            {
+              role: "row",
+              "data-today": day.isToday || void 0,
+              "data-weekend": day.isWeekend || void 0,
+              className: "grid border-b border-border-default last:border-b-0 data-[weekend=true]:bg-gray-50",
+              style: { gridTemplateColumns },
+              children: [
+                /* @__PURE__ */ jsxs32(
+                  "div",
+                  {
+                    role: "rowheader",
+                    className: cn(
+                      "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
+                      day.isToday && "bg-brand-subtle"
+                    ),
+                    children: [
+                      /* @__PURE__ */ jsx39(
+                        "span",
+                        {
+                          className: cn(
+                            "text-lg font-bold",
+                            day.isToday ? "text-brand" : "text-text-primary"
+                          ),
+                          children: day.dayNumber
+                        }
+                      ),
+                      /* @__PURE__ */ jsx39("span", { className: "text-xs text-text-tertiary", children: day.weekdayLabel })
+                    ]
+                  }
+                ),
+                columns.map((column) => {
+                  const filled = day.slots[column.id] ?? [];
+                  const emptyCount = Math.max(column.slotCount - filled.length, 0);
+                  return /* @__PURE__ */ jsxs32(
+                    "div",
+                    {
+                      role: "gridcell",
+                      className: cn(
+                        "flex flex-col gap-1.5 border-l border-border-default p-2",
+                        day.isToday && "bg-brand-subtle/40"
+                      ),
+                      children: [
+                        filled.map((slot) => /* @__PURE__ */ jsx39(
+                          AssignmentChip,
+                          {
+                            slot,
+                            onClick: onSlotClick ? (clicked) => onSlotClick(day.id, column.id, clicked) : void 0
+                          },
+                          slot.id
+                        )),
+                        onAddSlot && Array.from({ length: emptyCount }, (_, index) => {
+                          const order = filled.length + index + 1;
+                          return /* @__PURE__ */ jsx39(
+                            AddSlotButton,
+                            {
+                              label: addLabel,
+                              onClick: () => onAddSlot(day.id, column.id, order)
+                            },
+                            `add-slot-${order}`
+                          );
+                        })
+                      ]
+                    },
+                    column.id
+                  );
+                })
+              ]
+            },
+            day.id
+          ))
+        ]
+      }
+    );
+  }
+);
+ShiftTable.displayName = "ShiftTable";
+
+// src/schedule/TimeGrid.tsx
+import * as React34 from "react";
+import { Clock as Clock2, DoorOpen, FileText, Pencil as Pencil2, UserPlus } from "lucide-react";
+
+// src/schedule/time-grid-utils.ts
+function parseTimeToMinutes(time) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+  if (!match) return NaN;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return NaN;
+  return hours * 60 + minutes;
+}
+var MIN_RENDER_MINUTES = 15;
+function computeEventLayouts(events, windowStart, windowEnd, pixelsPerMinute) {
+  const winStart = parseTimeToMinutes(windowStart);
+  const winEnd = parseTimeToMinutes(windowEnd);
+  if (Number.isNaN(winStart) || Number.isNaN(winEnd) || winEnd <= winStart) {
+    return [];
+  }
+  const valid = [];
+  for (const event of events) {
+    let startMin = parseTimeToMinutes(event.start);
+    let endMin = parseTimeToMinutes(event.end);
+    if (Number.isNaN(startMin) || Number.isNaN(endMin)) continue;
+    if (endMin <= startMin) endMin = startMin + MIN_RENDER_MINUTES;
+    if (endMin <= winStart || startMin >= winEnd) continue;
+    startMin = Math.max(startMin, winStart);
+    endMin = Math.min(endMin, winEnd);
+    valid.push({ ...event, startMin, endMin, column: 0 });
+  }
+  valid.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+  const layouts = [];
+  let cluster = [];
+  let clusterEnd = -1;
+  const flushCluster = () => {
+    if (cluster.length === 0) return;
+    const totalColumns = Math.max(...cluster.map((event) => event.column)) + 1;
+    for (const event of cluster) {
+      layouts.push({
+        id: event.id,
+        top: (event.startMin - winStart) * pixelsPerMinute,
+        height: Math.max(
+          (event.endMin - event.startMin) * pixelsPerMinute,
+          MIN_RENDER_MINUTES * pixelsPerMinute
+        ),
+        left: `${event.column * 100 / totalColumns}%`,
+        width: `${100 / totalColumns}%`,
+        column: event.column,
+        totalColumns
+      });
+    }
+    cluster = [];
+  };
+  for (const event of valid) {
+    if (cluster.length > 0 && event.startMin >= clusterEnd) {
+      flushCluster();
+      clusterEnd = -1;
+    }
+    const used = new Set(
+      cluster.filter((other) => other.endMin > event.startMin).map((other) => other.column)
+    );
+    let column = 0;
+    while (used.has(column)) column += 1;
+    event.column = column;
+    cluster.push(event);
+    clusterEnd = Math.max(clusterEnd, event.endMin);
+  }
+  flushCluster();
+  return layouts;
+}
+function computeFreeGaps(events, windowStart, windowEnd, pixelsPerMinute, minMinutes = 30) {
+  const winStart = parseTimeToMinutes(windowStart);
+  const winEnd = parseTimeToMinutes(windowEnd);
+  if (Number.isNaN(winStart) || Number.isNaN(winEnd) || winEnd <= winStart) {
+    return [];
+  }
+  const intervals = events.map((event) => ({
+    start: Math.max(parseTimeToMinutes(event.start), winStart),
+    end: Math.min(parseTimeToMinutes(event.end), winEnd)
+  })).filter(
+    (interval) => !Number.isNaN(interval.start) && !Number.isNaN(interval.end) && interval.end > interval.start
+  ).sort((a, b) => a.start - b.start);
+  const gaps = [];
+  let cursor = winStart;
+  for (const interval of intervals) {
+    if (interval.start - cursor >= minMinutes) {
+      gaps.push({
+        top: (cursor - winStart) * pixelsPerMinute,
+        height: (interval.start - cursor) * pixelsPerMinute,
+        startMinutes: cursor
+      });
+    }
+    cursor = Math.max(cursor, interval.end);
+  }
+  if (winEnd - cursor >= minMinutes) {
+    gaps.push({
+      top: (cursor - winStart) * pixelsPerMinute,
+      height: (winEnd - cursor) * pixelsPerMinute,
+      startMinutes: cursor
+    });
+  }
+  return gaps;
+}
+
+// src/schedule/TimeGrid.tsx
+import { jsx as jsx40, jsxs as jsxs33 } from "react/jsx-runtime";
+function formatTick(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+var TimeGrid = React34.forwardRef(
+  function TimeGrid2({
+    className,
+    rooms,
+    events,
+    windowStart,
+    windowEnd,
+    tickMinutes = 30,
+    pixelsPerMinute = 2,
+    onEventClick,
+    onEditRoom,
+    onAddEvent,
+    addLabel = "\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E41\u0E1E\u0E17\u0E22\u0E4C\u0E40\u0E27\u0E23",
+    stickyHeader = true,
+    maxHeight,
+    ...props
+  }, ref) {
+    const winStart = parseTimeToMinutes(windowStart);
+    const winEnd = parseTimeToMinutes(windowEnd);
+    const isValidWindow = !Number.isNaN(winStart) && !Number.isNaN(winEnd) && winEnd > winStart;
+    const ticks = React34.useMemo(() => {
+      if (!isValidWindow) return [];
+      const result = [];
+      for (let t = winStart; t <= winEnd; t += tickMinutes) result.push(t);
+      return result;
+    }, [isValidWindow, winStart, winEnd, tickMinutes]);
+    const eventsByRoom = React34.useMemo(() => {
+      const map = /* @__PURE__ */ new Map();
+      for (const event of events) {
+        const list = map.get(event.roomId);
+        if (list) list.push(event);
+        else map.set(event.roomId, [event]);
+      }
+      return map;
+    }, [events]);
+    if (!isValidWindow) return null;
+    const bodyHeight = (winEnd - winStart) * pixelsPerMinute;
+    const gridTemplateColumns = `64px repeat(${Math.max(rooms.length, 1)}, minmax(240px, 1fr))`;
+    return /* @__PURE__ */ jsxs33(
+      "div",
+      {
+        ref,
+        role: "grid",
+        "aria-label": props["aria-label"] ?? "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E2B\u0E49\u0E2D\u0E07\u0E15\u0E23\u0E27\u0E08",
+        className: cn(
+          "overflow-auto rounded-xl border border-border-default bg-white",
+          className
+        ),
+        style: { maxHeight },
+        ...props,
+        children: [
+          /* @__PURE__ */ jsxs33(
+            "div",
+            {
+              role: "row",
+              className: cn(
+                "grid border-b border-border-default bg-gray-50",
+                stickyHeader && "sticky top-0 z-20"
+              ),
+              style: { gridTemplateColumns },
+              children: [
+                /* @__PURE__ */ jsx40(
+                  "div",
+                  {
+                    role: "columnheader",
+                    "aria-label": "\u0E40\u0E27\u0E25\u0E32",
+                    className: "flex items-center justify-center py-3 text-text-tertiary [&_svg]:size-4",
+                    children: /* @__PURE__ */ jsx40(Clock2, {})
+                  }
+                ),
+                rooms.map((room) => /* @__PURE__ */ jsxs33(
+                  "div",
+                  {
+                    role: "columnheader",
+                    className: "flex items-center justify-between gap-2 border-l border-border-default px-3 py-3",
+                    children: [
+                      /* @__PURE__ */ jsxs33("div", { className: "flex min-w-0 items-center gap-2 text-sm font-semibold text-text-primary", children: [
+                        /* @__PURE__ */ jsx40("span", { className: "shrink-0 text-text-tertiary [&_svg]:size-4", children: room.icon ?? /* @__PURE__ */ jsx40(DoorOpen, {}) }),
+                        /* @__PURE__ */ jsx40("span", { className: "truncate", children: room.name })
+                      ] }),
+                      onEditRoom && /* @__PURE__ */ jsx40(
+                        "button",
+                        {
+                          type: "button",
+                          "aria-label": `\u0E41\u0E01\u0E49\u0E44\u0E02 ${room.name}`,
+                          onClick: () => onEditRoom(room.id),
+                          className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-brand-subtle hover:text-brand [&_svg]:size-3.5",
+                          children: /* @__PURE__ */ jsx40(Pencil2, {})
+                        }
+                      )
+                    ]
+                  },
+                  room.id
+                ))
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs33("div", { className: "grid", style: { gridTemplateColumns }, children: [
+            /* @__PURE__ */ jsx40("div", { className: "relative", style: { height: bodyHeight }, children: ticks.map((tick) => {
+              const isHour = tick % 60 === 0;
+              return /* @__PURE__ */ jsx40(
+                "span",
+                {
+                  className: cn(
+                    "absolute right-2 -translate-y-1/2 text-xs",
+                    isHour ? "font-semibold text-text-primary" : "text-text-tertiary",
+                    tick === winStart && "translate-y-0",
+                    tick === winEnd && "-translate-y-full"
+                  ),
+                  style: { top: (tick - winStart) * pixelsPerMinute },
+                  children: formatTick(tick)
+                },
+                tick
+              );
+            }) }),
+            rooms.map((room) => {
+              const roomEvents = eventsByRoom.get(room.id) ?? [];
+              const layouts = computeEventLayouts(
+                roomEvents,
+                windowStart,
+                windowEnd,
+                pixelsPerMinute
+              );
+              const layoutById = new Map(layouts.map((l) => [l.id, l]));
+              const gaps = onAddEvent ? computeFreeGaps(
+                roomEvents,
+                windowStart,
+                windowEnd,
+                pixelsPerMinute,
+                tickMinutes
+              ) : [];
+              return /* @__PURE__ */ jsxs33(
+                "div",
+                {
+                  role: "gridcell",
+                  className: "relative border-l border-border-default",
+                  style: { height: bodyHeight },
+                  children: [
+                    ticks.slice(1, -1).map((tick) => /* @__PURE__ */ jsx40(
+                      "div",
+                      {
+                        "aria-hidden": "true",
+                        className: cn(
+                          "absolute inset-x-0 border-t",
+                          tick % 60 === 0 ? "border-border-default" : "border-border-subtle"
+                        ),
+                        style: { top: (tick - winStart) * pixelsPerMinute }
+                      },
+                      tick
+                    )),
+                    gaps.map((gap) => /* @__PURE__ */ jsxs33(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => onAddEvent?.(room.id, gap.startMinutes),
+                        className: "absolute inset-x-1.5 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong text-sm text-text-tertiary transition-colors hover:border-brand hover:bg-brand-subtle hover:text-brand [&_svg]:size-4",
+                        style: {
+                          top: gap.top + 4,
+                          height: Math.min(gap.height - 8, 72)
+                        },
+                        children: [
+                          /* @__PURE__ */ jsx40(UserPlus, {}),
+                          addLabel
+                        ]
+                      },
+                      gap.startMinutes
+                    )),
+                    roomEvents.map((event) => {
+                      const layout = layoutById.get(event.id);
+                      if (!layout) return null;
+                      const interactive = Boolean(onEventClick);
+                      return /* @__PURE__ */ jsxs33(
+                        "div",
+                        {
+                          role: interactive ? "button" : void 0,
+                          tabIndex: interactive ? 0 : void 0,
+                          onClick: interactive ? () => onEventClick?.(event) : void 0,
+                          onKeyDown: interactive ? (keyEvent) => {
+                            if (keyEvent.key === "Enter" || keyEvent.key === " ") {
+                              keyEvent.preventDefault();
+                              onEventClick?.(event);
+                            }
+                          } : void 0,
+                          className: cn(
+                            "absolute overflow-hidden rounded-lg border border-success-green-primary bg-success-green-50 p-2",
+                            interactive && "cursor-pointer transition-shadow hover:shadow-card focus-visible:ring-2"
+                          ),
+                          style: {
+                            top: layout.top + 2,
+                            height: layout.height - 4,
+                            left: `calc(${layout.left} + 4px)`,
+                            width: `calc(${layout.width} - 8px)`
+                          },
+                          children: [
+                            /* @__PURE__ */ jsxs33("div", { className: "flex items-center gap-1.5 text-sm font-semibold text-text-primary", children: [
+                              /* @__PURE__ */ jsx40(
+                                ScheduleAvatar,
+                                {
+                                  size: "xs",
+                                  color: event.color,
+                                  name: event.name,
+                                  label: event.avatarLabel,
+                                  src: event.src
+                                }
+                              ),
+                              /* @__PURE__ */ jsx40("span", { className: "truncate", children: event.name })
+                            ] }),
+                            event.note && /* @__PURE__ */ jsxs33("div", { className: "mt-1 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
+                              /* @__PURE__ */ jsx40(FileText, {}),
+                              /* @__PURE__ */ jsx40("span", { className: "truncate", children: event.note })
+                            ] }),
+                            /* @__PURE__ */ jsxs33("div", { className: "mt-1 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
+                              /* @__PURE__ */ jsx40(Clock2, {}),
+                              event.timeLabel ?? `${event.start} \u2013 ${event.end}`
+                            ] })
+                          ]
+                        },
+                        event.id
+                      );
+                    })
+                  ]
+                },
+                room.id
+              );
+            })
+          ] })
+        ]
+      }
+    );
+  }
+);
+TimeGrid.displayName = "TimeGrid";
 export {
+  ASSIGNMENT_COLOR_CLASSES,
+  AddSlotButton,
   AppLauncher,
+  AssignmentChip,
   Avatar,
   Breadcrumb,
   BreadcrumbLink,
@@ -3531,6 +4319,7 @@ export {
   ComboBox,
   ConfirmDialog,
   DataTable,
+  DateNavigator,
   DatePicker,
   Dialog,
   DialogClose,
@@ -3570,13 +4359,16 @@ export {
   PopoverTrigger,
   RadioGroup,
   RadioGroupItem,
+  ScheduleAvatar,
   Select,
   SelectItem,
+  ShiftTable,
   Sidebar,
   SidebarGroup,
   SidebarItem,
   Skeleton,
   Spinner2 as Spinner,
+  StatusBadge,
   Stepper,
   Switch,
   Table,
@@ -3592,6 +4384,7 @@ export {
   TabsList,
   TabsTrigger,
   Textarea,
+  TimeGrid,
   TimePicker,
   Toaster,
   Tooltip,
@@ -3608,6 +4401,10 @@ export {
   buttonVariants,
   chipVariants,
   cn,
+  computeEventLayouts,
+  computeFreeGaps,
+  parseTimeToMinutes,
+  statusBadgeVariants,
   toast
 };
 //# sourceMappingURL=index.js.map

@@ -72,4 +72,6 @@ function LoadingScreen({
   );
 }
 
+Spinner.displayName = "Spinner";
+
 export { Spinner, LoadingScreen };

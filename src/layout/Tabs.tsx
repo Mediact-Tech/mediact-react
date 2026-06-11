@@ -77,4 +77,8 @@ const TabsContent = React.forwardRef<
   );
 });
 
+TabsList.displayName = "TabsList";
+TabsTrigger.displayName = "TabsTrigger";
+TabsContent.displayName = "TabsContent";
+
 export { Tabs, TabsList, TabsTrigger, TabsContent };

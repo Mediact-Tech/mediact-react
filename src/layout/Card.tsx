@@ -70,4 +70,6 @@ const CardFooter = ({ className, ...props }: React.ComponentProps<"div">) => (
   />
 );
 
+Card.displayName = "Card";
+
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };

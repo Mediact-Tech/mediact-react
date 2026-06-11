@@ -1,6 +1,6 @@
 {
   "name": "@mediact/react",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "React components for Mediact Design System (Tailwind v4 + Radix)",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,8 +23,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "bun run lint:colors",
-    "lint:colors": "! grep -rn --include='*.tsx' --exclude='*.stories.tsx' --exclude='*.test.tsx' -E \"(bg|text|border|ring|fill|stroke|shadow)-\\[#[0-9a-fA-F]\" src/ || (echo 'ERROR: hardcoded hex colors found — use design tokens instead' && exit 1)",
+    "lint": "node scripts/lint-colors.mjs",
+    "lint:colors": "node scripts/lint-colors.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

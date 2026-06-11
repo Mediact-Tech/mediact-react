@@ -89,6 +89,8 @@ function Tooltip({
   );
 }
 
+TooltipContent.displayName = "TooltipContent";
+
 export {
   Tooltip,
   TooltipProvider,

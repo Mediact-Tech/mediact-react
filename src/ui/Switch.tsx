@@ -94,4 +94,6 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function Switch(
   );
 });
 
+Switch.displayName = "Switch";
+
 export { Switch };
