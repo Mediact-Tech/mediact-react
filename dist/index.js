@@ -4273,11 +4273,11 @@ var TimeGrid = React34.forwardRef(
                               ),
                               /* @__PURE__ */ jsx40("span", { className: "truncate", children: event.name })
                             ] }),
-                            event.note && /* @__PURE__ */ jsxs33("div", { className: "mt-1 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
+                            event.note && /* @__PURE__ */ jsxs33("div", { className: "mt-1 ml-7 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
                               /* @__PURE__ */ jsx40(FileText, {}),
                               /* @__PURE__ */ jsx40("span", { className: "truncate", children: event.note })
                             ] }),
-                            /* @__PURE__ */ jsxs33("div", { className: "mt-1 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
+                            /* @__PURE__ */ jsxs33("div", { className: "mt-1 ml-7 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
                               /* @__PURE__ */ jsx40(Clock2, {}),
                               event.timeLabel ?? `${event.start} \u2013 ${event.end}`
                             ] })
