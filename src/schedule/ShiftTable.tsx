@@ -59,14 +59,13 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
       stickyHeader = true,
       maxHeight,
       minColumnWidth = 220,
+      style,
       ...props
     },
     ref,
   ) {
     const gridTemplateColumns = `88px repeat(${Math.max(columns.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
 
-    // แยก H-scroll (outer) กับ V-scroll (inner) เพื่อหลีกเลี่ยง Chrome 2D-overflow
-    // compositing bug ที่ทำให้ sticky header border ถูก scrolled-content layer ทับ
     const innerContent = (
       <>
         {/* Header */}
@@ -80,7 +79,7 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
         >
           <div
             role="columnheader"
-            className="flex items-center justify-center px-2 py-3 text-sm font-semibold text-text-secondary"
+            className="sticky left-0 z-10 flex items-center justify-center border-r border-border-default bg-gray-50 px-2 py-3 text-sm font-semibold text-text-secondary"
           >
             {dayColumnLabel}
           </div>
@@ -129,8 +128,11 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
             <div
               role="rowheader"
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
-                today && "bg-success-green-600/10",
+                // sticky left-0: ตรึงคอลัมน์วันที่ไว้ขณะเลื่อนแนวนอน (frozen column)
+                // bg ต้องทึบเพื่อให้เนื้อหาคอลัมน์กะเลื่อนลอดใต้ได้สะอาด
+                "sticky left-0 z-[1] flex flex-col items-center justify-center gap-0.5 border-r border-border-default px-2 py-3",
+                day.isWeekend ? "bg-gray-50" : "bg-white",
+                today && "bg-success-green-50",
               )}
             >
               <span
@@ -188,27 +190,23 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
     );
 
     return (
+      // Scroll container เดียวรับทั้ง 2 แกน — sticky header (top) + sticky วันที่ (left)
+      // ทำงานเทียบ container นี้ตัวเดียว เป็น pattern มาตรฐานของตารางตรึงหัว+คอลัมน์แรก
       <div
         ref={ref}
         role="grid"
         aria-label={props["aria-label"] ?? "ตารางกะ"}
         className={cn(
-          // overflow-x-auto + overflow-y-hidden: CSS spec ไม่ promote hidden → auto
-          // ทำให้ outer เป็น H-scroll only — V-scroll อยู่ใน inner div แยกต่างหาก
-          "overflow-x-auto overflow-y-hidden rounded-xl border border-border-default bg-white",
+          "overflow-auto rounded-xl border border-border-default bg-white",
           className,
         )}
+        style={{ maxHeight, ...style }}
         {...props}
       >
-        {maxHeight ? (
-          // Inner: กว้างเท่า content (w-max min-w-full) → ไม่มี H-overflow ใน inner
-          // จึงเป็น V-scroll only → ไม่เกิด 2D-overflow compositing bug
-          <div className="w-max min-w-full overflow-y-auto" style={{ maxHeight }}>
-            {innerContent}
-          </div>
-        ) : (
-          innerContent
-        )}
+        {/* Sizer (ไม่ scroll): w-max min-w-full → แถวกว้างเท่า content เต็มเสมอ
+            พื้นหลัง/เส้นขอบของแถวจึงไม่ถูกตัดตอนเลื่อนแนวนอน ขณะที่ sticky
+            ยังอ้างอิง scroll container ภายนอกตัวเดียว */}
+        <div className="w-max min-w-full">{innerContent}</div>
       </div>
     );
   },
