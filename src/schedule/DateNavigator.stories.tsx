@@ -5,50 +5,58 @@ import { DateNavigator } from "./DateNavigator";
 const meta = {
   title: "Schedule/DateNavigator",
   component: DateNavigator,
-  tags: ["autodocs"],
-  args: {
-    label: "มิถุนายน 2569",
-  },
 } satisfies Meta<typeof DateNavigator>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
-
-const MONTHS = [
-  "มกราคม",
-  "กุมภาพันธ์",
-  "มีนาคม",
-  "เมษายน",
-  "พฤษภาคม",
-  "มิถุนายน",
-  "กรกฎาคม",
-  "สิงหาคม",
-  "กันยายน",
-  "ตุลาคม",
-  "พฤศจิกายน",
-  "ธันวาคม",
-];
-
-export const Controlled: Story = {
+/** Controlled mode (แนะนำ) — format ไทย + พ.ศ. อัตโนมัติ */
+export const ControlledMonth: Story = {
   render: () => {
-    const [month, setMonth] = React.useState(5);
+    const [month, setMonth] = React.useState(() => new Date(2026, 5, 1));
+    return <DateNavigator value={month} onChange={setMonth} unit="month" />;
+  },
+};
+
+/** ระดับวัน — "วันอังคารที่ 2 มิถุนายน" */
+export const ControlledDay: Story = {
+  render: () => {
+    const [day, setDay] = React.useState(() => new Date(2026, 5, 2));
+    return <DateNavigator value={day} onChange={setDay} unit="day" size="sm" />;
+  },
+};
+
+/** จำกัดช่วง — ปุ่ม disable อัตโนมัติเมื่อชนขอบ */
+export const WithMinMax: Story = {
+  render: () => {
+    const [month, setMonth] = React.useState(() => new Date(2026, 5, 1));
     return (
       <DateNavigator
-        label={`${MONTHS[month]} 2569`}
-        onPrev={() => setMonth((m) => Math.max(m - 1, 0))}
-        onNext={() => setMonth((m) => Math.min(m + 1, 11))}
-        prevDisabled={month === 0}
-        nextDisabled={month === 11}
+        value={month}
+        onChange={setMonth}
+        unit="month"
+        minDate={new Date(2026, 3, 1)}
+        maxDate={new Date(2026, 7, 1)}
       />
     );
   },
 };
 
-export const DayLevel: Story = {
+/** Locale อื่น */
+export const EnglishLocale: Story = {
+  render: () => {
+    const [month, setMonth] = React.useState(() => new Date(2026, 5, 1));
+    return (
+      <DateNavigator value={month} onChange={setMonth} locale="en-US" />
+    );
+  },
+};
+
+/** Manual mode — custom label ที่ format มาตรฐานไม่ครอบ */
+export const ManualLabel: Story = {
   args: {
-    label: "2 มิถุนายน · วันอังคาร",
-    size: "sm",
+    label: "สัปดาห์ที่ 24 / 2569",
+    onPrev: () => console.log("prev week"),
+    onNext: () => console.log("next week"),
   },
 };

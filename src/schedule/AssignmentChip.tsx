@@ -35,13 +35,13 @@ const AssignmentChip = React.forwardRef<HTMLElement, AssignmentChipProps>(
           : {})}
         className={cn(
           "flex w-full items-center gap-2 rounded-lg border border-border-default bg-gray-50 px-2 py-1.5 text-left text-sm text-text-primary transition-colors",
-          interactive && "cursor-pointer hover:border-brand hover:bg-brand-subtle",
+          interactive && "cursor-pointer hover:border-success-green-600 hover:bg-success-green-600/20",
           className,
         )}
         {...(props as Record<string, unknown>)}
       >
         {!hideOrder && (
-          <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-brand text-xs font-bold text-brand-foreground">
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-success-green-600 text-xs font-bold text-brand-foreground">
             {slot.order}
           </span>
         )}

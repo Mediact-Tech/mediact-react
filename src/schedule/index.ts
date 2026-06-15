@@ -8,7 +8,11 @@ export {
   statusBadgeVariants,
   type StatusBadgeProps,
 } from "./StatusBadge";
-export { DateNavigator, type DateNavigatorProps } from "./DateNavigator";
+export {
+  DateNavigator,
+  type DateNavigatorProps,
+  type DateNavigatorUnit,
+} from "./DateNavigator";
 export { AssignmentChip, type AssignmentChipProps } from "./AssignmentChip";
 export { AddSlotButton, type AddSlotButtonProps } from "./AddSlotButton";
 

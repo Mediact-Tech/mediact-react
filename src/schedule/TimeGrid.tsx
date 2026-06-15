@@ -37,6 +37,12 @@ export type TimeGridProps = Omit<React.ComponentProps<"div">, "children"> & {
   stickyHeader?: boolean;
   /** Max height (enables vertical scroll), e.g. "70vh" or 640. */
   maxHeight?: React.CSSProperties["maxHeight"];
+  /**
+   * Min width (px) ของแต่ละคอลัมน์ห้อง — ลดเมื่อพื้นที่แคบเพื่อเลี่ยง
+   * horizontal scroll (ซึ่งพ่วง vertical scrollbar ~17px ตามมา)
+   * @default 240
+   */
+  minColumnWidth?: number;
 };
 
 function formatTick(minutes: number): string {
@@ -70,6 +76,7 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
       addLabel = "เพิ่มแพทย์เวร",
       stickyHeader = true,
       maxHeight,
+      minColumnWidth = 240,
       ...props
     },
     ref,
@@ -99,7 +106,7 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
     if (!isValidWindow) return null;
 
     const bodyHeight = (winEnd - winStart) * pixelsPerMinute;
-    const gridTemplateColumns = `64px repeat(${Math.max(rooms.length, 1)}, minmax(240px, 1fr))`;
+    const gridTemplateColumns = `64px repeat(${Math.max(rooms.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
 
     return (
       <div
@@ -137,7 +144,7 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
             >
               <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-text-primary">
                 <span className="shrink-0 text-text-tertiary [&_svg]:size-4">
-                  {room.icon ?? <DoorOpen />}
+                  {room.icon ?? <DoorOpen className="text-success-green-600" />}
                 </span>
                 <span className="truncate">{room.name}</span>
               </div>
@@ -146,7 +153,7 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
                   type="button"
                   aria-label={`แก้ไข ${room.name}`}
                   onClick={() => onEditRoom(room.id)}
-                  className="shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-brand-subtle hover:text-brand [&_svg]:size-3.5"
+                  className="shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-3.5"
                 >
                   <Pencil />
                 </button>
@@ -155,29 +162,36 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
           ))}
         </div>
 
-        {/* Body */}
+        {/* Body — padding อยู่ระดับคอลัมน์ (py-5 ข้างใน) เพื่อให้ border-l ต่อเนื่องเต็มความสูง */}
         <div className="grid" style={{ gridTemplateColumns }}>
           {/* Time axis */}
-          <div className="relative" style={{ height: bodyHeight }}>
-            {ticks.map((tick) => {
+          <div className="py-5">
+            <div className="relative" style={{ height: bodyHeight }}>
+              {ticks.map((tick) => {
               const isHour = tick % 60 === 0;
+              // offset แบบคำนวณตรง (ไม่ใช้ translate utility) — กัน 2 ปัญหา:
+              // (1) consumer ที่ Tailwind scan dist ไม่เจอ negative utility
+              // (2) label ตัวสุดท้ายล้นกล่อง 1px จนเกิด scrollbar ปลอม
+              const labelOffset =
+                tick === winStart ? 0 : tick === winEnd ? 16 : 8;
               return (
                 <span
                   key={tick}
                   className={cn(
-                    "absolute right-2 -translate-y-1/2 text-xs",
+                    "absolute right-2 block h-4 text-xs leading-4",
                     isHour
                       ? "font-semibold text-text-primary"
                       : "text-text-tertiary",
-                    tick === winStart && "translate-y-0",
-                    tick === winEnd && "-translate-y-full",
                   )}
-                  style={{ top: (tick - winStart) * pixelsPerMinute }}
+                  style={{
+                    top: (tick - winStart) * pixelsPerMinute - labelOffset,
+                  }}
                 >
                   {formatTick(tick)}
                 </span>
               );
             })}
+            </div>
           </div>
 
           {/* Room columns */}
@@ -204,9 +218,9 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
               <div
                 key={room.id}
                 role="gridcell"
-                className="relative border-l border-border-default"
-                style={{ height: bodyHeight }}
+                className="border-l border-border-default py-5"
               >
+                <div className="relative" style={{ height: bodyHeight }}>
                 {/* Tick lines */}
                 {ticks.slice(1, -1).map((tick) => (
                   <div
@@ -228,10 +242,10 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
                     key={gap.startMinutes}
                     type="button"
                     onClick={() => onAddEvent?.(room.id, gap.startMinutes)}
-                    className="absolute inset-x-1.5 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong text-sm text-text-tertiary transition-colors hover:border-brand hover:bg-brand-subtle hover:text-brand [&_svg]:size-4"
+                    className="absolute inset-x-1.5 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong text-sm text-text-tertiary transition-colors hover:border-success-green-600 hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-4"
                     style={{
                       top: gap.top + 4,
-                      height: Math.min(gap.height - 8, 72),
+                      height: Math.min(gap.height - 8, 50),
                     }}
                   >
                     <UserPlus />
@@ -300,6 +314,7 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
                     </div>
                   );
                 })}
+                </div>
               </div>
             );
           })}

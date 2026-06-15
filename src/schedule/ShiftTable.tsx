@@ -31,6 +31,12 @@ export type ShiftTableProps = Omit<
   stickyHeader?: boolean;
   /** Max body height (enables vertical scroll), e.g. "70vh" or 640. */
   maxHeight?: React.CSSProperties["maxHeight"];
+  /**
+   * Min width (px) ของแต่ละคอลัมน์กะ — ลดเมื่อพื้นที่แคบเพื่อเลี่ยง
+   * horizontal scroll
+   * @default 220
+   */
+  minColumnWidth?: number;
 };
 
 /**
@@ -51,11 +57,12 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
       dayColumnLabel = "วันที่",
       stickyHeader = true,
       maxHeight,
+      minColumnWidth = 220,
       ...props
     },
     ref,
   ) {
-    const gridTemplateColumns = `88px repeat(${Math.max(columns.length, 1)}, minmax(220px, 1fr))`;
+    const gridTemplateColumns = `88px repeat(${Math.max(columns.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
 
     return (
       <div
@@ -104,7 +111,7 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
                     type="button"
                     aria-label={`แก้ไข ${column.name}`}
                     onClick={() => onEditColumn(column.id)}
-                    className="shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-brand-subtle hover:text-brand [&_svg]:size-3.5"
+                    className="shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-3.5"
                   >
                     <Pencil />
                   </button>
@@ -128,18 +135,18 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
               role="rowheader"
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
-                day.isToday && "bg-brand-subtle",
+                day.isToday && "bg-success-green-600/10",
               )}
             >
               <span
                 className={cn(
                   "text-lg font-bold",
-                  day.isToday ? "text-brand" : "text-text-primary",
+                  day.isToday ? "text-success-green-main" : "text-text-primary",
                 )}
               >
                 {day.dayNumber}
               </span>
-              <span className="text-xs text-text-tertiary">
+              <span className={cn("text-xs text-text-tertiary", day.isToday && "text-success-green-600")}>
                 {day.weekdayLabel}
               </span>
             </div>
@@ -152,7 +159,6 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
                   role="gridcell"
                   className={cn(
                     "flex flex-col gap-1.5 border-l border-border-default p-2",
-                    day.isToday && "bg-brand-subtle/40",
                   )}
                 >
                   {filled.map((slot) => (
