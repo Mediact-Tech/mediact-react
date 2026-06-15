@@ -3834,6 +3834,7 @@ AddSlotButton.displayName = "AddSlotButton";
 // src/schedule/ShiftTable.tsx
 import * as React33 from "react";
 import { Pencil } from "lucide-react";
+import { isToday as dateFnsIsToday, parseISO } from "date-fns";
 import { jsx as jsx39, jsxs as jsxs32 } from "react/jsx-runtime";
 var ShiftTable = React33.forwardRef(
   function ShiftTable2({
@@ -3914,77 +3915,80 @@ var ShiftTable = React33.forwardRef(
               ]
             }
           ),
-          days.map((day) => /* @__PURE__ */ jsxs32(
-            "div",
-            {
-              role: "row",
-              "data-today": day.isToday || void 0,
-              "data-weekend": day.isWeekend || void 0,
-              className: "grid border-b border-border-default last:border-b-0 data-[weekend=true]:bg-gray-50",
-              style: { gridTemplateColumns },
-              children: [
-                /* @__PURE__ */ jsxs32(
-                  "div",
-                  {
-                    role: "rowheader",
-                    className: cn(
-                      "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
-                      day.isToday && "bg-success-green-600/10"
-                    ),
-                    children: [
-                      /* @__PURE__ */ jsx39(
-                        "span",
-                        {
-                          className: cn(
-                            "text-lg font-bold",
-                            day.isToday ? "text-success-green-main" : "text-text-primary"
-                          ),
-                          children: day.dayNumber
-                        }
-                      ),
-                      /* @__PURE__ */ jsx39("span", { className: cn("text-xs text-text-tertiary", day.isToday && "text-success-green-600"), children: day.weekdayLabel })
-                    ]
-                  }
-                ),
-                columns.map((column) => {
-                  const filled = day.slots[column.id] ?? [];
-                  const emptyCount = Math.max(column.slotCount - filled.length, 0);
-                  return /* @__PURE__ */ jsxs32(
+          days.map((day) => {
+            const today = day.isToday ?? dateFnsIsToday(parseISO(day.id));
+            return /* @__PURE__ */ jsxs32(
+              "div",
+              {
+                role: "row",
+                "data-today": today || void 0,
+                "data-weekend": day.isWeekend || void 0,
+                className: "grid border-b border-border-default last:border-b-0 data-[weekend=true]:bg-gray-50",
+                style: { gridTemplateColumns },
+                children: [
+                  /* @__PURE__ */ jsxs32(
                     "div",
                     {
-                      role: "gridcell",
+                      role: "rowheader",
                       className: cn(
-                        "flex flex-col gap-1.5 border-l border-border-default p-2"
+                        "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
+                        today && "bg-success-green-600/10"
                       ),
                       children: [
-                        filled.map((slot) => /* @__PURE__ */ jsx39(
-                          AssignmentChip,
+                        /* @__PURE__ */ jsx39(
+                          "span",
                           {
-                            slot,
-                            onClick: onSlotClick ? (clicked) => onSlotClick(day.id, column.id, clicked) : void 0
-                          },
-                          slot.id
-                        )),
-                        onAddSlot && Array.from({ length: emptyCount }, (_, index) => {
-                          const order = filled.length + index + 1;
-                          return /* @__PURE__ */ jsx39(
-                            AddSlotButton,
-                            {
-                              label: addLabel,
-                              onClick: () => onAddSlot(day.id, column.id, order)
-                            },
-                            `add-slot-${order}`
-                          );
-                        })
+                            className: cn(
+                              "text-lg font-bold",
+                              today ? "text-success-green-main" : "text-text-primary"
+                            ),
+                            children: day.dayNumber
+                          }
+                        ),
+                        /* @__PURE__ */ jsx39("span", { className: cn("text-xs text-text-tertiary", today && "text-success-green-600"), children: day.weekdayLabel })
                       ]
-                    },
-                    column.id
-                  );
-                })
-              ]
-            },
-            day.id
-          ))
+                    }
+                  ),
+                  columns.map((column) => {
+                    const filled = day.slots[column.id] ?? [];
+                    const emptyCount = Math.max(column.slotCount - filled.length, 0);
+                    return /* @__PURE__ */ jsxs32(
+                      "div",
+                      {
+                        role: "gridcell",
+                        className: cn(
+                          "flex flex-col gap-1.5 border-l border-border-default p-2"
+                        ),
+                        children: [
+                          filled.map((slot) => /* @__PURE__ */ jsx39(
+                            AssignmentChip,
+                            {
+                              slot,
+                              onClick: onSlotClick ? (clicked) => onSlotClick(day.id, column.id, clicked) : void 0
+                            },
+                            slot.id
+                          )),
+                          onAddSlot && Array.from({ length: emptyCount }, (_, index) => {
+                            const order = filled.length + index + 1;
+                            return /* @__PURE__ */ jsx39(
+                              AddSlotButton,
+                              {
+                                label: addLabel,
+                                onClick: () => onAddSlot(day.id, column.id, order)
+                              },
+                              `add-slot-${order}`
+                            );
+                          })
+                        ]
+                      },
+                      column.id
+                    );
+                  })
+                ]
+              },
+              day.id
+            );
+          })
         ]
       }
     );
