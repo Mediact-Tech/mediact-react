@@ -798,23 +798,52 @@ declare const StatusBadge: React$1.ForwardRefExoticComponent<Omit<StatusBadgePro
 declare const dateNavigatorVariants: (props?: ({
     size?: "sm" | "md" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type DateNavigatorProps = Omit<React$1.ComponentProps<"div">, "children"> & VariantProps<typeof dateNavigatorVariants> & {
+type DateNavigatorUnit = "month" | "day";
+type DateNavigatorProps = Omit<React$1.ComponentProps<"div">, "children" | "onChange"> & VariantProps<typeof dateNavigatorVariants> & {
     /**
-     * Pre-formatted display label — the caller handles all date math and
-     * localization, including Buddhist years (e.g. "มิถุนายน 2569",
-     * "2 มิถุนายน · วันอังคาร").
+     * Controlled mode — เมื่อส่ง `value` มา component จะ format label
+     * และคำนวณ ‹ › ให้เองตาม `unit` (สไตล์เดียวกับ MUI controlled component)
      */
-    label: React$1.ReactNode;
+    value?: Date;
+    /** เรียกพร้อม Date ใหม่เมื่อกด ‹ › (เฉพาะ controlled mode) */
+    onChange?: (date: Date) => void;
+    /** Granularity ของ label และ step. @default "month" */
+    unit?: DateNavigatorUnit;
+    /**
+     * BCP-47 locale สำหรับ format label.
+     * @default "th-TH" — แสดงปีพุทธศักราชอัตโนมัติ (เช่น "มิถุนายน 2569")
+     */
+    locale?: string;
+    /** ปุ่ม ‹ disable อัตโนมัติเมื่อ step ถัดไปต่ำกว่านี้ (controlled mode) */
+    minDate?: Date;
+    /** ปุ่ม › disable อัตโนมัติเมื่อ step ถัดไปเกินกว่านี้ (controlled mode) */
+    maxDate?: Date;
+    /**
+     * Custom label — override การ format จาก `value`
+     * (ใช้เมื่อ format มาตรฐานไม่ครอบ เช่น "สัปดาห์ที่ 24 / 2569")
+     */
+    label?: React$1.ReactNode;
+    /** Hook เพิ่มเติมเมื่อกด ‹ (ทำงานร่วมกับ onChange ได้) */
     onPrev?: () => void;
+    /** Hook เพิ่มเติมเมื่อกด › (ทำงานร่วมกับ onChange ได้) */
     onNext?: () => void;
+    /** Override การ disable อัตโนมัติจาก minDate */
     prevDisabled?: boolean;
+    /** Override การ disable อัตโนมัติจาก maxDate */
     nextDisabled?: boolean;
-    /** aria-label for the previous button. */
+    /** aria-label ปุ่ม ‹ */
     prevLabel?: string;
-    /** aria-label for the next button. */
+    /** aria-label ปุ่ม › */
     nextLabel?: string;
 };
-/** `‹ label ›` stepper for navigating months/days. Purely presentational. */
+/**
+ * `‹ label ›` stepper สำหรับเลื่อนเดือน/วัน
+ *
+ * 2 โหมด:
+ * - **Controlled (แนะนำ):** ส่ง `value` + `onChange` — format ไทย/พ.ศ. ให้เอง
+ *   ผ่าน Intl ตาม `locale` และ step ตาม `unit`
+ * - **Manual:** ส่ง `label` + `onPrev`/`onNext` — ควบคุมเองทั้งหมด
+ */
 declare const DateNavigator: React$1.ForwardRefExoticComponent<Omit<DateNavigatorProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
 
 type AssignmentChipProps = Omit<React$1.ComponentProps<"button">, "onClick" | "children" | "slot"> & {
@@ -857,6 +886,12 @@ type ShiftTableProps = Omit<React$1.ComponentProps<"div">, "children"> & {
     stickyHeader?: boolean;
     /** Max body height (enables vertical scroll), e.g. "70vh" or 640. */
     maxHeight?: React$1.CSSProperties["maxHeight"];
+    /**
+     * Min width (px) ของแต่ละคอลัมน์กะ — ลดเมื่อพื้นที่แคบเพื่อเลี่ยง
+     * horizontal scroll
+     * @default 220
+     */
+    minColumnWidth?: number;
 };
 /**
  * Pattern A — monthly shift table (ตารางกะ).
@@ -893,6 +928,12 @@ type TimeGridProps = Omit<React$1.ComponentProps<"div">, "children"> & {
     stickyHeader?: boolean;
     /** Max height (enables vertical scroll), e.g. "70vh" or 640. */
     maxHeight?: React$1.CSSProperties["maxHeight"];
+    /**
+     * Min width (px) ของแต่ละคอลัมน์ห้อง — ลดเมื่อพื้นที่แคบเพื่อเลี่ยง
+     * horizontal scroll (ซึ่งพ่วง vertical scrollbar ~17px ตามมา)
+     * @default 240
+     */
+    minColumnWidth?: number;
 };
 /**
  * Pattern B — daily resource time grid (ตารางห้องตรวจ).
@@ -958,4 +999,4 @@ declare function computeFreeGaps(events: EventLayoutInput[], windowStart: string
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { ASSIGNMENT_COLOR_CLASSES, AddSlotButton, type AddSlotButtonProps, AppLauncher, type AppLauncherProps, AssignmentChip, type AssignmentChipProps, type AssignmentColor, type AssignmentSlot, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, type CheckboxProps, Chip, type ChipProps, ComboBox, type ComboBoxOption, type ComboBoxProps, ConfirmDialog, type ConfirmDialogProps, DataTable, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, type EventLayout, type EventLayoutInput, Filter, type FilterProps, FormField, type FormFieldProps, type FreeGap, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, MultiAutocomplete, type MultiAutocompleteProps, type MultiOption, NotificationBell, type NotificationBellProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, ScheduleAvatar, type ScheduleAvatarProps, Select, SelectItem, type SelectOption, type SelectProps, ShiftTable, type ShiftTableColumn, type ShiftTableDay, type ShiftTableProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, type SkeletonProps, Spinner, type SpinnerProps, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, type TextareaProps, TimeGrid, type TimeGridEventData, type TimeGridProps, type TimeGridRoom, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonVariants, chipVariants, cn, computeEventLayouts, computeFreeGaps, parseTimeToMinutes, statusBadgeVariants };
+export { ASSIGNMENT_COLOR_CLASSES, AddSlotButton, type AddSlotButtonProps, AppLauncher, type AppLauncherProps, AssignmentChip, type AssignmentChipProps, type AssignmentColor, type AssignmentSlot, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, type CheckboxProps, Chip, type ChipProps, ComboBox, type ComboBoxOption, type ComboBoxProps, ConfirmDialog, type ConfirmDialogProps, DataTable, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, type EventLayout, type EventLayoutInput, Filter, type FilterProps, FormField, type FormFieldProps, type FreeGap, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, MultiAutocomplete, type MultiAutocompleteProps, type MultiOption, NotificationBell, type NotificationBellProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, ScheduleAvatar, type ScheduleAvatarProps, Select, SelectItem, type SelectOption, type SelectProps, ShiftTable, type ShiftTableColumn, type ShiftTableDay, type ShiftTableProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, type SkeletonProps, Spinner, type SpinnerProps, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, type TextareaProps, TimeGrid, type TimeGridEventData, type TimeGridProps, type TimeGridRoom, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonVariants, chipVariants, cn, computeEventLayouts, computeFreeGaps, parseTimeToMinutes, statusBadgeVariants };

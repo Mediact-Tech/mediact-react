@@ -3678,10 +3678,22 @@ var dateNavigatorVariants = cva7(
     defaultVariants: { size: "md" }
   }
 );
+function startOfUnit(date, unit) {
+  return unit === "month" ? new Date(date.getFullYear(), date.getMonth(), 1) : new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+function addUnit(date, unit, amount) {
+  return unit === "month" ? new Date(date.getFullYear(), date.getMonth() + amount, 1) : new Date(date.getFullYear(), date.getMonth(), date.getDate() + amount);
+}
 var DateNavigator = React30.forwardRef(
   function DateNavigator2({
     className,
     size,
+    value,
+    onChange,
+    unit = "month",
+    locale = "th-TH",
+    minDate,
+    maxDate,
     label,
     onPrev,
     onNext,
@@ -3691,6 +3703,32 @@ var DateNavigator = React30.forwardRef(
     nextLabel = "\u0E16\u0E31\u0E14\u0E44\u0E1B",
     ...props
   }, ref) {
+    const formatter = React30.useMemo(
+      () => new Intl.DateTimeFormat(
+        locale,
+        unit === "month" ? { month: "long", year: "numeric" } : { weekday: "long", day: "numeric", month: "long" }
+      ),
+      [locale, unit]
+    );
+    const current = value ? startOfUnit(value, unit) : void 0;
+    const displayLabel = label ?? (current ? formatter.format(current) : "");
+    const canStep = (amount) => {
+      if (!current) return true;
+      const target = addUnit(current, unit, amount);
+      if (amount < 0 && minDate && target < startOfUnit(minDate, unit)) {
+        return false;
+      }
+      if (amount > 0 && maxDate && target > startOfUnit(maxDate, unit)) {
+        return false;
+      }
+      return true;
+    };
+    const step = (amount) => {
+      if (current && onChange) onChange(addUnit(current, unit, amount));
+      (amount < 0 ? onPrev : onNext)?.();
+    };
+    const isPrevDisabled = prevDisabled ?? !canStep(-1);
+    const isNextDisabled = nextDisabled ?? !canStep(1);
     const arrowClass = "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4";
     return /* @__PURE__ */ jsxs29(
       "div",
@@ -3704,20 +3742,20 @@ var DateNavigator = React30.forwardRef(
             {
               type: "button",
               "aria-label": prevLabel,
-              disabled: prevDisabled,
-              onClick: onPrev,
+              disabled: isPrevDisabled,
+              onClick: () => step(-1),
               className: arrowClass,
               children: /* @__PURE__ */ jsx36(ChevronLeft3, {})
             }
           ),
-          /* @__PURE__ */ jsx36("span", { className: "min-w-28 text-center text-sm font-semibold text-text-primary", children: label }),
+          /* @__PURE__ */ jsx36("span", { className: "min-w-28 text-center text-sm font-semibold text-text-primary", children: displayLabel }),
           /* @__PURE__ */ jsx36(
             "button",
             {
               type: "button",
               "aria-label": nextLabel,
-              disabled: nextDisabled,
-              onClick: onNext,
+              disabled: isNextDisabled,
+              onClick: () => step(1),
               className: arrowClass,
               children: /* @__PURE__ */ jsx36(ChevronRight4, {})
             }
@@ -3743,12 +3781,12 @@ var AssignmentChip = React31.forwardRef(
         ...interactive ? { type: "button", onClick: () => onClick?.(slot) } : {},
         className: cn(
           "flex w-full items-center gap-2 rounded-lg border border-border-default bg-gray-50 px-2 py-1.5 text-left text-sm text-text-primary transition-colors",
-          interactive && "cursor-pointer hover:border-brand hover:bg-brand-subtle",
+          interactive && "cursor-pointer hover:border-success-green-600 hover:bg-success-green-600/20",
           className
         ),
         ...props,
         children: [
-          !hideOrder && /* @__PURE__ */ jsx37("span", { className: "flex size-5 shrink-0 items-center justify-center rounded-md bg-brand text-xs font-bold text-brand-foreground", children: slot.order }),
+          !hideOrder && /* @__PURE__ */ jsx37("span", { className: "flex size-5 shrink-0 items-center justify-center rounded-md bg-success-green-600 text-xs font-bold text-brand-foreground", children: slot.order }),
           /* @__PURE__ */ jsx37(
             ScheduleAvatar,
             {
@@ -3779,7 +3817,7 @@ var AddSlotButton = React32.forwardRef(
         ref,
         type: "button",
         className: cn(
-          "flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong px-2 py-1.5 text-sm text-text-tertiary transition-colors hover:border-brand hover:bg-brand-subtle hover:text-brand disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4",
+          "flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong px-2 py-1.5 text-sm text-text-tertiary transition-colors hover:border-success-green-600 hover:bg-success-green-600/20 hover:text-success-green-600 disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4",
           className
         ),
         ...props,
@@ -3809,9 +3847,10 @@ var ShiftTable = React33.forwardRef(
     dayColumnLabel = "\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48",
     stickyHeader = true,
     maxHeight,
+    minColumnWidth = 220,
     ...props
   }, ref) {
-    const gridTemplateColumns = `88px repeat(${Math.max(columns.length, 1)}, minmax(220px, 1fr))`;
+    const gridTemplateColumns = `88px repeat(${Math.max(columns.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
     return /* @__PURE__ */ jsxs32(
       "div",
       {
@@ -3864,7 +3903,7 @@ var ShiftTable = React33.forwardRef(
                           type: "button",
                           "aria-label": `\u0E41\u0E01\u0E49\u0E44\u0E02 ${column.name}`,
                           onClick: () => onEditColumn(column.id),
-                          className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-brand-subtle hover:text-brand [&_svg]:size-3.5",
+                          className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-3.5",
                           children: /* @__PURE__ */ jsx39(Pencil, {})
                         }
                       )
@@ -3890,7 +3929,7 @@ var ShiftTable = React33.forwardRef(
                     role: "rowheader",
                     className: cn(
                       "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
-                      day.isToday && "bg-brand-subtle"
+                      day.isToday && "bg-success-green-600/10"
                     ),
                     children: [
                       /* @__PURE__ */ jsx39(
@@ -3898,12 +3937,12 @@ var ShiftTable = React33.forwardRef(
                         {
                           className: cn(
                             "text-lg font-bold",
-                            day.isToday ? "text-brand" : "text-text-primary"
+                            day.isToday ? "text-success-green-main" : "text-text-primary"
                           ),
                           children: day.dayNumber
                         }
                       ),
-                      /* @__PURE__ */ jsx39("span", { className: "text-xs text-text-tertiary", children: day.weekdayLabel })
+                      /* @__PURE__ */ jsx39("span", { className: cn("text-xs text-text-tertiary", day.isToday && "text-success-green-600"), children: day.weekdayLabel })
                     ]
                   }
                 ),
@@ -3915,8 +3954,7 @@ var ShiftTable = React33.forwardRef(
                     {
                       role: "gridcell",
                       className: cn(
-                        "flex flex-col gap-1.5 border-l border-border-default p-2",
-                        day.isToday && "bg-brand-subtle/40"
+                        "flex flex-col gap-1.5 border-l border-border-default p-2"
                       ),
                       children: [
                         filled.map((slot) => /* @__PURE__ */ jsx39(
@@ -4081,6 +4119,7 @@ var TimeGrid = React34.forwardRef(
     addLabel = "\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E41\u0E1E\u0E17\u0E22\u0E4C\u0E40\u0E27\u0E23",
     stickyHeader = true,
     maxHeight,
+    minColumnWidth = 240,
     ...props
   }, ref) {
     const winStart = parseTimeToMinutes(windowStart);
@@ -4103,7 +4142,7 @@ var TimeGrid = React34.forwardRef(
     }, [events]);
     if (!isValidWindow) return null;
     const bodyHeight = (winEnd - winStart) * pixelsPerMinute;
-    const gridTemplateColumns = `64px repeat(${Math.max(rooms.length, 1)}, minmax(240px, 1fr))`;
+    const gridTemplateColumns = `64px repeat(${Math.max(rooms.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
     return /* @__PURE__ */ jsxs33(
       "div",
       {
@@ -4143,7 +4182,7 @@ var TimeGrid = React34.forwardRef(
                     className: "flex items-center justify-between gap-2 border-l border-border-default px-3 py-3",
                     children: [
                       /* @__PURE__ */ jsxs33("div", { className: "flex min-w-0 items-center gap-2 text-sm font-semibold text-text-primary", children: [
-                        /* @__PURE__ */ jsx40("span", { className: "shrink-0 text-text-tertiary [&_svg]:size-4", children: room.icon ?? /* @__PURE__ */ jsx40(DoorOpen, {}) }),
+                        /* @__PURE__ */ jsx40("span", { className: "shrink-0 text-text-tertiary [&_svg]:size-4", children: room.icon ?? /* @__PURE__ */ jsx40(DoorOpen, { className: "text-success-green-600" }) }),
                         /* @__PURE__ */ jsx40("span", { className: "truncate", children: room.name })
                       ] }),
                       onEditRoom && /* @__PURE__ */ jsx40(
@@ -4152,7 +4191,7 @@ var TimeGrid = React34.forwardRef(
                           type: "button",
                           "aria-label": `\u0E41\u0E01\u0E49\u0E44\u0E02 ${room.name}`,
                           onClick: () => onEditRoom(room.id),
-                          className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-brand-subtle hover:text-brand [&_svg]:size-3.5",
+                          className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-3.5",
                           children: /* @__PURE__ */ jsx40(Pencil2, {})
                         }
                       )
@@ -4164,23 +4203,24 @@ var TimeGrid = React34.forwardRef(
             }
           ),
           /* @__PURE__ */ jsxs33("div", { className: "grid", style: { gridTemplateColumns }, children: [
-            /* @__PURE__ */ jsx40("div", { className: "relative", style: { height: bodyHeight }, children: ticks.map((tick) => {
+            /* @__PURE__ */ jsx40("div", { className: "py-5", children: /* @__PURE__ */ jsx40("div", { className: "relative", style: { height: bodyHeight }, children: ticks.map((tick) => {
               const isHour = tick % 60 === 0;
+              const labelOffset = tick === winStart ? 0 : tick === winEnd ? 16 : 8;
               return /* @__PURE__ */ jsx40(
                 "span",
                 {
                   className: cn(
-                    "absolute right-2 -translate-y-1/2 text-xs",
-                    isHour ? "font-semibold text-text-primary" : "text-text-tertiary",
-                    tick === winStart && "translate-y-0",
-                    tick === winEnd && "-translate-y-full"
+                    "absolute right-2 block h-4 text-xs leading-4",
+                    isHour ? "font-semibold text-text-primary" : "text-text-tertiary"
                   ),
-                  style: { top: (tick - winStart) * pixelsPerMinute },
+                  style: {
+                    top: (tick - winStart) * pixelsPerMinute - labelOffset
+                  },
                   children: formatTick(tick)
                 },
                 tick
               );
-            }) }),
+            }) }) }),
             rooms.map((room) => {
               const roomEvents = eventsByRoom.get(room.id) ?? [];
               const layouts = computeEventLayouts(
@@ -4197,13 +4237,12 @@ var TimeGrid = React34.forwardRef(
                 pixelsPerMinute,
                 tickMinutes
               ) : [];
-              return /* @__PURE__ */ jsxs33(
+              return /* @__PURE__ */ jsx40(
                 "div",
                 {
                   role: "gridcell",
-                  className: "relative border-l border-border-default",
-                  style: { height: bodyHeight },
-                  children: [
+                  className: "border-l border-border-default py-5",
+                  children: /* @__PURE__ */ jsxs33("div", { className: "relative", style: { height: bodyHeight }, children: [
                     ticks.slice(1, -1).map((tick) => /* @__PURE__ */ jsx40(
                       "div",
                       {
@@ -4221,10 +4260,10 @@ var TimeGrid = React34.forwardRef(
                       {
                         type: "button",
                         onClick: () => onAddEvent?.(room.id, gap.startMinutes),
-                        className: "absolute inset-x-1.5 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong text-sm text-text-tertiary transition-colors hover:border-brand hover:bg-brand-subtle hover:text-brand [&_svg]:size-4",
+                        className: "absolute inset-x-1.5 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong text-sm text-text-tertiary transition-colors hover:border-success-green-600 hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-4",
                         style: {
                           top: gap.top + 4,
-                          height: Math.min(gap.height - 8, 72)
+                          height: Math.min(gap.height - 8, 50)
                         },
                         children: [
                           /* @__PURE__ */ jsx40(UserPlus, {}),
@@ -4286,7 +4325,7 @@ var TimeGrid = React34.forwardRef(
                         event.id
                       );
                     })
-                  ]
+                  ] })
                 },
                 room.id
               );
