@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Pencil } from "lucide-react";
+import { isToday as dateFnsIsToday, parseISO } from "date-fns";
 import { cn } from "../lib/cn";
 import { AssignmentChip } from "./AssignmentChip";
 import { AddSlotButton } from "./AddSlotButton";
@@ -122,11 +123,13 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
         </div>
 
         {/* Body */}
-        {days.map((day) => (
+        {days.map((day) => {
+          const today = day.isToday ?? dateFnsIsToday(parseISO(day.id));
+          return (
           <div
             key={day.id}
             role="row"
-            data-today={day.isToday || undefined}
+            data-today={today || undefined}
             data-weekend={day.isWeekend || undefined}
             className="grid border-b border-border-default last:border-b-0 data-[weekend=true]:bg-gray-50"
             style={{ gridTemplateColumns }}
@@ -135,18 +138,18 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
               role="rowheader"
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
-                day.isToday && "bg-success-green-600/10",
+                today && "bg-success-green-600/10",
               )}
             >
               <span
                 className={cn(
                   "text-lg font-bold",
-                  day.isToday ? "text-success-green-main" : "text-text-primary",
+                  today ? "text-success-green-main" : "text-text-primary",
                 )}
               >
                 {day.dayNumber}
               </span>
-              <span className={cn("text-xs text-text-tertiary", day.isToday && "text-success-green-600")}>
+              <span className={cn("text-xs text-text-tertiary", today && "text-success-green-600")}>
                 {day.weekdayLabel}
               </span>
             </div>
@@ -187,7 +190,8 @@ const ShiftTable = React.forwardRef<HTMLDivElement, ShiftTableProps>(
               );
             })}
           </div>
-        ))}
+          );
+        })}
       </div>
     );
   },
