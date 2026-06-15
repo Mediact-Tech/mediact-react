@@ -3849,6 +3849,7 @@ var ShiftTable = React33.forwardRef(
     stickyHeader = true,
     maxHeight,
     minColumnWidth = 220,
+    style,
     ...props
   }, ref) {
     const gridTemplateColumns = `88px repeat(${Math.max(columns.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
@@ -3867,7 +3868,7 @@ var ShiftTable = React33.forwardRef(
               "div",
               {
                 role: "columnheader",
-                className: "flex items-center justify-center px-2 py-3 text-sm font-semibold text-text-secondary",
+                className: "sticky left-0 z-10 flex items-center justify-center border-r border-border-default bg-gray-50 px-2 py-3 text-sm font-semibold text-text-secondary",
                 children: dayColumnLabel
               }
             ),
@@ -3919,8 +3920,11 @@ var ShiftTable = React33.forwardRef(
                 {
                   role: "rowheader",
                   className: cn(
-                    "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
-                    today && "bg-success-green-600/10"
+                    // sticky left-0: ตรึงคอลัมน์วันที่ไว้ขณะเลื่อนแนวนอน (frozen column)
+                    // bg ต้องทึบเพื่อให้เนื้อหาคอลัมน์กะเลื่อนลอดใต้ได้สะอาด
+                    "sticky left-0 z-[1] flex flex-col items-center justify-center gap-0.5 border-r border-border-default px-2 py-3",
+                    day.isWeekend ? "bg-gray-50" : "bg-white",
+                    today && "bg-success-green-50"
                   ),
                   children: [
                     /* @__PURE__ */ jsx39(
@@ -3978,25 +3982,24 @@ var ShiftTable = React33.forwardRef(
         );
       })
     ] });
-    return /* @__PURE__ */ jsx39(
-      "div",
-      {
-        ref,
-        role: "grid",
-        "aria-label": props["aria-label"] ?? "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E01\u0E30",
-        className: cn(
-          // overflow-x-auto + overflow-y-hidden: CSS spec ไม่ promote hidden → auto
-          // ทำให้ outer เป็น H-scroll only — V-scroll อยู่ใน inner div แยกต่างหาก
-          "overflow-x-auto overflow-y-hidden rounded-xl border border-border-default bg-white",
-          className
-        ),
-        ...props,
-        children: maxHeight ? (
-          // Inner: กว้างเท่า content (w-max min-w-full) → ไม่มี H-overflow ใน inner
-          // จึงเป็น V-scroll only → ไม่เกิด 2D-overflow compositing bug
-          /* @__PURE__ */ jsx39("div", { className: "w-max min-w-full overflow-y-auto", style: { maxHeight }, children: innerContent })
-        ) : innerContent
-      }
+    return (
+      // Scroll container เดียวรับทั้ง 2 แกน — sticky header (top) + sticky วันที่ (left)
+      // ทำงานเทียบ container นี้ตัวเดียว เป็น pattern มาตรฐานของตารางตรึงหัว+คอลัมน์แรก
+      /* @__PURE__ */ jsx39(
+        "div",
+        {
+          ref,
+          role: "grid",
+          "aria-label": props["aria-label"] ?? "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E01\u0E30",
+          className: cn(
+            "overflow-auto rounded-xl border border-border-default bg-white",
+            className
+          ),
+          style: { maxHeight, ...style },
+          ...props,
+          children: /* @__PURE__ */ jsx39("div", { className: "w-max min-w-full", children: innerContent })
+        }
+      )
     );
   }
 );
@@ -4130,6 +4133,7 @@ var TimeGrid = React34.forwardRef(
     stickyHeader = true,
     maxHeight,
     minColumnWidth = 240,
+    style,
     ...props
   }, ref) {
     const winStart = parseTimeToMinutes(windowStart);
@@ -4169,7 +4173,7 @@ var TimeGrid = React34.forwardRef(
               {
                 role: "columnheader",
                 "aria-label": "\u0E40\u0E27\u0E25\u0E32",
-                className: "flex items-center justify-center py-3 text-text-tertiary [&_svg]:size-4",
+                className: "sticky left-0 z-10 flex items-center justify-center border-r border-border-default bg-gray-50 py-3 text-text-tertiary [&_svg]:size-4",
                 children: /* @__PURE__ */ jsx40(Clock2, {})
               }
             ),
@@ -4201,7 +4205,7 @@ var TimeGrid = React34.forwardRef(
         }
       ),
       /* @__PURE__ */ jsxs33("div", { className: "relative z-0 grid", style: { gridTemplateColumns }, children: [
-        /* @__PURE__ */ jsx40("div", { className: "py-5", children: /* @__PURE__ */ jsx40("div", { className: "relative", style: { height: bodyHeight }, children: ticks.map((tick) => {
+        /* @__PURE__ */ jsx40("div", { className: "sticky left-0 z-[1] border-r border-border-default bg-white py-5", children: /* @__PURE__ */ jsx40("div", { className: "relative", style: { height: bodyHeight }, children: ticks.map((tick) => {
           const isHour = tick % 60 === 0;
           const labelOffset = tick === winStart ? 0 : tick === winEnd ? 16 : 8;
           return /* @__PURE__ */ jsx40(
@@ -4330,25 +4334,24 @@ var TimeGrid = React34.forwardRef(
         })
       ] })
     ] });
-    return /* @__PURE__ */ jsx40(
-      "div",
-      {
-        ref,
-        role: "grid",
-        "aria-label": props["aria-label"] ?? "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E2B\u0E49\u0E2D\u0E07\u0E15\u0E23\u0E27\u0E08",
-        className: cn(
-          // overflow-x-auto + overflow-y-hidden: CSS spec ไม่ promote hidden → auto
-          // ทำให้ outer เป็น H-scroll only — V-scroll อยู่ใน inner div แยกต่างหาก
-          "overflow-x-auto overflow-y-hidden rounded-xl border border-border-default bg-white",
-          className
-        ),
-        ...props,
-        children: maxHeight ? (
-          // Inner: กว้างเท่า content (w-max min-w-full) → ไม่มี H-overflow ใน inner
-          // จึงเป็น V-scroll only → ไม่เกิด 2D-overflow compositing bug
-          /* @__PURE__ */ jsx40("div", { className: "w-max min-w-full overflow-y-auto", style: { maxHeight }, children: innerContent })
-        ) : innerContent
-      }
+    return (
+      // Scroll container เดียวรับทั้ง 2 แกน — sticky header (top) + sticky แกนเวลา (left)
+      // ทำงานเทียบ container นี้ตัวเดียว เป็น pattern มาตรฐานของตารางตรึงหัว+คอลัมน์แรก
+      /* @__PURE__ */ jsx40(
+        "div",
+        {
+          ref,
+          role: "grid",
+          "aria-label": props["aria-label"] ?? "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E2B\u0E49\u0E2D\u0E07\u0E15\u0E23\u0E27\u0E08",
+          className: cn(
+            "overflow-auto rounded-xl border border-border-default bg-white",
+            className
+          ),
+          style: { maxHeight, ...style },
+          ...props,
+          children: /* @__PURE__ */ jsx40("div", { className: "w-max min-w-full", children: innerContent })
+        }
+      )
     );
   }
 );
