@@ -3835,7 +3835,7 @@ AddSlotButton.displayName = "AddSlotButton";
 import * as React33 from "react";
 import { Pencil } from "lucide-react";
 import { isToday as dateFnsIsToday, parseISO } from "date-fns";
-import { jsx as jsx39, jsxs as jsxs32 } from "react/jsx-runtime";
+import { Fragment as Fragment6, jsx as jsx39, jsxs as jsxs32 } from "react/jsx-runtime";
 var ShiftTable = React33.forwardRef(
   function ShiftTable2({
     className,
@@ -3852,144 +3852,150 @@ var ShiftTable = React33.forwardRef(
     ...props
   }, ref) {
     const gridTemplateColumns = `88px repeat(${Math.max(columns.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
-    return /* @__PURE__ */ jsxs32(
+    const innerContent = /* @__PURE__ */ jsxs32(Fragment6, { children: [
+      /* @__PURE__ */ jsxs32(
+        "div",
+        {
+          role: "row",
+          className: cn(
+            "grid bg-gray-50 border-b border-border-default",
+            stickyHeader && "sticky top-0 z-10"
+          ),
+          style: { gridTemplateColumns },
+          children: [
+            /* @__PURE__ */ jsx39(
+              "div",
+              {
+                role: "columnheader",
+                className: "flex items-center justify-center px-2 py-3 text-sm font-semibold text-text-secondary",
+                children: dayColumnLabel
+              }
+            ),
+            columns.map((column) => /* @__PURE__ */ jsx39(
+              "div",
+              {
+                role: "columnheader",
+                className: "border-l border-border-default px-3 py-2",
+                children: /* @__PURE__ */ jsxs32("div", { className: "flex items-start justify-between gap-2", children: [
+                  /* @__PURE__ */ jsxs32("div", { className: "min-w-0", children: [
+                    /* @__PURE__ */ jsx39("div", { className: "truncate text-sm font-semibold text-text-primary", children: column.name }),
+                    /* @__PURE__ */ jsxs32("div", { className: "text-xs text-text-tertiary", children: [
+                      column.timeRange,
+                      " \xB7 ",
+                      column.slotCount,
+                      " \u0E25\u0E33\u0E14\u0E31\u0E1A"
+                    ] })
+                  ] }),
+                  onEditColumn && /* @__PURE__ */ jsx39(
+                    "button",
+                    {
+                      type: "button",
+                      "aria-label": `\u0E41\u0E01\u0E49\u0E44\u0E02 ${column.name}`,
+                      onClick: () => onEditColumn(column.id),
+                      className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-3.5",
+                      children: /* @__PURE__ */ jsx39(Pencil, {})
+                    }
+                  )
+                ] })
+              },
+              column.id
+            ))
+          ]
+        }
+      ),
+      days.map((day) => {
+        const today = day.isToday ?? dateFnsIsToday(parseISO(day.id));
+        return /* @__PURE__ */ jsxs32(
+          "div",
+          {
+            role: "row",
+            "data-today": today || void 0,
+            "data-weekend": day.isWeekend || void 0,
+            className: "relative z-0 grid border-b border-border-default last:border-b-0 data-[weekend=true]:bg-gray-50",
+            style: { gridTemplateColumns },
+            children: [
+              /* @__PURE__ */ jsxs32(
+                "div",
+                {
+                  role: "rowheader",
+                  className: cn(
+                    "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
+                    today && "bg-success-green-600/10"
+                  ),
+                  children: [
+                    /* @__PURE__ */ jsx39(
+                      "span",
+                      {
+                        className: cn(
+                          "text-lg font-bold",
+                          today ? "text-success-green-main" : "text-text-primary"
+                        ),
+                        children: day.dayNumber
+                      }
+                    ),
+                    /* @__PURE__ */ jsx39("span", { className: cn("text-xs text-text-tertiary", today && "text-success-green-600"), children: day.weekdayLabel })
+                  ]
+                }
+              ),
+              columns.map((column) => {
+                const filled = day.slots[column.id] ?? [];
+                const emptyCount = Math.max(column.slotCount - filled.length, 0);
+                return /* @__PURE__ */ jsxs32(
+                  "div",
+                  {
+                    role: "gridcell",
+                    className: cn(
+                      "flex flex-col gap-1.5 border-l border-border-default p-2"
+                    ),
+                    children: [
+                      filled.map((slot) => /* @__PURE__ */ jsx39(
+                        AssignmentChip,
+                        {
+                          slot,
+                          onClick: onSlotClick ? (clicked) => onSlotClick(day.id, column.id, clicked) : void 0
+                        },
+                        slot.id
+                      )),
+                      onAddSlot && Array.from({ length: emptyCount }, (_, index) => {
+                        const order = filled.length + index + 1;
+                        return /* @__PURE__ */ jsx39(
+                          AddSlotButton,
+                          {
+                            label: addLabel,
+                            onClick: () => onAddSlot(day.id, column.id, order)
+                          },
+                          `add-slot-${order}`
+                        );
+                      })
+                    ]
+                  },
+                  column.id
+                );
+              })
+            ]
+          },
+          day.id
+        );
+      })
+    ] });
+    return /* @__PURE__ */ jsx39(
       "div",
       {
         ref,
         role: "grid",
         "aria-label": props["aria-label"] ?? "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E01\u0E30",
         className: cn(
-          "overflow-auto rounded-xl border border-border-default bg-white",
+          // overflow-x-auto + overflow-y-hidden: CSS spec ไม่ promote hidden → auto
+          // ทำให้ outer เป็น H-scroll only — V-scroll อยู่ใน inner div แยกต่างหาก
+          "overflow-x-auto overflow-y-hidden rounded-xl border border-border-default bg-white",
           className
         ),
-        style: { maxHeight },
         ...props,
-        children: [
-          /* @__PURE__ */ jsxs32(
-            "div",
-            {
-              role: "row",
-              className: cn(
-                "grid border-b border-border-default bg-gray-50",
-                stickyHeader && "sticky top-0 z-10"
-              ),
-              style: { gridTemplateColumns },
-              children: [
-                /* @__PURE__ */ jsx39(
-                  "div",
-                  {
-                    role: "columnheader",
-                    className: "flex items-center justify-center px-2 py-3 text-sm font-semibold text-text-secondary",
-                    children: dayColumnLabel
-                  }
-                ),
-                columns.map((column) => /* @__PURE__ */ jsx39(
-                  "div",
-                  {
-                    role: "columnheader",
-                    className: "border-l border-border-default px-3 py-2",
-                    children: /* @__PURE__ */ jsxs32("div", { className: "flex items-start justify-between gap-2", children: [
-                      /* @__PURE__ */ jsxs32("div", { className: "min-w-0", children: [
-                        /* @__PURE__ */ jsx39("div", { className: "truncate text-sm font-semibold text-text-primary", children: column.name }),
-                        /* @__PURE__ */ jsxs32("div", { className: "text-xs text-text-tertiary", children: [
-                          column.timeRange,
-                          " \xB7 ",
-                          column.slotCount,
-                          " \u0E25\u0E33\u0E14\u0E31\u0E1A"
-                        ] })
-                      ] }),
-                      onEditColumn && /* @__PURE__ */ jsx39(
-                        "button",
-                        {
-                          type: "button",
-                          "aria-label": `\u0E41\u0E01\u0E49\u0E44\u0E02 ${column.name}`,
-                          onClick: () => onEditColumn(column.id),
-                          className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-3.5",
-                          children: /* @__PURE__ */ jsx39(Pencil, {})
-                        }
-                      )
-                    ] })
-                  },
-                  column.id
-                ))
-              ]
-            }
-          ),
-          days.map((day) => {
-            const today = day.isToday ?? dateFnsIsToday(parseISO(day.id));
-            return /* @__PURE__ */ jsxs32(
-              "div",
-              {
-                role: "row",
-                "data-today": today || void 0,
-                "data-weekend": day.isWeekend || void 0,
-                className: "grid border-b border-border-default last:border-b-0 data-[weekend=true]:bg-gray-50",
-                style: { gridTemplateColumns },
-                children: [
-                  /* @__PURE__ */ jsxs32(
-                    "div",
-                    {
-                      role: "rowheader",
-                      className: cn(
-                        "flex flex-col items-center justify-center gap-0.5 px-2 py-3",
-                        today && "bg-success-green-600/10"
-                      ),
-                      children: [
-                        /* @__PURE__ */ jsx39(
-                          "span",
-                          {
-                            className: cn(
-                              "text-lg font-bold",
-                              today ? "text-success-green-main" : "text-text-primary"
-                            ),
-                            children: day.dayNumber
-                          }
-                        ),
-                        /* @__PURE__ */ jsx39("span", { className: cn("text-xs text-text-tertiary", today && "text-success-green-600"), children: day.weekdayLabel })
-                      ]
-                    }
-                  ),
-                  columns.map((column) => {
-                    const filled = day.slots[column.id] ?? [];
-                    const emptyCount = Math.max(column.slotCount - filled.length, 0);
-                    return /* @__PURE__ */ jsxs32(
-                      "div",
-                      {
-                        role: "gridcell",
-                        className: cn(
-                          "flex flex-col gap-1.5 border-l border-border-default p-2"
-                        ),
-                        children: [
-                          filled.map((slot) => /* @__PURE__ */ jsx39(
-                            AssignmentChip,
-                            {
-                              slot,
-                              onClick: onSlotClick ? (clicked) => onSlotClick(day.id, column.id, clicked) : void 0
-                            },
-                            slot.id
-                          )),
-                          onAddSlot && Array.from({ length: emptyCount }, (_, index) => {
-                            const order = filled.length + index + 1;
-                            return /* @__PURE__ */ jsx39(
-                              AddSlotButton,
-                              {
-                                label: addLabel,
-                                onClick: () => onAddSlot(day.id, column.id, order)
-                              },
-                              `add-slot-${order}`
-                            );
-                          })
-                        ]
-                      },
-                      column.id
-                    );
-                  })
-                ]
-              },
-              day.id
-            );
-          })
-        ]
+        children: maxHeight ? (
+          // Inner: กว้างเท่า content (w-max min-w-full) → ไม่มี H-overflow ใน inner
+          // จึงเป็น V-scroll only → ไม่เกิด 2D-overflow compositing bug
+          /* @__PURE__ */ jsx39("div", { className: "w-max min-w-full overflow-y-auto", style: { maxHeight }, children: innerContent })
+        ) : innerContent
       }
     );
   }
@@ -4102,7 +4108,7 @@ function computeFreeGaps(events, windowStart, windowEnd, pixelsPerMinute, minMin
 }
 
 // src/schedule/TimeGrid.tsx
-import { jsx as jsx40, jsxs as jsxs33 } from "react/jsx-runtime";
+import { Fragment as Fragment7, jsx as jsx40, jsxs as jsxs33 } from "react/jsx-runtime";
 function formatTick(minutes) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -4147,195 +4153,201 @@ var TimeGrid = React34.forwardRef(
     if (!isValidWindow) return null;
     const bodyHeight = (winEnd - winStart) * pixelsPerMinute;
     const gridTemplateColumns = `64px repeat(${Math.max(rooms.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
-    return /* @__PURE__ */ jsxs33(
+    const innerContent = /* @__PURE__ */ jsxs33(Fragment7, { children: [
+      /* @__PURE__ */ jsxs33(
+        "div",
+        {
+          role: "row",
+          className: cn(
+            "grid bg-gray-50 border-b border-border-default",
+            stickyHeader && "sticky top-0 z-20"
+          ),
+          style: { gridTemplateColumns },
+          children: [
+            /* @__PURE__ */ jsx40(
+              "div",
+              {
+                role: "columnheader",
+                "aria-label": "\u0E40\u0E27\u0E25\u0E32",
+                className: "flex items-center justify-center py-3 text-text-tertiary [&_svg]:size-4",
+                children: /* @__PURE__ */ jsx40(Clock2, {})
+              }
+            ),
+            rooms.map((room) => /* @__PURE__ */ jsxs33(
+              "div",
+              {
+                role: "columnheader",
+                className: "flex items-center justify-between gap-2 border-l border-border-default px-3 py-3",
+                children: [
+                  /* @__PURE__ */ jsxs33("div", { className: "flex min-w-0 items-center gap-2 text-sm font-semibold text-text-primary", children: [
+                    /* @__PURE__ */ jsx40("span", { className: "shrink-0 text-text-tertiary [&_svg]:size-4", children: room.icon ?? /* @__PURE__ */ jsx40(DoorOpen, { className: "text-success-green-600" }) }),
+                    /* @__PURE__ */ jsx40("span", { className: "truncate", children: room.name })
+                  ] }),
+                  onEditRoom && /* @__PURE__ */ jsx40(
+                    "button",
+                    {
+                      type: "button",
+                      "aria-label": `\u0E41\u0E01\u0E49\u0E44\u0E02 ${room.name}`,
+                      onClick: () => onEditRoom(room.id),
+                      className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-3.5",
+                      children: /* @__PURE__ */ jsx40(Pencil2, {})
+                    }
+                  )
+                ]
+              },
+              room.id
+            ))
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxs33("div", { className: "relative z-0 grid", style: { gridTemplateColumns }, children: [
+        /* @__PURE__ */ jsx40("div", { className: "py-5", children: /* @__PURE__ */ jsx40("div", { className: "relative", style: { height: bodyHeight }, children: ticks.map((tick) => {
+          const isHour = tick % 60 === 0;
+          const labelOffset = tick === winStart ? 0 : tick === winEnd ? 16 : 8;
+          return /* @__PURE__ */ jsx40(
+            "span",
+            {
+              className: cn(
+                "absolute right-2 block h-4 text-xs leading-4",
+                isHour ? "font-semibold text-text-primary" : "text-text-tertiary"
+              ),
+              style: {
+                top: (tick - winStart) * pixelsPerMinute - labelOffset
+              },
+              children: formatTick(tick)
+            },
+            tick
+          );
+        }) }) }),
+        rooms.map((room) => {
+          const roomEvents = eventsByRoom.get(room.id) ?? [];
+          const layouts = computeEventLayouts(
+            roomEvents,
+            windowStart,
+            windowEnd,
+            pixelsPerMinute
+          );
+          const layoutById = new Map(layouts.map((l) => [l.id, l]));
+          const gaps = onAddEvent ? computeFreeGaps(
+            roomEvents,
+            windowStart,
+            windowEnd,
+            pixelsPerMinute,
+            tickMinutes
+          ) : [];
+          return /* @__PURE__ */ jsx40(
+            "div",
+            {
+              role: "gridcell",
+              className: "border-l border-border-default py-5",
+              children: /* @__PURE__ */ jsxs33("div", { className: "relative", style: { height: bodyHeight }, children: [
+                ticks.slice(1, -1).map((tick) => /* @__PURE__ */ jsx40(
+                  "div",
+                  {
+                    "aria-hidden": "true",
+                    className: cn(
+                      "absolute inset-x-0 border-t",
+                      tick % 60 === 0 ? "border-border-default" : "border-border-subtle"
+                    ),
+                    style: { top: (tick - winStart) * pixelsPerMinute }
+                  },
+                  tick
+                )),
+                gaps.map((gap) => /* @__PURE__ */ jsxs33(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => onAddEvent?.(room.id, gap.startMinutes),
+                    className: "absolute inset-x-1.5 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong text-sm text-text-tertiary transition-colors hover:border-success-green-600 hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-4",
+                    style: {
+                      top: gap.top + 4,
+                      height: Math.min(gap.height - 8, 50)
+                    },
+                    children: [
+                      /* @__PURE__ */ jsx40(UserPlus, {}),
+                      addLabel
+                    ]
+                  },
+                  gap.startMinutes
+                )),
+                roomEvents.map((event) => {
+                  const layout = layoutById.get(event.id);
+                  if (!layout) return null;
+                  const interactive = Boolean(onEventClick);
+                  return /* @__PURE__ */ jsxs33(
+                    "div",
+                    {
+                      role: interactive ? "button" : void 0,
+                      tabIndex: interactive ? 0 : void 0,
+                      onClick: interactive ? () => onEventClick?.(event) : void 0,
+                      onKeyDown: interactive ? (keyEvent) => {
+                        if (keyEvent.key === "Enter" || keyEvent.key === " ") {
+                          keyEvent.preventDefault();
+                          onEventClick?.(event);
+                        }
+                      } : void 0,
+                      className: cn(
+                        "absolute overflow-hidden rounded-lg border border-success-green-primary bg-success-green-50 p-2",
+                        interactive && "cursor-pointer transition-shadow hover:shadow-card focus-visible:ring-2"
+                      ),
+                      style: {
+                        top: layout.top + 2,
+                        height: layout.height - 4,
+                        left: `calc(${layout.left} + 4px)`,
+                        width: `calc(${layout.width} - 8px)`
+                      },
+                      children: [
+                        /* @__PURE__ */ jsxs33("div", { className: "flex items-center gap-1.5 text-sm font-semibold text-text-primary", children: [
+                          /* @__PURE__ */ jsx40(
+                            ScheduleAvatar,
+                            {
+                              size: "xs",
+                              color: event.color,
+                              name: event.name,
+                              label: event.avatarLabel,
+                              src: event.src
+                            }
+                          ),
+                          /* @__PURE__ */ jsx40("span", { className: "truncate", children: event.name })
+                        ] }),
+                        event.note && /* @__PURE__ */ jsxs33("div", { className: "mt-1 ml-7 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
+                          /* @__PURE__ */ jsx40(FileText, {}),
+                          /* @__PURE__ */ jsx40("span", { className: "truncate", children: event.note })
+                        ] }),
+                        /* @__PURE__ */ jsxs33("div", { className: "mt-1 ml-7 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
+                          /* @__PURE__ */ jsx40(Clock2, {}),
+                          event.timeLabel ?? `${event.start} \u2013 ${event.end}`
+                        ] })
+                      ]
+                    },
+                    event.id
+                  );
+                })
+              ] })
+            },
+            room.id
+          );
+        })
+      ] })
+    ] });
+    return /* @__PURE__ */ jsx40(
       "div",
       {
         ref,
         role: "grid",
         "aria-label": props["aria-label"] ?? "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E2B\u0E49\u0E2D\u0E07\u0E15\u0E23\u0E27\u0E08",
         className: cn(
-          "overflow-auto rounded-xl border border-border-default bg-white",
+          // overflow-x-auto + overflow-y-hidden: CSS spec ไม่ promote hidden → auto
+          // ทำให้ outer เป็น H-scroll only — V-scroll อยู่ใน inner div แยกต่างหาก
+          "overflow-x-auto overflow-y-hidden rounded-xl border border-border-default bg-white",
           className
         ),
-        style: { maxHeight },
         ...props,
-        children: [
-          /* @__PURE__ */ jsxs33(
-            "div",
-            {
-              role: "row",
-              className: cn(
-                "grid border-b border-border-default bg-gray-50",
-                stickyHeader && "sticky top-0 z-20"
-              ),
-              style: { gridTemplateColumns },
-              children: [
-                /* @__PURE__ */ jsx40(
-                  "div",
-                  {
-                    role: "columnheader",
-                    "aria-label": "\u0E40\u0E27\u0E25\u0E32",
-                    className: "flex items-center justify-center py-3 text-text-tertiary [&_svg]:size-4",
-                    children: /* @__PURE__ */ jsx40(Clock2, {})
-                  }
-                ),
-                rooms.map((room) => /* @__PURE__ */ jsxs33(
-                  "div",
-                  {
-                    role: "columnheader",
-                    className: "flex items-center justify-between gap-2 border-l border-border-default px-3 py-3",
-                    children: [
-                      /* @__PURE__ */ jsxs33("div", { className: "flex min-w-0 items-center gap-2 text-sm font-semibold text-text-primary", children: [
-                        /* @__PURE__ */ jsx40("span", { className: "shrink-0 text-text-tertiary [&_svg]:size-4", children: room.icon ?? /* @__PURE__ */ jsx40(DoorOpen, { className: "text-success-green-600" }) }),
-                        /* @__PURE__ */ jsx40("span", { className: "truncate", children: room.name })
-                      ] }),
-                      onEditRoom && /* @__PURE__ */ jsx40(
-                        "button",
-                        {
-                          type: "button",
-                          "aria-label": `\u0E41\u0E01\u0E49\u0E44\u0E02 ${room.name}`,
-                          onClick: () => onEditRoom(room.id),
-                          className: "shrink-0 cursor-pointer rounded-md p-1 text-text-tertiary transition-colors hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-3.5",
-                          children: /* @__PURE__ */ jsx40(Pencil2, {})
-                        }
-                      )
-                    ]
-                  },
-                  room.id
-                ))
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxs33("div", { className: "grid", style: { gridTemplateColumns }, children: [
-            /* @__PURE__ */ jsx40("div", { className: "py-5", children: /* @__PURE__ */ jsx40("div", { className: "relative", style: { height: bodyHeight }, children: ticks.map((tick) => {
-              const isHour = tick % 60 === 0;
-              const labelOffset = tick === winStart ? 0 : tick === winEnd ? 16 : 8;
-              return /* @__PURE__ */ jsx40(
-                "span",
-                {
-                  className: cn(
-                    "absolute right-2 block h-4 text-xs leading-4",
-                    isHour ? "font-semibold text-text-primary" : "text-text-tertiary"
-                  ),
-                  style: {
-                    top: (tick - winStart) * pixelsPerMinute - labelOffset
-                  },
-                  children: formatTick(tick)
-                },
-                tick
-              );
-            }) }) }),
-            rooms.map((room) => {
-              const roomEvents = eventsByRoom.get(room.id) ?? [];
-              const layouts = computeEventLayouts(
-                roomEvents,
-                windowStart,
-                windowEnd,
-                pixelsPerMinute
-              );
-              const layoutById = new Map(layouts.map((l) => [l.id, l]));
-              const gaps = onAddEvent ? computeFreeGaps(
-                roomEvents,
-                windowStart,
-                windowEnd,
-                pixelsPerMinute,
-                tickMinutes
-              ) : [];
-              return /* @__PURE__ */ jsx40(
-                "div",
-                {
-                  role: "gridcell",
-                  className: "border-l border-border-default py-5",
-                  children: /* @__PURE__ */ jsxs33("div", { className: "relative", style: { height: bodyHeight }, children: [
-                    ticks.slice(1, -1).map((tick) => /* @__PURE__ */ jsx40(
-                      "div",
-                      {
-                        "aria-hidden": "true",
-                        className: cn(
-                          "absolute inset-x-0 border-t",
-                          tick % 60 === 0 ? "border-border-default" : "border-border-subtle"
-                        ),
-                        style: { top: (tick - winStart) * pixelsPerMinute }
-                      },
-                      tick
-                    )),
-                    gaps.map((gap) => /* @__PURE__ */ jsxs33(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: () => onAddEvent?.(room.id, gap.startMinutes),
-                        className: "absolute inset-x-1.5 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong text-sm text-text-tertiary transition-colors hover:border-success-green-600 hover:bg-success-green-600/20 hover:text-success-green-600 [&_svg]:size-4",
-                        style: {
-                          top: gap.top + 4,
-                          height: Math.min(gap.height - 8, 50)
-                        },
-                        children: [
-                          /* @__PURE__ */ jsx40(UserPlus, {}),
-                          addLabel
-                        ]
-                      },
-                      gap.startMinutes
-                    )),
-                    roomEvents.map((event) => {
-                      const layout = layoutById.get(event.id);
-                      if (!layout) return null;
-                      const interactive = Boolean(onEventClick);
-                      return /* @__PURE__ */ jsxs33(
-                        "div",
-                        {
-                          role: interactive ? "button" : void 0,
-                          tabIndex: interactive ? 0 : void 0,
-                          onClick: interactive ? () => onEventClick?.(event) : void 0,
-                          onKeyDown: interactive ? (keyEvent) => {
-                            if (keyEvent.key === "Enter" || keyEvent.key === " ") {
-                              keyEvent.preventDefault();
-                              onEventClick?.(event);
-                            }
-                          } : void 0,
-                          className: cn(
-                            "absolute overflow-hidden rounded-lg border border-success-green-primary bg-success-green-50 p-2",
-                            interactive && "cursor-pointer transition-shadow hover:shadow-card focus-visible:ring-2"
-                          ),
-                          style: {
-                            top: layout.top + 2,
-                            height: layout.height - 4,
-                            left: `calc(${layout.left} + 4px)`,
-                            width: `calc(${layout.width} - 8px)`
-                          },
-                          children: [
-                            /* @__PURE__ */ jsxs33("div", { className: "flex items-center gap-1.5 text-sm font-semibold text-text-primary", children: [
-                              /* @__PURE__ */ jsx40(
-                                ScheduleAvatar,
-                                {
-                                  size: "xs",
-                                  color: event.color,
-                                  name: event.name,
-                                  label: event.avatarLabel,
-                                  src: event.src
-                                }
-                              ),
-                              /* @__PURE__ */ jsx40("span", { className: "truncate", children: event.name })
-                            ] }),
-                            event.note && /* @__PURE__ */ jsxs33("div", { className: "mt-1 ml-7 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
-                              /* @__PURE__ */ jsx40(FileText, {}),
-                              /* @__PURE__ */ jsx40("span", { className: "truncate", children: event.note })
-                            ] }),
-                            /* @__PURE__ */ jsxs33("div", { className: "mt-1 ml-7 flex items-center gap-1 text-xs text-text-secondary [&_svg]:size-3", children: [
-                              /* @__PURE__ */ jsx40(Clock2, {}),
-                              event.timeLabel ?? `${event.start} \u2013 ${event.end}`
-                            ] })
-                          ]
-                        },
-                        event.id
-                      );
-                    })
-                  ] })
-                },
-                room.id
-              );
-            })
-          ] })
-        ]
+        children: maxHeight ? (
+          // Inner: กว้างเท่า content (w-max min-w-full) → ไม่มี H-overflow ใน inner
+          // จึงเป็น V-scroll only → ไม่เกิด 2D-overflow compositing bug
+          /* @__PURE__ */ jsx40("div", { className: "w-max min-w-full overflow-y-auto", style: { maxHeight }, children: innerContent })
+        ) : innerContent
       }
     );
   }

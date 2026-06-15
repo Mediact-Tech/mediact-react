@@ -732,7 +732,10 @@ type ShiftTableColumn = {
 };
 /** A day row in {@link ShiftTable} (Pattern A). */
 type ShiftTableDay = {
-    /** Stable identifier, e.g. ISO date "2026-06-02". */
+    /**
+     * Stable identifier — **ต้องเป็น Gregorian ISO date** เช่น `"2026-06-02"` (ค.ศ.)
+     * ห้ามใช้ปีพุทธศักราช (2569) เพราะ component ใช้ id นี้คำนวณ `isToday` อัตโนมัติ
+     */
     id: string;
     /** Day-of-month label, e.g. 2. */
     dayNumber: number;
