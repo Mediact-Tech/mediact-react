@@ -108,23 +108,15 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
     const bodyHeight = (winEnd - winStart) * pixelsPerMinute;
     const gridTemplateColumns = `64px repeat(${Math.max(rooms.length, 1)}, minmax(${minColumnWidth}px, 1fr))`;
 
-    return (
-      <div
-        ref={ref}
-        role="grid"
-        aria-label={props["aria-label"] ?? "ตารางห้องตรวจ"}
-        className={cn(
-          "overflow-auto rounded-xl border border-border-default bg-white",
-          className,
-        )}
-        style={{ maxHeight }}
-        {...props}
-      >
+    // แยก H-scroll (outer) กับ V-scroll (inner) เพื่อหลีกเลี่ยง Chrome 2D-overflow
+    // compositing bug ที่ทำให้ sticky header border ถูก scrolled-content layer ทับ
+    const innerContent = (
+      <>
         {/* Header */}
         <div
           role="row"
           className={cn(
-            "grid border-b border-border-default bg-gray-50",
+            "grid bg-gray-50 border-b border-border-default",
             stickyHeader && "sticky top-0 z-20",
           )}
           style={{ gridTemplateColumns }}
@@ -163,7 +155,7 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
         </div>
 
         {/* Body — padding อยู่ระดับคอลัมน์ (py-5 ข้างใน) เพื่อให้ border-l ต่อเนื่องเต็มความสูง */}
-        <div className="grid" style={{ gridTemplateColumns }}>
+        <div className="relative z-0 grid" style={{ gridTemplateColumns }}>
           {/* Time axis */}
           <div className="py-5">
             <div className="relative" style={{ height: bodyHeight }}>
@@ -319,6 +311,31 @@ const TimeGrid = React.forwardRef<HTMLDivElement, TimeGridProps>(
             );
           })}
         </div>
+      </>
+    );
+
+    return (
+      <div
+        ref={ref}
+        role="grid"
+        aria-label={props["aria-label"] ?? "ตารางห้องตรวจ"}
+        className={cn(
+          // overflow-x-auto + overflow-y-hidden: CSS spec ไม่ promote hidden → auto
+          // ทำให้ outer เป็น H-scroll only — V-scroll อยู่ใน inner div แยกต่างหาก
+          "overflow-x-auto overflow-y-hidden rounded-xl border border-border-default bg-white",
+          className,
+        )}
+        {...props}
+      >
+        {maxHeight ? (
+          // Inner: กว้างเท่า content (w-max min-w-full) → ไม่มี H-overflow ใน inner
+          // จึงเป็น V-scroll only → ไม่เกิด 2D-overflow compositing bug
+          <div className="w-max min-w-full overflow-y-auto" style={{ maxHeight }}>
+            {innerContent}
+          </div>
+        ) : (
+          innerContent
+        )}
       </div>
     );
   },

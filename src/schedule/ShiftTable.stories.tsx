@@ -17,18 +17,24 @@ const doctors = {
 
 const WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 
+// ใช้วันที่จริง (Gregorian) เพื่อให้ isToday auto-detect ทำงานได้
+const today = new Date();
+const yyyy = today.getFullYear();
+const mm = String(today.getMonth() + 1).padStart(2, "0");
+const isoDay = (d: number) => `${yyyy}-${mm}-${String(d).padStart(2, "0")}`;
+
 const days: ShiftTableDay[] = [
   {
-    id: "2569-06-01",
+    id: isoDay(1),
     dayNumber: 1,
     weekdayLabel: WEEKDAYS[1]!,
     slots: {},
   },
   {
-    id: "2569-06-02",
-    dayNumber: 2,
-    weekdayLabel: WEEKDAYS[2]!,
-    isToday: true,
+    // ไม่ต้องส่ง isToday — component คำนวณจาก id อัตโนมัติ
+    id: isoDay(today.getDate()),
+    dayNumber: today.getDate(),
+    weekdayLabel: WEEKDAYS[today.getDay()]!,
     slots: {
       morning: [
         { id: "s1", order: 1, ...doctors.worawit },
@@ -39,9 +45,9 @@ const days: ShiftTableDay[] = [
     },
   },
   {
-    id: "2569-06-03",
-    dayNumber: 3,
-    weekdayLabel: WEEKDAYS[3]!,
+    id: isoDay(today.getDate() + 1),
+    dayNumber: today.getDate() + 1,
+    weekdayLabel: WEEKDAYS[(today.getDay() + 1) % 7]!,
     slots: {
       morning: [{ id: "s5", order: 1, ...doctors.nattarika }],
       evening: [
@@ -51,17 +57,17 @@ const days: ShiftTableDay[] = [
     },
   },
   {
-    id: "2569-06-04",
-    dayNumber: 4,
-    weekdayLabel: WEEKDAYS[4]!,
+    id: isoDay(today.getDate() + 2),
+    dayNumber: today.getDate() + 2,
+    weekdayLabel: WEEKDAYS[(today.getDay() + 2) % 7]!,
     slots: {
       morning: [{ id: "s8", order: 1, ...doctors.anuwat }],
     },
   },
   {
-    id: "2569-06-06",
-    dayNumber: 6,
-    weekdayLabel: WEEKDAYS[6]!,
+    id: isoDay(today.getDate() + 4),
+    dayNumber: today.getDate() + 4,
+    weekdayLabel: WEEKDAYS[0]!,
     isWeekend: true,
     slots: {},
   },
@@ -100,10 +106,9 @@ export const ScrollableMonth: Story = {
   args: {
     maxHeight: 480,
     days: Array.from({ length: 30 }, (_, index): ShiftTableDay => ({
-      id: `2569-06-${String(index + 1).padStart(2, "0")}`,
+      id: isoDay(index + 1),
       dayNumber: index + 1,
       weekdayLabel: WEEKDAYS[(index + 1) % 7]!,
-      isToday: index + 1 === 2,
       isWeekend: (index + 1) % 7 === 0 || (index + 1) % 7 === 6,
       slots:
         index % 2 === 1
