@@ -54,6 +54,7 @@ type AddButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof sol
 declare const AddButton: React$1.ForwardRefExoticComponent<Omit<AddButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
 
 declare const outlineButtonVariants: (props?: ({
+    variant?: "brand" | "neutral" | null | undefined;
     size?: "sm" | "md" | "lg" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 type OutlineButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof outlineButtonVariants> & {

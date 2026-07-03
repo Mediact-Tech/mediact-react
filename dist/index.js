@@ -184,9 +184,13 @@ import { Slot as Slot4 } from "@radix-ui/react-slot";
 import { cva as cva3 } from "class-variance-authority";
 import { jsx as jsx4 } from "react/jsx-runtime";
 var outlineButtonVariants = cva3(
-  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-brand-active bg-white px-3 py-2 text-sm font-medium leading-6 tracking-normal text-brand-active shadow-xs transition-all outline-none hover:bg-brand-active/10 focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-white px-3 py-2 text-sm font-medium leading-6 tracking-normal shadow-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
+      variant: {
+        brand: "border-brand-active text-brand-active hover:bg-brand-active/10",
+        neutral: "border-slate-200 text-slate-900 hover:bg-gray-100"
+      },
       size: {
         sm: "h-8 [&_svg:not([class*='size-'])]:size-4",
         md: "h-9 [&_svg:not([class*='size-'])]:size-4",
@@ -194,19 +198,20 @@ var outlineButtonVariants = cva3(
       }
     },
     defaultVariants: {
+      variant: "brand",
       size: "lg"
     }
   }
 );
 var OutlineButton = React4.forwardRef(
-  ({ className, size, asChild = false, label, children, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, label, children, ...props }, ref) => {
     const Comp = asChild ? Slot4 : "button";
     return /* @__PURE__ */ jsx4(
       Comp,
       {
         ref,
         "data-slot": "button",
-        className: cn(outlineButtonVariants({ size, className })),
+        className: cn(outlineButtonVariants({ variant, size, className })),
         ...props,
         children: children ?? label
       }
