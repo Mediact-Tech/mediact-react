@@ -3,7 +3,6 @@ import * as React$1 from 'react';
 import { VariantProps } from 'class-variance-authority';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import * as RadixSwitch from '@radix-ui/react-switch';
-import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as RadixRadio from '@radix-ui/react-radio-group';
 import * as RadixSelect from '@radix-ui/react-select';
 import * as RadixAvatar from '@radix-ui/react-avatar';
@@ -29,6 +28,41 @@ type ButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof button
     rightIcon?: React$1.ReactNode;
 };
 declare const Button: React$1.ForwardRefExoticComponent<Omit<ButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+
+declare const solidButtonVariants: (props?: ({
+    variant?: "primary" | "success" | "warning" | "info" | null | undefined;
+    size?: "sm" | "md" | "lg" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type SolidButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof solidButtonVariants> & {
+    asChild?: boolean;
+    /** Localized button text — ignored when `children` is provided. */
+    label?: React$1.ReactNode;
+};
+/** Filled action button — for actions like Save, Upload, Confirm. */
+declare const SolidButton: React$1.ForwardRefExoticComponent<Omit<SolidButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+
+type AddButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof solidButtonVariants> & {
+    asChild?: boolean;
+    /** Localized button text — ignored when `children` is provided. */
+    label?: React$1.ReactNode;
+};
+/**
+ * "Add" button — same "[+ icon] [add_text]" pattern everywhere in the system.
+ * With `asChild`, children render as-is (no Plus injected) so the caller's
+ * single element (e.g. a router Link) can carry its own icon + text.
+ */
+declare const AddButton: React$1.ForwardRefExoticComponent<Omit<AddButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+
+declare const outlineButtonVariants: (props?: ({
+    size?: "sm" | "md" | "lg" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type OutlineButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof outlineButtonVariants> & {
+    asChild?: boolean;
+    /** Localized button text — ignored when `children` is provided. */
+    label?: React$1.ReactNode;
+};
+/** Outlined action button — for secondary actions like Cancel, Edit. */
+declare const OutlineButton: React$1.ForwardRefExoticComponent<Omit<OutlineButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
 
 type FieldSize = "sm" | "md" | "lg";
 
@@ -105,7 +139,7 @@ type RadioGroupProps<V extends string = string> = Omit<React$1.ComponentProps<ty
     containerClassName?: string;
     children?: React$1.ReactNode;
 };
-declare function RadioGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, orientation, children, ...props }: RadioGroupProps<V>): react_jsx_runtime.JSX.Element;
+declare function RadioGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, orientation, children, ...props }: RadioGroupProps<V>): React$1.JSX.Element;
 type RadioGroupItemProps = Omit<React$1.ComponentProps<typeof RadixRadio.Item>, "asChild"> & {
     description?: React$1.ReactNode;
 };
@@ -139,11 +173,11 @@ type SelectProps<V extends string = string> = {
     /** When passing children directly (for grouping/custom items). */
     children?: React$1.ReactNode;
 };
-declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, }: SelectProps<V>): react_jsx_runtime.JSX.Element;
+declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, }: SelectProps<V>): React$1.JSX.Element;
 declare const SelectItem: React$1.ForwardRefExoticComponent<Omit<RadixSelect.SelectItemProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
 
 declare const chipVariants: (props?: ({
-    variant?: "primary" | "success" | "warning" | "neutral" | "danger" | "info" | null | undefined;
+    variant?: "primary" | "success" | "warning" | "info" | "neutral" | "danger" | null | undefined;
     size?: "sm" | "md" | "lg" | null | undefined;
     interactive?: boolean | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
@@ -179,7 +213,7 @@ type TopNavBrandProps = React$1.ComponentProps<"div"> & {
 declare const TopNavBrand: React$1.ForwardRefExoticComponent<Omit<TopNavBrandProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
 declare const TopNavSpacer: ({ className }: {
     className?: string;
-}) => react_jsx_runtime.JSX.Element;
+}) => React$1.JSX.Element;
 /** Canonical app keys across the Mediact ecosystem. */
 type MediactAppKey = "mediwork" | "medimatch" | "medipay" | "medistock" | "medicare" | "medirefer";
 type MediactAppConfig = {
@@ -208,7 +242,7 @@ type AppLauncherProps = {
     comingSoonText?: string;
     className?: string;
 };
-declare function AppLauncher({ apps, order, onAppClick, label, comingSoonText, className, }: AppLauncherProps): react_jsx_runtime.JSX.Element;
+declare function AppLauncher({ apps, order, onAppClick, label, comingSoonText, className, }: AppLauncherProps): React$1.JSX.Element;
 type NotificationBellProps = React$1.ComponentProps<"button"> & {
     hasUnread?: boolean;
     unreadCount?: number;
@@ -242,7 +276,7 @@ type UserMenuProps = {
  * profile menu: centered avatar + name + role header, full-width menu items, and
  * a bottom row that pairs an optional language switcher with a red Log Out button.
  */
-declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): react_jsx_runtime.JSX.Element;
+declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): React$1.JSX.Element;
 
 type SidebarProps = React$1.ComponentProps<"aside"> & {
     /** Logo / brand block rendered at the top. */
@@ -274,7 +308,7 @@ type SidebarItemProps = {
     badge?: React$1.ReactNode;
     className?: string;
 };
-declare function SidebarItem({ id, label, icon: Icon, href, onClick, badge, className, }: SidebarItemProps): react_jsx_runtime.JSX.Element;
+declare function SidebarItem({ id, label, icon: Icon, href, onClick, badge, className, }: SidebarItemProps): React$1.JSX.Element;
 type SidebarGroupProps = {
     /** Stable id used for the chevron-toggle aria. */
     id: string;
@@ -288,7 +322,7 @@ type SidebarGroupProps = {
     children?: React$1.ReactNode;
     className?: string;
 };
-declare function SidebarGroup({ id, label, icon: Icon, defaultExpanded, expanded, onExpandedChange, children, className, }: SidebarGroupProps): react_jsx_runtime.JSX.Element;
+declare function SidebarGroup({ id, label, icon: Icon, defaultExpanded, expanded, onExpandedChange, children, className, }: SidebarGroupProps): React$1.JSX.Element;
 
 type FormFieldProps = {
     /** Field label rendered above the input. Omit for unlabeled fields. */
@@ -310,7 +344,7 @@ type FormFieldProps = {
  * Layout shell shared by every form primitive (Input, Textarea, Select, ...).
  * Renders: [Label] [children] [hint | error]
  */
-declare function FormField({ label, hint, error, required, htmlFor, hideLabel, className, children, }: FormFieldProps): react_jsx_runtime.JSX.Element;
+declare function FormField({ label, hint, error, required, htmlFor, hideLabel, className, children, }: FormFieldProps): React$1.JSX.Element;
 
 type DatePickerProps = {
     id?: string;
@@ -341,7 +375,7 @@ type DatePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, disabled, size, captionLayout, fromYear, toYear, className, containerClassName, }: DatePickerProps): react_jsx_runtime.JSX.Element;
+declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, disabled, size, captionLayout, fromYear, toYear, className, containerClassName, }: DatePickerProps): React$1.JSX.Element;
 
 /** "HH:mm" string in 24-hour format. */
 type TimeValue = string;
@@ -365,7 +399,7 @@ type TimePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function TimePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, disabled, size, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
+declare function TimePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, disabled, size, className, containerClassName, }: TimePickerProps): React$1.JSX.Element;
 
 type ComboBoxOption<V extends string = string> = {
     value: V;
@@ -395,7 +429,7 @@ type ComboBoxProps<V extends string = string> = {
     className?: string;
     containerClassName?: string;
 };
-declare function ComboBox<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, searchPlaceholder, emptyText, value, defaultValue, onChange, options, onSearch, disabled, size, className, containerClassName, }: ComboBoxProps<V>): react_jsx_runtime.JSX.Element;
+declare function ComboBox<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, searchPlaceholder, emptyText, value, defaultValue, onChange, options, onSearch, disabled, size, className, containerClassName, }: ComboBoxProps<V>): React$1.JSX.Element;
 
 type MultiOption<V extends string = string> = {
     value: V;
@@ -427,7 +461,7 @@ type MultiAutocompleteProps<V extends string = string> = {
     className?: string;
     containerClassName?: string;
 };
-declare function MultiAutocomplete<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, searchPlaceholder, emptyText, value, defaultValue, onChange, options, onSearch, maxVisibleChips, maxItems, disabled, size, className, containerClassName, }: MultiAutocompleteProps<V>): react_jsx_runtime.JSX.Element;
+declare function MultiAutocomplete<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, searchPlaceholder, emptyText, value, defaultValue, onChange, options, onSearch, maxVisibleChips, maxItems, disabled, size, className, containerClassName, }: MultiAutocompleteProps<V>): React$1.JSX.Element;
 
 declare const Table: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.TableHTMLAttributes<HTMLTableElement>, HTMLTableElement>, "ref"> & React$1.RefAttributes<HTMLTableElement>>;
 declare const TableHeader: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React$1.RefAttributes<HTMLTableSectionElement>>;
@@ -474,7 +508,7 @@ type DataTableProps<TData> = {
     empty?: React$1.ReactNode;
     className?: string;
 };
-declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, empty, className, }: DataTableProps<TData>): react_jsx_runtime.JSX.Element;
+declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, empty, className, }: DataTableProps<TData>): React$1.JSX.Element;
 
 declare const cardVariants: (props?: ({
     variant?: "flat" | "elevated" | "outlined" | null | undefined;
@@ -482,11 +516,11 @@ declare const cardVariants: (props?: ({
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 type CardProps = React$1.ComponentProps<"div"> & VariantProps<typeof cardVariants>;
 declare const Card: React$1.ForwardRefExoticComponent<Omit<CardProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const CardHeader: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const CardTitle: ({ className, ...props }: React$1.ComponentProps<"h3">) => react_jsx_runtime.JSX.Element;
-declare const CardDescription: ({ className, ...props }: React$1.ComponentProps<"p">) => react_jsx_runtime.JSX.Element;
-declare const CardContent: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const CardFooter: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const CardHeader: ({ className, ...props }: React$1.ComponentProps<"div">) => React$1.JSX.Element;
+declare const CardTitle: ({ className, ...props }: React$1.ComponentProps<"h3">) => React$1.JSX.Element;
+declare const CardDescription: ({ className, ...props }: React$1.ComponentProps<"p">) => React$1.JSX.Element;
+declare const CardContent: ({ className, ...props }: React$1.ComponentProps<"div">) => React$1.JSX.Element;
+declare const CardFooter: ({ className, ...props }: React$1.ComponentProps<"div">) => React$1.JSX.Element;
 
 declare const Tabs: React$1.ForwardRefExoticComponent<RadixTabs.TabsProps & React$1.RefAttributes<HTMLDivElement>>;
 declare const tabsListVariants: (props?: ({
@@ -516,9 +550,9 @@ type BreadcrumbProps = React$1.ComponentProps<"nav"> & {
     /** Collapse middle items when more than this number. Default `0` (no collapse). */
     maxItems?: number;
 };
-declare function Breadcrumb({ items, separator, maxItems, className, ...props }: BreadcrumbProps): react_jsx_runtime.JSX.Element;
+declare function Breadcrumb({ items, separator, maxItems, className, ...props }: BreadcrumbProps): React$1.JSX.Element;
 /** Low-level escape hatch — use `<BreadcrumbRoot>` + `<BreadcrumbLink>` for custom rendering. */
-declare const BreadcrumbRoot: ({ className, ...props }: React$1.ComponentProps<"nav">) => react_jsx_runtime.JSX.Element;
+declare const BreadcrumbRoot: ({ className, ...props }: React$1.ComponentProps<"nav">) => React$1.JSX.Element;
 declare const BreadcrumbLink: React$1.ForwardRefExoticComponent<Omit<React$1.ClassAttributes<HTMLAnchorElement> & React$1.AnchorHTMLAttributes<HTMLAnchorElement> & {
     asChild?: boolean;
 }, "ref"> & React$1.RefAttributes<HTMLAnchorElement>>;
@@ -536,7 +570,7 @@ type StepperProps = {
     /** Allow click on completed/active steps to navigate. */
     onStepClick?: (index: number) => void;
 };
-declare function Stepper({ steps, current, orientation, className, onStepClick, }: StepperProps): react_jsx_runtime.JSX.Element;
+declare function Stepper({ steps, current, orientation, className, onStepClick, }: StepperProps): React$1.JSX.Element;
 
 type SkeletonProps = React$1.ComponentProps<"div"> & {
     /** Shape preset. `text` defaults to a 1em-height bar. `circle` is square + rounded-full. */
@@ -554,7 +588,7 @@ declare const Spinner: React$1.ForwardRefExoticComponent<Omit<SpinnerProps, "ref
 declare function LoadingScreen({ label, className, }: {
     label?: React$1.ReactNode;
     className?: string;
-}): react_jsx_runtime.JSX.Element;
+}): React$1.JSX.Element;
 
 type EmptyStateProps = React$1.ComponentProps<"div"> & {
     /** Icon / illustration shown in the colored circle. Caller controls size + color
@@ -569,7 +603,7 @@ type EmptyStateProps = React$1.ComponentProps<"div"> & {
      * skip the wrapper entirely (caller renders their own illustration). */
     iconTone?: "info" | "success" | "warning" | "danger" | "neutral" | "none";
 };
-declare function EmptyState({ icon, title, description, action, iconTone, className, ...props }: EmptyStateProps): react_jsx_runtime.JSX.Element;
+declare function EmptyState({ icon, title, description, action, iconTone, className, ...props }: EmptyStateProps): React$1.JSX.Element;
 
 type ToasterProps = React$1.ComponentProps<typeof Toaster$1>;
 /**
@@ -584,7 +618,7 @@ type ToasterProps = React$1.ComponentProps<typeof Toaster$1>;
  * @example
  * <Toaster position="top-right" />
  */
-declare function Toaster(props: ToasterProps): react_jsx_runtime.JSX.Element;
+declare function Toaster(props: ToasterProps): React$1.JSX.Element;
 
 declare const Popover: React$1.FC<RadixPopover.PopoverProps>;
 declare const PopoverTrigger: React$1.ForwardRefExoticComponent<RadixPopover.PopoverTriggerProps & React$1.RefAttributes<HTMLButtonElement>>;
@@ -603,8 +637,8 @@ type DialogContentProps = React$1.ComponentProps<typeof RadixDialog.Content> & {
     showClose?: boolean;
 };
 declare const DialogContent: React$1.ForwardRefExoticComponent<Omit<DialogContentProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const DialogHeader: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const DialogFooter: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const DialogHeader: ({ className, ...props }: React$1.ComponentProps<"div">) => React$1.JSX.Element;
+declare const DialogFooter: ({ className, ...props }: React$1.ComponentProps<"div">) => React$1.JSX.Element;
 declare const DialogTitle: React$1.ForwardRefExoticComponent<Omit<RadixDialog.DialogTitleProps & React$1.RefAttributes<HTMLHeadingElement>, "ref"> & React$1.RefAttributes<HTMLHeadingElement>>;
 declare const DialogDescription: React$1.ForwardRefExoticComponent<Omit<RadixDialog.DialogDescriptionProps & React$1.RefAttributes<HTMLParagraphElement>, "ref"> & React$1.RefAttributes<HTMLParagraphElement>>;
 
@@ -623,7 +657,7 @@ type ConfirmDialogProps = {
     onCancel?: () => void;
     size?: React$1.ComponentProps<typeof DialogContent>["size"];
 };
-declare function ConfirmDialog({ open, onOpenChange, title, description, tone, confirmLabel, cancelLabel, onConfirm, onCancel, size, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
+declare function ConfirmDialog({ open, onOpenChange, title, description, tone, confirmLabel, cancelLabel, onConfirm, onCancel, size, }: ConfirmDialogProps): React$1.JSX.Element;
 
 type PopoverContentProps = React$1.ComponentProps<typeof RadixPopover.Content>;
 type FilterProps = {
@@ -644,7 +678,7 @@ type FilterProps = {
     /** Class for the popover content panel. */
     contentClassName?: string;
 };
-declare function Filter({ children, triggerLabel, trigger, triggerProps, open, defaultOpen, onOpenChange, align, side, sideOffset, contentClassName, }: FilterProps): react_jsx_runtime.JSX.Element;
+declare function Filter({ children, triggerLabel, trigger, triggerProps, open, defaultOpen, onOpenChange, align, side, sideOffset, contentClassName, }: FilterProps): React$1.JSX.Element;
 
 declare const TooltipProvider: React$1.FC<RadixTooltip.TooltipProviderProps>;
 declare const TooltipRoot: React$1.FC<RadixTooltip.TooltipProps>;
@@ -672,7 +706,7 @@ type TooltipProps = {
  * Convenience wrapper. For grouped tooltips wrap your tree in <TooltipProvider>.
  * This component creates its own provider if none is in scope (safe to nest).
  */
-declare function Tooltip({ content, children, side, align, delayDuration, open, defaultOpen, onOpenChange, asChild, arrow, }: TooltipProps): react_jsx_runtime.JSX.Element;
+declare function Tooltip({ content, children, side, align, delayDuration, open, defaultOpen, onOpenChange, asChild, arrow, }: TooltipProps): React$1.JSX.Element;
 
 declare const DropdownMenu: React$1.FC<RadixMenu.DropdownMenuProps>;
 declare const DropdownMenuTrigger: React$1.ForwardRefExoticComponent<RadixMenu.DropdownMenuTriggerProps & React$1.RefAttributes<HTMLButtonElement>>;
@@ -785,7 +819,7 @@ type ScheduleAvatarProps = Omit<AvatarProps, "fallback"> & {
 declare const ScheduleAvatar: React$1.ForwardRefExoticComponent<Omit<ScheduleAvatarProps, "ref"> & React$1.RefAttributes<HTMLSpanElement>>;
 
 declare const statusBadgeVariants: (props?: ({
-    tone?: "success" | "warning" | "neutral" | "danger" | "info" | null | undefined;
+    tone?: "success" | "warning" | "info" | "neutral" | "danger" | null | undefined;
     size?: "sm" | "md" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 type StatusBadgeProps = React$1.ComponentProps<"span"> & VariantProps<typeof statusBadgeVariants> & {
@@ -1002,4 +1036,4 @@ declare function computeFreeGaps(events: EventLayoutInput[], windowStart: string
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { ASSIGNMENT_COLOR_CLASSES, AddSlotButton, type AddSlotButtonProps, AppLauncher, type AppLauncherProps, AssignmentChip, type AssignmentChipProps, type AssignmentColor, type AssignmentSlot, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, type CheckboxProps, Chip, type ChipProps, ComboBox, type ComboBoxOption, type ComboBoxProps, ConfirmDialog, type ConfirmDialogProps, DataTable, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, type EventLayout, type EventLayoutInput, Filter, type FilterProps, FormField, type FormFieldProps, type FreeGap, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, MultiAutocomplete, type MultiAutocompleteProps, type MultiOption, NotificationBell, type NotificationBellProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, ScheduleAvatar, type ScheduleAvatarProps, Select, SelectItem, type SelectOption, type SelectProps, ShiftTable, type ShiftTableColumn, type ShiftTableDay, type ShiftTableProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, type SkeletonProps, Spinner, type SpinnerProps, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, type TextareaProps, TimeGrid, type TimeGridEventData, type TimeGridProps, type TimeGridRoom, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonVariants, chipVariants, cn, computeEventLayouts, computeFreeGaps, parseTimeToMinutes, statusBadgeVariants };
+export { ASSIGNMENT_COLOR_CLASSES, AddButton, type AddButtonProps, AddSlotButton, type AddSlotButtonProps, AppLauncher, type AppLauncherProps, AssignmentChip, type AssignmentChipProps, type AssignmentColor, type AssignmentSlot, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, type CheckboxProps, Chip, type ChipProps, ComboBox, type ComboBoxOption, type ComboBoxProps, ConfirmDialog, type ConfirmDialogProps, DataTable, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, type EventLayout, type EventLayoutInput, Filter, type FilterProps, FormField, type FormFieldProps, type FreeGap, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, MultiAutocomplete, type MultiAutocompleteProps, type MultiOption, NotificationBell, type NotificationBellProps, OutlineButton, type OutlineButtonProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, ScheduleAvatar, type ScheduleAvatarProps, Select, SelectItem, type SelectOption, type SelectProps, ShiftTable, type ShiftTableColumn, type ShiftTableDay, type ShiftTableProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, type TextareaProps, TimeGrid, type TimeGridEventData, type TimeGridProps, type TimeGridRoom, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonVariants, chipVariants, cn, computeEventLayouts, computeFreeGaps, outlineButtonVariants, parseTimeToMinutes, solidButtonVariants, statusBadgeVariants };
