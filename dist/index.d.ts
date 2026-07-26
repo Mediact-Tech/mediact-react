@@ -30,6 +30,42 @@ type ButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof button
 };
 declare const Button: React$1.ForwardRefExoticComponent<Omit<ButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
 
+declare const solidButtonVariants: (props?: ({
+    variant?: "primary" | "success" | "warning" | "info" | null | undefined;
+    size?: "sm" | "md" | "lg" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type SolidButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof solidButtonVariants> & {
+    asChild?: boolean;
+    /** Localized button text — ignored when `children` is provided. */
+    label?: React$1.ReactNode;
+};
+/** Filled action button — for actions like Save, Upload, Confirm. */
+declare const SolidButton: React$1.ForwardRefExoticComponent<Omit<SolidButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+
+type AddButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof solidButtonVariants> & {
+    asChild?: boolean;
+    /** Localized button text — ignored when `children` is provided. */
+    label?: React$1.ReactNode;
+};
+/**
+ * "Add" button — same "[+ icon] [add_text]" pattern everywhere in the system.
+ * With `asChild`, children render as-is (no Plus injected) so the caller's
+ * single element (e.g. a router Link) can carry its own icon + text.
+ */
+declare const AddButton: React$1.ForwardRefExoticComponent<Omit<AddButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+
+declare const outlineButtonVariants: (props?: ({
+    variant?: "brand" | "neutral" | null | undefined;
+    size?: "sm" | "md" | "lg" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type OutlineButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof outlineButtonVariants> & {
+    asChild?: boolean;
+    /** Localized button text — ignored when `children` is provided. */
+    label?: React$1.ReactNode;
+};
+/** Outlined action button — for secondary actions like Cancel, Edit. */
+declare const OutlineButton: React$1.ForwardRefExoticComponent<Omit<OutlineButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+
 type FieldSize = "sm" | "md" | "lg";
 
 type NativeInputProps = Omit<React$1.ComponentProps<"input">, "size">;
@@ -143,7 +179,7 @@ declare function Select<V extends string = string>({ id, label, hint, error, req
 declare const SelectItem: React$1.ForwardRefExoticComponent<Omit<RadixSelect.SelectItemProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
 
 declare const chipVariants: (props?: ({
-    variant?: "primary" | "success" | "warning" | "neutral" | "danger" | "info" | null | undefined;
+    variant?: "primary" | "success" | "warning" | "info" | "neutral" | "danger" | null | undefined;
     size?: "sm" | "md" | "lg" | null | undefined;
     interactive?: boolean | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
@@ -785,7 +821,7 @@ type ScheduleAvatarProps = Omit<AvatarProps, "fallback"> & {
 declare const ScheduleAvatar: React$1.ForwardRefExoticComponent<Omit<ScheduleAvatarProps, "ref"> & React$1.RefAttributes<HTMLSpanElement>>;
 
 declare const statusBadgeVariants: (props?: ({
-    tone?: "success" | "warning" | "neutral" | "danger" | "info" | null | undefined;
+    tone?: "success" | "warning" | "info" | "neutral" | "danger" | null | undefined;
     size?: "sm" | "md" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 type StatusBadgeProps = React$1.ComponentProps<"span"> & VariantProps<typeof statusBadgeVariants> & {
@@ -1002,4 +1038,4 @@ declare function computeFreeGaps(events: EventLayoutInput[], windowStart: string
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { ASSIGNMENT_COLOR_CLASSES, AddSlotButton, type AddSlotButtonProps, AppLauncher, type AppLauncherProps, AssignmentChip, type AssignmentChipProps, type AssignmentColor, type AssignmentSlot, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, type CheckboxProps, Chip, type ChipProps, ComboBox, type ComboBoxOption, type ComboBoxProps, ConfirmDialog, type ConfirmDialogProps, DataTable, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, type EventLayout, type EventLayoutInput, Filter, type FilterProps, FormField, type FormFieldProps, type FreeGap, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, MultiAutocomplete, type MultiAutocompleteProps, type MultiOption, NotificationBell, type NotificationBellProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, ScheduleAvatar, type ScheduleAvatarProps, Select, SelectItem, type SelectOption, type SelectProps, ShiftTable, type ShiftTableColumn, type ShiftTableDay, type ShiftTableProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, type SkeletonProps, Spinner, type SpinnerProps, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, type TextareaProps, TimeGrid, type TimeGridEventData, type TimeGridProps, type TimeGridRoom, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonVariants, chipVariants, cn, computeEventLayouts, computeFreeGaps, parseTimeToMinutes, statusBadgeVariants };
+export { ASSIGNMENT_COLOR_CLASSES, AddButton, type AddButtonProps, AddSlotButton, type AddSlotButtonProps, AppLauncher, type AppLauncherProps, AssignmentChip, type AssignmentChipProps, type AssignmentColor, type AssignmentSlot, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, type CheckboxProps, Chip, type ChipProps, ComboBox, type ComboBoxOption, type ComboBoxProps, ConfirmDialog, type ConfirmDialogProps, DataTable, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, type EventLayout, type EventLayoutInput, Filter, type FilterProps, FormField, type FormFieldProps, type FreeGap, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, MultiAutocomplete, type MultiAutocompleteProps, type MultiOption, NotificationBell, type NotificationBellProps, OutlineButton, type OutlineButtonProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, ScheduleAvatar, type ScheduleAvatarProps, Select, SelectItem, type SelectOption, type SelectProps, ShiftTable, type ShiftTableColumn, type ShiftTableDay, type ShiftTableProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, type TextareaProps, TimeGrid, type TimeGridEventData, type TimeGridProps, type TimeGridRoom, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonVariants, chipVariants, cn, computeEventLayouts, computeFreeGaps, outlineButtonVariants, parseTimeToMinutes, solidButtonVariants, statusBadgeVariants };

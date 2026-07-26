@@ -1,0 +1,31 @@
+/* @mediact/react/ai-chat.css — widget-level knobs, on top of the design tokens
+ *
+ * Import once in your app's entry CSS after `@import "tailwindcss"`:
+ *
+ *   @import "tailwindcss";
+ *   @import "@mediact/react/style.css";
+ *   @import "@mediact/react/ai-chat.css";
+ *   @source "../../node_modules/@mediact/react/dist";
+ *
+ * (`@source` is what makes Tailwind v4 generate the utility classes the pre-built
+ *  widget bundle references — without it the drawer renders unstyled.)
+ *
+ * The token block below is the same one `style.css` ships; CSS custom properties are
+ * idempotent, so importing both is harmless — and importing ONLY this one still themes
+ * the widget correctly.
+ */
+@import "../../../tokens/src/theme.css";
+
+:root {
+  /* Stacking — the widget portals to <body>, so it has to out-rank the host's own overlays.
+   * MUI: AppBar 1100 · Drawer 1200 · Modal 1300 · Snackbar 1400 · Tooltip 1500.
+   * Default sits just above MUI's Modal so a host dialog can never bury the assistant.
+   * Override per app: `:root { --mediact-ai-chat-z: 900; }` */
+  --mediact-ai-chat-z: 1310;
+
+  /* Drawer width on ≥sm screens (full-width below that). */
+  --mediact-ai-chat-drawer-width: 26rem;
+
+  /* Distance of the floating launcher from the viewport corner. */
+  --mediact-ai-chat-launcher-offset: 1.5rem;
+}
