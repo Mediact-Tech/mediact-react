@@ -3,6 +3,7 @@ import { resolveTokenProvider } from "./auth/selfAuth";
 import { ChatDrawer } from "./components/ChatDrawer";
 import { FloatingButton } from "./components/FloatingButton";
 import { resolveLabels } from "./labels";
+import { AI_CHAT_OPEN_EVENT, type AiChatOpenDetail } from "./lib/hostBridge";
 import { useAiChatSession } from "./state/useAiChatSession";
 import type { AiChatConfig } from "./types";
 
@@ -73,6 +74,40 @@ export function AiChatWidget({
   React.useEffect(() => {
     if (open) void session.start();
   }, [open, session.start]);
+
+  // Host bridge — `openAiChat()` anywhere in the app opens this drawer and queues a message.
+  const [hostRequest, setHostRequest] = React.useState<AiChatOpenDetail | null>(null);
+  React.useEffect(() => {
+    const onOpen = (event: Event) => {
+      // Ack by cancelling: this is how the dispatcher learns a widget is actually mounted.
+      event.preventDefault();
+      const detail = (event as CustomEvent<AiChatOpenDetail>).detail ?? {};
+      if (detail.message?.trim()) setHostRequest(detail);
+      setOpen(true);
+    };
+    window.addEventListener(AI_CHAT_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(AI_CHAT_OPEN_EVENT, onOpen);
+  }, [setOpen]);
+
+  // A queued host message waits for the session to be ready (a busy turn finishes, a cold start
+  // connects), flips the mode first when asked, then goes out as a normal user turn.
+  const { status: sessionStatus, mode: sessionMode } = session.state;
+  const { setMode: sessionSetMode, send: sessionSend } = session;
+  React.useEffect(() => {
+    if (!hostRequest?.message) return;
+    if (sessionStatus === "error") {
+      // A failed start must not fire a surprise send minutes later once the user retries.
+      setHostRequest(null);
+      return;
+    }
+    if (sessionStatus !== "ready") return;
+    if (hostRequest.mode && sessionMode !== hostRequest.mode) {
+      sessionSetMode(hostRequest.mode);
+      return; // effect re-runs once the mode lands
+    }
+    setHostRequest(null);
+    void sessionSend(hostRequest.message);
+  }, [hostRequest, sessionStatus, sessionMode, sessionSetMode, sessionSend]);
 
   const handleSend = React.useCallback(
     (text: string) => {

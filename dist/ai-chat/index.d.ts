@@ -349,6 +349,26 @@ interface AiChatWidgetProps extends AiChatConfig {
  */
 declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): react_jsx_runtime.JSX.Element;
 
+/**
+ * Host → widget bridge. The drawer is mounted ONCE at the app root, but the moments that want to
+ * open it live deep inside feature screens (a diagnostics banner, an error toast). Threading an
+ * `open` prop through every layer would couple all of them to the root layout, so the bridge is a
+ * window CustomEvent instead: any host code calls `openAiChat(...)`, the mounted widget listens.
+ */
+declare const AI_CHAT_OPEN_EVENT = "mediact-ai-chat:open";
+interface AiChatOpenDetail {
+    /** Sent as the user's turn once the session is ready. Omit to just open the drawer. */
+    message?: string;
+    /** Switch the conversation to this mode before sending (e.g. `schedule` for roster work). */
+    mode?: ChatMode;
+}
+/**
+ * Open the chat drawer — and, with `message`, send it as the user once the session connects.
+ * Returns false when no widget is mounted to receive it, so callers can fall back to their own hint
+ * instead of silently doing nothing.
+ */
+declare function openAiChat(detail?: AiChatOpenDetail): boolean;
+
 /** Thai-first defaults — every consuming app runs Thai as its primary locale. */
 declare const defaultLabels: AiChatLabels;
 declare function resolveLabels(overrides?: Partial<AiChatLabels>): AiChatLabels;
@@ -649,4 +669,4 @@ declare function resolveTokenProvider(auth: AiChatAuthConfig | undefined, hostGe
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, extractEnterMode, extractRedirect, hasExitMode, resolveLabels, resolveTokenProvider, stripSentinels, useAiChatSession };
+export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, extractEnterMode, extractRedirect, hasExitMode, openAiChat, resolveLabels, resolveTokenProvider, stripSentinels, useAiChatSession };

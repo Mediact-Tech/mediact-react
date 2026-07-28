@@ -1004,6 +1004,18 @@ function buildScheduleGreeting(labels, seed) {
   return labels.scheduleGreeting.replace("{context}", context);
 }
 
+// src/ai-chat/lib/hostBridge.ts
+var AI_CHAT_OPEN_EVENT = "mediact-ai-chat:open";
+function openAiChat(detail = {}) {
+  if (typeof window === "undefined") return false;
+  const event = new CustomEvent(AI_CHAT_OPEN_EVENT, {
+    detail,
+    cancelable: true
+  });
+  window.dispatchEvent(event);
+  return event.defaultPrevented;
+}
+
 // src/ai-chat/state/useAiChatSession.ts
 import * as React8 from "react";
 
@@ -1680,6 +1692,33 @@ function AiChatWidget({
   React9.useEffect(() => {
     if (open) void session.start();
   }, [open, session.start]);
+  const [hostRequest, setHostRequest] = React9.useState(null);
+  React9.useEffect(() => {
+    const onOpen = (event) => {
+      event.preventDefault();
+      const detail = event.detail ?? {};
+      if (detail.message?.trim()) setHostRequest(detail);
+      setOpen(true);
+    };
+    window.addEventListener(AI_CHAT_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(AI_CHAT_OPEN_EVENT, onOpen);
+  }, [setOpen]);
+  const { status: sessionStatus, mode: sessionMode } = session.state;
+  const { setMode: sessionSetMode, send: sessionSend } = session;
+  React9.useEffect(() => {
+    if (!hostRequest?.message) return;
+    if (sessionStatus === "error") {
+      setHostRequest(null);
+      return;
+    }
+    if (sessionStatus !== "ready") return;
+    if (hostRequest.mode && sessionMode !== hostRequest.mode) {
+      sessionSetMode(hostRequest.mode);
+      return;
+    }
+    setHostRequest(null);
+    void sessionSend(hostRequest.message);
+  }, [hostRequest, sessionStatus, sessionMode, sessionSetMode, sessionSend]);
   const handleSend = React9.useCallback(
     (text) => {
       void session.send(text);
@@ -1739,6 +1778,7 @@ function AiChatWidget({
   ] });
 }
 export {
+  AI_CHAT_OPEN_EVENT,
   AiChatApiError,
   AiChatWidget,
   ChatDrawer,
@@ -1760,6 +1800,7 @@ export {
   extractEnterMode,
   extractRedirect,
   hasExitMode,
+  openAiChat,
   resolveLabels,
   resolveTokenProvider,
   stripSentinels,

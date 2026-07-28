@@ -1,6 +1,9 @@
 // The one thing most apps need
 export { AiChatWidget, type AiChatWidgetProps } from "./AiChatWidget";
 
+// Host bridge — open the mounted drawer (and queue a message) from anywhere in the host app
+export { openAiChat, AI_CHAT_OPEN_EVENT, type AiChatOpenDetail } from "./lib/hostBridge";
+
 // Config + UI model
 export type {
   AiChatAuthConfig,
