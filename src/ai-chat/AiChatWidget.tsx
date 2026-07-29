@@ -129,9 +129,17 @@ export function AiChatWidget({
   }, [session.newConversation, session.start]);
 
   const handleRetry = React.useCallback(() => {
+    // S11-F2: retry after a transport failure must KEEP the thread — restarting on the same
+    // conversation replays the transcript (incl. replies that landed while the socket was down)
+    // and re-opens the socket. Only a session that never got a conversation starts fresh.
+    const current = session.state.conversationId;
+    if (current) {
+      void session.start(current);
+      return;
+    }
     session.newConversation();
     void session.start();
-  }, [session.newConversation, session.start]);
+  }, [session.state.conversationId, session.newConversation, session.start]);
 
   return (
     <>

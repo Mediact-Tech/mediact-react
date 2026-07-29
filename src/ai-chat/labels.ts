@@ -15,6 +15,7 @@ export const defaultLabels: AiChatLabels = {
   emptyHint: "เช่น “เดือนนี้เวรดึกใครยังขาดบ้าง”",
   connecting: "กำลังเชื่อมต่อ…",
   disconnected: "การเชื่อมต่อหลุด",
+  reconnecting: "กำลังเชื่อมต่อใหม่อัตโนมัติ…",
   retry: "ลองใหม่",
   close: "ปิด",
   committed: "บันทึกแล้ว",

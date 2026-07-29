@@ -120,7 +120,14 @@ export class ChatTransport {
     // No socket = no send (there is no HTTP fallback). Give centrifuge's own reconnect a moment
     // before failing the turn, instead of losing a message to a blip.
     if (!(await this.waitUntilConnected())) {
-      throw new Error("ยังเชื่อมต่อกับเซิร์ฟเวอร์แบบเรียลไทม์ไม่ได้ จึงส่งข้อความไม่ได้ กรุณาลองใหม่");
+      // S11-F2: a killed broker can leave the socket half-open — centrifuge sits in its backoff
+      // believing the connection may come back while nothing is listening. One forced
+      // disconnect/connect cycle re-dials for real before this turn is failed.
+      this.client.disconnect();
+      this.client.connect();
+      if (!(await this.waitUntilConnected())) {
+        throw new Error("ยังเชื่อมต่อกับเซิร์ฟเวอร์แบบเรียลไทม์ไม่ได้ จึงส่งข้อความไม่ได้ กรุณาลองใหม่");
+      }
     }
 
     try {
@@ -176,11 +183,24 @@ export class ChatTransport {
 /**
  * centrifuge reports failures as its own `{ code, message }` shape, not a JS Error — carry the
  * code into the message so a host logging `error.message` doesn't lose the only diagnostic bit.
+ *
+ * S11-F1: transport failures are the one error class the USER ends up reading (the session prints
+ * the message inside the failed turn), and "timeout (code 1)" on a head nurse's screen explains
+ * nothing. Connection-shaped failures get a Thai sentence that also says what happens next —
+ * the server may well still be processing the turn, and the reply will surface on reconnect.
+ * Other codes (4401/4403/validation) keep the raw diagnostic; those are for developers.
  */
+const CONNECTION_FAILURE = /timeout|connection|closed|unavailable|transport/i;
+
 function toError(error: unknown): Error {
   if (error instanceof Error) return error;
   if (error && typeof error === "object" && "message" in error) {
     const { message, code } = error as { message: string; code?: number };
+    if (CONNECTION_FAILURE.test(message)) {
+      return new Error(
+        "การเชื่อมต่อขัดข้องชั่วคราว ระบบกำลังเชื่อมต่อใหม่ให้อัตโนมัติ — ข้อความที่ส่งไปอาจกำลังประมวลผลอยู่ คำตอบจะแสดงเมื่อกลับมาเชื่อมต่อได้",
+      );
+    }
     return new Error(code ? `${message} (code ${code})` : message);
   }
   return new Error(String(error));

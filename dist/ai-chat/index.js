@@ -843,7 +843,10 @@ function StatusBar({
 }) {
   if (status === "error") {
     return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-error-red-50 px-4 py-2 text-xs text-error-red-800", children: [
-      /* @__PURE__ */ jsx9("span", { className: "min-w-0 flex-1 truncate", children: error }),
+      /* @__PURE__ */ jsxs8("span", { className: "min-w-0 flex-1", children: [
+        error,
+        transportStatus === "connecting" && /* @__PURE__ */ jsx9("span", { className: "mt-0.5 block text-error-red-800/70", children: labels.reconnecting })
+      ] }),
       /* @__PURE__ */ jsx9(
         "button",
         {
@@ -972,6 +975,7 @@ var defaultLabels = {
   emptyHint: "\u0E40\u0E0A\u0E48\u0E19 \u201C\u0E40\u0E14\u0E37\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E40\u0E27\u0E23\u0E14\u0E36\u0E01\u0E43\u0E04\u0E23\u0E22\u0E31\u0E07\u0E02\u0E32\u0E14\u0E1A\u0E49\u0E32\u0E07\u201D",
   connecting: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u2026",
   disconnected: "\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E2B\u0E25\u0E38\u0E14",
+  reconnecting: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34\u2026",
   retry: "\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48",
   close: "\u0E1B\u0E34\u0E14",
   committed: "\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E41\u0E25\u0E49\u0E27",
@@ -1206,7 +1210,11 @@ var ChatTransport = class {
     if (!this.client) throw new Error("ChatTransport.send called before connect()");
     await this.ensureFreshConnection();
     if (!await this.waitUntilConnected()) {
-      throw new Error("\u0E22\u0E31\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E01\u0E31\u0E1A\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E41\u0E1A\u0E1A\u0E40\u0E23\u0E35\u0E22\u0E25\u0E44\u0E17\u0E21\u0E4C\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49 \u0E08\u0E36\u0E07\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48");
+      this.client.disconnect();
+      this.client.connect();
+      if (!await this.waitUntilConnected()) {
+        throw new Error("\u0E22\u0E31\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E01\u0E31\u0E1A\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E41\u0E1A\u0E1A\u0E40\u0E23\u0E35\u0E22\u0E25\u0E44\u0E17\u0E21\u0E4C\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49 \u0E08\u0E36\u0E07\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48");
+      }
     }
     try {
       const result = await this.client.rpc("chat.send", params);
@@ -1249,10 +1257,16 @@ var ChatTransport = class {
     this.config.onStatusChange?.(status);
   }
 };
+var CONNECTION_FAILURE = /timeout|connection|closed|unavailable|transport/i;
 function toError(error) {
   if (error instanceof Error) return error;
   if (error && typeof error === "object" && "message" in error) {
     const { message, code } = error;
+    if (CONNECTION_FAILURE.test(message)) {
+      return new Error(
+        "\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E02\u0E31\u0E14\u0E02\u0E49\u0E2D\u0E07\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27 \u0E23\u0E30\u0E1A\u0E1A\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E43\u0E2B\u0E21\u0E48\u0E43\u0E2B\u0E49\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 \u2014 \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E17\u0E35\u0E48\u0E2A\u0E48\u0E07\u0E44\u0E1B\u0E2D\u0E32\u0E08\u0E01\u0E33\u0E25\u0E31\u0E07\u0E1B\u0E23\u0E30\u0E21\u0E27\u0E25\u0E1C\u0E25\u0E2D\u0E22\u0E39\u0E48 \u0E04\u0E33\u0E15\u0E2D\u0E1A\u0E08\u0E30\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E01\u0E25\u0E31\u0E1A\u0E21\u0E32\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E44\u0E14\u0E49"
+      );
+    }
     return new Error(code ? `${message} (code ${code})` : message);
   }
   return new Error(String(error));
@@ -1302,8 +1316,12 @@ function reducer(state, action) {
         // next turn answers. Better blank than a stale number from another conversation.
         contextUsage: null
       };
-    case "transport":
+    case "transport": {
+      if (action.status === "connected" && state.status === "error") {
+        return { ...state, transportStatus: action.status, status: "ready", error: null };
+      }
       return { ...state, transportStatus: action.status };
+    }
     case "user_turn":
       return {
         ...state,
@@ -1456,6 +1474,7 @@ function useAiChatSession(config) {
   labelsRef.current = labels;
   const transportRef = React8.useRef(null);
   const startingRef = React8.useRef(null);
+  const startRef = React8.useRef(null);
   const stateRef = React8.useRef(state);
   stateRef.current = state;
   const streamRef = React8.useRef("");
@@ -1523,7 +1542,13 @@ function useAiChatSession(config) {
             getToken: () => configRef.current.getToken(),
             debug: configRef.current.debug,
             onEvent: handleEvent,
-            onStatusChange: (status) => dispatch({ type: "transport", status }),
+            onStatusChange: (status) => {
+              dispatch({ type: "transport", status });
+              if (status === "connected" && stateRef.current.status === "error") {
+                const current = stateRef.current.conversationId;
+                if (current) void startRef.current?.(current);
+              }
+            },
             onError: (error) => configRef.current.onError?.(error)
           });
           await transport.connect();
@@ -1540,6 +1565,7 @@ function useAiChatSession(config) {
     },
     [api, handleEvent, reportError, storageKey]
   );
+  startRef.current = start;
   const send = React8.useCallback(
     async (text) => {
       const trimmed = text.trim();
@@ -1736,9 +1762,14 @@ function AiChatWidget({
     void session.start();
   }, [session.newConversation, session.start]);
   const handleRetry = React9.useCallback(() => {
+    const current = session.state.conversationId;
+    if (current) {
+      void session.start(current);
+      return;
+    }
     session.newConversation();
     void session.start();
-  }, [session.newConversation, session.start]);
+  }, [session.state.conversationId, session.newConversation, session.start]);
   return /* @__PURE__ */ jsxs10(Fragment3, { children: [
     !hideLauncher && /* @__PURE__ */ jsx11(
       FloatingButton,

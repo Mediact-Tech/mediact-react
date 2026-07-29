@@ -53,6 +53,8 @@ export interface AiChatLabels {
   emptyHint: string;
   connecting: string;
   disconnected: string;
+  /** Sub-line on the error bar while the socket is auto-redialing (S11-F1). */
+  reconnecting: string;
   retry: string;
   close: string;
   committed: string;

@@ -110,8 +110,16 @@ function reducer(state: SessionState, action: Action): SessionState {
         contextUsage: null,
       };
 
-    case "transport":
+    case "transport": {
+      // S11-F2: `error` had no exit but a full restart, so a dead broker left the composer disabled
+      // FOREVER — even after the connection came back. The socket returning IS the recovery signal:
+      // unlock the room. (The hook also resyncs the transcript from the server at this moment, so
+      // any reply that finished while the screen was dark surfaces on its own.)
+      if (action.status === "connected" && state.status === "error") {
+        return { ...state, transportStatus: action.status, status: "ready", error: null };
+      }
       return { ...state, transportStatus: action.status };
+    }
 
     case "user_turn":
       return {
@@ -329,6 +337,9 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
 
   const transportRef = React.useRef<ChatTransport | null>(null);
   const startingRef = React.useRef<Promise<void> | null>(null);
+  // `start` for callbacks wired BEFORE `start` exists (the transport's own status handler) —
+  // reconnect-resync must call the latest start, not a stale closure.
+  const startRef = React.useRef<((conversationId?: string) => Promise<void>) | null>(null);
   // Latest state for stable callbacks that must read it (setMode keeps the resolved scope).
   const stateRef = React.useRef(state);
   stateRef.current = state;
@@ -412,7 +423,18 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
             getToken: () => configRef.current.getToken(),
             debug: configRef.current.debug,
             onEvent: handleEvent,
-            onStatusChange: (status) => dispatch({ type: "transport", status }),
+            onStatusChange: (status) => {
+              dispatch({ type: "transport", status });
+              // S11-F2: while the screen sat in `error`, replies kept landing in the conversation
+              // on the server (turns outlive a dead socket by design). Reconnecting is the moment
+              // to fetch what was missed — a full re-start on the SAME conversation replays the
+              // transcript from the source of truth. Guarded to the error state so a healthy
+              // stream is never interrupted, and `startingRef` already serializes re-entry.
+              if (status === "connected" && stateRef.current.status === "error") {
+                const current = stateRef.current.conversationId;
+                if (current) void startRef.current?.(current);
+              }
+            },
             onError: (error) => configRef.current.onError?.(error),
           });
           await transport.connect();
@@ -431,6 +453,7 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
     },
     [api, handleEvent, reportError, storageKey],
   );
+  startRef.current = start;
 
   const send = React.useCallback(
     async (text: string) => {

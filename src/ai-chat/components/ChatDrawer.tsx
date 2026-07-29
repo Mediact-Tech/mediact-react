@@ -195,7 +195,14 @@ function StatusBar({
   if (status === "error") {
     return (
       <div className="flex items-center gap-2 bg-error-red-50 px-4 py-2 text-xs text-error-red-800">
-        <span className="min-w-0 flex-1 truncate">{error}</span>
+        <span className="min-w-0 flex-1">
+          {error}
+          {/* S11-F1: while centrifuge keeps re-dialing behind the scenes, say so — a silent red bar
+              reads as "it's dead", when the room will in fact unlock itself on reconnect. */}
+          {transportStatus === "connecting" && (
+            <span className="mt-0.5 block text-error-red-800/70">{labels.reconnecting}</span>
+          )}
+        </span>
         <button
           type="button"
           onClick={onRetry}
