@@ -16,7 +16,11 @@ import {
   type ScheduleSeed,
 } from "../lib/sentinels";
 import { buildScheduleGreeting, resolveLabels } from "../labels";
-import { ChatTransport, type TransportStatus } from "../realtime/chatTransport";
+import {
+  ChatSendTimeoutError,
+  ChatTransport,
+  type TransportStatus,
+} from "../realtime/chatTransport";
 import type { AiChatConfig, ChatMessage, SessionStatus } from "../types";
 
 /**
@@ -36,6 +40,15 @@ import type { AiChatConfig, ChatMessage, SessionStatus } from "../types";
 const MODE_ENTER_TEXT = "🗓️ เข้าสู่โหมดจัดเวร";
 const MODE_EXIT_TEXT = "ออกจากโหมดจัดเวร";
 const NO_ANSWER_TEXT = "(ไม่มีคำตอบ)";
+
+/**
+ * How long a turn whose ack was lost waits for the channel to prove it is alive. Generous: the
+ * answer it is waiting for is a whole agent run, and the cost of being wrong is a turn closed as
+ * failed while its reply is still on the way — the failure this path was built to stop.
+ */
+const UNACKED_GRACE_MS = 150_000;
+const UNACKED_EXPIRED_TEXT =
+  "ไม่ได้รับคำตอบจากระบบค่ะ ข้อความอาจไม่ได้ถูกส่งถึง ลองส่งใหม่อีกครั้งนะคะ";
 
 interface SessionState {
   conversationId: string | null;
@@ -77,6 +90,8 @@ type Action =
     }
   | { type: "set_mode"; mode: ChatMode; seed: ScheduleSeed | null; greeting: string }
   | { type: "error"; message: string }
+  /** The send RPC timed out — the turn may be running. Keeps it open; see the reducer case. */
+  | { type: "send_unacked"; message: string }
   | { type: "reset" };
 
 const initialState: SessionState = {
@@ -169,6 +184,17 @@ function reducer(state: SessionState, action: Action): SessionState {
         messages: failStreamingTurn(state.messages, action.message),
         activeRunId: null,
       };
+
+    // The send RPC timed out. Unlike `error`, this says nothing about whether the turn is running,
+    // so the placeholder stays STREAMING: the answer arrives as publications on a channel keyed by
+    // conversation, not by run, and it lands with or without the runId the RPC never returned.
+    // Closing the turn here is what threw real answers away — `applyDone` folds `done` into the
+    // last streaming message, so with none left it dropped the reply and rendered nothing. The
+    // note goes in `error` for the banner only; the composer stays locked (status "sending")
+    // because a turn IS in flight. The caller arms a grace timer so this cannot hang forever —
+    // if no publication arrives it dispatches a real `error`, which is the way out (S11-F2).
+    case "send_unacked":
+      return { ...state, error: action.message };
 
     case "reset":
       return { ...initialState };
@@ -353,7 +379,27 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
     dispatch({ type: "error", message: err.message || fallback });
   }, []);
 
+  // A send whose ack was lost leaves the turn open waiting for the channel. This is the deadline on
+  // that wait: without it, a turn the service never actually received would spin forever with the
+  // composer locked — the shape of S11-F2, re-created by the very fix for it.
+  const unackedTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearUnackedGrace = React.useCallback(() => {
+    if (!unackedTimerRef.current) return;
+    clearTimeout(unackedTimerRef.current);
+    unackedTimerRef.current = null;
+  }, []);
+  const armUnackedGrace = React.useCallback(() => {
+    clearUnackedGrace();
+    unackedTimerRef.current = setTimeout(() => {
+      unackedTimerRef.current = null;
+      dispatch({ type: "error", message: UNACKED_EXPIRED_TEXT });
+    }, UNACKED_GRACE_MS);
+  }, [clearUnackedGrace]);
+  React.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
+
   const handleEvent = React.useCallback((event: ChatEvent) => {
+    // Anything at all on the channel proves the turn is alive — stand the grace timer down.
+    clearUnackedGrace();
     if (event.event !== "done") {
       if (event.event === "token") streamRef.current += event.payload.delta;
       dispatch({ type: "event", event });
@@ -488,10 +534,18 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
         });
         dispatch({ type: "run_accepted", runId: ticket.runId });
       } catch (error) {
+        // A timed-out send is not a failed turn (see ChatSendTimeoutError): the service answers on
+        // the conversation's channel, so the reply still arrives — but only if the turn is left
+        // open for it to land in. Arm a grace timer so an ack that never comes still has an exit.
+        if (error instanceof ChatSendTimeoutError) {
+          dispatch({ type: "send_unacked", message: error.message });
+          armUnackedGrace();
+          return;
+        }
         reportError(error, "ส่งข้อความไม่สำเร็จ");
       }
     },
-    [state.conversationId, state.mode, state.scheduleSeed, reportError],
+    [state.conversationId, state.mode, state.scheduleSeed, reportError, armUnackedGrace],
   );
 
   const cancel = React.useCallback(async () => {

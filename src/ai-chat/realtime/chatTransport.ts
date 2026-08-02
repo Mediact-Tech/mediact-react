@@ -34,6 +34,35 @@ export interface ChatTransportConfig {
 /** How long a turn waits for the socket before giving up and telling the user. */
 const CONNECT_TIMEOUT_MS = 5000;
 
+/**
+ * Ceiling on ONE centrifuge command, `chat.send` above all. Centrifuge's own default is 5s, and
+ * accepting a turn does not fit in it: the service persists the user message, marks the mode
+ * boundary and creates the run — four sequential round-trips to the database — before it can
+ * answer with a runId. Measured at ~7s against an off-region database, twice in a row.
+ *
+ * The 5s default is what "the WebSocket keeps dying" actually was. The socket never dropped:
+ * centrifuge rejected the call with the literal message `timeout`, which matches the
+ * connection-failure test in `toError` below, so a turn the server had ACCEPTED was reported to
+ * the user as a lost connection. Kept separate from CONNECT_TIMEOUT_MS on purpose — waiting for a
+ * socket and waiting for a database are different questions and want different answers.
+ */
+const COMMAND_TIMEOUT_MS = 30_000;
+
+/**
+ * A `chat.send` that timed out. NOT a failure: the RPC reply was lost, not the turn — the service
+ * may well have accepted it and be streaming the answer to the channel this client is still
+ * subscribed to. Callers must keep the turn open rather than close it as failed.
+ */
+export class ChatSendTimeoutError extends Error {
+  constructor() {
+    super("ส่งข้อความแล้ว แต่ระบบยังไม่ตอบรับ — กำลังรอคำตอบอยู่ค่ะ");
+    this.name = "ChatSendTimeoutError";
+  }
+}
+
+/** centrifuge's own code for a command that ran out of time (`errorCodes.timeout`). */
+const CENTRIFUGE_TIMEOUT_CODE = 1;
+
 export class ChatTransport {
   private client: Centrifuge | null = null;
   private subs: Subscription[] = [];
@@ -63,6 +92,7 @@ export class ChatTransport {
         this.pinnedToken = fresh;
         return { token: fresh };
       },
+      timeout: COMMAND_TIMEOUT_MS,
       debug: this.config.debug ?? false,
     });
 
@@ -134,8 +164,13 @@ export class ChatTransport {
       const result = await this.client.rpc("chat.send", params);
       return result.data as RunTicket;
     } catch (error) {
+      // A timed-out call is the one rejection that says nothing about the turn: the reply was
+      // lost, so the service may have accepted it and be answering on the channel already.
+      // Everything else (4401 unauthenticated, 4403 forbidden, a closed transport) genuinely
+      // means no turn was started.
+      if (isTimeout(error)) throw new ChatSendTimeoutError();
       // centrifuge rejects with its own `{code, message}` — rethrowing it raw loses the reason
-      // (4401 unauthenticated / 4403 forbidden / timeout) behind a generic "send failed".
+      // behind a generic "send failed".
       throw toError(error);
     }
   }
@@ -191,6 +226,20 @@ export class ChatTransport {
  * Other codes (4401/4403/validation) keep the raw diagnostic; those are for developers.
  */
 const CONNECTION_FAILURE = /timeout|connection|closed|unavailable|transport/i;
+
+/**
+ * Centrifuge's timeout rejection, by CODE. The message it carries is the bare word `timeout`,
+ * which also satisfies CONNECTION_FAILURE above — matching on text would classify a call that
+ * merely took too long as a dropped socket, which is the confusion this whole path exists to undo.
+ */
+function isTimeout(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: number }).code === CENTRIFUGE_TIMEOUT_CODE
+  );
+}
 
 function toError(error: unknown): Error {
   if (error instanceof Error) return error;

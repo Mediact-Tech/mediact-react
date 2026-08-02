@@ -1138,6 +1138,14 @@ function safeDecode(value) {
 // src/ai-chat/realtime/chatTransport.ts
 import { Centrifuge, State } from "centrifuge";
 var CONNECT_TIMEOUT_MS = 5e3;
+var COMMAND_TIMEOUT_MS = 3e4;
+var ChatSendTimeoutError = class extends Error {
+  constructor() {
+    super("\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E41\u0E25\u0E49\u0E27 \u0E41\u0E15\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E15\u0E2D\u0E1A\u0E23\u0E31\u0E1A \u2014 \u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E2D\u0E04\u0E33\u0E15\u0E2D\u0E1A\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30");
+    this.name = "ChatSendTimeoutError";
+  }
+};
+var CENTRIFUGE_TIMEOUT_CODE = 1;
 var ChatTransport = class {
   constructor(config) {
     this.config = config;
@@ -1164,6 +1172,7 @@ var ChatTransport = class {
         this.pinnedToken = fresh;
         return { token: fresh };
       },
+      timeout: COMMAND_TIMEOUT_MS,
       debug: this.config.debug ?? false
     });
     client.on("state", (ctx) => this.setStatus(mapState(ctx.newState)));
@@ -1220,6 +1229,7 @@ var ChatTransport = class {
       const result = await this.client.rpc("chat.send", params);
       return result.data;
     } catch (error) {
+      if (isTimeout(error)) throw new ChatSendTimeoutError();
       throw toError(error);
     }
   }
@@ -1258,6 +1268,9 @@ var ChatTransport = class {
   }
 };
 var CONNECTION_FAILURE = /timeout|connection|closed|unavailable|transport/i;
+function isTimeout(error) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === CENTRIFUGE_TIMEOUT_CODE;
+}
 function toError(error) {
   if (error instanceof Error) return error;
   if (error && typeof error === "object" && "message" in error) {
@@ -1288,6 +1301,8 @@ function mapState(state) {
 var MODE_ENTER_TEXT = "\u{1F5D3}\uFE0F \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23";
 var MODE_EXIT_TEXT = "\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23";
 var NO_ANSWER_TEXT = "(\u0E44\u0E21\u0E48\u0E21\u0E35\u0E04\u0E33\u0E15\u0E2D\u0E1A)";
+var UNACKED_GRACE_MS = 15e4;
+var UNACKED_EXPIRED_TEXT = "\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E04\u0E33\u0E15\u0E2D\u0E1A\u0E08\u0E32\u0E01\u0E23\u0E30\u0E1A\u0E1A\u0E04\u0E48\u0E30 \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E2D\u0E32\u0E08\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E16\u0E39\u0E01\u0E2A\u0E48\u0E07\u0E16\u0E36\u0E07 \u0E25\u0E2D\u0E07\u0E2A\u0E48\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E19\u0E30\u0E04\u0E30";
 var initialState = {
   conversationId: null,
   messages: [],
@@ -1360,6 +1375,16 @@ function reducer(state, action) {
         messages: failStreamingTurn(state.messages, action.message),
         activeRunId: null
       };
+    // The send RPC timed out. Unlike `error`, this says nothing about whether the turn is running,
+    // so the placeholder stays STREAMING: the answer arrives as publications on a channel keyed by
+    // conversation, not by run, and it lands with or without the runId the RPC never returned.
+    // Closing the turn here is what threw real answers away — `applyDone` folds `done` into the
+    // last streaming message, so with none left it dropped the reply and rendered nothing. The
+    // note goes in `error` for the banner only; the composer stays locked (status "sending")
+    // because a turn IS in flight. The caller arms a grace timer so this cannot hang forever —
+    // if no publication arrives it dispatches a real `error`, which is the way out (S11-F2).
+    case "send_unacked":
+      return { ...state, error: action.message };
     case "reset":
       return { ...initialState };
   }
@@ -1484,7 +1509,22 @@ function useAiChatSession(config) {
     configRef.current.onError?.(err);
     dispatch({ type: "error", message: err.message || fallback });
   }, []);
+  const unackedTimerRef = React8.useRef(null);
+  const clearUnackedGrace = React8.useCallback(() => {
+    if (!unackedTimerRef.current) return;
+    clearTimeout(unackedTimerRef.current);
+    unackedTimerRef.current = null;
+  }, []);
+  const armUnackedGrace = React8.useCallback(() => {
+    clearUnackedGrace();
+    unackedTimerRef.current = setTimeout(() => {
+      unackedTimerRef.current = null;
+      dispatch({ type: "error", message: UNACKED_EXPIRED_TEXT });
+    }, UNACKED_GRACE_MS);
+  }, [clearUnackedGrace]);
+  React8.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
   const handleEvent = React8.useCallback((event) => {
+    clearUnackedGrace();
     if (event.event !== "done") {
       if (event.event === "token") streamRef.current += event.payload.delta;
       dispatch({ type: "event", event });
@@ -1594,10 +1634,15 @@ function useAiChatSession(config) {
         });
         dispatch({ type: "run_accepted", runId: ticket.runId });
       } catch (error) {
+        if (error instanceof ChatSendTimeoutError) {
+          dispatch({ type: "send_unacked", message: error.message });
+          armUnackedGrace();
+          return;
+        }
         reportError(error, "\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08");
       }
     },
-    [state.conversationId, state.mode, state.scheduleSeed, reportError]
+    [state.conversationId, state.mode, state.scheduleSeed, reportError, armUnackedGrace]
   );
   const cancel = React8.useCallback(async () => {
     const runId = state.activeRunId;
