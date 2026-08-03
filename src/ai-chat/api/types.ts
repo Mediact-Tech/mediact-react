@@ -29,6 +29,12 @@ export type MessageRole = "user" | "assistant" | "system";
 export interface TranscriptMessage {
   role: MessageRole;
   content: string;
+  /**
+   * The confirm card this turn drew, when it is STILL answerable — the service drops the ones whose change
+   * has already been saved or dropped, so a replayed transcript never offers a second confirm on something
+   * that is done. Absent on every other turn.
+   */
+  widget?: WidgetEnvelope;
 }
 
 /** `POST /v2/ai/transport/subscribe` — what the FE needs to open the socket. */

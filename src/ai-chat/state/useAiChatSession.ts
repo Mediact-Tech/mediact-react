@@ -623,6 +623,10 @@ function replayTranscript(transcript: TranscriptMessage[]): {
       role: message.role,
       // Sentinels are directives, never text — and replay must not re-trigger them either.
       content: message.role === "assistant" ? stripSentinels(message.content) : message.content,
+      // A pending change outlives the socket, so its confirm card has to as well: without this, reloading
+      // mid-handshake left the reply's "กดยืนยันได้เลย" pointing at buttons that no longer existed. The
+      // service only sends back a card that can still be answered, so anything here is safe to render.
+      widgets: message.widget ? [message.widget] : undefined,
     };
   });
 
