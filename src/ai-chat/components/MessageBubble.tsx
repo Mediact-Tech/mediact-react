@@ -10,10 +10,15 @@ export interface MessageBubbleProps {
   message: ChatMessage;
   labels: AiChatLabels;
   onWidgetAction: (reply: string) => void;
-  busy?: boolean;
+  /**
+   * Are this turn's widget buttons unanswerable? True while a turn is in flight, and for every card that is
+   * no longer the last thing that happened — a card whose change has been confirmed or cancelled still shows
+   * what it was, but pressing it would answer for a proposal that is gone.
+   */
+  widgetsDisabled?: boolean;
 }
 
-export function MessageBubble({ message, labels, onWidgetAction, busy }: MessageBubbleProps) {
+export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps) {
   // `system` rows are the scheduling-span boundary markers the transcript replays — a divider, not a turn.
   if (message.role === "system") {
     return (
@@ -63,7 +68,7 @@ export function MessageBubble({ message, labels, onWidgetAction, busy }: Message
             key={`${widget.type}-${index}`}
             widget={widget}
             onAction={onWidgetAction}
-            disabled={busy}
+            disabled={widgetsDisabled}
           />
         ))}
 

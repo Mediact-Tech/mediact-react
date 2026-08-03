@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { WidgetRenderer } from "./WidgetRenderer";
+import { MessageList } from "./MessageList";
+import { defaultLabels } from "../labels";
 import type { ConfirmWidget, WidgetEnvelope } from "../api/types";
 
 /**
@@ -45,5 +47,50 @@ describe("WidgetRenderer — confirm", () => {
     expect(confirm.disabled).toBe(true);
     confirm.click();
     expect(onAction).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Found by running it: cancelling a change left its own card sitting above the "ยกเลิกแล้ว" reply with both
+ * buttons still pressable, so Confirm could answer for a proposal that no longer existed. A card is live
+ * only while it is the last thing that happened.
+ */
+describe("MessageList — only the newest card can be answered", () => {
+  const turn = (id: string, content: string, withCard = false) => ({
+    id,
+    role: "assistant" as const,
+    content,
+    widgets: withCard ? [card] : undefined,
+  });
+
+  const pressable = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll<HTMLButtonElement>('[data-slot="ai-chat-widget"] button')).filter(
+      (button) => !button.disabled,
+    ).length;
+
+  it("keeps the buttons live while the card is the last turn", () => {
+    const { container } = render(
+      <MessageList
+        messages={[turn("m1", "เตรียมไว้แล้ว", true)]}
+        labels={defaultLabels}
+        busy={false}
+        onWidgetAction={vi.fn()}
+      />,
+    );
+    expect(pressable(container)).toBe(2);
+  });
+
+  it("un-presses a card once a reply has come after it", () => {
+    const { container } = render(
+      <MessageList
+        messages={[turn("m1", "เตรียมไว้แล้ว", true), turn("m2", "ยกเลิกรายการที่เตรียมไว้แล้วค่ะ")]}
+        labels={defaultLabels}
+        busy={false}
+        onWidgetAction={vi.fn()}
+      />,
+    );
+    expect(pressable(container)).toBe(0);
+    // …but the card is still THERE: the transcript must keep showing what was offered.
+    expect(container.querySelectorAll('[data-slot="ai-chat-widget"]')).toHaveLength(1);
   });
 });

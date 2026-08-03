@@ -64,13 +64,17 @@ export function MessageList({
       data-slot="ai-chat-messages"
       className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
     >
-      {messages.map((message) => (
+      {messages.map((message, index) => (
         <MessageBubble
           key={message.id}
           message={message}
           labels={labels}
           onWidgetAction={onWidgetAction}
-          busy={busy}
+          // A card is answerable only while it is the LAST thing that happened. Seen live: cancelling a
+          // change left its own card sitting above the "ยกเลิกแล้ว" reply with both buttons still pressable —
+          // Confirm then answered a proposal that no longer existed. Anything after the card (the reply to
+          // it, the next question) means it has been dealt with; the summary stays, the buttons do not.
+          widgetsDisabled={busy || index !== messages.length - 1}
         />
       ))}
       <div ref={endRef} />
