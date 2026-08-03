@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
-import { CalendarDays, History, MessageCircle, Plus, X } from "lucide-react";
+import { CalendarDays, ChevronsLeft, ChevronsRight, History, MessageCircle, Plus } from "lucide-react";
 import type { ChatMode, ContextUsage, ConversationListItem } from "../api/types";
 import type { AiChatLabels, ChatMessage, SessionStatus } from "../types";
 import type { TransportStatus } from "../realtime/chatTransport";
@@ -108,9 +108,19 @@ export function ChatDrawer(props: ChatDrawerProps) {
             <IconButton label={labels.newChat} onClick={onNewChat}>
               <Plus className="size-4" />
             </IconButton>
+            {/* A collapse chevron, not an ✕. Putting the panel away keeps the thread — `start()` resumes
+                the remembered conversation, so reopening lands back in the same transcript — but an ✕ in
+                the top-right corner is the universal "close this / discard it" affordance, and users read
+                it as ending the chat and starting over. The chevron points at the edge the drawer came
+                from, which is what actually happens to it. "New chat" is the button beside it, deliberately
+                distinct. */}
             <RadixDialog.Close asChild>
-              <IconButton label={labels.close}>
-                <X className="size-4" />
+              <IconButton label={labels.minimize}>
+                {position === "bottom-left" ? (
+                  <ChevronsLeft className="size-4" />
+                ) : (
+                  <ChevronsRight className="size-4" />
+                )}
               </IconButton>
             </RadixDialog.Close>
           </header>

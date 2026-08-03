@@ -56,7 +56,14 @@ export interface AiChatLabels {
   /** Sub-line on the error bar while the socket is auto-redialing (S11-F1). */
   reconnecting: string;
   retry: string;
-  close: string;
+  /**
+   * The button that puts the panel away — NOT a "close".
+   *
+   * Hiding the drawer keeps the thread: `start()` resumes the remembered conversation, so reopening lands
+   * back in the same transcript. An ✕ in the corner said the opposite, and users read it as "end this chat",
+   * which is why the glyph is a collapse chevron and this label says so in words.
+   */
+  minimize: string;
   committed: string;
   notCommitted: string;
   thinking: string;

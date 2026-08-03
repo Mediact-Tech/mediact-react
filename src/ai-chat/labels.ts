@@ -17,7 +17,7 @@ export const defaultLabels: AiChatLabels = {
   disconnected: "การเชื่อมต่อหลุด",
   reconnecting: "กำลังเชื่อมต่อใหม่อัตโนมัติ…",
   retry: "ลองใหม่",
-  close: "ปิด",
+  minimize: "ย่อหน้าต่างแชท (บทสนทนายังอยู่)",
   committed: "บันทึกแล้ว",
   notCommitted: "ยังไม่ได้บันทึก",
   thinking: "กำลังคิด…",

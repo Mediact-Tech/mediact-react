@@ -147,7 +147,10 @@ export function AiChatWidget({
         <FloatingButton
           open={open}
           onClick={() => setOpen(!open)}
-          label={labels.launcher}
+          // The button's job changes with the drawer: it opens the assistant, then it puts it away. A
+          // screen reader that hears "ผู้ช่วย AI" on a button that hides the panel learns the same wrong
+          // thing the ✕ used to teach sighted users.
+          label={open ? labels.minimize : labels.launcher}
           position={position}
           className={className}
         />

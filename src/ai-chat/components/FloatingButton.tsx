@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Sparkles, X } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Sparkles } from "lucide-react";
 import { cn } from "../lib/cn";
 
 export interface FloatingButtonProps {
@@ -52,7 +52,13 @@ export const FloatingButton = React.forwardRef<HTMLButtonElement, FloatingButton
         )}
       >
         {open ? (
-          <X className="size-6" />
+          // Matches the drawer's own header button: the same collapse chevron, pointing at the same edge.
+          // Two different glyphs for one action taught two different meanings — and an ✕ taught the wrong one.
+          position === "bottom-left" ? (
+            <ChevronsLeft className="size-6" />
+          ) : (
+            <ChevronsRight className="size-6" />
+          )
         ) : (
           <>
             <Sparkles className="size-6 shrink-0 transition-transform group-hover:scale-110" />
