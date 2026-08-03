@@ -85,7 +85,7 @@ function resolveTokenProvider(auth, hostGetToken, onError) {
 // src/ai-chat/components/ChatDrawer.tsx
 import * as React6 from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
-import { CalendarDays, History, MessageCircle, Plus, X } from "lucide-react";
+import { CalendarDays, ChevronsLeft, ChevronsRight, History, MessageCircle, Plus } from "lucide-react";
 
 // src/ai-chat/lib/cn.ts
 import { clsx } from "clsx";
@@ -579,7 +579,7 @@ function ScheduleDiff({ payload }) {
 
 // src/ai-chat/components/MessageBubble.tsx
 import { jsx as jsx7, jsxs as jsxs6 } from "react/jsx-runtime";
-function MessageBubble({ message, labels, onWidgetAction, busy }) {
+function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
   if (message.role === "system") {
     return /* @__PURE__ */ jsxs6("div", { className: "my-2 flex items-center gap-2", "data-slot": "ai-chat-divider", children: [
       /* @__PURE__ */ jsx7("span", { className: "h-px flex-1 bg-border-subtle" }),
@@ -611,7 +611,7 @@ function MessageBubble({ message, labels, onWidgetAction, busy }) {
           {
             widget,
             onAction: onWidgetAction,
-            disabled: busy
+            disabled: widgetsDisabled
           },
           `${widget.type}-${index}`
         )),
@@ -697,13 +697,13 @@ function MessageList({
       "data-slot": "ai-chat-messages",
       className: "flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4",
       children: [
-        messages.map((message) => /* @__PURE__ */ jsx8(
+        messages.map((message, index) => /* @__PURE__ */ jsx8(
           MessageBubble,
           {
             message,
             labels,
             onWidgetAction,
-            busy
+            widgetsDisabled: busy || index !== messages.length - 1
           },
           message.id
         )),
@@ -765,7 +765,7 @@ function ChatDrawer(props) {
           /* @__PURE__ */ jsx9(ContextMeter, { usage: contextUsage ?? null, labels, className: "mr-1" }),
           /* @__PURE__ */ jsx9(IconButton, { label: labels.history, onClick: () => setHistoryOpen((v) => !v), active: historyOpen, children: /* @__PURE__ */ jsx9(History, { className: "size-4" }) }),
           /* @__PURE__ */ jsx9(IconButton, { label: labels.newChat, onClick: onNewChat, children: /* @__PURE__ */ jsx9(Plus, { className: "size-4" }) }),
-          /* @__PURE__ */ jsx9(RadixDialog.Close, { asChild: true, children: /* @__PURE__ */ jsx9(IconButton, { label: labels.close, children: /* @__PURE__ */ jsx9(X, { className: "size-4" }) }) })
+          /* @__PURE__ */ jsx9(RadixDialog.Close, { asChild: true, children: /* @__PURE__ */ jsx9(IconButton, { label: labels.minimize, children: position === "bottom-left" ? /* @__PURE__ */ jsx9(ChevronsLeft, { className: "size-4" }) : /* @__PURE__ */ jsx9(ChevronsRight, { className: "size-4" }) }) })
         ] }),
         (showModeToggle || mode === "schedule") && onModeChange && /* @__PURE__ */ jsxs8("div", { className: "flex gap-1 border-b border-border-subtle bg-white px-4 py-2", children: [
           /* @__PURE__ */ jsx9(
@@ -922,7 +922,7 @@ function ModeChip({
 
 // src/ai-chat/components/FloatingButton.tsx
 import * as React7 from "react";
-import { Sparkles as Sparkles2, X as X2 } from "lucide-react";
+import { ChevronsLeft as ChevronsLeft2, ChevronsRight as ChevronsRight2, Sparkles as Sparkles2 } from "lucide-react";
 import { Fragment as Fragment2, jsx as jsx10, jsxs as jsxs9 } from "react/jsx-runtime";
 var FloatingButton = React7.forwardRef(
   function FloatingButton2({ open, onClick, label, position = "bottom-right", className }, ref) {
@@ -951,7 +951,11 @@ var FloatingButton = React7.forwardRef(
           "cursor-pointer",
           className
         ),
-        children: open ? /* @__PURE__ */ jsx10(X2, { className: "size-6" }) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
+        children: open ? (
+          // Matches the drawer's own header button: the same collapse chevron, pointing at the same edge.
+          // Two different glyphs for one action taught two different meanings — and an ✕ taught the wrong one.
+          position === "bottom-left" ? /* @__PURE__ */ jsx10(ChevronsLeft2, { className: "size-6" }) : /* @__PURE__ */ jsx10(ChevronsRight2, { className: "size-6" })
+        ) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
           /* @__PURE__ */ jsx10(Sparkles2, { className: "size-6 shrink-0 transition-transform group-hover:scale-110" }),
           /* @__PURE__ */ jsx10("span", { className: "hidden text-sm font-medium whitespace-nowrap sm:inline", children: label })
         ] })
@@ -977,7 +981,7 @@ var defaultLabels = {
   disconnected: "\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E2B\u0E25\u0E38\u0E14",
   reconnecting: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34\u2026",
   retry: "\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48",
-  close: "\u0E1B\u0E34\u0E14",
+  minimize: "\u0E22\u0E48\u0E2D\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E41\u0E0A\u0E17 (\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E22\u0E31\u0E07\u0E2D\u0E22\u0E39\u0E48)",
   committed: "\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E41\u0E25\u0E49\u0E27",
   notCommitted: "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01",
   thinking: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E04\u0E34\u0E14\u2026",
@@ -1701,7 +1705,11 @@ function replayTranscript(transcript) {
       id: nextId(),
       role: message.role,
       // Sentinels are directives, never text — and replay must not re-trigger them either.
-      content: message.role === "assistant" ? stripSentinels(message.content) : message.content
+      content: message.role === "assistant" ? stripSentinels(message.content) : message.content,
+      // A pending change outlives the socket, so its confirm card has to as well: without this, reloading
+      // mid-handshake left the reply's "กดยืนยันได้เลย" pointing at buttons that no longer existed. The
+      // service only sends back a card that can still be answered, so anything here is safe to render.
+      widgets: message.widget ? [message.widget] : void 0
     };
   });
   return { messages, mode: seed ? "schedule" : "assistant", seed };
@@ -1821,7 +1829,7 @@ function AiChatWidget({
       {
         open,
         onClick: () => setOpen(!open),
-        label: labels.launcher,
+        label: open ? labels.minimize : labels.launcher,
         position,
         className
       }

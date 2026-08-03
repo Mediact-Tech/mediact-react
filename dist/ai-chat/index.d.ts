@@ -27,6 +27,12 @@ type MessageRole = "user" | "assistant" | "system";
 interface TranscriptMessage {
     role: MessageRole;
     content: string;
+    /**
+     * The confirm card this turn drew, when it is STILL answerable — the service drops the ones whose change
+     * has already been saved or dropped, so a replayed transcript never offers a second confirm on something
+     * that is done. Absent on every other turn.
+     */
+    widget?: WidgetEnvelope;
 }
 /** `POST /v2/ai/transport/subscribe` — what the FE needs to open the socket. */
 interface ConnectInfo {
@@ -256,7 +262,14 @@ interface AiChatLabels {
     /** Sub-line on the error bar while the socket is auto-redialing (S11-F1). */
     reconnecting: string;
     retry: string;
-    close: string;
+    /**
+     * The button that puts the panel away — NOT a "close".
+     *
+     * Hiding the drawer keeps the thread: `start()` resumes the remembered conversation, so reopening lands
+     * back in the same transcript. An ✕ in the corner said the opposite, and users read it as "end this chat",
+     * which is why the glyph is a collapse chevron and this label says so in words.
+     */
+    minimize: string;
     committed: string;
     notCommitted: string;
     thinking: string;
@@ -505,9 +518,14 @@ interface MessageBubbleProps {
     message: ChatMessage;
     labels: AiChatLabels;
     onWidgetAction: (reply: string) => void;
-    busy?: boolean;
+    /**
+     * Are this turn's widget buttons unanswerable? True while a turn is in flight, and for every card that is
+     * no longer the last thing that happened — a card whose change has been confirmed or cancelled still shows
+     * what it was, but pressing it would answer for a proposal that is gone.
+     */
+    widgetsDisabled?: boolean;
 }
-declare function MessageBubble({ message, labels, onWidgetAction, busy }: MessageBubbleProps): react_jsx_runtime.JSX.Element;
+declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): react_jsx_runtime.JSX.Element;
 
 interface ComposerProps {
     onSend: (text: string) => void;
