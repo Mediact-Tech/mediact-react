@@ -13,7 +13,9 @@ function cn(...inputs) {
 // src/ui/Button.tsx
 import { jsx, jsxs } from "react/jsx-runtime";
 var buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all rounded-sm cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0",
+  // rounded-md to match SolidButton / OutlineButton / AddButton — every button in the DS now shares
+  // one corner radius.
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -121,11 +123,14 @@ var solidButtonVariants = cva2(
   "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap px-3 py-2 text-sm font-medium leading-6 tracking-normal text-slate-50 transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
+      // rounded-md on every variant. `success` and `primary` used to be rounded-sm, so a screen that
+      // mixed variants — or mixed SolidButton with AddButton/OutlineButton — showed two different
+      // corner radii on buttons of the same kind.
       variant: {
-        info: "rounded-md bg-brand-active shadow-sm hover:bg-info-blue-primary-hover disabled:hover:bg-brand-active",
+        info: "rounded-md bg-brand-active shadow-sm hover:bg-brand-active-hover disabled:hover:bg-brand-active",
         warning: "rounded-md bg-warning-normal shadow-md hover:bg-warning-hover disabled:hover:bg-warning-normal",
-        success: "rounded-sm bg-success-green-primary shadow-sm hover:bg-success-green-primary-hover disabled:hover:bg-success-green-primary",
-        primary: "rounded-sm bg-brand shadow-xs hover:bg-brand-hover disabled:hover:bg-brand"
+        success: "rounded-md bg-success-green-primary shadow-sm hover:bg-success-green-primary-hover disabled:hover:bg-success-green-primary",
+        primary: "rounded-md bg-brand shadow-xs hover:bg-brand-hover disabled:hover:bg-brand"
       },
       size: {
         sm: "h-8 [&_svg:not([class*='size-'])]:size-4",
