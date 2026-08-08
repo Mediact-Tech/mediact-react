@@ -232,11 +232,24 @@ export interface WidgetEnvelope<T extends WidgetType = WidgetType> {
   payload: WidgetPayloadMap[T];
 }
 
+/**
+ * Which turn an event belongs to (`ai_runs.id`), carried on every member of the union below.
+ *
+ * `chat:{conversationId}` is shared by every client the owner has open, so two browser tabs on the same
+ * conversation both receive every publication. Without a turn name a client can only guess whose tokens
+ * these are — and the guess it used to make ("I have a bubble open, so they must be mine") is wrong in
+ * exactly the case that matters. Optional: an older service sends nothing here, and the session falls
+ * back to that same guess rather than breaking.
+ */
+interface TurnStamp {
+  turnId?: string;
+}
+
 /** One message on `chat:{conversationId}` — the discriminated union of the §4 protocol. */
 export type ChatEvent =
-  | { event: "token"; payload: TokenPayload }
-  | { event: "tool_call"; payload: ToolCallPayload }
-  | { event: "widget"; payload: WidgetEnvelope }
-  | { event: "proposal"; payload: ProposalPayload }
-  | { event: "task_state"; payload: TaskStatePayload }
-  | { event: "done"; payload: DonePayload };
+  | ({ event: "token"; payload: TokenPayload } & TurnStamp)
+  | ({ event: "tool_call"; payload: ToolCallPayload } & TurnStamp)
+  | ({ event: "widget"; payload: WidgetEnvelope } & TurnStamp)
+  | ({ event: "proposal"; payload: ProposalPayload } & TurnStamp)
+  | ({ event: "task_state"; payload: TaskStatePayload } & TurnStamp)
+  | ({ event: "done"; payload: DonePayload } & TurnStamp);
