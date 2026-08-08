@@ -73,6 +73,9 @@ beforeEach(() => {
   emit = null;
   transcript = [];
   sendResult = async () => ({ runId: "run-1" });
+  // `start()` remembers the last conversation here. Left standing between tests it makes the next `start()`
+  // replay a transcript that test never set up — which is how one of these passed for the wrong reason.
+  window.localStorage.clear();
 });
 
 afterEach(() => {
@@ -184,25 +187,53 @@ describe("useAiChatSession — a turn started in another tab", () => {
     expect(hook.result.current.state.status).toBe("ready");
   });
 
-  // The question is written to `ai_messages` before the run is queued but never published, so it is the
-  // one part of the turn a follower cannot hear — without the resync the answer arrives unattributed.
-  it("pulls in the question that was typed in the other tab", async () => {
-    transcript = [{ role: "user", content: "เดือนนี้ใครขึ้นเวรดึกบ้าง" } as TranscriptMessage];
+  // The question rides the channel ahead of the answer, so a follower hears the whole turn in order
+  // instead of having to go read the missing half back over HTTP.
+  it("shows the question typed in the other tab, above the answer", async () => {
     const hook = await startedSession();
 
     await act(async () => {
+      emit!({
+        event: "user_turn",
+        payload: { message: "เดือนนี้ใครขึ้นเวรดึกบ้าง" },
+        turnId: "run-9",
+      } as ChatEvent);
       emit!({ event: "token", payload: { delta: "2 คนค่ะ" }, turnId: "run-9" } as ChatEvent);
     });
 
-    await waitFor(() =>
-      expect(
-        hook.result.current.state.messages.some(
-          (m) => m.role === "user" && m.content === "เดือนนี้ใครขึ้นเวรดึกบ้าง",
-        ),
-      ).toBe(true),
-    );
-    // …and the bubble the answer is streaming into survived the resync.
-    expect(reply(hook)?.content).toBe("2 คนค่ะ");
+    const roles = hook.result.current.state.messages.map((m) => `${m.role}:${m.content}`);
+    expect(roles).toEqual(["user:เดือนนี้ใครขึ้นเวรดึกบ้าง", "assistant:2 คนค่ะ"]);
+  });
+
+  // The sender already drew the question when it hit send; the echo must not draw it a second time.
+  it("does not echo the question back onto the tab that typed it", async () => {
+    const hook = await startedSession();
+    await act(async () => {
+      await hook.result.current.send("ถามเอง");
+    });
+
+    await act(async () => {
+      emit!({ event: "user_turn", payload: { message: "ถามเอง" }, turnId: "run-1" } as ChatEvent);
+    });
+
+    expect(hook.result.current.state.messages.filter((m) => m.role === "user")).toHaveLength(1);
+  });
+
+  // ai-service deploys on its own schedule, so an event name this build has never heard of is a normal
+  // event. It used to fall off the end of `applyEvent`'s switch and return undefined — which the reducer
+  // then made the entire session state, white-screening the drawer.
+  it("survives an event name it does not know", async () => {
+    const hook = await startedSession();
+    await act(async () => {
+      await hook.result.current.send("ถามอะไรสักอย่าง");
+    });
+
+    await act(async () => {
+      emit!({ event: "something_from_the_future", payload: { x: 1 } } as unknown as ChatEvent);
+    });
+
+    expect(hook.result.current.state.messages.length).toBeGreaterThan(0);
+    expect(reply(hook)?.streaming).toBe(true);
   });
 
   it("locks the composer while the other tab's turn runs", async () => {
@@ -291,32 +322,5 @@ describe("useAiChatSession — a turn started in another tab", () => {
     expect(assistants).toHaveLength(2);
     expect(assistants[0]?.streaming).toBe(false);
     expect(assistants[1]?.content).toBe("คำตอบของอีกแท็บ");
-  });
-});
-
-describe("useAiChatSession — the follower's resync races the turn", () => {
-  // Measured live, two tabs on one conversation: the fetch landed after the service had written the
-  // assistant row, so the answer arrived from storage AND from the stream and was rendered twice.
-  it("does not print the answer twice when the transcript already has it", async () => {
-    transcript = [
-      { role: "user", content: "ตอบสั้นๆ ว่าโอเค" },
-      { role: "assistant", content: "โอเคค่ะ" },
-    ] as TranscriptMessage[];
-    const hook = await startedSession();
-
-    await act(async () => {
-      emit!({ event: "token", payload: { delta: "โอเคค่ะ" }, turnId: "run-9" } as ChatEvent);
-      emit!({ event: "done", payload: {}, turnId: "run-9" } as ChatEvent);
-    });
-
-    await waitFor(() =>
-      expect(
-        hook.result.current.state.messages.some((m) => m.role === "user"),
-      ).toBe(true),
-    );
-    const answers = hook.result.current.state.messages.filter(
-      (m) => m.role === "assistant" && m.content === "โอเคค่ะ",
-    );
-    expect(answers).toHaveLength(1);
   });
 });

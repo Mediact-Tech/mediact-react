@@ -82,12 +82,24 @@ export interface ChatSendParams extends ChatScope {
 /* ── Centrifugo event protocol (chat:{id} / task:{id}) ────────────────────── */
 
 export type ChatEventName =
+  | "user_turn"
   | "token"
   | "tool_call"
   | "widget"
   | "proposal"
   | "task_state"
   | "done";
+
+/**
+ * The question that opened a turn.
+ *
+ * Every other event is the ASSISTANT half of a turn, so the channel used to carry only half a conversation:
+ * a client that did not type the question had no way to hear it. Published before the answer is queued, so
+ * it is always on screen before the first token.
+ */
+export interface UserTurnPayload {
+  message: string;
+}
 
 export interface TokenPayload {
   delta: string;
@@ -247,6 +259,7 @@ interface TurnStamp {
 
 /** One message on `chat:{conversationId}` — the discriminated union of the §4 protocol. */
 export type ChatEvent =
+  | ({ event: "user_turn"; payload: UserTurnPayload } & TurnStamp)
   | ({ event: "token"; payload: TokenPayload } & TurnStamp)
   | ({ event: "tool_call"; payload: ToolCallPayload } & TurnStamp)
   | ({ event: "widget"; payload: WidgetEnvelope } & TurnStamp)

@@ -90,9 +90,9 @@ type Action =
     }
   | { type: "set_mode"; mode: ChatMode; seed: ScheduleSeed | null; greeting: string }
   /** A turn started somewhere else on this conversation (the user's other tab) — open a bubble for it. */
-  | { type: "follow_start"; turnId: string | null; bubbleId: string }
-  /** Replace everything BEFORE `keepFromId` with the server's transcript. */
-  | { type: "resync"; messages: ChatMessage[]; keepFromId: string }
+  | { type: "follow_start"; turnId: string | null }
+  /** The question of a turn someone else started, straight off the channel. */
+  | { type: "remote_question"; content: string }
   | { type: "error"; message: string }
   /** The send RPC timed out — the turn may be running. Keeps it open; see the reducer case. */
   | { type: "send_unacked"; message: string }
@@ -188,7 +188,7 @@ function reducer(state: SessionState, action: Action): SessionState {
         // `streaming` would spin a placeholder forever. (Two turns genuinely overlapping means both tabs
         // hit send inside the same instant — rare, and this closes the first one honestly rather than
         // garbling the two answers into one bubble.)
-        messages: [...closeOpenTurns(state.messages), remoteTurn(action.bubbleId)],
+        messages: [...closeOpenTurns(state.messages), remoteTurn()],
         status: "streaming",
         // Adopt the run so Cancel works from here too: it is the same person and the same conversation,
         // just a different window.
@@ -196,22 +196,13 @@ function reducer(state: SessionState, action: Action): SessionState {
         error: null,
       };
 
-    // The transcript is authoritative for everything already closed — it is where the user message of a
-    // turn started elsewhere comes from, since that message was never published to the channel.
-    //
-    // Spliced at the followed bubble rather than "keep whatever is still streaming": the fetch races the
-    // turn, and a short turn finishes first. Keying on `streaming` then dropped the finished bubble on the
-    // floor — the transcript has no row for it yet either, since the assistant message is written after
-    // `done` — so the follower lost the very answer it had just received.
-    case "resync": {
-      const at = state.messages.findIndex((m) => m.id === action.keepFromId);
-      // Bubble gone (reset, new conversation, another turn took over) → the fetch is stale, ignore it.
-      if (at < 0) return state;
-      // Strictly additive: a resync exists to supply what this tab never heard, so an empty transcript
-      // contributes nothing and must not be allowed to erase what the user has already read.
-      if (!action.messages.length) return state;
-      return { ...state, messages: [...action.messages, ...state.messages.slice(at)] };
-    }
+    // The question of a turn this tab did not type. It arrives before the answer's first token, so it lands
+    // above the bubble `follow_start` is about to create, in the order a reader expects.
+    case "remote_question":
+      return {
+        ...state,
+        messages: [...state.messages, { id: nextId(), role: "user", content: action.content }],
+      };
 
     case "error":
       return {
@@ -290,6 +281,13 @@ function applyEvent(
 
     case "task_state":
       return state;
+
+    // Forward compatibility, deliberately at the cost of exhaustiveness checking. These events come off a
+    // wire from a service that deploys on its own schedule, so a name this build has never heard of is a
+    // NORMAL event, not a bug — and falling off the end of this switch returned `undefined`, which the
+    // reducer then made the whole session state. That is a white screen, not a dropped event.
+    default:
+      return state;
   }
 }
 
@@ -335,8 +333,8 @@ function lastStreamingIndex(messages: ChatMessage[]): number {
 }
 
 /** An assistant bubble for a turn this tab did not start, ready to receive the same event stream. */
-const remoteTurn = (id: string): ChatMessage => ({
-  id,
+const remoteTurn = (): ChatMessage => ({
+  id: nextId(),
   role: "assistant",
   content: "",
   streaming: true,
@@ -467,26 +465,6 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
   const turnRef = React.useRef<{ id: string | null; own: boolean } | null>(null);
 
   /**
-   * Pull the closed part of the log from the server. Needed when a turn starts in another tab: the user's
-   * question is written to `ai_messages` before the run is queued but is never published to the channel, so
-   * it is the one piece of the turn this tab cannot hear.
-   */
-  const resyncTranscript = React.useCallback(
-    async (keepFromId: string) => {
-      const conversationId = stateRef.current.conversationId;
-      if (!conversationId) return;
-      try {
-        const transcript = await api.getMessages(conversationId);
-        const stored = untilLastQuestion(replayTranscript(transcript).messages);
-        dispatch({ type: "resync", messages: stored, keepFromId });
-      } catch {
-        /* Following still works without it — the answer streams in, only the question is missing. */
-      }
-    },
-    [api],
-  );
-
-  /**
    * Work out whose turn this event belongs to, making sure there is a bubble for it either way.
    * Returns true when the turn was started from this tab.
    */
@@ -501,16 +479,33 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
         return current.own;
       }
       turnRef.current = { id: turnId ?? null, own: false };
-      const bubbleId = nextId();
-      dispatch({ type: "follow_start", turnId: turnId ?? null, bubbleId });
-      void resyncTranscript(bubbleId);
+      dispatch({ type: "follow_start", turnId: turnId ?? null });
       return false;
     },
-    [resyncTranscript],
+    [],
   );
+
+  /**
+   * Is the turn this event names the one THIS tab sent? Read-only — unlike `adoptTurn` it claims nothing,
+   * because the question of a turn must not open a bubble; the first token does that.
+   */
+  const isOwnTurn = React.useCallback((turnId?: string): boolean => {
+    const current = turnRef.current;
+    if (!current?.own) return false;
+    return !turnId || current.id === null || current.id === turnId;
+  }, []);
 
   const handleEvent = React.useCallback(
     (event: ChatEvent) => {
+      // The question. The tab that typed it already rendered it optimistically on send, so only the others
+      // put it on screen — and none of them claims the turn here, or the answer would have no bubble.
+      if (event.event === "user_turn") {
+        if (!isOwnTurn(event.turnId)) {
+          dispatch({ type: "remote_question", content: event.payload.message });
+        }
+        return;
+      }
+
       const own = adoptTurn(event.turnId);
       // Our own turn being alive is what the grace timer waits for. Another tab's turn says nothing about
       // whether the message THIS tab sent ever arrived, so it must not stand the timer down.
@@ -545,7 +540,7 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
         greeting: buildScheduleGreeting(labelsRef.current, seed),
       });
     },
-    [adoptTurn, clearUnackedGrace],
+    [adoptTurn, isOwnTurn, clearUnackedGrace],
   );
 
   const start = React.useCallback(
@@ -767,24 +762,6 @@ function replayTranscript(transcript: TranscriptMessage[]): {
   });
 
   return { messages, mode: seed ? "schedule" : "assistant", seed };
-}
-
-/**
- * The transcript up to and including its last question.
- *
- * What follows a question is the answer to it — and for the turn being followed, that answer is the live
- * bubble's job. The fetch races the turn: measured with two tabs on one conversation, it landed after the
- * service had already written the assistant row, so splicing the whole transcript in printed the reply
- * twice, once from storage and once from the stream.
- *
- * Cutting here rather than comparing text: the rows carry no turn id, so "does this row belong to the turn
- * I am watching" can only be answered structurally — and the question of a turn is always written before
- * its first token goes out, which is what makes the last question a reliable boundary.
- */
-function untilLastQuestion(messages: ChatMessage[]): ChatMessage[] {
-  const last = messages.map((m) => m.role).lastIndexOf("user");
-  // No question at all — nothing to reason about, keep what the server sent.
-  return last < 0 ? messages : messages.slice(0, last + 1);
 }
 
 function readStored(key: string): string | null {
