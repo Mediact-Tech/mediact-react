@@ -89,6 +89,10 @@ type Action =
       greeting: string;
     }
   | { type: "set_mode"; mode: ChatMode; seed: ScheduleSeed | null; greeting: string }
+  /** A turn started somewhere else on this conversation (the user's other tab) — open a bubble for it. */
+  | { type: "follow_start"; turnId: string | null; bubbleId: string }
+  /** Replace everything BEFORE `keepFromId` with the server's transcript. */
+  | { type: "resync"; messages: ChatMessage[]; keepFromId: string }
   | { type: "error"; message: string }
   /** The send RPC timed out — the turn may be running. Keeps it open; see the reducer case. */
   | { type: "send_unacked"; message: string }
@@ -171,6 +175,42 @@ function reducer(state: SessionState, action: Action): SessionState {
         scheduleSeed: entering ? (action.seed ?? state.scheduleSeed) : null,
         messages,
       };
+    }
+
+    // The user is talking to this conversation from another tab. Both tabs are subscribed to
+    // `chat:{conversationId}` and both receive every publication — but until now only the tab that called
+    // `send` had a bubble to fold them into, so the other one dropped the whole turn on the floor and sat
+    // there looking like an empty chat. Give the turn a bubble here and the existing fold logic just works.
+    case "follow_start":
+      return {
+        ...state,
+        // Anything still open belongs to a turn that is over as far as this screen can tell; leaving it
+        // `streaming` would spin a placeholder forever. (Two turns genuinely overlapping means both tabs
+        // hit send inside the same instant — rare, and this closes the first one honestly rather than
+        // garbling the two answers into one bubble.)
+        messages: [...closeOpenTurns(state.messages), remoteTurn(action.bubbleId)],
+        status: "streaming",
+        // Adopt the run so Cancel works from here too: it is the same person and the same conversation,
+        // just a different window.
+        activeRunId: action.turnId,
+        error: null,
+      };
+
+    // The transcript is authoritative for everything already closed — it is where the user message of a
+    // turn started elsewhere comes from, since that message was never published to the channel.
+    //
+    // Spliced at the followed bubble rather than "keep whatever is still streaming": the fetch races the
+    // turn, and a short turn finishes first. Keying on `streaming` then dropped the finished bubble on the
+    // floor — the transcript has no row for it yet either, since the assistant message is written after
+    // `done` — so the follower lost the very answer it had just received.
+    case "resync": {
+      const at = state.messages.findIndex((m) => m.id === action.keepFromId);
+      // Bubble gone (reset, new conversation, another turn took over) → the fetch is stale, ignore it.
+      if (at < 0) return state;
+      // Strictly additive: a resync exists to supply what this tab never heard, so an empty transcript
+      // contributes nothing and must not be allowed to erase what the user has already read.
+      if (!action.messages.length) return state;
+      return { ...state, messages: [...action.messages, ...state.messages.slice(at)] };
     }
 
     case "error":
@@ -294,6 +334,22 @@ function lastStreamingIndex(messages: ChatMessage[]): number {
   return -1;
 }
 
+/** An assistant bubble for a turn this tab did not start, ready to receive the same event stream. */
+const remoteTurn = (id: string): ChatMessage => ({
+  id,
+  role: "assistant",
+  content: "",
+  streaming: true,
+});
+
+function closeOpenTurns(messages: ChatMessage[]): ChatMessage[] {
+  return messages.map((message) =>
+    message.streaming
+      ? { ...message, streaming: false, content: message.content || NO_ANSWER_TEXT }
+      : message,
+  );
+}
+
 function failStreamingTurn(messages: ChatMessage[], reason: string): ChatMessage[] {
   const index = lastStreamingIndex(messages);
   if (index < 0) return messages;
@@ -375,6 +431,9 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
 
   const reportError = React.useCallback((error: unknown, fallback: string) => {
     const err = error instanceof Error ? error : new Error(fallback);
+    // Release the turn claim: the bubble it owned is about to be closed as failed, so a later event must
+    // read as a fresh turn rather than as more of this one.
+    turnRef.current = null;
     configRef.current.onError?.(err);
     dispatch({ type: "error", message: err.message || fallback });
   }, []);
@@ -392,38 +451,102 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
     clearUnackedGrace();
     unackedTimerRef.current = setTimeout(() => {
       unackedTimerRef.current = null;
+      turnRef.current = null;
       dispatch({ type: "error", message: UNACKED_EXPIRED_TEXT });
     }, UNACKED_GRACE_MS);
   }, [clearUnackedGrace]);
   React.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
 
-  const handleEvent = React.useCallback((event: ChatEvent) => {
-    // Anything at all on the channel proves the turn is alive — stand the grace timer down.
-    clearUnackedGrace();
-    if (event.event !== "done") {
-      if (event.event === "token") streamRef.current += event.payload.delta;
-      dispatch({ type: "event", event });
-      return;
-    }
+  /**
+   * The turn currently on screen, and whether THIS tab started it.
+   *
+   * A ref, not state: several events land in the same tick, and the ownership decision has to see what the
+   * previous one already decided. A state read here would still say "no turn open" and open a second
+   * follower bubble for the same turn.
+   */
+  const turnRef = React.useRef<{ id: string | null; own: boolean } | null>(null);
 
-    // Terminal event: resolve the FE directives the reply carries, then close the turn.
-    const raw = streamRef.current;
-    streamRef.current = "";
-    const redirect = extractRedirect(raw);
-    if (redirect && typeof window !== "undefined") {
-      // New tab — navigating away would kill the socket mid-conversation.
-      window.open(redirect, "_blank", "noopener,noreferrer");
-    }
-    const seed = extractEnterMode(raw);
-    dispatch({
-      type: "done",
-      payload: event.payload,
-      content: stripSentinels(raw),
-      seed,
-      exit: hasExitMode(raw),
-      greeting: buildScheduleGreeting(labelsRef.current, seed),
-    });
-  }, []);
+  /**
+   * Pull the closed part of the log from the server. Needed when a turn starts in another tab: the user's
+   * question is written to `ai_messages` before the run is queued but is never published to the channel, so
+   * it is the one piece of the turn this tab cannot hear.
+   */
+  const resyncTranscript = React.useCallback(
+    async (keepFromId: string) => {
+      const conversationId = stateRef.current.conversationId;
+      if (!conversationId) return;
+      try {
+        const transcript = await api.getMessages(conversationId);
+        const stored = untilLastQuestion(replayTranscript(transcript).messages);
+        dispatch({ type: "resync", messages: stored, keepFromId });
+      } catch {
+        /* Following still works without it — the answer streams in, only the question is missing. */
+      }
+    },
+    [api],
+  );
+
+  /**
+   * Work out whose turn this event belongs to, making sure there is a bubble for it either way.
+   * Returns true when the turn was started from this tab.
+   */
+  const adoptTurn = React.useCallback(
+    (turnId?: string): boolean => {
+      const current = turnRef.current;
+      if (current && (!turnId || current.id === null || current.id === turnId)) {
+        // A send whose ack was lost has no id of its own — the first event to arrive names it.
+        // (If the other tab sent in that same window this adopts ITS id. Both answers still render, one
+        // under the wrong heading; the alternative is holding the reply back on a maybe.)
+        if (current.id === null && turnId) current.id = turnId;
+        return current.own;
+      }
+      turnRef.current = { id: turnId ?? null, own: false };
+      const bubbleId = nextId();
+      dispatch({ type: "follow_start", turnId: turnId ?? null, bubbleId });
+      void resyncTranscript(bubbleId);
+      return false;
+    },
+    [resyncTranscript],
+  );
+
+  const handleEvent = React.useCallback(
+    (event: ChatEvent) => {
+      const own = adoptTurn(event.turnId);
+      // Our own turn being alive is what the grace timer waits for. Another tab's turn says nothing about
+      // whether the message THIS tab sent ever arrived, so it must not stand the timer down.
+      if (own) clearUnackedGrace();
+
+      if (event.event !== "done") {
+        if (event.event === "token") streamRef.current += event.payload.delta;
+        dispatch({ type: "event", event });
+        return;
+      }
+
+      // Terminal event: resolve the FE directives the reply carries, then close the turn.
+      const raw = streamRef.current;
+      streamRef.current = "";
+      turnRef.current = null;
+      const redirect = extractRedirect(raw);
+      // Only for the tab that asked. A redirect is the answer to a request someone made HERE; firing it on
+      // every open tab pops up windows nobody asked for.
+      if (own && redirect && typeof window !== "undefined") {
+        // New tab — navigating away would kill the socket mid-conversation.
+        window.open(redirect, "_blank", "noopener,noreferrer");
+      }
+      // The mode change is NOT gated the same way: entering scheduling is a fact about the conversation,
+      // and both tabs are looking at the same conversation.
+      const seed = extractEnterMode(raw);
+      dispatch({
+        type: "done",
+        payload: event.payload,
+        content: stripSentinels(raw),
+        seed,
+        exit: hasExitMode(raw),
+        greeting: buildScheduleGreeting(labelsRef.current, seed),
+      });
+    },
+    [adoptTurn, clearUnackedGrace],
+  );
 
   const start = React.useCallback(
     async (conversationId?: string) => {
@@ -436,6 +559,7 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
           // Switching threads: drop the old socket before opening the new one.
           transportRef.current?.disconnect();
           transportRef.current = null;
+          turnRef.current = null;
 
           // Resume what the user was last talking about — closing the drawer must not throw the
           // thread away. Falls back to a new conversation if that id is gone (deleted, other user).
@@ -513,7 +637,15 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
         return;
       }
 
+      // One turn at a time per conversation, whichever tab it was started from. Without this a second tab
+      // could queue a turn on top of a running one: the two runs stream into the same channel and the
+      // second one replays a history that does not yet contain the first one's answer.
+      if (stateRef.current.status === "sending" || stateRef.current.status === "streaming") return;
+
       streamRef.current = "";
+      // Claim the turn BEFORE the send: the first event can arrive before the ack does, and it has to find
+      // an owner here or it reads as somebody else's turn and opens a second bubble.
+      turnRef.current = { id: null, own: true };
       dispatch({
         type: "user_turn",
         message: { id: nextId(), role: "user", content: trimmed },
@@ -532,6 +664,9 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
           // A scheduling hand-off already resolved dept/month — carry it so the agent doesn't re-ask.
           ...(state.mode === "schedule" ? state.scheduleSeed : null),
         });
+        // Name the turn we claimed above, now that the service has told us what it is called. Guarded:
+        // a short turn can be finished (and the claim released) before its ack lands.
+        if (turnRef.current?.own) turnRef.current.id = ticket.runId;
         dispatch({ type: "run_accepted", runId: ticket.runId });
       } catch (error) {
         // A timed-out send is not a failed turn (see ChatSendTimeoutError): the service answers on
@@ -565,6 +700,7 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
     transportRef.current?.disconnect();
     transportRef.current = null;
     streamRef.current = "";
+    turnRef.current = null;
     writeStored(storageKey, null);
     dispatch({ type: "reset" });
   }, [storageKey]);
@@ -631,6 +767,24 @@ function replayTranscript(transcript: TranscriptMessage[]): {
   });
 
   return { messages, mode: seed ? "schedule" : "assistant", seed };
+}
+
+/**
+ * The transcript up to and including its last question.
+ *
+ * What follows a question is the answer to it — and for the turn being followed, that answer is the live
+ * bubble's job. The fetch races the turn: measured with two tabs on one conversation, it landed after the
+ * service had already written the assistant row, so splicing the whole transcript in printed the reply
+ * twice, once from storage and once from the stream.
+ *
+ * Cutting here rather than comparing text: the rows carry no turn id, so "does this row belong to the turn
+ * I am watching" can only be answered structurally — and the question of a turn is always written before
+ * its first token goes out, which is what makes the last question a reliable boundary.
+ */
+function untilLastQuestion(messages: ChatMessage[]): ChatMessage[] {
+  const last = messages.map((m) => m.role).lastIndexOf("user");
+  // No question at all — nothing to reason about, keep what the server sent.
+  return last < 0 ? messages : messages.slice(0, last + 1);
 }
 
 function readStored(key: string): string | null {
