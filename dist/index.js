@@ -1753,7 +1753,13 @@ var chipVariants = cva4(
   {
     variants: {
       variant: {
-        neutral: "border-border-default bg-white text-text-primary",
+        /* 🔴 `text-text-secondary` ไม่ใช่ `text-text-primary` — ใน `theme.css` (ชั้นที่ DS
+         * ยังกินอยู่) `--color-text-primary` ถูก alias ไปที่ `--color-brand` ⇒ ชิปโทน
+         * "กลาง" จะได้ตัวอักษรสีแบรนด์ตามธีมแอป ซึ่งขัดกับคำว่ากลางในตัวมันเอง
+         * (บน MediHR = ครามเข้ม #0611ac · บน Mediwork = มิ้นต์ contrast 1.9 อ่านไม่ออก)
+         * เหตุผลเดียวกับที่ `feedback/EmptyState.tsx` เลือก `text-secondary` ให้หัวเรื่อง
+         * — รากอยู่ที่ชั้น token ไม่ใช่ที่ component ตัวใดตัวหนึ่ง */
+        neutral: "border-border-default bg-white text-text-secondary",
         primary: "border-brand/20 bg-brand-subtle text-brand",
         success: "border-success-green-200 bg-success-green-50 text-success-green-800",
         warning: "border-warning-yellow-200 bg-warning-yellow-50 text-warning-yellow-800",
