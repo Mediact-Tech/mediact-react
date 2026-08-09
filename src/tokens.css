@@ -1,0 +1,10 @@
+/* Mediact Design System — token 3 ชั้น (ชุด normalize แล้ว)
+ *
+ *   @import "tailwindcss";
+ *   @import "@mediact/react/tokens.css";        ← primitive + semantic
+ *   @import "@mediact/react/theme/medihr.css";  ← ธีมของ module ตัวเอง
+ *
+ * ต่างจาก `style.css` เดิมที่เป็น token ชุดเก่า 106 ตัวแบบแบน
+ * ทั้งสองอยู่ร่วมกันได้ — `style.css` ยังทำงานเหมือนเดิมสำหรับแอปที่ยังไม่ย้าย
+ */
+@import "../../tokens/src/semantic.css";

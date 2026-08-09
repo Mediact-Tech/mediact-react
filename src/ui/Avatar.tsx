@@ -2,6 +2,7 @@ import * as React from "react";
 import * as RadixAvatar from "@radix-ui/react-avatar";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
+import { SkeletonBox } from "../feedback/Skeleton";
 
 const avatarVariants = cva(
   "relative flex shrink-0 overflow-hidden rounded-full bg-gray-100 text-text-tertiary",
@@ -9,10 +10,10 @@ const avatarVariants = cva(
     variants: {
       size: {
         xs: "size-6 text-[10px]",
-        sm: "size-8 text-xs",
-        md: "size-10 text-sm",
-        lg: "size-12 text-base",
-        xl: "size-16 text-lg",
+        sm: "size-8 text-caption",
+        md: "size-10 text-body-sm",
+        lg: "size-12 text-body-md",
+        xl: "size-16 text-body-lg",
       },
     },
     defaultVariants: { size: "md" },
@@ -30,6 +31,8 @@ export type AvatarProps = Omit<
     name?: string;
     /** Custom fallback content (overrides initials). */
     fallback?: React.ReactNode;
+    /** ข้อมูลยังมาไม่ถึง — แทนด้วยวงกลมเทาขนาดเท่ากัน */
+    isLoading?: boolean;
   };
 
 /** Honorific/title prefixes stripped before computing initials (dots ignored). */
@@ -61,9 +64,16 @@ function initials(name?: string) {
 }
 
 const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
-  { className, size, src, name, fallback, ...props },
+  { className, size, src, name, fallback, isLoading, ...props },
   ref,
 ) {
+  if (isLoading) {
+    return (
+      <SkeletonBox
+        className={cn(avatarVariants({ size }), "rounded-full", className)}
+      />
+    );
+  }
   return (
     <RadixAvatar.Root
       ref={ref}

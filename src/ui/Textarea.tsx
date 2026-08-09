@@ -2,6 +2,7 @@ import * as React from "react";
 import { cn } from "../lib/cn";
 import {
   FloatingFieldShell,
+  FieldSkeleton,
   type FieldSize,
 } from "../form/FloatingFieldShell";
 
@@ -16,6 +17,8 @@ export type TextareaProps = React.ComponentProps<"textarea"> & {
   /** Show character count in the hint slot (requires `maxLength`). */
   showCount?: boolean;
   containerClassName?: string;
+  /** ข้อความยังมาไม่ถึง — แทนช่องด้วยโครงร่างที่สูงเท่ากันทุกประการ */
+  isLoading?: boolean;
 };
 
 const minHeights: Record<FieldSize, string> = {
@@ -23,6 +26,33 @@ const minHeights: Record<FieldSize, string> = {
   md: "min-h-[88px]",
   lg: "min-h-[104px]",
 };
+
+/**
+ * รูปทรงของช่องข้อความยาว — แยกออกมาเพราะ **โครงร่างตอนโหลดต้องใช้ตัวเดียวกัน**
+ * ถ้าปล่อยไว้ inline โครงร่างจะต้องเดาความสูงเอง แล้ววันที่ใครแก้ `minHeights`
+ * โครงร่างจะเพี้ยนเงียบ ๆ (`Input` ใช้ `fieldShapeClasses` ด้วยเหตุผลเดียวกัน)
+ */
+export function textareaShapeClasses({
+  hasError,
+  size,
+}: {
+  hasError: boolean;
+  size: FieldSize;
+}) {
+  return [
+    /* 🔴 `block` จำเป็น ไม่ใช่ของประดับ — `<textarea>` เป็น `inline-block` นั่งบน
+     * เส้นฐานโดยปริยาย กล่องแม่จึงได้ที่ว่างใต้เส้นฐานเพิ่ม **7px** (วัดแล้ว
+     * กล่องแม่ 95px ทั้งที่ตัว textarea เอง 88px) = ที่ว่างเปล่าที่ไม่มีใครขอ
+     * และทำให้โครงร่างตอนโหลด (ซึ่งเป็น <div> block) เตี้ยกว่าของจริง 7px */
+    "block w-full rounded-sm border bg-bg-default px-3 py-2.5 text-body-sm font-medium transition-colors resize-y",
+    "focus:outline-none focus:ring-1",
+    "disabled:cursor-not-allowed disabled:bg-bg-subtle",
+    minHeights[size],
+    hasError
+      ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40"
+      : "border-border-strong focus:border-brand focus:ring-brand/30",
+  ].join(" ");
+}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   function Textarea(
@@ -46,6 +76,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       onBlur,
       onChange,
       disabled,
+      isLoading,
       ...props
     },
     ref,
@@ -73,6 +104,22 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     ) : (
       hint
     );
+
+    /* โครงร่างใช้ shell + รูปทรงตัวเดียวกับของจริง ⇒ สูงเท่ากันโดยโครงสร้าง */
+    if (isLoading) {
+      return (
+        <FieldSkeleton
+          label={label}
+          hint={hintWithCounter}
+          required={required}
+          hideLabel={hideLabel}
+          size={size}
+          multiline
+          shape={textareaShapeClasses({ hasError: false, size })}
+          containerClassName={containerClassName}
+        />
+      );
+    }
 
     return (
       <FloatingFieldShell
@@ -110,16 +157,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             if (!isControlled) setInternalValue(e.target.value);
             onChange?.(e);
           }}
-          className={cn(
-            "w-full rounded-sm border bg-white px-3 py-2.5 text-sm font-medium transition-colors resize-y",
-            "focus:outline-none focus:ring-1",
-            "disabled:cursor-not-allowed disabled:bg-gray-50",
-            minHeights[size],
-            hasError
-              ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40"
-              : "border-border-strong focus:border-brand focus:ring-brand/30",
-            className,
-          )}
+          className={cn(textareaShapeClasses({ hasError, size }), className)}
           {...props}
         />
       </FloatingFieldShell>

@@ -16,7 +16,7 @@ export function ToolTrail({ tools }: { tools: ToolCallEntry[] }) {
         <li
           key={`${tool.label_th}-${index}`}
           className={cn(
-            "flex items-center gap-1.5 text-xs",
+            "flex items-center gap-1.5 text-caption",
             tool.status === "error" ? "text-error-red-600" : "text-gray-500",
           )}
         >

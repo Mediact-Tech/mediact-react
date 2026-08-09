@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>;
 export const VisualPreview: Story = {
   render: () => {
     const baseToast =
-      "flex items-center gap-3 rounded-sm border px-5 py-3 shadow-sm font-semibold text-base [&_svg]:size-6 [&_svg]:shrink-0";
+      "flex items-center gap-3 rounded-sm border px-5 py-3 shadow-sm font-semibold text-body-md [&_svg]:size-6 [&_svg]:shrink-0";
     const tones = {
       success:
         "bg-success-green-50 border-success-green-200 text-success-green-800 [&_svg]:text-success-green-primary",

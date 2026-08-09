@@ -42,26 +42,27 @@ export const WithError: Story = {
   },
 };
 
-export const YearRange: Story = {
-  args: {
-    label: "Birthday",
-    fromYear: 1900,
-    toYear: new Date().getFullYear(),
-  },
+export const English: Story = {
+  args: { label: "Birthday", calendarLocale: "en-GB" },
   parameters: {
     docs: {
       description: {
         story:
-          "Use `fromYear` / `toYear` to constrain the year dropdown range. By default the dropdown spans current year ±100/+10.",
+          "ค่าเริ่มต้นของปฏิทินคือ `th-TH` ซึ่งให้ปี **พ.ศ.** อัตโนมัติ · ส่ง `calendarLocale` เพื่อเปลี่ยนภาษา/ปฏิทิน",
       },
     },
   },
 };
 
-export const MonthsOnly: Story = {
-  args: {
-    label: "Date",
-    captionLayout: "dropdown-months",
+export const WeekStartsMonday: Story = {
+  args: { label: "Date", weekStartsOn: 1 },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "ของจริงในแอปเริ่มสัปดาห์ที่ **อาทิตย์** (ค่าเริ่มต้น) — ส่ง `weekStartsOn={1}` ถ้าจอไหนต้องเริ่มจันทร์",
+      },
+    },
   },
 };
 

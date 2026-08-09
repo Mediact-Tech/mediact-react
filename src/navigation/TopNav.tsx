@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, ChevronDown, LogOut } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Settings } from "lucide-react";
 import { cn } from "../lib/cn";
 import { Avatar } from "../ui/Avatar";
 import {
@@ -8,13 +8,12 @@ import {
   PopoverTrigger,
 } from "../overlay/Popover";
 import {
-  medi_careDataUrl,
+  sidebarHideDataUrl,
+  sidebarShowDataUrl,
+  medi_hrDataUrl,
   medi_matchDataUrl,
-  medi_payDataUrl,
-  medi_referDataUrl,
-  medi_stockDataUrl,
   medi_workDataUrl,
-  mediactDataUrl,
+  mediactLogoDataUrl,
 } from "./_app-icons/data";
 
 /* ─────────────────────────────────────────────────────────────────── */
@@ -34,7 +33,10 @@ const TopNav = React.forwardRef<HTMLElement, TopNavProps>(function TopNav(
     <header
       ref={ref}
       className={cn(
-        "flex h-16 w-full items-center gap-2 rounded-[15px] border border-border-subtle bg-white px-4 shadow-sm",
+        /* 📐 วัดจาก Portal: สูง **72** (`h-18`) · pad-x **20** · มุม 15
+         * · เส้นคั่น **ด้านล่างอย่างเดียว** `gray-100` ไม่ใช่กรอบรอบด้าน · เงา `md`
+         * ของเดิมเป็น 64 / pad 16 / กรอบรอบด้าน / เงา `sm` — ไม่ตรงสักข้อ */
+        "flex h-18 w-full items-center gap-2 rounded-[15px] border-b border-gray-100 bg-white px-5 shadow-md",
         floating && "sticky top-0 z-30",
         className,
       )}
@@ -44,6 +46,71 @@ const TopNav = React.forwardRef<HTMLElement, TopNavProps>(function TopNav(
     </header>
   );
 });
+
+/* ─────────────────────────────────────────────────────────────────── */
+/* Toggle — พับ/กางแถบเมนูซ้าย                                          */
+/* ─────────────────────────────────────────────────────────────────── */
+
+export type TopNavToggleProps = Omit<
+  React.ComponentProps<"button">,
+  "children" | "onToggle"
+> & {
+  /** แถบเมนูซ้ายยุบอยู่หรือไม่ — คุมว่าจะโชว์ไอคอน "กาง" หรือ "พับ" */
+  collapsed?: boolean;
+  onToggle?: (next: boolean) => void;
+  /**
+   * ข้อความสำหรับ `title`/`aria-label` — แอปส่งคำแปลมาเอง (DS ไม่มี i18n)
+   *
+   * ⚠️ ปุ่มนี้มีแต่ไอคอน ถ้าไม่ส่งมา โปรแกรมอ่านหน้าจอจะเจอปุ่มไม่มีชื่อ
+   * (บทเรียนเดียวกับปุ่มเมนูตอน `Sidebar` ยุบ) จึงมีค่าตั้งต้นภาษาอังกฤษให้
+   */
+  labels?: { expand: string; collapse: string };
+};
+
+/**
+ * ปุ่มพับ/กางแถบเมนูซ้าย — ไอคอนเป็นไฟล์เดียวกับที่ Portal ใช้จริง
+ *
+ * 📐 วัดจาก Portal: **32×32** · มุม 8 · ไอคอน **20×20** · hover พื้นเทาอ่อน
+ */
+const TopNavToggle = React.forwardRef<HTMLButtonElement, TopNavToggleProps>(
+  function TopNavToggle(
+    {
+      className,
+      collapsed = false,
+      onToggle,
+      labels = { expand: "Expand menu", collapse: "Collapse menu" },
+      ...props
+    },
+    ref,
+  ) {
+    const name = collapsed ? labels.expand : labels.collapse;
+    return (
+      <button
+        ref={ref}
+        type="button"
+        onClick={() => onToggle?.(!collapsed)}
+        title={name}
+        aria-label={name}
+        aria-expanded={!collapsed}
+        className={cn(
+          /* สีเดียวกับปุ่มไอคอนอีกสามตัวในแถบ (`iconButtonClass`) — ของเดิม `text-gray-700`
+           * ให้ `#6b747e` (theme.css ประกาศไว้จริง วัดยืนยันแล้ว) ซึ่งต่างจากปุ่มข้าง ๆ
+           * โดยไม่มีเหตุผล · `text-text-body` เป็น token ตรง ๆ ไม่ต้องพึ่งชื่อที่ชนกับ Tailwind */
+          "inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-text-body transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+          className,
+        )}
+        {...props}
+      >
+        <img
+          src={collapsed ? sidebarShowDataUrl : sidebarHideDataUrl}
+          alt=""
+          aria-hidden
+          className="size-5"
+        />
+      </button>
+    );
+  },
+);
 
 /* ─────────────────────────────────────────────────────────────────── */
 /* Brand                                                                */
@@ -62,7 +129,11 @@ const TopNavBrand = React.forwardRef<HTMLDivElement, TopNavBrandProps>(
         {...props}
       >
         {logo && <span className="shrink-0">{logo}</span>}
-        <span className="truncate text-xl font-semibold text-text-primary">
+        {/* วัดจาก Portal: **18px/700** สี `#2D3748`
+          * 🔴 `text-text-primary` alias ไปสีแบรนด์ ⇒ ชื่อโรงพยาบาลเปลี่ยนสีตามแอป
+          * ใช้ `text-text-heading` (`#3f454a`) ซึ่งเป็นค่าที่ใกล้ที่สุดในชั้น semantic
+          * (`#2d3748` มีอยู่แค่ใน primitive `--mx-slate-700` ซึ่งไม่ generate utility) */}
+        <span className="truncate text-[18px] font-bold text-text-heading">
           {children}
         </span>
       </div>
@@ -82,21 +153,27 @@ const TopNavSpacer = ({ className }: { className?: string }) => (
 /* Icon button                                                          */
 /* ─────────────────────────────────────────────────────────────────── */
 
+/** ปุ่มไอคอนฝั่งขวา — วัดจาก Portal: ไอคอน **28** · pad 8 · วงกลม
+ *
+ * ⚠️ สีที่วัดได้คือ `rgb(107,116,126)` ซึ่ง `--color-gray-700` ของ DS ตั้งไว้ตรงเป๊ะ
+ * **แต่ใช้ `text-gray-700` ไม่ได้** — วัดในเบราว์เซอร์แล้วออกมาเป็น
+ * `oklch(0.446 0.03 256.802)` คือค่า `gray-700` ของ Tailwind เอง ไม่ใช่ของ DS
+ * (กับดักชื่อชนที่ §3 เตือนไว้ — `bg-gray-50` บังเอิญได้ค่าถูก แต่ตัวนี้ไม่)
+ * จึงใช้ `text-text-body` (`#535a61`) ซึ่งเข้มกว่าเล็กน้อยแต่เป็น token จริง */
 const iconButtonClass =
-  "inline-flex size-10 shrink-0 items-center justify-center rounded-full text-text-body transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-6";
+  "inline-flex size-11 shrink-0 items-center justify-center rounded-full text-text-body transition-colors hover:bg-gray-50 hover:text-text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-7";
 
 /* ─────────────────────────────────────────────────────────────────── */
 /* AppLauncher — Mediact ecosystem app catalog                          */
 /* ─────────────────────────────────────────────────────────────────── */
 
 /** Canonical app keys across the Mediact ecosystem. */
-export type MediactAppKey =
-  | "mediwork"
-  | "medimatch"
-  | "medipay"
-  | "medistock"
-  | "medicare"
-  | "medirefer";
+/** แอปในระบบนิเวศ Mediact ที่ **ปล่อยจริงแล้ว**
+ *
+ * เดิมมี `medipay` · `medistock` · `medicare` · `medirefer` เป็น Coming Soon
+ * ตัดออก 2026-08-09 — ไม่มีแอปไหน import `AppLauncher` เลย (ตรวจครบ 6 checkout)
+ * และช่องที่ขึ้นว่า "เร็ว ๆ นี้" ค้างมานานกลายเป็นสัญญาที่ไม่มีใครถือ */
+export type MediactAppKey = "mediwork" | "medimatch" | "medihr";
 
 export type MediactAppConfig = {
   /** Where this app lives. Falsy → tile is rendered as not-clickable. */
@@ -115,7 +192,7 @@ export type MediactAppConfig = {
 
 export type AppLauncherProps = {
   apps: Partial<Record<MediactAppKey, MediactAppConfig>>;
-  /** Render order. Default: mediwork → medimatch → medipay → medistock → medicare → medirefer. */
+  /** ลำดับการแสดง ค่าเริ่มต้น: mediwork → medimatch → medihr */
   order?: MediactAppKey[];
   /** Override default `<a href>` navigation (e.g. for SPA routing). */
   onAppClick?: (key: MediactAppKey, app: MediactAppConfig) => void;
@@ -123,6 +200,16 @@ export type AppLauncherProps = {
   label?: string;
   /** Subtitle shown beneath disabled / coming-soon tiles. */
   comingSoonText?: string;
+  /**
+   * ปุ่มก้นลิ้นชักที่พาไปหน้าตั้งค่าของ Portal — ของจริงมีทุกแอป
+   *
+   * ข้อความส่งมาจากแอปเสมอ (DS ไม่มี i18n)
+   */
+  settingsAction?: {
+    label: React.ReactNode;
+    href?: string;
+    onClick?: (e: React.MouseEvent) => void;
+  };
   className?: string;
 };
 
@@ -132,20 +219,10 @@ const DEFAULT_APP_DEFS: Record<
 > = {
   mediwork: { label: "Medi Work", src: medi_workDataUrl },
   medimatch: { label: "Medi Match", src: medi_matchDataUrl },
-  medipay: { label: "Medi Pay", src: medi_payDataUrl },
-  medistock: { label: "Medi Stock", src: medi_stockDataUrl },
-  medicare: { label: "Medi Care", src: medi_careDataUrl },
-  medirefer: { label: "Medi Refer", src: medi_referDataUrl },
+  medihr: { label: "Medi HR", src: medi_hrDataUrl },
 };
 
-const DEFAULT_APP_ORDER: MediactAppKey[] = [
-  "mediwork",
-  "medimatch",
-  "medipay",
-  "medistock",
-  "medicare",
-  "medirefer",
-];
+const DEFAULT_APP_ORDER: MediactAppKey[] = ["mediwork", "medimatch", "medihr"];
 
 /** 9-dot grid icon used by the AppLauncher trigger. */
 const NineDotIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -169,6 +246,7 @@ function AppLauncher({
   onAppClick,
   label = "Apps",
   comingSoonText = "Coming Soon",
+  settingsAction,
   className,
 }: AppLauncherProps) {
   const visible = order.filter((key) => apps[key] != null);
@@ -189,13 +267,15 @@ function AppLauncher({
         sideOffset={16}
         className="w-[340px] rounded-3xl border border-gray-50 p-6 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)]"
       >
-        <div className="mb-6 flex items-center justify-center gap-1 border-b border-gray-200 pb-4">
+        {/* 📐 ของจริงใน Portal ใช้ **โลโก้เต็ม** `mediact-logo.svg` ที่ 100×24
+          * ไม่ได้เอาเครื่องหมายมาวางคู่กับคำว่า "MediAct" แบบที่นี่เคยทำ
+          * ซึ่งเท่ากับเขียนชื่อแบรนด์ซ้ำสองครั้งข้างกัน */}
+        <div className="mb-6 flex items-center justify-center border-b border-gray-200 pb-4">
           <img
-            src={mediactDataUrl}
+            src={mediactLogoDataUrl}
             alt="MediAct"
-            className="h-8 w-auto"
+            className="h-6 w-[100px] object-contain"
           />
-          <h2 className="text-lg font-semibold text-text-heading">MediAct</h2>
         </div>
         <div className="grid grid-cols-3 gap-x-2 gap-y-6">
           {visible.map((key) => {
@@ -222,6 +302,26 @@ function AppLauncher({
             );
           })}
         </div>
+
+        {settingsAction && (
+          /* ปุ่มไปหน้าตั้งค่า (Portal) — วัดจากของจริง: เว้นบน 24 · เต็มความกว้าง
+           * · py 12 · มุม 16 · พื้น `#EAF4FF` ตัวอักษร `#1E78F2` · 15px/500
+           * ⚠️ ต้องเป็นฟ้า **คงที่** — ปุ่มนี้พาไป Portal เสมอไม่ว่าเปิดจากแอปไหน
+           * `text-info-blue-primary` ใช้ไม่ได้เพราะ alias ไป `--color-brand-active`
+           * ⇒ จะเปลี่ยนสีตามแอปที่ยืนอยู่
+           *
+           * 🔴 ใช้ `info-blue-800` (`#1e48cc`) ไม่ใช่ `#1E78F2` ของ Portal —
+           * ของ Portal บนพื้น `#EAF4FF` วัดได้ **3.80:1** ตกเกณฑ์ข้อความ 4.5:1
+           * (`info-blue-600` `#3b82f6` ก็ตก 3.42:1) ตัวที่เลือกได้ **6.85:1** */
+          <a
+            href={settingsAction.href}
+            onClick={settingsAction.onClick}
+            className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-info-blue-50 py-3 text-[15px] font-medium text-info-blue-800 transition-colors hover:bg-info-blue-100 [&_svg]:size-5"
+          >
+            <Settings aria-hidden />
+            {settingsAction.label}
+          </a>
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -402,7 +502,7 @@ function UserMenu({
           type="button"
           aria-label={label}
           className={cn(
-            "group inline-flex items-center gap-2 rounded-full p-0.5 pr-1 text-sm font-medium text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+            "group inline-flex items-center gap-2 rounded-full p-0.5 pr-1 text-body-sm font-medium text-text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
             className,
           )}
         >
@@ -428,7 +528,7 @@ function UserMenu({
             className="mb-3 size-[60px] border-2 border-gray-100"
           />
           {user.name && (
-            <h3 className="text-lg font-semibold text-text-heading">
+            <h3 className="text-body-lg font-semibold text-text-heading">
               {user.name}
             </h3>
           )}
@@ -491,6 +591,7 @@ NotificationBell.displayName = "NotificationBell";
 
 export {
   TopNav,
+  TopNavToggle,
   TopNavBrand,
   TopNavSpacer,
   AppLauncher,

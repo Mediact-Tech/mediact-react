@@ -22,6 +22,25 @@ export type TimePickerProps = {
   minuteStep?: number;
   /** @deprecated use `minuteStep` */
   step?: number;
+  /**
+   * Earliest selectable time, inclusive — 24h "HH:mm" string (e.g. "08:00").
+   * Disables out-of-range hour/minute options in the popover and snaps a
+   * typed value back into range once focus leaves the field. `value`/`onChange`
+   * always stay 24h "HH:mm" regardless.
+   */
+  minTime?: TimeValue;
+  /**
+   * Latest selectable time, inclusive — 24h "HH:mm" string (e.g. "17:00").
+   * See `minTime`.
+   */
+  maxTime?: TimeValue;
+  /**
+   * Display the field + popover in 12-hour format with an AM/PM toggle.
+   * Display-only — the committed `value`/`onChange` shape never changes,
+   * it stays 24h "HH:mm".
+   * @default false
+   */
+  ampm?: boolean;
   disabled?: boolean;
   size?: FieldSize;
   className?: string;
@@ -29,9 +48,9 @@ export type TimePickerProps = {
 };
 
 const heights: Record<FieldSize, string> = {
-  sm: "h-9 text-sm",
-  md: "h-11 text-sm",
-  lg: "h-12 text-base",
+  sm: "h-9 text-body-sm",
+  md: "h-11 text-body-sm",
+  lg: "h-12 text-body-md",
 };
 
 function pad2(n: number) {
@@ -61,6 +80,36 @@ function format24(h: number | null, m: number | null): TimeValue {
   return `${pad2(h ?? 0)}:${pad2(m ?? 0)}`;
 }
 
+type Period = "AM" | "PM";
+
+function to12Hour(h: number): { h12: number; period: Period } {
+  const period: Period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return { h12, period };
+}
+
+function from12Hour(h12: number, period: Period): number {
+  const base = h12 % 12;
+  return period === "PM" ? base + 12 : base;
+}
+
+function timeToMinutes(v: TimeValue | undefined): number | null {
+  const { h, m } = parseTime(v);
+  if (h == null || m == null) return null;
+  return h * 60 + m;
+}
+
+function clampMinutesToRange(
+  total: number,
+  min: number | null,
+  max: number | null,
+) {
+  let v = total;
+  if (min != null && v < min) v = min;
+  if (max != null && v > max) v = max;
+  return v;
+}
+
 function TimePicker({
   id,
   label,
@@ -74,6 +123,9 @@ function TimePicker({
   onChange,
   minuteStep,
   step,
+  minTime,
+  maxTime,
+  ampm = false,
   disabled,
   size = "md",
   className,
@@ -94,10 +146,26 @@ function TimePicker({
 
   const stepEffective = minuteStep ?? step ?? 1;
 
+  const minMinutes = React.useMemo(() => timeToMinutes(minTime), [minTime]);
+  const maxMinutes = React.useMemo(() => timeToMinutes(maxTime), [maxTime]);
+
+  // AM/PM is display-only: `h`/`m` (derived from `current`, above) stay the single
+  // source of truth in 24h. `manualPeriod` only matters while no hour has been
+  // committed yet (e.g. user clicks "PM" before typing an hour) — once `h` is set,
+  // the period is always derived from it so it can't drift out of sync.
+  const [manualPeriod, setManualPeriod] = React.useState<Period>(() =>
+    h != null ? to12Hour(h).period : "AM",
+  );
+  const period: Period = h != null ? to12Hour(h).period : manualPeriod;
+
   // Local string state for inputs so users can type freely (e.g. "1" before
   // committing to "01"). Only commit/normalize on change of the parent value
-  // or on input blur via the parent's `onChange`.
-  const [hStr, setHStr] = React.useState(() => (h != null ? pad2(h) : ""));
+  // or on input blur via the parent's `onChange`. In `ampm` mode the hour box
+  // displays 1-12 while `h` itself always stays 24h.
+  const [hStr, setHStr] = React.useState(() => {
+    const displayH = ampm ? (h != null ? to12Hour(h).h12 : null) : h;
+    return displayH != null ? pad2(displayH) : "";
+  });
   const [mStr, setMStr] = React.useState(() => (m != null ? pad2(m) : ""));
 
   // Sync local string state ONLY when the parent value differs from what the
@@ -105,36 +173,52 @@ function TimePicker({
   // typing "3" would commit "03:00" → useEffect would overwrite hStr "3" with
   // "03" mid-typing, jamming the cursor at the end and blocking further input.
   React.useEffect(() => {
+    const displayH = ampm ? (h != null ? to12Hour(h).h12 : null) : h;
     const localH = hStr === "" ? null : parseInt(hStr, 10);
-    if (localH !== h) {
-      setHStr(h != null ? pad2(h) : "");
+    if (localH !== displayH) {
+      setHStr(displayH != null ? pad2(displayH) : "");
     }
     const localM = mStr === "" ? null : parseInt(mStr, 10);
     if (localM !== m) {
       setMStr(m != null ? pad2(m) : "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [h, m]);
+  }, [h, m, ampm]);
+
+  const applyValue = (safeH: number | null, safeM: number | null) => {
+    const next = format24(safeH, safeM);
+    if (!isControlled) setInternal(next);
+    onChange?.(next);
+  };
 
   const commit = (nextH: string, nextM: string) => {
     const safeH =
       nextH === "" ? null : clamp(parseInt(nextH, 10) || 0, 0, 23);
     const safeM =
       nextM === "" ? null : clamp(parseInt(nextM, 10) || 0, 0, 59);
-    const next = format24(safeH, safeM);
-    if (!isControlled) setInternal(next);
-    onChange?.(next);
+    applyValue(safeH, safeM);
+  };
+
+  const commitAmPm = (nextH12: string, nextM: string, periodArg: Period) => {
+    const safeH12 =
+      nextH12 === "" ? null : clamp(parseInt(nextH12, 10) || 0, 1, 12);
+    const safeM =
+      nextM === "" ? null : clamp(parseInt(nextM, 10) || 0, 0, 59);
+    const safeH = safeH12 == null ? null : from12Hour(safeH12, periodArg);
+    applyValue(safeH, safeM);
   };
 
   const handleHourChange = (raw: string) => {
     const cleaned = raw.replace(/\D/g, "").slice(0, 2);
     setHStr(cleaned);
-    commit(cleaned, mStr);
+    if (ampm) commitAmPm(cleaned, mStr, period);
+    else commit(cleaned, mStr);
   };
   const handleMinuteChange = (raw: string) => {
     const cleaned = raw.replace(/\D/g, "").slice(0, 2);
     setMStr(cleaned);
-    commit(hStr, cleaned);
+    if (ampm) commitAmPm(hStr, cleaned, period);
+    else commit(hStr, cleaned);
   };
   const handleHourBlur = () => {
     if (hStr !== "" && hStr.length === 1) setHStr(pad2(parseInt(hStr, 10)));
@@ -142,6 +226,69 @@ function TimePicker({
   const handleMinuteBlur = () => {
     if (mStr !== "" && mStr.length === 1) setMStr(pad2(parseInt(mStr, 10)));
   };
+
+  const handlePeriodChange = (next: Period) => {
+    setManualPeriod(next);
+    if (h != null) {
+      const { h12 } = to12Hour(h);
+      applyValue(from12Hour(h12, next), m);
+    }
+  };
+
+  // Bound the picker itself: hour / 12h-block / minute options outside
+  // [minTime, maxTime] are disabled so they can't be picked at all — not just
+  // rejected after the fact.
+  const isHourBlockDisabled = (h24: number) => {
+    if (minMinutes == null && maxMinutes == null) return false;
+    const start = h24 * 60;
+    const end = start + 59;
+    if (maxMinutes != null && start > maxMinutes) return true;
+    if (minMinutes != null && end < minMinutes) return true;
+    return false;
+  };
+  const isMinuteDisabled = (mm: number) => {
+    if (h == null || (minMinutes == null && maxMinutes == null)) return false;
+    const total = h * 60 + mm;
+    if (minMinutes != null && total < minMinutes) return true;
+    if (maxMinutes != null && total > maxMinutes) return true;
+    return false;
+  };
+  const isPeriodBlockDisabled = (p: Period) => {
+    if (minMinutes == null && maxMinutes == null) return false;
+    const start = (p === "AM" ? 0 : 12) * 60;
+    const end = start + 12 * 60 - 1;
+    if (maxMinutes != null && start > maxMinutes) return true;
+    if (minMinutes != null && end < minMinutes) return true;
+    return false;
+  };
+
+  // Typed entry stays free-form while the user is mid-type (no per-keystroke
+  // snapping — that would fight typing "14" with minTime="09:00": the field
+  // would jump to "09" right after the first "1"). Once focus leaves the whole
+  // field group, snap a complete-but-out-of-range value back into bounds.
+  const enforceBoundsOnBlur = () => {
+    if ((minMinutes == null && maxMinutes == null) || h == null || m == null) {
+      return;
+    }
+    const total = h * 60 + m;
+    const clampedTotal = clampMinutesToRange(total, minMinutes, maxMinutes);
+    if (clampedTotal !== total) {
+      applyValue(Math.floor(clampedTotal / 60), clampedTotal % 60);
+    }
+  };
+
+  const hourItems = React.useMemo(
+    () =>
+      ampm
+        ? Array.from({ length: 12 }, (_, i) => i + 1)
+        : Array.from({ length: 24 }, (_, i) => i),
+    [ampm],
+  );
+  const minuteItems = React.useMemo(() => {
+    const out: number[] = [];
+    for (let i = 0; i < 60; i += stepEffective) out.push(i);
+    return out;
+  }, [stepEffective]);
 
   return (
     <FloatingFieldShell
@@ -170,24 +317,41 @@ function TimePicker({
           </PopoverTrigger>
           <PopoverContent align="end" sideOffset={6} className="p-0">
             <div
-              className="flex h-56 w-40 divide-x divide-border-default text-sm"
+              className={cn(
+                "flex h-56 divide-x divide-border-default text-body-sm",
+                ampm ? "w-56" : "w-40",
+              )}
               role="dialog"
               aria-label="Pick time"
             >
               <TimeColumn
                 ariaLabel="Hours"
-                count={24}
-                step={1}
-                selected={h}
-                onPick={(next) => commit(pad2(next), mStr)}
+                items={hourItems}
+                selected={ampm ? (h != null ? to12Hour(h).h12 : null) : h}
+                isDisabled={(item) =>
+                  isHourBlockDisabled(ampm ? from12Hour(item, period) : item)
+                }
+                onPick={(next) =>
+                  applyValue(ampm ? from12Hour(next, period) : next, m)
+                }
               />
               <TimeColumn
                 ariaLabel="Minutes"
-                count={60}
-                step={stepEffective}
+                items={minuteItems}
                 selected={m}
-                onPick={(next) => commit(hStr, pad2(next))}
+                isDisabled={isMinuteDisabled}
+                onPick={(next) => applyValue(h, next)}
               />
+              {ampm && (
+                <TimeColumn
+                  ariaLabel="Period"
+                  items={["AM", "PM"] as const}
+                  selected={h != null ? period : null}
+                  isDisabled={isPeriodBlockDisabled}
+                  onPick={handlePeriodChange}
+                  formatLabel={(item) => item}
+                />
+              )}
             </div>
           </PopoverContent>
         </Popover>
@@ -206,7 +370,10 @@ function TimePicker({
         )}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            setFocused(false);
+            enforceBoundsOnBlur();
+          }
         }}
       >
         <input
@@ -235,6 +402,17 @@ function TimePicker({
           aria-label="Minutes"
           className="w-8 bg-transparent text-center font-medium tabular-nums outline-none disabled:cursor-not-allowed"
         />
+        {ampm && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => handlePeriodChange(period === "AM" ? "PM" : "AM")}
+            aria-label="Toggle AM/PM"
+            className="shrink-0 rounded-sm px-1 text-caption font-medium text-text-tertiary hover:bg-black/5 disabled:cursor-not-allowed"
+          >
+            {period}
+          </button>
+        )}
         {/* spacer so the right-adornment clock icon doesn't overlap inputs */}
         <span className="ml-auto" aria-hidden="true" />
       </div>
@@ -242,25 +420,22 @@ function TimePicker({
   );
 }
 
-function TimeColumn({
+function TimeColumn<T extends string | number>({
   ariaLabel,
-  count,
-  step,
+  items,
   selected,
+  isDisabled,
   onPick,
+  formatLabel,
 }: {
   ariaLabel: string;
-  count: number;
-  step: number;
-  selected: number | null;
-  onPick: (n: number) => void;
+  items: T[];
+  selected: T | null;
+  isDisabled?: (item: T) => boolean;
+  onPick: (item: T) => void;
+  formatLabel?: (item: T) => string;
 }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const items = React.useMemo(() => {
-    const out: number[] = [];
-    for (let i = 0; i < count; i += step) out.push(i);
-    return out;
-  }, [count, step]);
 
   React.useEffect(() => {
     if (selected == null || !containerRef.current) return;
@@ -277,24 +452,33 @@ function TimeColumn({
       aria-label={ariaLabel}
       className="flex flex-1 flex-col overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300"
     >
-      {items.map((n) => {
-        const isSelected = n === selected;
+      {items.map((item) => {
+        const isSelected = item === selected;
+        const disabled = isDisabled?.(item) ?? false;
         return (
           <button
-            key={n}
+            key={item}
             type="button"
-            data-value={n}
+            data-value={item}
             role="option"
             aria-selected={isSelected || undefined}
-            onClick={() => onPick(n)}
+            aria-disabled={disabled || undefined}
+            disabled={disabled}
+            onClick={() => onPick(item)}
             className={cn(
               "mx-2 my-0.5 flex h-8 shrink-0 items-center justify-center rounded-md text-center font-medium tabular-nums transition-colors",
-              isSelected
-                ? "bg-brand-active text-white"
-                : "text-text-primary hover:bg-brand-subtle",
+              disabled
+                ? "cursor-not-allowed text-text-tertiary/40"
+                : isSelected
+                  ? "bg-brand-active text-white"
+                  : "text-text-primary hover:bg-brand-subtle",
             )}
           >
-            {pad2(n)}
+            {formatLabel
+              ? formatLabel(item)
+              : typeof item === "number"
+                ? pad2(item)
+                : String(item)}
           </button>
         );
       })}

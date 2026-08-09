@@ -8,15 +8,18 @@ import {
   type SortingState,
   type RowSelectionState,
   type OnChangeFn,
+  type Updater,
   type Row,
   type Table as TanstackTable,
 } from "@tanstack/react-table";
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
+  Inbox,
 } from "lucide-react";
 import { cn } from "../lib/cn";
 import {
@@ -31,7 +34,20 @@ import { Checkbox } from "../ui/Checkbox";
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
 import { Skeleton } from "../feedback/Skeleton";
-import { EmptyState } from "../feedback/EmptyState";
+import { EmptyState, ErrorState } from "../feedback/EmptyState";
+import {
+  DataTableGroupRow,
+  defaultGroupLabel,
+  resolveGroups,
+  type DataTableGroupingProps,
+} from "./table-groups";
+import {
+  frozenCellProps,
+  pickFrozenIds,
+  useFrozenOffsets,
+  type FreezeColumns,
+  type FrozenOffsets,
+} from "./use-frozen-columns";
 
 export type DataTablePagination = {
   /** 0-based page index. */
@@ -45,6 +61,46 @@ export type DataTablePagination = {
   pageSizeOptions?: number[];
 };
 
+/**
+ * Overrides for every piece of built-in copy `DataTable` renders on its own
+ * (all English by default — this package has no i18n lib bound in, so the
+ * consuming app supplies translated strings here). Every field is optional;
+ * omitted fields keep the English default.
+ */
+export type DataTableLabels = {
+  /** aria-label on the header "select all rows" checkbox. Default `"Select all"`. */
+  selectAllAriaLabel?: string;
+  /** aria-label on each row's own checkbox. Default `"Select row"`. */
+  selectRowAriaLabel?: string;
+  /**
+   * Default empty state (no rows, no `error`). `title` is `string` (not
+   * `ReactNode`) because it flows into `EmptyState`, which — like any native
+   * `<div>` — only accepts a plain string for its `title` attribute.
+   */
+  empty?: { title?: string; description?: React.ReactNode };
+  /** Default error state, shown when `error` is set and `errorSlot` isn't. Same `title: string` constraint as `empty`. */
+  error?: { title?: string; description?: React.ReactNode };
+  /** Retry button label inside the default error state. Default `"Retry"`. */
+  retry?: React.ReactNode;
+  /**
+   * ชื่อปุ่ม "หน้าก่อนหน้า" · ค่าเริ่มต้น `"Previous page"`
+   *
+   * 🔴 เป็น `string` ไม่ใช่ `ReactNode` เพราะปุ่มเป็น**ไอคอนล้วน** ⇒ ข้อความนี้ไป
+   * เป็น `aria-label` ซึ่งรับได้เฉพาะ string · ส่ง element มาจะได้ `[object Object]`
+   */
+  prev?: string;
+  /** ชื่อปุ่ม "หน้าถัดไป" · ค่าเริ่มต้น `"Next page"` · เป็น `string` ด้วยเหตุผลเดียวกับ `prev` */
+  next?: string;
+  /** Label next to the page-size select. Default `"Rows per page"`. */
+  rowsPerPage?: React.ReactNode;
+  /** ชื่อปุ่มพับ/กางกลุ่ม (ไอคอนล้วน) · ค่าเริ่มต้น `"Toggle group"` */
+  toggleGroup?: string;
+  /** Selected-row-count label. Default `` (n) => `${n} selected` ``. */
+  selected?: (count: number) => React.ReactNode;
+  /** Visible-range label, e.g. `"1–10 of 53"`. Default is `"0 of 0"` when `total` is 0. */
+  of?: (start: number, end: number, total: number) => React.ReactNode;
+};
+
 export type DataTableProps<TData> = {
   columns: ColumnDef<TData, any>[];
   data: TData[];
@@ -53,23 +109,138 @@ export type DataTableProps<TData> = {
   pagination?: DataTablePagination;
   /** Controlled sorting state. When omitted, table is uncontrolled. */
   sorting?: SortingState;
-  onSortingChange?: OnChangeFn<SortingState>;
+  /**
+   * เรียงคอลัมน์เปลี่ยน — **ได้ `SortingState` มาตรง ๆ พร้อมใช้**
+   *
+   * 🔴 ไม่ใช่ `OnChangeFn` ของ TanStack ที่ส่ง **ฟังก์ชัน** `(old) => next` กลับมา
+   * (พิสูจน์แล้ว: กดหัวตาราง 3 ครั้ง ได้ `typeof === "function"` ทั้ง 3 ครั้ง)
+   * ⇒ ทางที่ TanStack ให้มาจะพังทันทีที่เอาไปต่อกับอะไรที่ไม่ใช่ `useState`
+   * — queryKey ของ react-query · URL state (`nuqs`) · zustand — เพราะได้ฟังก์ชัน
+   * ไปใส่แทนค่า แล้ว key ไม่เปลี่ยน/URL เพี้ยนโดยไม่มี error
+   *
+   * DS คลี่ให้แล้วที่นี่ที่เดียว ⇒ เหมือน `onPageChange` และ `onCollapsedGroupsChange`
+   * ในตัวเดียวกัน · ส่ง `setSorting` ของ `useState` ตรง ๆ ก็ยังใช้ได้เหมือนเดิม
+   *
+   * ```tsx
+   * const [sorting, setSorting] = useState<SortingState>([]);
+   * const q = useQuery({ queryKey: ["staff", page, sorting], queryFn: ... });
+   * <DataTable manualSorting sorting={sorting} onSortingChange={setSorting} … />
+   * ```
+   */
+  onSortingChange?: (sorting: SortingState) => void;
   /** Manual sorting (server-side). When `true`, the table will not sort rows itself. */
   manualSorting?: boolean;
   /** Enable a checkbox selection column. */
   enableSelection?: boolean;
+  /**
+   * แถวไหนติ๊กได้บ้าง — ไม่ส่ง = ติ๊กได้ทุกแถว
+   *
+   * 🔴 **select-all จะติ๊กเฉพาะแถวที่ผ่านเงื่อนไขนี้** และตัวนับ "เลือกแล้ว N จาก M"
+   * ใช้ M = จำนวนแถวที่ติ๊กได้ ไม่ใช่จำนวนแถวทั้งหมด
+   *
+   * ของจริงบน Mediwork ต้องการแบบนี้ทุกหน้าคำขอ — ติ๊กได้เฉพาะใบที่ยัง "รออนุมัติ"
+   * ใบที่อนุมัติ/ปฏิเสธไปแล้วต้องเห็นในตารางแต่ทำอะไรไม่ได้
+   * (วันนี้แต่ละฟีเจอร์ส่ง `pendingCount` เข้าไปเอง ซ้ำกัน 6 ที่)
+   *
+   * ```tsx
+   * isRowSelectable={(r) => r.status === "PENDING"}
+   * ```
+   */
+  isRowSelectable?: (row: TData) => boolean;
+  /**
+   * ความกว้างขั้นต่ำของตาราง (px) — แคบกว่านี้แล้วเลื่อนแนวนอนแทนที่จะบีบคอลัมน์
+   *
+   * ไม่ส่ง = ตารางกว้างเท่ากล่องที่อยู่ ไม่มีการเลื่อน
+   */
+  minTableWidth?: number;
+  /**
+   * แช่คอลัมน์ไว้กับที่เวลาเลื่อนแนวนอน — ใช้คู่กับ `minTableWidth`
+   *
+   * ```tsx
+   * minTableWidth={1200}
+   * freezeColumns={{ left: 1, right: 1 }}   // ชื่อค้างซ้าย · ปุ่มค้างขวา
+   * ```
+   *
+   * นับเฉพาะคอลัมน์**ข้อมูล** — ช่องติ๊กเลือกแช่ตามให้เองเมื่อ `left ≥ 1`
+   *
+   * 🔴 **ไม่มีผลถ้าไม่มีอะไรให้เลื่อน** — ตารางที่พอดีกล่องอยู่แล้วจะดูเหมือนไม่ทำงาน
+   * ต้องตั้ง `minTableWidth` หรือมีคอลัมน์กว้างพอจนล้นก่อน
+   *
+   * ⚠️ ของจริงวันนี้แช่ซ้ายอย่างเดียว 1 คอลัมน์ (ตารางเวร 4 ไฟล์) —
+   * **ฝั่งขวายังไม่มีที่ไหนทำ** ตัวนี้จึงเป็นของใหม่ ไม่ได้ลอกของเดิมมา
+   */
+  freezeColumns?: FreezeColumns;
   rowSelection?: RowSelectionState;
-  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  /** แถวที่ติ๊กเปลี่ยน — **ได้ `RowSelectionState` มาตรง ๆ** เหตุผลเดียวกับ `onSortingChange` */
+  onRowSelectionChange?: (rowSelection: RowSelectionState) => void;
   /** Stable id for selection — required when data resets. Default uses array index. */
   getRowId?: (row: TData, index: number) => string;
   /** Click handler for a row. Selection checkbox stops propagation. */
   onRowClick?: (row: TData, index: number) => void;
   /** Sticky header inside scrolling container. */
   stickyHeader?: boolean;
-  /** Custom empty state. */
+  /** Custom empty state. Rendered when there's no error and 0 rows. */
   empty?: React.ReactNode;
+  /**
+   * ไอคอนของสถานะว่าง — ไม่ส่ง = กล่องจดหมายเปล่า
+   *
+   * ควรส่งให้ตรงกับสิ่งที่ตารางนี้แสดง — "ยังไม่มีคำขอ" กับ "ยังไม่มีบุคลากร"
+   * เป็นความว่างคนละอย่าง และรูปคือทางที่บอกได้เร็วที่สุดว่าอันไหน
+   */
+  emptyIcon?: React.ReactNode;
+  /** ไอคอนของสถานะผิดพลาด — ไม่ส่ง = สามเหลี่ยมเตือน */
+  errorIcon?: React.ReactNode;
+  /**
+   * วาดสถานะว่างเอง — ได้รู้ด้วยว่า **ว่างเพราะกรองแล้วไม่เจอ หรือว่างเพราะยังไม่มีข้อมูลเลย**
+   *
+   * 🔴 สองอย่างนี้ต้องพูดคนละแบบ: "ไม่พบผลลัพธ์ ลองแก้คำค้น" กับ "ยังไม่มีรายการ กดเพิ่ม"
+   * — บอกให้ผู้ใช้ไปสร้างใหม่ทั้งที่เขาแค่กรองผิด คือทางที่ทำให้เขาสร้างข้อมูลซ้ำ
+   *
+   * ```tsx
+   * renderEmpty={({ isFiltered }) => isFiltered ? <NoMatch/> : <FirstRun/>}
+   * ```
+   *
+   * ชนะ `empty` เมื่อส่งมาทั้งคู่
+   */
+  renderEmpty?: (ctx: { isFiltered: boolean }) => React.ReactNode;
+  /**
+   * ตารางนี้กำลังถูกกรอง/ค้นอยู่หรือเปล่า — ตัวตารางไม่รู้เอง เพราะการกรองเกิดนอกตัวมัน
+   * (ช่องค้นหาอยู่เหนือตาราง · ตัวกรองอยู่คนละที่) ⇒ ผู้เรียกต้องบอก
+   */
+  isFiltered?: boolean;
   className?: string;
-};
+
+  /**
+   * Truthy → renders the error state instead of rows/empty state. Pass the
+   * actual caught error (for future use / telemetry) or just `true`.
+   * `isLoading` still takes priority, so a background refetch doesn't flash
+   * a stale error.
+   */
+  error?: unknown;
+  /** Override the default error block entirely. Caller closes over `error` / `onRetry` itself. */
+  errorSlot?: React.ReactNode;
+  /**
+   * วาดสถานะผิดพลาดเอง — **ได้ตัว error กับปุ่มลองใหม่ส่งมาให้** ไม่ต้อง closure เอง
+   *
+   * ต่างจาก `errorSlot` ตรงที่ไม่ต้องหอบ `error`/`onRetry` ไปผูกไว้ข้างนอก
+   * ⇒ แยกเป็น component ที่ใช้ซ้ำได้จริง
+   *
+   * ```tsx
+   * renderError={({ error, retry }) => <ApiError err={error} onRetry={retry} />}
+   * ```
+   *
+   * ชนะ `errorSlot` เมื่อส่งมาทั้งคู่
+   */
+  renderError?: (ctx: {
+    error: unknown;
+    retry: (() => void) | undefined;
+  }) => React.ReactNode;
+  /** Retry action wired into the default error state's button. No-op if `errorSlot` is set. */
+  onRetry?: () => void;
+
+  /** Override any built-in copy — see `DataTableLabels`. All English by default. */
+  labels?: DataTableLabels;
+} & DataTableGroupingProps<TData>;
 
 function DataTable<TData>({
   columns,
@@ -80,55 +251,134 @@ function DataTable<TData>({
   onSortingChange,
   manualSorting,
   enableSelection,
+  isRowSelectable,
+  minTableWidth,
+  freezeColumns,
   rowSelection: rowSelectionProp,
   onRowSelectionChange,
   getRowId,
   onRowClick,
   stickyHeader,
   empty,
+  emptyIcon,
+  errorIcon,
+  renderEmpty,
+  isFiltered,
+  renderError,
   className,
+  error,
+  errorSlot,
+  onRetry,
+  labels,
+  groupBy,
+  groupOrder,
+  groupLabel,
+  collapsibleGroups,
+  defaultCollapsedGroups,
+  collapsedGroups,
+  onCollapsedGroupsChange,
 }: DataTableProps<TData>) {
+  /* 🔴 TanStack ตั้ง `size: 150` เป็นค่าเริ่มต้นให้ทุกคอลัมน์ ⇒ อ่านจาก
+   * `columnDef.size` ตรง ๆ ไม่ได้ เพราะจะได้ 150 มาแม้ผู้เรียกไม่ได้สั่งอะไรเลย
+   * แล้วทุกคอลัมน์จะถูกยัด min-width 150px โดยไม่มีใครขอ */
+  const explicitWidths = React.useMemo(() => {
+    const m = new Map<string, number>();
+    columns.forEach((c, i) => {
+      if (c.size == null) return;
+      const key = c.id ?? (c as { accessorKey?: string }).accessorKey ?? String(i);
+      m.set(String(key), c.size);
+    });
+    return m;
+  }, [columns]);
+
+  /* 🔴 TanStack เรียก `onXChange` ด้วย **ฟังก์ชัน** `(old) => next` ไม่ใช่ค่า
+   * (พิสูจน์แล้ว — ทุกครั้ง ไม่ใช่บางครั้ง) · ปล่อยผ่านไปให้ผู้เรียกแปลว่าทุกที่ที่ใช้
+   * ตารางนี้ต้องเขียน `typeof u === "function" ? u(prev) : u` เองซ้ำกันทุกจอ
+   * และจอที่ลืม จะพังแบบ**เงียบ** (queryKey ไม่เปลี่ยน · URL ได้ค่าประหลาด)
+   *
+   * คลี่ที่นี่ที่เดียว ⇒ callback ทุกตัวของ component นี้ส่ง "ค่า" เหมือนกันหมด */
+  const resolve = <T,>(updater: Updater<T>, prev: T): T =>
+    typeof updater === "function" ? (updater as (old: T) => T)(prev) : updater;
+
   const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);
   const sorting = sortingProp ?? internalSorting;
-  const handleSortingChange = onSortingChange ?? setInternalSorting;
+  const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
+    const next = resolve(updater, sorting);
+    if (onSortingChange) onSortingChange(next);
+    else setInternalSorting(next);
+  };
 
   const [internalSelection, setInternalSelection] = React.useState<RowSelectionState>({});
   const rowSelection = rowSelectionProp ?? internalSelection;
-  const handleSelectionChange = onRowSelectionChange ?? setInternalSelection;
+  const handleSelectionChange: OnChangeFn<RowSelectionState> = (updater) => {
+    const next = resolve(updater, rowSelection);
+    if (onRowSelectionChange) onRowSelectionChange(next);
+    else setInternalSelection(next);
+  };
+
+  const [internalCollapsed, setInternalCollapsed] = React.useState<string[]>(
+    () => [...(defaultCollapsedGroups ?? [])],
+  );
+  const collapsedKeys = collapsedGroups ?? internalCollapsed;
+  const toggleGroup = (key: string) => {
+    const next = collapsedKeys.includes(key)
+      ? collapsedKeys.filter((k) => k !== key)
+      : [...collapsedKeys, key];
+    if (onCollapsedGroupsChange) onCollapsedGroupsChange(next);
+    else setInternalCollapsed(next);
+  };
 
   const finalColumns = React.useMemo<ColumnDef<TData, any>[]>(() => {
     if (!enableSelection) return columns;
     const selectColumn: ColumnDef<TData, any> = {
       id: "__select",
       size: 40,
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllRowsSelected()
-              ? true
-              : table.getIsSomeRowsSelected()
-                ? "indeterminate"
-                : false
-          }
-          onCheckedChange={(v) =>
-            table.toggleAllRowsSelected(v === true)
-          }
-          aria-label="Select all"
-        />
-      ),
+      header: ({ table }) => {
+        /* นับจากแถวที่ **ติ๊กได้จริง** เท่านั้น — ไม่งั้นหน้าที่มีแถวติ๊กไม่ได้ปนอยู่
+         * จะไม่มีทางขึ้นเป็น "เลือกครบ" เลย ค้างเป็นขีดกลางตลอด */
+        const rows = table.getRowModel().rows;
+        const selectable = rows.filter((r) => r.getCanSelect());
+        const picked = selectable.filter((r) => r.getIsSelected()).length;
+        return (
+          <Checkbox
+            checked={
+              selectable.length > 0 && picked === selectable.length
+                ? true
+                : picked > 0
+                  ? "indeterminate"
+                  : false
+            }
+            disabled={selectable.length === 0}
+            /* อัปเดตครั้งเดียวทั้งก้อน — วนเรียก `toggleSelected` ทีละแถวจะคิดจาก
+             * state เดิมที่ยังไม่ re-render ทุกครั้ง แล้วตัวสุดท้ายทับตัวก่อนหน้า */
+            onCheckedChange={(v) =>
+              table.setRowSelection((prev) => {
+                const next = { ...prev };
+                selectable.forEach((r) => {
+                  if (v === true) next[r.id] = true;
+                  else delete next[r.id];
+                });
+                return next;
+              })
+            }
+            aria-label={labels?.selectAllAriaLabel ?? "Select all"}
+          />
+        );
+      },
       cell: ({ row }) => (
         <div onClick={(e) => e.stopPropagation()}>
           <Checkbox
             checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
             onCheckedChange={(v) => row.toggleSelected(v === true)}
-            aria-label="Select row"
+            aria-label={labels?.selectRowAriaLabel ?? "Select row"}
           />
         </div>
       ),
       enableSorting: false,
     };
     return [selectColumn, ...columns];
-  }, [columns, enableSelection]);
+  }, [columns, enableSelection, labels?.selectAllAriaLabel, labels?.selectRowAriaLabel]);
 
   const table = useReactTable({
     data,
@@ -138,7 +388,13 @@ function DataTable<TData>({
     state: { sorting, rowSelection },
     onSortingChange: handleSortingChange,
     onRowSelectionChange: handleSelectionChange,
-    enableRowSelection: enableSelection,
+    /* ส่งเป็นฟังก์ชันเมื่อมีเงื่อนไข ⇒ `row.getCanSelect()` ตอบตามจริง
+     * ทั้งช่องติ๊กรายแถวและ select-all อ่านค่าเดียวกันนี้ ไม่แยกกันคิด */
+    enableRowSelection: enableSelection
+      ? isRowSelectable
+        ? (row) => isRowSelectable(row.original)
+        : true
+      : false,
     manualSorting,
     manualPagination: !!pagination,
     rowCount: pagination?.rowCount,
@@ -150,18 +406,34 @@ function DataTable<TData>({
     : 1;
   const currentPage = pagination ? pagination.pageIndex + 1 : 1;
 
+  const tableRef = React.useRef<HTMLTableElement>(null);
+  const renderedIds = table.getVisibleLeafColumns().map((c) => c.id);
+  const { left: frozenLeft, right: frozenRight } = pickFrozenIds(
+    renderedIds,
+    freezeColumns,
+    Boolean(enableSelection),
+  );
+  const frozen = useFrozenOffsets(tableRef, frozenLeft, frozenRight);
+
   return (
     <div
       className={cn(
-        "flex flex-col rounded-md border border-border-default bg-white",
+        /* วัดจาก Portal จริง: radius 12 · เส้นขอบ #919eab33 · เงาบาง 2 ชั้น
+         * (ของเดิม radius 6 · ไม่มีเงา ⇒ ตารางกลืนไปกับพื้นหน้า) */
+        "flex flex-col overflow-hidden rounded-xl border border-divider-gray bg-bg-default shadow-sm",
         className,
       )}
     >
+      {/* `Table` ห่อตัวเองด้วย `overflow-auto` อยู่แล้ว ⇒ การเลื่อนแนวนอนได้มาฟรี
+          เมื่อตั้ง `minWidth` — ไม่ต้องเพิ่มกล่อง scroll ซ้อนอีกชั้น */}
       <div className={cn(stickyHeader && "max-h-[600px] overflow-auto")}>
-        <Table>
+        <Table
+          ref={tableRef}
+          style={minTableWidth != null ? { minWidth: minTableWidth } : undefined}
+        >
           <TableHeader
             className={cn(
-              stickyHeader && "sticky top-0 z-10 bg-white shadow-[0_1px_0_0_#0000001f]",
+              stickyHeader && "sticky top-0 z-10 bg-bg-default shadow-[0_1px_0_0_#0000001f]",
             )}
           >
             {table.getHeaderGroups().map((hg) => (
@@ -169,14 +441,25 @@ function DataTable<TData>({
                 {hg.headers.map((header) => {
                   const sortable = header.column.getCanSort();
                   const sortDir = header.column.getIsSorted();
+                  const pin = frozenCellProps(frozen[header.column.id], "head");
                   return (
                     <TableHead
                       key={header.id}
-                      style={
-                        header.column.columnDef.size
-                          ? { width: header.column.columnDef.size }
-                          : undefined
-                      }
+                      /* ตัววัดจับคู่หัวคอลัมน์กับระยะแช่ด้วยค่านี้ — ห้ามถอดออก */
+                      data-col-id={header.column.id}
+                      className={pin.className}
+                      /* 🔴 `size` = ความกว้าง **ขั้นต่ำ** ไม่ใช่ความกว้างเป๊ะ
+                       *
+                       * ของจริงทั้ง 4 แอปเขียน `minWidth: '200px'` (อย่างน้อยเท่านี้
+                       * ขยายได้ถ้ามีที่) — ใช้อยู่ 22/41 ไฟล์ มากกว่าความสามารถอื่นทุกตัว
+                       * ถ้าตีเป็น `width` เป๊ะ คอลัมน์จะไม่ขยายตามตาราง เหลือช่องว่าง
+                       * ด้านขวาเวลาจอกว้าง ซึ่งไม่ใช่สิ่งที่ของจริงทำ */
+                      style={{
+                        ...(explicitWidths.has(header.column.id)
+                          ? { minWidth: explicitWidths.get(header.column.id) }
+                          : null),
+                        ...pin.style,
+                      }}
                     >
                       {header.isPlaceholder ? null : sortable ? (
                         <button
@@ -214,25 +497,72 @@ function DataTable<TData>({
                 columnCount={finalColumns.length}
                 rowCount={pagination?.pageSize ?? 5}
               />
+            ) : error ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={finalColumns.length} className="p-0">
+                  {renderError
+                    ? renderError({ error, retry: onRetry })
+                    : (errorSlot ?? (
+                    /* ใช้ `ErrorState` ตัวเดียวกับที่แอปใช้ ไม่ประกอบเองในตาราง —
+                     * ไม่งั้นสถานะผิดพลาดในตารางจะหน้าตาต่างจากที่อื่นในจอเดียวกัน */
+                    <ErrorState
+                      error={error}
+                      icon={errorIcon}
+                      title={labels?.error?.title ?? "Something went wrong"}
+                      description={
+                        labels?.error?.description ??
+                        "We couldn't load this data."
+                      }
+                      onRetry={onRetry}
+                      retryLabel={labels?.retry ?? "Retry"}
+                    />
+                  ))}
+                </TableCell>
+              </TableRow>
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={finalColumns.length}
                   className="p-0"
                 >
-                  {empty ?? (
+                  {renderEmpty
+                    ? renderEmpty({ isFiltered: Boolean(isFiltered) })
+                    : (empty ?? (
+                    /* 🔴 ต้องมีไอคอนด้วย ไม่ใช่ข้อความเปล่า — ตารางเคยส่งแค่
+                     * `title`/`description` ⇒ `EmptyState` ไม่ render ป้ายเลย
+                     * แล้วสถานะว่างในตารางหน้าตาไม่เหมือน `EmptyState` ที่อื่นในจอเดียวกัน
+                     * ทั้งที่เรียก component ตัวเดียวกันอยู่ · ผู้เรียกเปลี่ยนไอคอน
+                     * ให้ตรงกับสิ่งที่ตารางนี้แสดงได้ผ่าน `emptyIcon` */
                     <EmptyState
-                      title="No data"
-                      description="There's nothing to show here yet."
+                      icon={emptyIcon ?? <Inbox />}
+                      title={labels?.empty?.title ?? "No data"}
+                      description={
+                        labels?.empty?.description ??
+                        "There's nothing to show here yet."
+                      }
                     />
-                  )}
+                  ))}
                 </TableCell>
               </TableRow>
+            ) : groupBy ? (
+              <GroupedRows
+                table={table}
+                groupBy={groupBy}
+                groupOrder={groupOrder}
+                groupLabel={groupLabel}
+                collapsibleGroups={collapsibleGroups}
+                collapsedKeys={collapsedKeys}
+                onToggleGroup={toggleGroup}
+                toggleGroupLabel={labels?.toggleGroup ?? "Toggle group"}
+                onRowClick={onRowClick}
+                frozen={frozen}
+              />
             ) : (
               table.getRowModel().rows.map((row, idx) => (
                 <DataRow
                   key={row.id}
                   row={row}
+                  frozen={frozen}
                   onClick={
                     onRowClick
                       ? () => onRowClick(row.original, idx)
@@ -245,13 +575,19 @@ function DataTable<TData>({
         </Table>
       </div>
 
-      {pagination && (
+      {pagination ? (
         <PaginationFooter
           pagination={pagination}
           currentPage={currentPage}
           totalPages={totalPages}
           table={table}
+          labels={labels}
         />
+      ) : (
+        /* 🔴 ตัวนับ "เลือกแล้ว N" เคยอยู่ในแถบแบ่งหน้าเท่านั้น ⇒ ตารางที่เลือกแถวได้
+         * แต่ไม่มีแบ่งหน้าจะ **ติ๊กแล้วไม่มีอะไรบอกเลย** (ของจริง: เลือกได้ 11 ตาราง
+         * แต่มีแบ่งหน้าแค่ 6) — การเลือกที่ไม่มีผลตอบกลับคือการเลือกที่ผู้ใช้ไม่มั่นใจ */
+        <SelectedCountBar table={table} labels={labels} />
       )}
     </div>
   );
@@ -260,22 +596,118 @@ function DataTable<TData>({
 function DataRow<TData>({
   row,
   onClick,
+  frozen,
 }: {
   row: Row<TData>;
   onClick?: () => void;
+  frozen: FrozenOffsets;
 }) {
   return (
     <TableRow
       data-state={row.getIsSelected() ? "selected" : undefined}
       onClick={onClick}
-      className={onClick ? "cursor-pointer" : undefined}
+      /* `group/row` = ช่องทางเดียวที่เซลล์ซึ่งถูกแช่จะรู้ว่าแถวกำลังถูกชี้/ถูกเลือก
+       * เซลล์ที่แช่ต้องมีพื้นทึบของตัวเอง ⇒ ถ้าไม่ส่งสถานะไป มันจะเป็นสีเดิม
+       * อยู่ช่องเดียวขณะที่ทั้งแถวเปลี่ยนสี */
+      className={cn("group/row", onClick && "cursor-pointer")}
     >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
+      {row.getVisibleCells().map((cell) => {
+        const pin = frozenCellProps(frozen[cell.column.id], "cell");
+        return (
+          <TableCell
+            key={cell.id}
+            data-col-id={cell.column.id}
+            className={pin.className}
+            style={pin.style}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        );
+      })}
     </TableRow>
+  );
+}
+
+/**
+ * แถวที่แบ่งเป็นกลุ่มใต้หัวตารางชุดเดียว
+ *
+ * 🔴 `colSpan` มาจาก `getVisibleLeafColumns().length` เสมอ — ของจริง 5 หน้าเขียนเลขไว้ตายตัว
+ * แล้วแถบหัวกลุ่มจะสั้นกว่าตารางทันทีที่ใครเพิ่มคอลัมน์ (คอลัมน์ติ๊กเลือกก็นับรวมที่นี่)
+ *
+ * ⚠️ พับกลุ่ม **ไม่ยกเลิกการติ๊กเลือก** — แถวที่ถูกเลือกไว้ยังนับอยู่ในตัวเลข "เลือกแล้ว N"
+ * ทั้งที่มองไม่เห็น · ตั้งใจ เพราะพับคือการซ่อนชั่วคราว ไม่ใช่การถอนสิ่งที่ผู้ใช้เลือกไว้
+ */
+function GroupedRows<TData>({
+  table,
+  groupBy,
+  groupOrder,
+  groupLabel,
+  collapsibleGroups,
+  collapsedKeys,
+  onToggleGroup,
+  toggleGroupLabel,
+  onRowClick,
+  frozen,
+}: {
+  table: TanstackTable<TData>;
+  collapsedKeys: readonly string[];
+  onToggleGroup: (key: string) => void;
+  toggleGroupLabel: string;
+  onRowClick?: (row: TData, index: number) => void;
+  frozen: FrozenOffsets;
+} & Pick<
+  DataTableGroupingProps<TData>,
+  "groupOrder" | "groupLabel" | "collapsibleGroups"
+> &
+  Required<Pick<DataTableGroupingProps<TData>, "groupBy">>) {
+  const colSpan = table.getVisibleLeafColumns().length;
+  const groups = resolveGroups(
+    table.getRowModel().rows,
+    groupBy,
+    groupOrder,
+    collapsedKeys,
+  );
+
+  /* ลำดับที่ส่งเข้า `onRowClick` = ลำดับ**ที่เห็นบนจอ** ตรงกับตอนไม่จัดกลุ่ม
+   * (กลุ่มที่พับอยู่ไม่นับ เพราะไม่ได้ถูกวาด) */
+  let renderIndex = 0;
+
+  return (
+    <>
+      {groups.map((group, groupIndex) => (
+        <React.Fragment key={group.key ?? "__ungrouped"}>
+          {group.key != null && (
+            <DataTableGroupRow
+              colSpan={colSpan}
+              collapsible={collapsibleGroups}
+              collapsed={group.collapsed}
+              onToggle={() => onToggleGroup(group.key!)}
+              toggleAriaLabel={toggleGroupLabel}
+              label={(groupLabel ?? defaultGroupLabel)({
+                key: group.key,
+                rows: group.rows.map((r) => r.original),
+                count: group.rows.length,
+                index: groupIndex,
+              })}
+            />
+          )}
+          {!group.collapsed &&
+            group.rows.map((row) => {
+              const idx = renderIndex++;
+              return (
+                <DataRow
+                  key={row.id}
+                  row={row}
+                  frozen={frozen}
+                  onClick={
+                    onRowClick ? () => onRowClick(row.original, idx) : undefined
+                  }
+                />
+              );
+            })}
+        </React.Fragment>
+      ))}
+    </>
   );
 }
 
@@ -301,87 +733,132 @@ function SkeletonRows({
   );
 }
 
+function defaultOfLabel(start: number, end: number, total: number) {
+  return total > 0 ? `${start}–${end} of ${total}` : "0 of 0";
+}
+
+/** แถบบอกจำนวนที่เลือก — ใช้ตอนไม่มีแถบแบ่งหน้า · ไม่มีอะไรเลือกก็ไม่ render */
+function SelectedCountBar<TData>({
+  table,
+  labels,
+}: {
+  table: TanstackTable<TData>;
+  labels?: DataTableLabels;
+}) {
+  const count = table.getSelectedRowModel().rows.length;
+  if (count === 0) return null;
+  return (
+    <div className="border-t border-border-default px-3 py-2 text-body-sm font-medium text-text-black">
+      {labels?.selected ? labels.selected(count) : `${count} selected`}
+    </div>
+  );
+}
+
 function PaginationFooter<TData>({
   pagination,
   currentPage,
   totalPages,
   table,
+  labels,
 }: {
   pagination: DataTablePagination;
   currentPage: number;
   totalPages: number;
   table: TanstackTable<TData>;
+  labels?: DataTableLabels;
 }) {
   const sizeOptions = pagination.pageSizeOptions ?? [10, 20, 50, 100];
-  const start = pagination.pageIndex * pagination.pageSize + 1;
+  const start =
+    pagination.rowCount === 0
+      ? 0
+      : pagination.pageIndex * pagination.pageSize + 1;
   const end = Math.min(
     pagination.rowCount,
     (pagination.pageIndex + 1) * pagination.pageSize,
   );
   const selectedCount = table.getSelectedRowModel().rows.length;
 
+  const atFirst = pagination.pageIndex === 0;
+  const atLast = pagination.pageIndex >= totalPages - 1;
+
+  /* ปุ่มหน้าเป็น**ไอคอนล้วน** ⇒ ต้องมี `aria-label` ไม่งั้นโปรแกรมอ่านหน้าจอ
+   * อ่านออกมาเป็นปุ่มเปล่า · ใช้คำเดียวกับที่เคยเป็นข้อความบนปุ่ม */
+  const pagerButton =
+    "rounded-md p-1 text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-30";
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default px-3 py-2 text-sm">
-      <div className="flex items-center gap-3 text-text-tertiary">
-        {selectedCount > 0 && (
-          <span className="font-medium text-text-primary">
-            {selectedCount} selected
+    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border-default px-3 py-3 text-body-sm font-medium">
+      {pagination.onPageSizeChange && (
+        <div className="flex items-center gap-3">
+          {/* ป้ายต้องไม่ตกบรรทัด — วัดแล้วที่ 1000px "Rows per page" แตกเป็น 2 แถว
+              แล้วดันแถบสูงขึ้นทั้งแถบ */}
+          <span className="whitespace-nowrap text-text-tertiary">
+            {labels?.rowsPerPage ?? "Rows per page"}
           </span>
-        )}
-        {pagination.rowCount > 0 ? (
-          <span>
-            {start}–{end} of {pagination.rowCount}
-          </span>
-        ) : (
-          <span>0 of 0</span>
-        )}
-      </div>
-      <div className="flex items-center gap-3">
-        {pagination.onPageSizeChange && (
-          <div className="flex items-center gap-2">
-            <span className="text-text-tertiary">Rows per page</span>
-            <Select
-              size="sm"
-              value={String(pagination.pageSize)}
-              onChange={(v) => pagination.onPageSizeChange?.(Number(v))}
-              options={sizeOptions.map((n) => ({
-                value: String(n),
-                label: String(n),
-              }))}
-              className="w-20"
-            />
-          </div>
-        )}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
+          <Select
             size="sm"
-            disabled={pagination.pageIndex === 0}
+            value={String(pagination.pageSize)}
+            onChange={(v) => pagination.onPageSizeChange?.(Number(v))}
+            options={sizeOptions.map((n) => ({
+              value: String(n),
+              label: String(n),
+            }))}
+            /* 🔴 ในแถบเครื่องมือไม่มี error มาแสดง — บรรทัดที่ shell จองไว้จึงเป็น
+             * ที่ว่างเปล่าที่ดันช่องจาก 36 เป็น 56px และดันทั้งแถบเป็น 73px */
+            reserveMessageSpace={false}
+            containerClassName="w-auto"
+            /* ไม่มีกรอบ — ในแถบนี้ช่องเลือกไม่ใช่ "ช่องกรอกในฟอร์ม" แต่เป็นตัวปรับ
+             * มุมมองข้าง ๆ ข้อความ · กรอบทำให้มันดูหนักกว่าทุกอย่างรอบตัว
+             * `border-transparent` ไม่ใช่ `border-0` — ลบความหนาแล้วช่องจะแคบลง 2px
+             * แล้วเลขขยับตอน hover (บทเรียนเดิมจาก skeleton ของปุ่ม) */
+            className="h-8 w-auto min-w-14 border-transparent bg-transparent px-2 hover:bg-overlay-hover"
+          />
+        </div>
+      )}
+
+      <div className="flex items-center gap-4 text-text-body">
+        <span className="whitespace-nowrap">
+          {labels?.of
+            ? labels.of(start, end, pagination.rowCount)
+            : defaultOfLabel(start, end, pagination.rowCount)}
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label={labels?.prev ?? "Previous page"}
+            className={pagerButton}
+            disabled={atFirst}
             onClick={() =>
               pagination.onPageChange(Math.max(0, pagination.pageIndex - 1))
             }
-            leftIcon={<ChevronLeft />}
           >
-            Prev
-          </Button>
-          <span className="px-2 text-text-tertiary">
-            {currentPage} / {totalPages}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={pagination.pageIndex >= totalPages - 1}
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            aria-label={labels?.next ?? "Next page"}
+            className={pagerButton}
+            disabled={atLast}
             onClick={() =>
               pagination.onPageChange(
                 Math.min(totalPages - 1, pagination.pageIndex + 1),
               )
             }
-            rightIcon={<ChevronRight />}
           >
-            Next
-          </Button>
+            <ChevronRight className="size-5" />
+          </button>
         </div>
       </div>
+
+      {/* ตัวนับที่เลือกไปอยู่ท้ายแถบ — กลุ่มซ้ายต้องเหมือนของ Portal เป๊ะ
+          และตัวนับนี้ปรากฏ ๆ หาย ๆ ตามการติ๊ก ถ้าอยู่ซ้ายจะดันทุกอย่างขยับทั้งแถบ */}
+      {selectedCount > 0 && (
+        <span className="ml-auto whitespace-nowrap text-text-black">
+          {labels?.selected
+            ? labels.selected(selectedCount)
+            : `${selectedCount} selected`}
+        </span>
+      )}
     </div>
   );
 }

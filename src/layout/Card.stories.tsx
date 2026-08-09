@@ -26,7 +26,7 @@ export const Default: Story = {
         <CardDescription>Status: in progress</CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-text-body">
+        <p className="text-body-sm text-text-body">
           12 tasks remaining. Next milestone in 5 days.
         </p>
       </CardContent>

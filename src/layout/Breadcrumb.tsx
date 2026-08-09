@@ -18,12 +18,17 @@ export type BreadcrumbProps = React.ComponentProps<"nav"> & {
   separator?: React.ReactNode;
   /** Collapse middle items when more than this number. Default `0` (no collapse). */
   maxItems?: number;
+  /** Component used to render `items[].href` links — e.g. next/link's `Link`.
+   *  Must accept `href`, `className`, and `children`. Defaults to a plain `<a>`,
+   *  which keeps this package framework-agnostic (no router import inside DS). */
+  linkComponent?: React.ElementType;
 };
 
 function Breadcrumb({
   items,
   separator,
   maxItems = 0,
+  linkComponent: LinkComponent = "a",
   className,
   ...props
 }: BreadcrumbProps) {
@@ -41,7 +46,7 @@ function Breadcrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className={cn("flex items-center text-base", className)}
+      className={cn("flex items-center text-body-md", className)}
       {...props}
     >
       <ol className="flex flex-wrap items-center gap-3">
@@ -71,7 +76,7 @@ function Breadcrumb({
                   {item.label}
                 </span>
               ) : item.href ? (
-                <a
+                <LinkComponent
                   href={item.href}
                   className={cn(
                     itemBaseClass,
@@ -80,7 +85,7 @@ function Breadcrumb({
                 >
                   {item.icon}
                   {item.label}
-                </a>
+                </LinkComponent>
               ) : item.onClick ? (
                 <button
                   type="button"
@@ -112,7 +117,7 @@ function Breadcrumb({
 const BreadcrumbRoot = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
     aria-label="Breadcrumb"
-    className={cn("flex items-center text-base", className)}
+    className={cn("flex items-center text-body-md", className)}
     {...props}
   />
 );

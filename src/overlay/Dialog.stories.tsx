@@ -32,7 +32,7 @@ export const Basic: Story = {
             Make changes to your profile here. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        <div className="text-sm text-text-body">Form goes here…</div>
+        <div className="text-body-sm text-text-body">Form goes here…</div>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="ghost">Cancel</Button>

@@ -3,6 +3,7 @@ import { Eye, EyeOff, X } from "lucide-react";
 import { cn } from "../lib/cn";
 import {
   FloatingFieldShell,
+  FieldSkeleton,
   fieldShapeClasses,
   type FieldSize,
 } from "../form/FloatingFieldShell";
@@ -19,11 +20,19 @@ export type InputProps = NativeInputProps & {
   /** Force the label into the floated position (e.g. for fields with fixed prefixes/masks). */
   alwaysFloatLabel?: boolean;
   size?: FieldSize;
+  /** ไอคอนหน้าช่องกรอก — ป้ายที่ยังไม่ลอยจะขยับไปทางขวาให้เอง */
+  prefixIcon?: React.ReactNode;
+  /** ไอคอนท้ายช่องกรอก — ถ้ามีปุ่มล้างค่าหรือปุ่มดูรหัสผ่าน สองตัวนั้นมาก่อน */
+  suffixIcon?: React.ReactNode;
+  /** @deprecated ใช้ `prefixIcon` — ชื่อเดิมไม่มีแอปไหนเรียกเลย ส่วน `prefixIcon` ถูกเรียก 27 จุด */
   leftAdornment?: React.ReactNode;
+  /** @deprecated ใช้ `suffixIcon` — ชื่อเดิมไม่มีแอปไหนเรียกเลย ส่วน `suffixIcon` ถูกเรียก 29 จุด */
   rightAdornment?: React.ReactNode;
   /** Show a clear (×) button when value is non-empty. */
   clearable?: boolean;
   containerClassName?: string;
+  /** ข้อมูลยังมาไม่ถึง — แทนช่องกรอกด้วยโครงร่างที่สูงเท่ากันทุกประการ */
+  isLoading?: boolean;
 };
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
@@ -39,6 +48,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
     hideLabel,
     alwaysFloatLabel,
     size = "md",
+    prefixIcon,
+    suffixIcon,
     leftAdornment,
     rightAdornment,
     clearable,
@@ -49,6 +60,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
     onChange,
     disabled,
     placeholder,
+    isLoading,
     ...props
   },
   ref,
@@ -68,6 +80,24 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
   const floating =
     Boolean(alwaysFloatLabel) || focused || hasValue || Boolean(placeholder);
   const showClear = Boolean(clearable && hasValue && !disabled);
+  // ชื่อใหม่ชนะเสมอ ชื่อเดิมยังรับได้เพื่อไม่ให้ของที่เขียนไปแล้วพัง
+  const prefix = prefixIcon ?? leftAdornment;
+  const suffix = suffixIcon ?? rightAdornment;
+
+  /* โครงร่างใช้ shell ตัวเดียวกับของจริง ⇒ สูงเท่ากันโดยโครงสร้าง */
+  if (isLoading) {
+    return (
+      <FieldSkeleton
+        label={label}
+        hint={hint}
+        required={required}
+        hideLabel={hideLabel}
+        size={size}
+        leftAdornment={prefix}
+        containerClassName={containerClassName}
+      />
+    );
+  }
 
   return (
     <FloatingFieldShell
@@ -81,9 +111,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
       floating={floating}
       focused={focused}
       hasError={hasError}
-      leftAdornment={leftAdornment}
+      leftAdornment={prefix}
       rightAdornment={
-        showClear || isPassword || rightAdornment ? (
+        showClear || isPassword || suffix ? (
           <>
             {showClear && (
               <button
@@ -97,7 +127,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
                     target: { value: "" },
                   } as React.ChangeEvent<HTMLInputElement>);
                 }}
-                className="rounded-full p-0.5 hover:bg-black/5"
+                className="rounded-full p-0.5 hover:bg-overlay-hover"
               >
                 <X />
               </button>
@@ -108,12 +138,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 tabIndex={-1}
                 onClick={() => setShowPassword((s) => !s)}
-                className="rounded-full p-0.5 hover:bg-black/5"
+                className="rounded-full p-0.5 hover:bg-overlay-hover"
               >
                 {showPassword ? <Eye /> : <EyeOff />}
               </button>
             )}
-            {!showClear && !isPassword && rightAdornment}
+            {!showClear && !isPassword && suffix}
           </>
         ) : null
       }
@@ -143,8 +173,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
         }}
         className={cn(
           fieldShapeClasses({ hasError, size }),
-          leftAdornment && "pl-9",
-          (showClear || isPassword || rightAdornment) && "pr-9",
+          prefix && "pl-9",
+          (showClear || isPassword || suffix) && "pr-9",
           className,
         )}
         {...props}

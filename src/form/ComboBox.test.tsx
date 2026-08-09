@@ -80,7 +80,10 @@ describe("ComboBox", () => {
       el.textContent?.includes("Thailand"),
     );
     await user.click(thailandOption!);
-    expect(onChange).toHaveBeenCalledWith(undefined);
+    /* ⚠️ `null` ไม่ใช่ `undefined` — จงใจเปลี่ยนตอนรวบ MultiAutocomplete เข้ามา
+     * (2026-08-08) ให้ตรงกับ `EntityAutocomplete` ที่คืน `null` มาตั้งแต่แรก
+     * เดิมสอง component พี่น้องคืนคนละชนิด ⇒ สลับตัวเมื่อไหร่ `v === null` พังเงียบ */
+    expect(onChange).toHaveBeenCalledWith(null);
   });
 
   it("shows empty text when no options match query", async () => {

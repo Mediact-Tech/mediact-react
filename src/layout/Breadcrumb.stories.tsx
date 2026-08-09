@@ -51,3 +51,50 @@ export const Collapsed: Story = {
     ],
   },
 };
+
+/** Injecting a router-aware link component (e.g. next/link's `Link`) instead of
+ * the default plain `<a>` — avoids a full-page reload in Next.js apps. Here a
+ * tiny stand-in logs navigation instead of importing next/link (DS stays
+ * framework-agnostic; the consuming app supplies its own router's Link). */
+function FakeRouterLink({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      className={className}
+      onClick={(e) => {
+        e.preventDefault();
+        // eslint-disable-next-line no-console
+        console.log("client-side navigate:", href);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+export const WithLinkComponent: Story = {
+  args: {
+    linkComponent: FakeRouterLink,
+    items: [
+      { label: "Home", icon: <Home />, href: "/" },
+      { label: "User management", href: "/users" },
+      { label: "User lists" },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Pass `linkComponent` to route `items[].href` links through the app's router (e.g. `<Breadcrumb linkComponent={Link} .../>` with next/link) instead of a plain `<a>`.",
+      },
+    },
+  },
+};

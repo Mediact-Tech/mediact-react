@@ -145,7 +145,7 @@ function Composer({
             placeholder,
             "aria-label": placeholder,
             className: cn(
-              "max-h-40 min-h-9 flex-1 resize-none rounded-md border border-border-input px-3 py-2 text-sm",
+              "max-h-40 min-h-9 flex-1 resize-none rounded-md border border-border-input px-3 py-2 text-body-sm",
               "outline-none placeholder:text-gray-400",
               "focus-visible:border-brand-active focus-visible:ring-1 focus-visible:ring-brand-active",
               "disabled:bg-gray-50 disabled:text-gray-400"
@@ -261,13 +261,13 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
     };
   }, [load]);
   if (error) {
-    return /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-xs text-error-red-600", children: error });
+    return /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-error-red-600", children: error });
   }
   if (!items) {
     return /* @__PURE__ */ jsx3("div", { className: "flex items-center justify-center py-6", children: /* @__PURE__ */ jsx3(Loader2, { className: "size-4 animate-spin text-gray-400" }) });
   }
   if (items.length === 0) {
-    return /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-xs text-gray-500", children: labels.emptyHint });
+    return /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-gray-500", children: labels.emptyHint });
   }
   return /* @__PURE__ */ jsx3("ul", { "data-slot": "ai-chat-history", className: "max-h-64 overflow-y-auto border-b border-border-subtle", children: items.map((item) => /* @__PURE__ */ jsx3("li", { children: /* @__PURE__ */ jsxs3(
     "button",
@@ -282,7 +282,7 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
       children: [
         /* @__PURE__ */ jsx3(MessageSquare, { className: "mt-0.5 size-3.5 shrink-0 text-gray-400" }),
         /* @__PURE__ */ jsxs3("span", { className: "min-w-0 flex-1", children: [
-          /* @__PURE__ */ jsx3("span", { className: "block truncate text-sm text-black", children: item.title || item.preview || "(\u0E44\u0E21\u0E48\u0E21\u0E35\u0E0A\u0E37\u0E48\u0E2D)" }),
+          /* @__PURE__ */ jsx3("span", { className: "block truncate text-body-sm text-black", children: item.title || item.preview || "(\u0E44\u0E21\u0E48\u0E21\u0E35\u0E0A\u0E37\u0E48\u0E2D)" }),
           /* @__PURE__ */ jsx3("span", { className: "block text-[11px] text-gray-400", children: relativeTime(item.createdAt) })
         ] })
       ]
@@ -333,16 +333,16 @@ function Markdown({ text, className }) {
         "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         "[&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5",
         "[&_li]:my-0.5",
-        "[&_h1]:my-2 [&_h1]:text-base [&_h1]:font-semibold",
-        "[&_h2]:my-2 [&_h2]:text-sm [&_h2]:font-semibold",
-        "[&_h3]:my-1.5 [&_h3]:text-sm [&_h3]:font-semibold",
+        "[&_h1]:my-2 [&_h1]:text-body-md [&_h1]:font-semibold",
+        "[&_h2]:my-2 [&_h2]:text-body-sm [&_h2]:font-semibold",
+        "[&_h3]:my-1.5 [&_h3]:text-body-sm [&_h3]:font-semibold",
         "[&_a]:text-brand-active [&_a]:underline",
         "[&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.9em]",
         "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-gray-100 [&_pre]:p-2",
         "[&_pre_code]:bg-transparent [&_pre_code]:p-0",
         "[&_blockquote]:border-l-2 [&_blockquote]:border-border-default [&_blockquote]:pl-2 [&_blockquote]:text-gray-600",
         // Tables scroll inside the bubble instead of stretching the drawer.
-        "[&_table]:my-2 [&_table]:block [&_table]:w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_table]:text-xs",
+        "[&_table]:my-2 [&_table]:block [&_table]:w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_table]:text-caption",
         "[&_th]:border [&_th]:border-border-default [&_th]:bg-gray-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:whitespace-nowrap",
         "[&_td]:border [&_td]:border-border-default [&_td]:px-2 [&_td]:py-1 [&_td]:whitespace-nowrap",
         className
@@ -362,7 +362,7 @@ function ToolTrail({ tools }) {
     "li",
     {
       className: cn(
-        "flex items-center gap-1.5 text-xs",
+        "flex items-center gap-1.5 text-caption",
         tool.status === "error" ? "text-error-red-600" : "text-gray-500"
       ),
       children: [
@@ -410,7 +410,7 @@ function WidgetRenderer({ widget, onAction, disabled }) {
     case "schedule_diff":
       return /* @__PURE__ */ jsx6(ScheduleDiff, { payload: widget.payload });
     default:
-      return /* @__PURE__ */ jsx6(Frame, { children: /* @__PURE__ */ jsxs5("p", { className: "text-xs text-gray-500", children: [
+      return /* @__PURE__ */ jsx6(Frame, { children: /* @__PURE__ */ jsxs5("p", { className: "text-caption text-gray-500", children: [
         "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E1B\u0E23\u0E30\u0E01\u0E2D\u0E1A (",
         widget.type,
         ")"
@@ -440,7 +440,7 @@ function ActionButton({
       onClick,
       disabled,
       className: cn(
-        "h-8 rounded-sm px-3 text-sm font-semibold transition-colors cursor-pointer",
+        "h-8 rounded-sm px-3 text-body-sm font-semibold transition-colors cursor-pointer",
         "disabled:pointer-events-none disabled:opacity-40",
         variant === "primary" ? "bg-brand text-brand-foreground hover:bg-brand-hover" : "border border-brand bg-white text-brand hover:bg-brand-subtle"
       ),
@@ -454,8 +454,8 @@ function ConfirmCard({
   disabled
 }) {
   return /* @__PURE__ */ jsxs5(Frame, { children: [
-    /* @__PURE__ */ jsx6("p", { className: "text-sm font-semibold text-black", children: payload.title_th }),
-    /* @__PURE__ */ jsx6("p", { className: "mt-1 whitespace-pre-wrap text-sm text-gray-600", children: payload.summary_th }),
+    /* @__PURE__ */ jsx6("p", { className: "text-body-sm font-semibold text-black", children: payload.title_th }),
+    /* @__PURE__ */ jsx6("p", { className: "mt-1 whitespace-pre-wrap text-body-sm text-gray-600", children: payload.summary_th }),
     /* @__PURE__ */ jsxs5("div", { className: "mt-3 flex gap-2", children: [
       /* @__PURE__ */ jsx6(ActionButton, { onClick: () => onAction(payload.confirmLabel), disabled, children: payload.confirmLabel }),
       /* @__PURE__ */ jsx6(
@@ -483,12 +483,12 @@ function ErrorCard({
       children: /* @__PURE__ */ jsxs5("div", { className: "flex items-start gap-2", children: [
         isError ? /* @__PURE__ */ jsx6(CircleAlert, { className: "mt-0.5 size-4 shrink-0 text-error-red-600" }) : /* @__PURE__ */ jsx6(TriangleAlert2, { className: "mt-0.5 size-4 shrink-0 text-warning-normal" }),
         /* @__PURE__ */ jsxs5("div", { className: "min-w-0 flex-1", children: [
-          /* @__PURE__ */ jsxs5("p", { className: "text-sm font-semibold text-black", children: [
+          /* @__PURE__ */ jsxs5("p", { className: "text-body-sm font-semibold text-black", children: [
             payload.code,
             " \u2014 ",
             payload.message_th
           ] }),
-          payload.location && /* @__PURE__ */ jsxs5("p", { className: "mt-1 text-xs text-gray-600", children: [
+          payload.location && /* @__PURE__ */ jsxs5("p", { className: "mt-1 text-caption text-gray-600", children: [
             payload.location.date,
             " \xB7 \u0E40\u0E27\u0E23 ",
             payload.location.shiftType
@@ -514,7 +514,7 @@ function StaffPicker({
   disabled
 }) {
   return /* @__PURE__ */ jsxs5(Frame, { children: [
-    /* @__PURE__ */ jsx6("p", { className: "text-sm text-gray-700", children: payload.prompt_th }),
+    /* @__PURE__ */ jsx6("p", { className: "text-body-sm text-gray-700", children: payload.prompt_th }),
     /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-col gap-1", children: payload.candidates.map((candidate) => /* @__PURE__ */ jsxs5(
       "button",
       {
@@ -526,9 +526,9 @@ function StaffPicker({
           "hover:bg-brand-subtle disabled:pointer-events-none disabled:opacity-40 cursor-pointer"
         ),
         children: [
-          /* @__PURE__ */ jsx6("span", { className: "text-sm font-medium text-black", children: candidate.displayName }),
-          candidate.subUnit && /* @__PURE__ */ jsx6("span", { className: "text-xs text-gray-500", children: candidate.subUnit }),
-          candidate.hint && /* @__PURE__ */ jsx6("span", { className: "text-xs text-gray-400", children: candidate.hint })
+          /* @__PURE__ */ jsx6("span", { className: "text-body-sm font-medium text-black", children: candidate.displayName }),
+          candidate.subUnit && /* @__PURE__ */ jsx6("span", { className: "text-caption text-gray-500", children: candidate.subUnit }),
+          candidate.hint && /* @__PURE__ */ jsx6("span", { className: "text-caption text-gray-400", children: candidate.hint })
         ]
       },
       candidate.userId
@@ -538,12 +538,12 @@ function StaffPicker({
 function SummaryStats({ payload }) {
   return /* @__PURE__ */ jsxs5(Frame, { children: [
     /* @__PURE__ */ jsx6("dl", { className: "grid grid-cols-2 gap-2", children: payload.stats.map((stat) => /* @__PURE__ */ jsxs5("div", { className: "rounded-sm bg-gray-50 px-2 py-1.5", children: [
-      /* @__PURE__ */ jsx6("dt", { className: "text-xs text-gray-500", children: stat.label_th }),
+      /* @__PURE__ */ jsx6("dt", { className: "text-caption text-gray-500", children: stat.label_th }),
       /* @__PURE__ */ jsx6(
         "dd",
         {
           className: cn(
-            "text-sm font-semibold",
+            "text-body-sm font-semibold",
             stat.flag === "high" && "text-error-red-600",
             stat.flag === "low" && "text-warning-normal",
             !stat.flag && "text-black"
@@ -552,7 +552,7 @@ function SummaryStats({ payload }) {
         }
       )
     ] }, stat.label_th)) }),
-    payload.warnings_th.length > 0 && /* @__PURE__ */ jsx6("ul", { className: "mt-2 flex flex-col gap-1", children: payload.warnings_th.map((warning) => /* @__PURE__ */ jsxs5("li", { className: "text-xs text-warning-normal", children: [
+    payload.warnings_th.length > 0 && /* @__PURE__ */ jsx6("ul", { className: "mt-2 flex flex-col gap-1", children: payload.warnings_th.map((warning) => /* @__PURE__ */ jsxs5("li", { className: "text-caption text-warning-normal", children: [
       "\u2022 ",
       warning
     ] }, warning)) })
@@ -560,7 +560,7 @@ function SummaryStats({ payload }) {
 }
 function ScheduleDiff({ payload }) {
   return /* @__PURE__ */ jsxs5(Frame, { className: "overflow-x-auto", children: [
-    /* @__PURE__ */ jsxs5("p", { className: "mb-2 text-xs text-gray-500", children: [
+    /* @__PURE__ */ jsxs5("p", { className: "mb-2 text-caption text-gray-500", children: [
       "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E40\u0E27\u0E23 #",
       payload.scheduleId,
       " \xB7 \u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E0A\u0E31\u0E19 ",
@@ -569,7 +569,7 @@ function ScheduleDiff({ payload }) {
       payload.changes.length,
       " \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23"
     ] }),
-    /* @__PURE__ */ jsx6("table", { className: "w-full border-collapse text-sm", children: /* @__PURE__ */ jsx6("tbody", { children: payload.changes.map((change, index) => /* @__PURE__ */ jsxs5("tr", { className: "border-b border-border-subtle", children: [
+    /* @__PURE__ */ jsx6("table", { className: "w-full border-collapse text-body-sm", children: /* @__PURE__ */ jsx6("tbody", { children: payload.changes.map((change, index) => /* @__PURE__ */ jsxs5("tr", { className: "border-b border-border-subtle", children: [
       /* @__PURE__ */ jsx6("td", { className: "py-1 pr-2 whitespace-nowrap text-gray-600", children: change.date }),
       /* @__PURE__ */ jsx6("td", { className: "py-1 pr-2 text-gray-400 line-through", children: change.before ?? "\u2014" }),
       /* @__PURE__ */ jsx6("td", { className: "py-1 font-medium text-black", children: change.after ?? "\u2014" })
@@ -600,7 +600,7 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
           "div",
           {
             className: cn(
-              "rounded-lg px-3 py-2 text-sm break-words",
+              "rounded-lg px-3 py-2 text-body-sm break-words",
               isUser ? "bg-brand text-brand-foreground whitespace-pre-wrap" : message.failed ? "border border-error-red-100 bg-error-red-50 text-error-red-800" : "border border-border-subtle bg-white text-black"
             ),
             children: isUser ? message.content : message.content ? /* @__PURE__ */ jsx7(Markdown, { text: message.content }) : message.streaming ? /* @__PURE__ */ jsx7(TypingDots, { label: labels.thinking }) : null
@@ -672,8 +672,8 @@ function MessageList({
   if (messages.length === 0) {
     return /* @__PURE__ */ jsxs7("div", { className: "flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center", children: [
       /* @__PURE__ */ jsx8(Sparkles, { className: "size-8 text-brand-active" }),
-      /* @__PURE__ */ jsx8("p", { className: "text-sm font-semibold text-black", children: labels.emptyTitle }),
-      /* @__PURE__ */ jsx8("p", { className: "text-xs text-gray-500", children: labels.emptyHint }),
+      /* @__PURE__ */ jsx8("p", { className: "text-body-sm font-semibold text-black", children: labels.emptyTitle }),
+      /* @__PURE__ */ jsx8("p", { className: "text-caption text-gray-500", children: labels.emptyHint }),
       suggestions && suggestions.length > 0 && /* @__PURE__ */ jsx8("div", { className: "mt-4 flex w-full flex-col gap-2", children: suggestions.map((suggestion) => /* @__PURE__ */ jsx8(
         "button",
         {
@@ -681,7 +681,7 @@ function MessageList({
           disabled: busy,
           onClick: () => onWidgetAction(suggestion),
           className: cn(
-            "rounded-lg border border-border-default bg-white px-3 py-2 text-left text-sm text-black",
+            "rounded-lg border border-border-default bg-white px-3 py-2 text-left text-body-sm text-black",
             "transition-colors hover:border-brand-active hover:bg-brand-subtle cursor-pointer",
             "disabled:pointer-events-none disabled:opacity-40"
           ),
@@ -759,8 +759,8 @@ function ChatDrawer(props) {
       children: [
         /* @__PURE__ */ jsxs8("header", { className: "flex items-center gap-2 border-b border-border-subtle bg-white px-4 py-3", children: [
           /* @__PURE__ */ jsxs8("div", { className: "min-w-0 flex-1", children: [
-            /* @__PURE__ */ jsx9(RadixDialog.Title, { className: "truncate text-sm font-semibold text-black", children: labels.title }),
-            /* @__PURE__ */ jsx9("p", { className: "truncate text-xs text-gray-500", children: labels.subtitle })
+            /* @__PURE__ */ jsx9(RadixDialog.Title, { className: "truncate text-body-sm font-semibold text-black", children: labels.title }),
+            /* @__PURE__ */ jsx9("p", { className: "truncate text-caption text-gray-500", children: labels.subtitle })
           ] }),
           /* @__PURE__ */ jsx9(ContextMeter, { usage: contextUsage ?? null, labels, className: "mr-1" }),
           /* @__PURE__ */ jsx9(IconButton, { label: labels.history, onClick: () => setHistoryOpen((v) => !v), active: historyOpen, children: /* @__PURE__ */ jsx9(History, { className: "size-4" }) }),
@@ -842,7 +842,7 @@ function StatusBar({
   onRetry
 }) {
   if (status === "error") {
-    return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-error-red-50 px-4 py-2 text-xs text-error-red-800", children: [
+    return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-error-red-50 px-4 py-2 text-caption text-error-red-800", children: [
       /* @__PURE__ */ jsxs8("span", { className: "min-w-0 flex-1", children: [
         error,
         transportStatus === "connecting" && /* @__PURE__ */ jsx9("span", { className: "mt-0.5 block text-error-red-800/70", children: labels.reconnecting })
@@ -859,10 +859,10 @@ function StatusBar({
     ] });
   }
   if (status === "starting" || transportStatus === "connecting") {
-    return /* @__PURE__ */ jsx9("div", { className: "bg-brand-subtle px-4 py-1.5 text-xs text-brand", children: labels.connecting });
+    return /* @__PURE__ */ jsx9("div", { className: "bg-brand-subtle px-4 py-1.5 text-caption text-brand", children: labels.connecting });
   }
   if (transportStatus === "disconnected") {
-    return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-gray-100 px-4 py-1.5 text-xs text-gray-600", children: [
+    return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-gray-100 px-4 py-1.5 text-caption text-gray-600", children: [
       /* @__PURE__ */ jsx9("span", { className: "min-w-0 flex-1 truncate", children: labels.disconnected }),
       /* @__PURE__ */ jsx9(
         "button",
@@ -909,7 +909,7 @@ function ModeChip({
       onClick,
       "aria-pressed": active,
       className: cn(
-        "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
+        "flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-medium transition-colors cursor-pointer",
         active ? "bg-brand text-brand-foreground" : "border border-border-default bg-white text-gray-600 hover:bg-gray-50"
       ),
       children: [
@@ -957,7 +957,7 @@ var FloatingButton = React7.forwardRef(
           position === "bottom-left" ? /* @__PURE__ */ jsx10(ChevronsLeft2, { className: "size-6" }) : /* @__PURE__ */ jsx10(ChevronsRight2, { className: "size-6" })
         ) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
           /* @__PURE__ */ jsx10(Sparkles2, { className: "size-6 shrink-0 transition-transform group-hover:scale-110" }),
-          /* @__PURE__ */ jsx10("span", { className: "hidden text-sm font-medium whitespace-nowrap sm:inline", children: label })
+          /* @__PURE__ */ jsx10("span", { className: "hidden text-body-sm font-medium whitespace-nowrap sm:inline", children: label })
         ] })
       }
     );
@@ -1368,6 +1368,31 @@ function reducer(state, action) {
         messages
       };
     }
+    // The user is talking to this conversation from another tab. Both tabs are subscribed to
+    // `chat:{conversationId}` and both receive every publication — but until now only the tab that called
+    // `send` had a bubble to fold them into, so the other one dropped the whole turn on the floor and sat
+    // there looking like an empty chat. Give the turn a bubble here and the existing fold logic just works.
+    case "follow_start":
+      return {
+        ...state,
+        // Anything still open belongs to a turn that is over as far as this screen can tell; leaving it
+        // `streaming` would spin a placeholder forever. (Two turns genuinely overlapping means both tabs
+        // hit send inside the same instant — rare, and this closes the first one honestly rather than
+        // garbling the two answers into one bubble.)
+        messages: [...closeOpenTurns(state.messages), remoteTurn()],
+        status: "streaming",
+        // Adopt the run so Cancel works from here too: it is the same person and the same conversation,
+        // just a different window.
+        activeRunId: action.turnId,
+        error: null
+      };
+    // The question of a turn this tab did not type. It arrives before the answer's first token, so it lands
+    // above the bubble `follow_start` is about to create, in the order a reader expects.
+    case "remote_question":
+      return {
+        ...state,
+        messages: [...state.messages, { id: nextId(), role: "user", content: action.content }]
+      };
     case "error":
       return {
         ...state,
@@ -1428,6 +1453,12 @@ ${event.payload.summary_th}` : event.payload.summary_th
       return { ...state, messages, status: "streaming" };
     case "task_state":
       return state;
+    // Forward compatibility, deliberately at the cost of exhaustiveness checking. These events come off a
+    // wire from a service that deploys on its own schedule, so a name this build has never heard of is a
+    // NORMAL event, not a bug — and falling off the end of this switch returned `undefined`, which the
+    // reducer then made the whole session state. That is a white screen, not a dropped event.
+    default:
+      return state;
   }
 }
 function applyDone(state, action) {
@@ -1461,6 +1492,17 @@ function lastStreamingIndex(messages) {
     if (messages[i]?.streaming) return i;
   }
   return -1;
+}
+var remoteTurn = () => ({
+  id: nextId(),
+  role: "assistant",
+  content: "",
+  streaming: true
+});
+function closeOpenTurns(messages) {
+  return messages.map(
+    (message) => message.streaming ? { ...message, streaming: false, content: message.content || NO_ANSWER_TEXT } : message
+  );
 }
 function failStreamingTurn(messages, reason) {
   const index = lastStreamingIndex(messages);
@@ -1510,6 +1552,7 @@ function useAiChatSession(config) {
   const storageKey = `mediact-ai-chat:conversation:${config.baseUrl}`;
   const reportError = React8.useCallback((error, fallback) => {
     const err = error instanceof Error ? error : new Error(fallback);
+    turnRef.current = null;
     configRef.current.onError?.(err);
     dispatch({ type: "error", message: err.message || fallback });
   }, []);
@@ -1523,33 +1566,64 @@ function useAiChatSession(config) {
     clearUnackedGrace();
     unackedTimerRef.current = setTimeout(() => {
       unackedTimerRef.current = null;
+      turnRef.current = null;
       dispatch({ type: "error", message: UNACKED_EXPIRED_TEXT });
     }, UNACKED_GRACE_MS);
   }, [clearUnackedGrace]);
   React8.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
-  const handleEvent = React8.useCallback((event) => {
-    clearUnackedGrace();
-    if (event.event !== "done") {
-      if (event.event === "token") streamRef.current += event.payload.delta;
-      dispatch({ type: "event", event });
-      return;
-    }
-    const raw = streamRef.current;
-    streamRef.current = "";
-    const redirect = extractRedirect(raw);
-    if (redirect && typeof window !== "undefined") {
-      window.open(redirect, "_blank", "noopener,noreferrer");
-    }
-    const seed = extractEnterMode(raw);
-    dispatch({
-      type: "done",
-      payload: event.payload,
-      content: stripSentinels(raw),
-      seed,
-      exit: hasExitMode(raw),
-      greeting: buildScheduleGreeting(labelsRef.current, seed)
-    });
+  const turnRef = React8.useRef(null);
+  const adoptTurn = React8.useCallback(
+    (turnId) => {
+      const current = turnRef.current;
+      if (current && (!turnId || current.id === null || current.id === turnId)) {
+        if (current.id === null && turnId) current.id = turnId;
+        return current.own;
+      }
+      turnRef.current = { id: turnId ?? null, own: false };
+      dispatch({ type: "follow_start", turnId: turnId ?? null });
+      return false;
+    },
+    []
+  );
+  const isOwnTurn = React8.useCallback((turnId) => {
+    const current = turnRef.current;
+    if (!current?.own) return false;
+    return !turnId || current.id === null || current.id === turnId;
   }, []);
+  const handleEvent = React8.useCallback(
+    (event) => {
+      if (event.event === "user_turn") {
+        if (!isOwnTurn(event.turnId)) {
+          dispatch({ type: "remote_question", content: event.payload.message });
+        }
+        return;
+      }
+      const own = adoptTurn(event.turnId);
+      if (own) clearUnackedGrace();
+      if (event.event !== "done") {
+        if (event.event === "token") streamRef.current += event.payload.delta;
+        dispatch({ type: "event", event });
+        return;
+      }
+      const raw = streamRef.current;
+      streamRef.current = "";
+      turnRef.current = null;
+      const redirect = extractRedirect(raw);
+      if (own && redirect && typeof window !== "undefined") {
+        window.open(redirect, "_blank", "noopener,noreferrer");
+      }
+      const seed = extractEnterMode(raw);
+      dispatch({
+        type: "done",
+        payload: event.payload,
+        content: stripSentinels(raw),
+        seed,
+        exit: hasExitMode(raw),
+        greeting: buildScheduleGreeting(labelsRef.current, seed)
+      });
+    },
+    [adoptTurn, isOwnTurn, clearUnackedGrace]
+  );
   const start = React8.useCallback(
     async (conversationId) => {
       if (transportRef.current && !conversationId) return;
@@ -1559,6 +1633,7 @@ function useAiChatSession(config) {
         try {
           transportRef.current?.disconnect();
           transportRef.current = null;
+          turnRef.current = null;
           const remembered = conversationId ?? readStored(storageKey);
           let id;
           let transcript = [];
@@ -1620,7 +1695,9 @@ function useAiChatSession(config) {
         reportError(new Error("\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E2B\u0E49\u0E2D\u0E07\u0E2A\u0E19\u0E17\u0E19\u0E32"), "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D");
         return;
       }
+      if (stateRef.current.status === "sending" || stateRef.current.status === "streaming") return;
       streamRef.current = "";
+      turnRef.current = { id: null, own: true };
       dispatch({
         type: "user_turn",
         message: { id: nextId(), role: "user", content: trimmed },
@@ -1636,6 +1713,7 @@ function useAiChatSession(config) {
           // A scheduling hand-off already resolved dept/month — carry it so the agent doesn't re-ask.
           ...state.mode === "schedule" ? state.scheduleSeed : null
         });
+        if (turnRef.current?.own) turnRef.current.id = ticket.runId;
         dispatch({ type: "run_accepted", runId: ticket.runId });
       } catch (error) {
         if (error instanceof ChatSendTimeoutError) {
@@ -1663,6 +1741,7 @@ function useAiChatSession(config) {
     transportRef.current?.disconnect();
     transportRef.current = null;
     streamRef.current = "";
+    turnRef.current = null;
     writeStored(storageKey, null);
     dispatch({ type: "reset" });
   }, [storageKey]);

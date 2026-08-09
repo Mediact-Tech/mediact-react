@@ -44,7 +44,7 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
         {(message.content || !isUser) && (
           <div
             className={cn(
-              "rounded-lg px-3 py-2 text-sm break-words",
+              "rounded-lg px-3 py-2 text-body-sm break-words",
               isUser
                 ? "bg-brand text-brand-foreground whitespace-pre-wrap"
                 : message.failed

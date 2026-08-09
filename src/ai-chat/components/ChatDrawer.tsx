@@ -92,10 +92,10 @@ export function ChatDrawer(props: ChatDrawerProps) {
         >
           <header className="flex items-center gap-2 border-b border-border-subtle bg-white px-4 py-3">
             <div className="min-w-0 flex-1">
-              <RadixDialog.Title className="truncate text-sm font-semibold text-black">
+              <RadixDialog.Title className="truncate text-body-sm font-semibold text-black">
                 {labels.title}
               </RadixDialog.Title>
-              <p className="truncate text-xs text-gray-500">{labels.subtitle}</p>
+              <p className="truncate text-caption text-gray-500">{labels.subtitle}</p>
             </div>
 
             {/* Sits beside the actions rather than in the log: it describes the CONVERSATION, and it
@@ -204,7 +204,7 @@ function StatusBar({
 }) {
   if (status === "error") {
     return (
-      <div className="flex items-center gap-2 bg-error-red-50 px-4 py-2 text-xs text-error-red-800">
+      <div className="flex items-center gap-2 bg-error-red-50 px-4 py-2 text-caption text-error-red-800">
         <span className="min-w-0 flex-1">
           {error}
           {/* S11-F1: while centrifuge keeps re-dialing behind the scenes, say so — a silent red bar
@@ -225,12 +225,12 @@ function StatusBar({
   }
 
   if (status === "starting" || transportStatus === "connecting") {
-    return <div className="bg-brand-subtle px-4 py-1.5 text-xs text-brand">{labels.connecting}</div>;
+    return <div className="bg-brand-subtle px-4 py-1.5 text-caption text-brand">{labels.connecting}</div>;
   }
 
   if (transportStatus === "disconnected") {
     return (
-      <div className="flex items-center gap-2 bg-gray-100 px-4 py-1.5 text-xs text-gray-600">
+      <div className="flex items-center gap-2 bg-gray-100 px-4 py-1.5 text-caption text-gray-600">
         <span className="min-w-0 flex-1 truncate">{labels.disconnected}</span>
         <button
           type="button"
@@ -286,7 +286,7 @@ function ModeChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
+        "flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-medium transition-colors cursor-pointer",
         active
           ? "bg-brand text-brand-foreground"
           : "border border-border-default bg-white text-gray-600 hover:bg-gray-50",

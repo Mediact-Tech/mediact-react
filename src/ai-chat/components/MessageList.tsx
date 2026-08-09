@@ -32,8 +32,8 @@ export function MessageList({
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
         <Sparkles className="size-8 text-brand-active" />
-        <p className="text-sm font-semibold text-black">{labels.emptyTitle}</p>
-        <p className="text-xs text-gray-500">{labels.emptyHint}</p>
+        <p className="text-body-sm font-semibold text-black">{labels.emptyTitle}</p>
+        <p className="text-caption text-gray-500">{labels.emptyHint}</p>
 
         {/* A blank box is the hardest prompt to answer — offer real starting questions. */}
         {suggestions && suggestions.length > 0 && (
@@ -45,7 +45,7 @@ export function MessageList({
                 disabled={busy}
                 onClick={() => onWidgetAction(suggestion)}
                 className={cn(
-                  "rounded-lg border border-border-default bg-white px-3 py-2 text-left text-sm text-black",
+                  "rounded-lg border border-border-default bg-white px-3 py-2 text-left text-body-sm text-black",
                   "transition-colors hover:border-brand-active hover:bg-brand-subtle cursor-pointer",
                   "disabled:pointer-events-none disabled:opacity-40",
                 )}

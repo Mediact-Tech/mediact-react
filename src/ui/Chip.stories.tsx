@@ -29,6 +29,48 @@ export const Variants: Story = {
   ),
 };
 
+const TONES = ["neutral", "primary", "success", "warning", "danger", "info"] as const;
+
+export const FillMatrix: Story = {
+  name: "Fill × Tone matrix",
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <div>
+        <p className="mb-2 text-caption font-medium text-text-tertiary">
+          subtle (default — unchanged)
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {TONES.map((tone) => (
+            <Chip key={tone} variant={tone} fill="subtle">
+              {tone}
+            </Chip>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="mb-2 text-caption font-medium text-text-tertiary">solid</p>
+        <div className="flex flex-wrap gap-2">
+          {TONES.map((tone) => (
+            <Chip key={tone} variant={tone} fill="solid">
+              {tone}
+            </Chip>
+          ))}
+        </div>
+      </div>
+    </div>
+  ),
+};
+
+export const SolidRemovable: Story = {
+  args: {
+    variant: "danger",
+    fill: "solid",
+    removable: true,
+    children: "Solid + removable",
+    onRemove: () => console.log("removed"),
+  },
+};
+
 export const Sizes: Story = {
   render: () => (
     <div className="flex items-center gap-2">

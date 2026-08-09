@@ -135,4 +135,142 @@ describe("TimePicker", () => {
       ).toBeDisabled();
     });
   });
+
+  describe("minTime / maxTime", () => {
+    it("disables out-of-range hour options in the popover", async () => {
+      const user = userEvent.setup();
+      render(
+        <TimePicker label="Time" minTime="09:00" maxTime="17:00" />,
+      );
+      await user.click(
+        screen.getByRole("button", { name: /open time picker/i }),
+      );
+      const dialog = await screen.findByRole("dialog", { name: "Pick time" });
+      const [hourCol] = within(dialog).getAllByRole("listbox");
+      expect(within(hourCol!).getByRole("option", { name: "08" })).toBeDisabled();
+      expect(within(hourCol!).getByRole("option", { name: "17" })).toBeEnabled();
+      expect(within(hourCol!).getByRole("option", { name: "18" })).toBeDisabled();
+    });
+
+    it("disables out-of-range minute options once an hour at the boundary is selected", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <TimePicker
+          label="Time"
+          minTime="09:30"
+          maxTime="17:00"
+          value="09:30"
+          onChange={onChange}
+        />,
+      );
+      await user.click(
+        screen.getByRole("button", { name: /open time picker/i }),
+      );
+      const dialog = await screen.findByRole("dialog", { name: "Pick time" });
+      const [, minuteCol] = within(dialog).getAllByRole("listbox");
+      expect(
+        within(minuteCol!).getByRole("option", { name: "00" }),
+      ).toBeDisabled();
+      expect(
+        within(minuteCol!).getByRole("option", { name: "30" }),
+      ).toBeEnabled();
+    });
+
+    it("does not disable anything when minTime/maxTime are unset (default)", async () => {
+      const user = userEvent.setup();
+      render(<TimePicker label="Time" />);
+      await user.click(
+        screen.getByRole("button", { name: /open time picker/i }),
+      );
+      const dialog = await screen.findByRole("dialog", { name: "Pick time" });
+      const [hourCol] = within(dialog).getAllByRole("listbox");
+      expect(within(hourCol!).getByRole("option", { name: "00" })).toBeEnabled();
+      expect(within(hourCol!).getByRole("option", { name: "23" })).toBeEnabled();
+    });
+
+    it("snaps a typed out-of-range value back into bounds once focus leaves the field", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <TimePicker
+          label="Time"
+          minTime="09:00"
+          maxTime="17:00"
+          onChange={onChange}
+        />,
+      );
+      await user.type(screen.getByLabelText("Hours"), "05");
+      await user.type(screen.getByLabelText("Minutes"), "00");
+      // clicking outside the whole field group moves focus away
+      await user.click(document.body);
+      expect(onChange).toHaveBeenLastCalledWith("09:00");
+    });
+
+    it("does not clamp mid-typing (typing '14' with minTime hour 9 isn't jammed to '09' after the first digit)", async () => {
+      const user = userEvent.setup();
+      render(<TimePicker label="Time" minTime="09:00" />);
+      const h = screen.getByLabelText("Hours");
+      await user.type(h, "1");
+      expect(h).toHaveValue("1");
+      await user.type(h, "4");
+      expect(h).toHaveValue("14");
+    });
+  });
+
+  describe("ampm", () => {
+    it("displays hour in 12h form while value/onChange stay 24h", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <TimePicker label="Time" ampm value="14:30" onChange={onChange} />,
+      );
+      expect(screen.getByLabelText("Hours")).toHaveValue("02");
+      expect(screen.getByLabelText("Minutes")).toHaveValue("30");
+      expect(screen.getByRole("button", { name: /toggle am\/pm/i })).toHaveTextContent(
+        "PM",
+      );
+    });
+
+    it("toggling AM/PM converts the 24h value without touching hour/minute", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <TimePicker label="Time" ampm value="09:15" onChange={onChange} />,
+      );
+      await user.click(screen.getByRole("button", { name: /toggle am\/pm/i }));
+      expect(onChange).toHaveBeenLastCalledWith("21:15");
+    });
+
+    it("popover shows a 3rd Period listbox and hour options in 1-12 form", async () => {
+      const user = userEvent.setup();
+      render(<TimePicker label="Time" ampm />);
+      await user.click(
+        screen.getByRole("button", { name: /open time picker/i }),
+      );
+      const dialog = await screen.findByRole("dialog", { name: "Pick time" });
+      const lists = within(dialog).getAllByRole("listbox");
+      expect(lists).toHaveLength(3);
+      const [hourCol] = lists;
+      expect(within(hourCol!).queryByRole("option", { name: "00" })).toBeNull();
+      expect(within(hourCol!).getByRole("option", { name: "12" })).toBeInTheDocument();
+    });
+
+    it("picking hour 3, minute 45, and PM from the popover commits 15:45", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(<TimePicker label="Time" ampm onChange={onChange} />);
+      await user.click(
+        screen.getByRole("button", { name: /open time picker/i }),
+      );
+      const dialog = await screen.findByRole("dialog", { name: "Pick time" });
+      const [hourCol, minuteCol, periodCol] = within(dialog).getAllByRole(
+        "listbox",
+      );
+      await user.click(within(hourCol!).getByRole("option", { name: "03" }));
+      await user.click(within(minuteCol!).getByRole("option", { name: "45" }));
+      await user.click(within(periodCol!).getByRole("option", { name: "PM" }));
+      expect(onChange).toHaveBeenLastCalledWith("15:45");
+    });
+  });
 });

@@ -22,7 +22,16 @@
       "types": "./dist/ai-chat/index.d.ts",
       "import": "./dist/ai-chat/index.js"
     },
-    "./ai-chat.css": "./dist/ai-chat/style.css"
+    "./ai-chat.css": "./dist/ai-chat/style.css",
+    "./mui": {
+      "types": "./dist/mui/index.d.ts",
+      "import": "./dist/mui/index.js"
+    },
+    "./tokens.css": "./dist/tokens.css",
+    "./theme/portal.css": "./dist/theme/portal.css",
+    "./theme/mediwork.css": "./dist/theme/mediwork.css",
+    "./theme/medimatch.css": "./dist/theme/medimatch.css",
+    "./theme/medihr.css": "./dist/theme/medihr.css"
   },
   "sideEffects": [
     "**/*.css"
@@ -64,7 +73,7 @@
     "dompurify": "^3.4.12",
     "lucide-react": "^1.14.0",
     "marked": "^18.0.7",
-    "react-day-picker": "^10.0.0",
+    "react-number-format": "^5.4.5",
     "sonner": "^1.7.4",
     "tailwind-merge": "^3.5.0"
   },

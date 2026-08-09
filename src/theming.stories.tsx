@@ -34,7 +34,7 @@ function ThemingPlayground({
   return (
     <div style={style} className="space-y-8 rounded-xl border border-border-subtle bg-white p-8">
       <div>
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+        <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-tertiary">
           Active tokens
         </p>
         <div className="flex flex-wrap gap-2">
@@ -44,7 +44,7 @@ function ThemingPlayground({
             ["brand-active", brandActive],
             ["brand-subtle", brandSubtle],
           ].map(([name, value]) => (
-            <div key={name} className="flex items-center gap-2 rounded-md border border-border-default px-3 py-1.5 text-sm">
+            <div key={name} className="flex items-center gap-2 rounded-md border border-border-default px-3 py-1.5 text-body-sm">
               <span
                 className="size-4 rounded-sm border border-border-default"
                 style={{ background: value }}
@@ -57,7 +57,7 @@ function ThemingPlayground({
       </div>
 
       <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+        <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-text-tertiary">
           Buttons
         </p>
         <div className="flex flex-wrap gap-3">
@@ -71,7 +71,7 @@ function ThemingPlayground({
       </div>
 
       <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+        <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-text-tertiary">
           Controls
         </p>
         <div className="flex flex-wrap items-center gap-6">
@@ -84,7 +84,7 @@ function ThemingPlayground({
       </div>
 
       <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+        <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-text-tertiary">
           Tabs
         </p>
         <Tabs defaultValue="a">
@@ -100,7 +100,7 @@ function ThemingPlayground({
       </div>
 
       <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+        <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-text-tertiary">
           Tooltip
         </p>
         <Tooltip content="Tooltip text">

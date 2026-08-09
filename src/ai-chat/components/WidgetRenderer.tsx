@@ -41,7 +41,7 @@ export function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererPro
       // rather than silently swallowing a turn's payload.
       return (
         <Frame>
-          <p className="text-xs text-gray-500">ข้อมูลประกอบ ({widget.type})</p>
+          <p className="text-caption text-gray-500">ข้อมูลประกอบ ({widget.type})</p>
         </Frame>
       );
   }
@@ -75,7 +75,7 @@ function ActionButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "h-8 rounded-sm px-3 text-sm font-semibold transition-colors cursor-pointer",
+        "h-8 rounded-sm px-3 text-body-sm font-semibold transition-colors cursor-pointer",
         "disabled:pointer-events-none disabled:opacity-40",
         variant === "primary"
           ? "bg-brand text-brand-foreground hover:bg-brand-hover"
@@ -98,8 +98,8 @@ function ConfirmCard({
 }) {
   return (
     <Frame>
-      <p className="text-sm font-semibold text-black">{payload.title_th}</p>
-      <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600">{payload.summary_th}</p>
+      <p className="text-body-sm font-semibold text-black">{payload.title_th}</p>
+      <p className="mt-1 whitespace-pre-wrap text-body-sm text-gray-600">{payload.summary_th}</p>
       <div className="mt-3 flex gap-2">
         <ActionButton onClick={() => onAction(payload.confirmLabel)} disabled={disabled}>
           {payload.confirmLabel}
@@ -141,11 +141,11 @@ function ErrorCard({
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning-normal" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-black">
+          <p className="text-body-sm font-semibold text-black">
             {payload.code} — {payload.message_th}
           </p>
           {payload.location && (
-            <p className="mt-1 text-xs text-gray-600">
+            <p className="mt-1 text-caption text-gray-600">
               {payload.location.date} · เวร {payload.location.shiftType}
             </p>
           )}
@@ -180,7 +180,7 @@ function StaffPicker({
 }) {
   return (
     <Frame>
-      <p className="text-sm text-gray-700">{payload.prompt_th}</p>
+      <p className="text-body-sm text-gray-700">{payload.prompt_th}</p>
       <div className="mt-2 flex flex-col gap-1">
         {payload.candidates.map((candidate) => (
           <button
@@ -193,9 +193,9 @@ function StaffPicker({
               "hover:bg-brand-subtle disabled:pointer-events-none disabled:opacity-40 cursor-pointer",
             )}
           >
-            <span className="text-sm font-medium text-black">{candidate.displayName}</span>
-            {candidate.subUnit && <span className="text-xs text-gray-500">{candidate.subUnit}</span>}
-            {candidate.hint && <span className="text-xs text-gray-400">{candidate.hint}</span>}
+            <span className="text-body-sm font-medium text-black">{candidate.displayName}</span>
+            {candidate.subUnit && <span className="text-caption text-gray-500">{candidate.subUnit}</span>}
+            {candidate.hint && <span className="text-caption text-gray-400">{candidate.hint}</span>}
           </button>
         ))}
       </div>
@@ -209,10 +209,10 @@ function SummaryStats({ payload }: { payload: SummaryStatsWidget }) {
       <dl className="grid grid-cols-2 gap-2">
         {payload.stats.map((stat) => (
           <div key={stat.label_th} className="rounded-sm bg-gray-50 px-2 py-1.5">
-            <dt className="text-xs text-gray-500">{stat.label_th}</dt>
+            <dt className="text-caption text-gray-500">{stat.label_th}</dt>
             <dd
               className={cn(
-                "text-sm font-semibold",
+                "text-body-sm font-semibold",
                 stat.flag === "high" && "text-error-red-600",
                 stat.flag === "low" && "text-warning-normal",
                 !stat.flag && "text-black",
@@ -226,7 +226,7 @@ function SummaryStats({ payload }: { payload: SummaryStatsWidget }) {
       {payload.warnings_th.length > 0 && (
         <ul className="mt-2 flex flex-col gap-1">
           {payload.warnings_th.map((warning) => (
-            <li key={warning} className="text-xs text-warning-normal">
+            <li key={warning} className="text-caption text-warning-normal">
               • {warning}
             </li>
           ))}
@@ -239,10 +239,10 @@ function SummaryStats({ payload }: { payload: SummaryStatsWidget }) {
 function ScheduleDiff({ payload }: { payload: ScheduleDiffWidget }) {
   return (
     <Frame className="overflow-x-auto">
-      <p className="mb-2 text-xs text-gray-500">
+      <p className="mb-2 text-caption text-gray-500">
         ตารางเวร #{payload.scheduleId} · เวอร์ชัน {payload.version} · {payload.changes.length} รายการ
       </p>
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-body-sm">
         <tbody>
           {payload.changes.map((change, index) => (
             <tr key={`${change.date}-${change.userId}-${index}`} className="border-b border-border-subtle">

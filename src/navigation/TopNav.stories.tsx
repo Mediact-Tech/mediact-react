@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
 import { Globe } from "lucide-react";
 import {
   AppLauncher,
   NotificationBell,
   TopNav,
+  TopNavToggle,
   TopNavBrand,
   TopNavSpacer,
   UserMenu,
@@ -28,10 +30,26 @@ type Story = StoryObj<typeof meta>;
 const fullCatalog = {
   mediwork: { baseUrl: "https://mediwork.mediact.example" },
   medimatch: { baseUrl: "https://medimatch.mediact.example" },
-  medipay: { comingSoon: true },
-  medistock: { comingSoon: true },
-  medicare: { comingSoon: true },
-  medirefer: { comingSoon: true },
+  /* MediHR เป็นระบบที่ 4 ที่ปล่อยจริงแล้ว — ไม่ใช่ Coming Soon */
+  medihr: { baseUrl: "https://hr.mediact.example" },
+};
+
+/** ปุ่มพับ/กางเมนู — story ถือ state เอง เพราะของจริงเป็นของ layout ไม่ใช่ของ TopNav */
+function DemoToggle() {
+  const [collapsed, setCollapsed] = useState(false);
+  return (
+    <TopNavToggle
+      collapsed={collapsed}
+      onToggle={setCollapsed}
+      labels={{ expand: "กางเมนู", collapse: "พับเมนู" }}
+    />
+  );
+}
+
+/** ปุ่มก้นลิ้นชักที่พาไปหน้าตั้งค่าของ Portal — ข้อความมาจากแอปเสมอ */
+const settingsAction = {
+  label: "ตั้งค่า",
+  href: "https://portal.mediact.example",
 };
 
 const user = {
@@ -45,7 +63,7 @@ function LanguageSwitcherDemo() {
   return (
     <button
       type="button"
-      className="flex h-9 items-center gap-2 rounded-full border border-[#0000003B] bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+      className="flex h-9 items-center gap-2 rounded-full border border-[#0000003B] bg-white px-3 text-body-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
     >
       <Globe className="size-5 text-gray-700/70" />
       English
@@ -73,9 +91,10 @@ export const Default: Story = {
   render: () => (
     <div className="p-4">
       <TopNav>
+        <DemoToggle />
         <TopNavBrand>ABC Hospital</TopNavBrand>
         <TopNavSpacer />
-        <AppLauncher apps={fullCatalog} />
+        <AppLauncher apps={fullCatalog} settingsAction={settingsAction} />
         <NotificationBell hasUnread />
         <UserMenu {...userMenuProps} />
       </TopNav>
@@ -87,6 +106,7 @@ export const ActiveApp: Story = {
   render: () => (
     <div className="p-4">
       <TopNav>
+        <DemoToggle />
         <TopNavBrand>ABC Hospital</TopNavBrand>
         <TopNavSpacer />
         <AppLauncher
@@ -97,6 +117,7 @@ export const ActiveApp: Story = {
               active: true,
             },
           }}
+          settingsAction={settingsAction}
         />
         <NotificationBell hasUnread />
         <UserMenu {...userMenuProps} />
@@ -109,6 +130,7 @@ export const TenantWithoutMedimatch: Story = {
   render: () => (
     <div className="p-4">
       <TopNav>
+        <DemoToggle />
         <TopNavBrand>ABC Hospital</TopNavBrand>
         <TopNavSpacer />
         <AppLauncher
@@ -123,6 +145,7 @@ export const TenantWithoutMedimatch: Story = {
               disabled: true,
             },
           }}
+          settingsAction={settingsAction}
         />
         <NotificationBell hasUnread />
         <UserMenu {...userMenuProps} />
@@ -135,9 +158,10 @@ export const WithUnreadCount: Story = {
   render: () => (
     <div className="p-4">
       <TopNav>
+        <DemoToggle />
         <TopNavBrand>ABC Hospital</TopNavBrand>
         <TopNavSpacer />
-        <AppLauncher apps={fullCatalog} />
+        <AppLauncher apps={fullCatalog} settingsAction={settingsAction} />
         <NotificationBell unreadCount={5} />
         <UserMenu {...userMenuProps} />
       </TopNav>
@@ -149,9 +173,10 @@ export const NoNotifications: Story = {
   render: () => (
     <div className="p-4">
       <TopNav>
+        <DemoToggle />
         <TopNavBrand>ABC Hospital</TopNavBrand>
         <TopNavSpacer />
-        <AppLauncher apps={fullCatalog} />
+        <AppLauncher apps={fullCatalog} settingsAction={settingsAction} />
         <NotificationBell />
         <UserMenu {...userMenuProps} />
       </TopNav>
@@ -170,9 +195,10 @@ export const WithoutAvatarSrc: Story = {
   render: () => (
     <div className="p-4">
       <TopNav>
+        <DemoToggle />
         <TopNavBrand>ABC Hospital</TopNavBrand>
         <TopNavSpacer />
-        <AppLauncher apps={fullCatalog} />
+        <AppLauncher apps={fullCatalog} settingsAction={settingsAction} />
         <NotificationBell hasUnread />
         <UserMenu
           user={{ name: "admin1 admin1", role: "Super Admin" }}
@@ -209,7 +235,7 @@ export const LongTitle: Story = {
           Bangkok Mediact Memorial Hospital — Medical Center
         </TopNavBrand>
         <TopNavSpacer />
-        <AppLauncher apps={fullCatalog} />
+        <AppLauncher apps={fullCatalog} settingsAction={settingsAction} />
         <NotificationBell hasUnread />
         <UserMenu {...userMenuProps} />
       </TopNav>

@@ -67,7 +67,7 @@ function LoadingScreen({
       )}
     >
       <Spinner size="xl" />
-      {label && <span className="text-sm">{label}</span>}
+      {label && <span className="text-body-sm">{label}</span>}
     </div>
   );
 }

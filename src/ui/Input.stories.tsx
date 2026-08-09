@@ -69,12 +69,58 @@ export const Required: Story = {
   args: { required: true },
 };
 
-export const WithLeftAdornment: Story = {
-  args: { label: "Email", leftAdornment: <Mail /> },
+export const WithPrefixIcon: Story = {
+  args: { label: "อีเมล", prefixIcon: <Mail /> },
+};
+
+export const WithSuffixIcon: Story = {
+  args: { label: "ค้นหา", suffixIcon: <Search /> },
+};
+
+/** ใส่ได้ทั้งสองข้างพร้อมกัน — ช่องกรอกเว้นที่ให้เองทั้งซ้าย (`pl-9`) และขวา (`pr-9`) */
+export const WithBothIcons: Story = {
+  args: { label: "ค้นหาพนักงาน", prefixIcon: <Search />, suffixIcon: <Mail /> },
+};
+
+/** ป้ายที่ยังไม่ลอยจะเลื่อนไปทางขวาเองเมื่อมีไอคอนหน้าช่อง
+ * (`left-3` → `left-9`) ไม่งั้นป้ายจะทับไอคอน */
+export const IconShiftsRestingLabel: Story = {
+  render: () => (
+    <div className="flex w-80 flex-col gap-6">
+      <Input label="ไม่มีไอคอน" />
+      <Input label="มีไอคอน — ป้ายเลื่อนให้เอง" prefixIcon={<Search />} />
+    </div>
+  ),
+};
+
+/** ปุ่มล้างค่าและปุ่มดูรหัสผ่านมาก่อน `suffixIcon` เสมอ
+ * — ไม่งั้นจะมีสองอย่างซ้อนกันที่มุมขวา */
+export const SuffixIconYieldsToBuiltIns: Story = {
+  render: () => {
+    const [v, setV] = useState("พิมพ์แล้วดูมุมขวา");
+    return (
+      <div className="flex w-80 flex-col gap-6">
+        <Input label="ปกติ" suffixIcon={<Mail />} />
+        <Input
+          label="clearable — ปุ่มล้างชนะ"
+          suffixIcon={<Mail />}
+          clearable
+          value={v}
+          onChange={(e) => setV(e.target.value)}
+        />
+        <Input label="password — ปุ่มตาชนะ" type="password" suffixIcon={<Mail />} />
+      </div>
+    );
+  },
+};
+
+/** @deprecated ชื่อเดิม — ยังใช้ได้ แต่ `prefixIcon`/`suffixIcon` คือชื่อที่แอปจริงเรียก 56 จุด */
+export const LegacyAdornmentNames: Story = {
+  args: { label: "ชื่อเดิมยังทำงาน", leftAdornment: <Mail /> },
 };
 
 export const Password: Story = {
-  args: { label: "Password", type: "password", leftAdornment: <Lock /> },
+  args: { label: "รหัสผ่าน", type: "password", prefixIcon: <Lock /> },
 };
 
 export const Clearable: Story = {
@@ -119,6 +165,31 @@ export const States: Story = {
       <Input label="Disabled" disabled defaultValue="cannot edit" />
       <Input label="Required" required />
       <Input label="With error" defaultValue="bad" error="Required field" />
+    </div>
+  ),
+};
+
+/** ไม่มีป้าย → ใช้ placeholder แทน
+ *
+ * ป้ายว่าง (`label=""` หรือไม่ส่ง `label`) ต้องไม่ render อะไรเลย
+ * ก่อนหน้านี้ `label=""` จะสร้าง <label> เปล่ากว้าง 12px พื้นขาววางคร่อมเส้นขอบ
+ * = เจาะรูขาวบนกรอบโดยไม่มีตัวอักษร · เกิดบ่อยจาก `label={t("...")}` ที่ยังไม่มีคำแปล
+ */
+export const PlaceholderOnly: Story = {
+  args: { label: undefined, placeholder: "ค้นหาพนักงาน" },
+};
+
+export const EmptyLabelFallsBackToPlaceholder: Story = {
+  args: { label: "", placeholder: "ค้นหาพนักงาน" },
+};
+
+/** เทียบสามเคสให้เห็นพร้อมกัน — เส้นขอบด้านบนต้องต่อเนื่องทั้งสองอันล่าง */
+export const LabelVsPlaceholder: Story = {
+  render: () => (
+    <div className="flex w-80 flex-col gap-7">
+      <Input label="มีป้าย" placeholder="เช่น ศุกร์ ทดสอบ" />
+      <Input placeholder="ไม่ส่ง label เลย" />
+      <Input label="" placeholder={'label="" — เส้นขอบต้องไม่ขาด'} />
     </div>
   ),
 };

@@ -40,7 +40,7 @@ const DropdownMenuItem = React.forwardRef<HTMLDivElement, ItemProps>(
       <RadixMenu.Item
         ref={ref}
         className={cn(
-          "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
+          "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-body-sm outline-none transition-colors",
           "focus:bg-brand-subtle data-[highlighted]:bg-brand-subtle",
           "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
           destructive && "text-cherry-red-600 focus:bg-cherry-red-50 data-[highlighted]:bg-cherry-red-50",
@@ -61,7 +61,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
     <RadixMenu.CheckboxItem
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none",
+        "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-body-sm outline-none",
         "focus:bg-brand-subtle data-[highlighted]:bg-brand-subtle",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
@@ -86,7 +86,7 @@ const DropdownMenuRadioItem = React.forwardRef<
     <RadixMenu.RadioItem
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none",
+        "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-body-sm outline-none",
         "focus:bg-brand-subtle data-[highlighted]:bg-brand-subtle",
         className,
       )}
@@ -110,7 +110,7 @@ const DropdownMenuLabel = React.forwardRef<
     <RadixMenu.Label
       ref={ref}
       className={cn(
-        "px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-tertiary",
+        "px-2 py-1.5 text-caption font-semibold uppercase tracking-wide text-text-tertiary",
         inset && "pl-8",
         className,
       )}
@@ -140,7 +140,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
     <RadixMenu.SubTrigger
       ref={ref}
       className={cn(
-        "flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none",
+        "flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-body-sm outline-none",
         "focus:bg-brand-subtle data-[state=open]:bg-brand-subtle",
         className,
       )}

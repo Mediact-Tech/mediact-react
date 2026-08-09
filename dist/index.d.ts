@@ -1,13 +1,13 @@
 import * as class_variance_authority_types from 'class-variance-authority/types';
-import * as React$1 from 'react';
+import * as React from 'react';
 import { VariantProps } from 'class-variance-authority';
+import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import * as RadixSwitch from '@radix-ui/react-switch';
-import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as RadixRadio from '@radix-ui/react-radio-group';
 import * as RadixSelect from '@radix-ui/react-select';
 import * as RadixAvatar from '@radix-ui/react-avatar';
-import { ColumnDef, SortingState, OnChangeFn, RowSelectionState } from '@tanstack/react-table';
+import { Row, ColumnDef, SortingState, RowSelectionState } from '@tanstack/react-table';
 import * as RadixTabs from '@radix-ui/react-tabs';
 import { Toaster as Toaster$1 } from 'sonner';
 export { toast } from 'sonner';
@@ -16,81 +16,152 @@ import * as RadixDialog from '@radix-ui/react-dialog';
 import * as RadixTooltip from '@radix-ui/react-tooltip';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { ClassValue } from 'clsx';
+export { T as TYPE_SCALE, a as TYPE_SCALE_DEFAULT_WEIGHT, b as TypeScaleEntry, c as TypeScaleToken } from './type-scale-Cv-4FG73.js';
 
 declare const buttonVariants: (props?: ({
-    variant?: "primary" | "secondary" | "ghost" | "destructive" | "success" | "warning" | null | undefined;
+    variant?: "primary" | "secondary" | "ghost" | "info" | "destructive" | "success" | "warning" | null | undefined;
     size?: "xs" | "sm" | "md" | "lg" | "xl" | null | undefined;
     fullWidth?: boolean | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type ButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof buttonVariants> & {
+type ButtonProps = React.ComponentProps<"button"> & VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    /** ผู้ใช้กดแล้วกำลังทำงาน — แสดงสปินเนอร์ในปุ่ม ปุ่มยังอยู่ที่เดิม */
     loading?: boolean;
-    leftIcon?: React$1.ReactNode;
-    rightIcon?: React$1.ReactNode;
+    /**
+     * ข้อมูลยังมาไม่ถึง — แทนทั้งปุ่มด้วยโครงร่าง
+     *
+     * คนละเรื่องกับ `loading` โดยตั้งใจ:
+     * `loading` = สิ่งที่ผู้ใช้สั่งกำลังทำอยู่ (ต้องเห็นปุ่มและป้ายเดิม)
+     * `isLoading` = ยังไม่รู้ว่าปุ่มนี้ควรเขียนว่าอะไร หรือควรมีไหม
+     * ใช้พร้อมกันได้ แต่ `isLoading` ชนะเพราะยังไม่มีอะไรให้กด
+     */
+    isLoading?: boolean;
+    leftIcon?: React.ReactNode;
+    rightIcon?: React.ReactNode;
 };
-declare const Button: React$1.ForwardRefExoticComponent<Omit<ButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+declare const Button: React.ForwardRefExoticComponent<Omit<ButtonProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
 declare const solidButtonVariants: (props?: ({
-    variant?: "primary" | "success" | "warning" | "info" | null | undefined;
+    variant?: "primary" | "info" | "success" | "warning" | null | undefined;
     size?: "sm" | "md" | "lg" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type SolidButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof solidButtonVariants> & {
+type SolidButtonProps = React.ComponentProps<"button"> & VariantProps<typeof solidButtonVariants> & {
     asChild?: boolean;
     /** Localized button text — ignored when `children` is provided. */
-    label?: React$1.ReactNode;
+    label?: React.ReactNode;
 };
 /** Filled action button — for actions like Save, Upload, Confirm. */
-declare const SolidButton: React$1.ForwardRefExoticComponent<Omit<SolidButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+declare const SolidButton: React.ForwardRefExoticComponent<Omit<SolidButtonProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
-type AddButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof solidButtonVariants> & {
+type AddButtonProps = React.ComponentProps<"button"> & VariantProps<typeof solidButtonVariants> & {
     asChild?: boolean;
     /** Localized button text — ignored when `children` is provided. */
-    label?: React$1.ReactNode;
+    label?: React.ReactNode;
 };
 /**
  * "Add" button — same "[+ icon] [add_text]" pattern everywhere in the system.
  * With `asChild`, children render as-is (no Plus injected) so the caller's
  * single element (e.g. a router Link) can carry its own icon + text.
  */
-declare const AddButton: React$1.ForwardRefExoticComponent<Omit<AddButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+declare const AddButton: React.ForwardRefExoticComponent<Omit<AddButtonProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
 declare const outlineButtonVariants: (props?: ({
     variant?: "brand" | "neutral" | null | undefined;
     size?: "sm" | "md" | "lg" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type OutlineButtonProps = React$1.ComponentProps<"button"> & VariantProps<typeof outlineButtonVariants> & {
+type OutlineButtonProps = React.ComponentProps<"button"> & VariantProps<typeof outlineButtonVariants> & {
     asChild?: boolean;
     /** Localized button text — ignored when `children` is provided. */
-    label?: React$1.ReactNode;
+    label?: React.ReactNode;
 };
 /** Outlined action button — for secondary actions like Cancel, Edit. */
-declare const OutlineButton: React$1.ForwardRefExoticComponent<Omit<OutlineButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+declare const OutlineButton: React.ForwardRefExoticComponent<Omit<OutlineButtonProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
 type FieldSize = "sm" | "md" | "lg";
 
-type NativeInputProps = Omit<React$1.ComponentProps<"input">, "size">;
+type NativeInputProps = Omit<React.ComponentProps<"input">, "size">;
 type InputProps = NativeInputProps & {
     /** Floating label — sits inside the field as placeholder, floats up on focus or when filled. */
-    label?: React$1.ReactNode;
-    hint?: React$1.ReactNode;
-    error?: React$1.ReactNode;
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
     /** Force the label into the floated position (e.g. for fields with fixed prefixes/masks). */
     alwaysFloatLabel?: boolean;
     size?: FieldSize;
-    leftAdornment?: React$1.ReactNode;
-    rightAdornment?: React$1.ReactNode;
+    /** ไอคอนหน้าช่องกรอก — ป้ายที่ยังไม่ลอยจะขยับไปทางขวาให้เอง */
+    prefixIcon?: React.ReactNode;
+    /** ไอคอนท้ายช่องกรอก — ถ้ามีปุ่มล้างค่าหรือปุ่มดูรหัสผ่าน สองตัวนั้นมาก่อน */
+    suffixIcon?: React.ReactNode;
+    /** @deprecated ใช้ `prefixIcon` — ชื่อเดิมไม่มีแอปไหนเรียกเลย ส่วน `prefixIcon` ถูกเรียก 27 จุด */
+    leftAdornment?: React.ReactNode;
+    /** @deprecated ใช้ `suffixIcon` — ชื่อเดิมไม่มีแอปไหนเรียกเลย ส่วน `suffixIcon` ถูกเรียก 29 จุด */
+    rightAdornment?: React.ReactNode;
     /** Show a clear (×) button when value is non-empty. */
     clearable?: boolean;
     containerClassName?: string;
+    /** ข้อมูลยังมาไม่ถึง — แทนช่องกรอกด้วยโครงร่างที่สูงเท่ากันทุกประการ */
+    isLoading?: boolean;
 };
-declare const Input: React$1.ForwardRefExoticComponent<Omit<InputProps, "ref"> & React$1.RefAttributes<HTMLInputElement>>;
+declare const Input: React.ForwardRefExoticComponent<Omit<InputProps, "ref"> & React.RefAttributes<HTMLInputElement>>;
 
-type TextareaProps = React$1.ComponentProps<"textarea"> & {
-    label?: React$1.ReactNode;
-    hint?: React$1.ReactNode;
-    error?: React$1.ReactNode;
+/** รูปแบบสำเร็จรูป — เพิ่มได้ แต่ต้องมีของจริงมารองรับก่อน */
+declare const FORMAT_PRESETS: {
+    /** เลขบัตรประชาชนไทย 13 หลัก — 1-2345-67890-12-3 */
+    readonly thaiId: {
+        readonly kind: "pattern";
+        readonly pattern: "#-####-#####-##-#";
+        readonly digits: 13;
+    };
+    /** เบอร์มือถือไทย 10 หลัก — 081-234-5678 */
+    readonly phone: {
+        readonly kind: "pattern";
+        readonly pattern: "###-###-####";
+        readonly digits: 10;
+    };
+    /** เลขบัญชีธนาคารไทย 10 หลัก — 123-4-56789-0 */
+    readonly bankAccount: {
+        readonly kind: "pattern";
+        readonly pattern: "###-#-#####-#";
+        readonly digits: 10;
+    };
+    /** จำนวนเงิน — ค่าเดียวกับที่ Medimatch ใช้อยู่กับช่องค่าจ้าง */
+    readonly currency: {
+        readonly kind: "numeric";
+    };
+};
+type FormatPreset = keyof typeof FORMAT_PRESETS;
+/** รูปแบบที่เขียนเอง — ให้ทั้งขาจัดและขาถอด ไม่งั้นค่าที่ส่งกลับจะเป็นค่าที่จัดแล้ว */
+type CustomFormat = {
+    /** ค่าดิบ → สิ่งที่แสดงบนจอ */
+    format: (raw: string) => string;
+    /** สิ่งที่อยู่บนจอ → ค่าดิบ · ไม่ส่ง = ตัดทุกอย่างที่ไม่ใช่ตัวเลข */
+    removeFormatting?: (formatted: string) => string;
+};
+type FormatInputProps = Omit<InputProps, "value" | "defaultValue" | "onChange" | "type"> & {
+    /** ชื่อรูปแบบสำเร็จรูป · สตริง mask (`"#-####-#####-##-#"`) · หรือฟังก์ชันเอง */
+    format: FormatPreset | string | CustomFormat;
+    value?: string;
+    /** คืน **ค่าดิบ** เสมอ — ไม่มีตัวคั่น */
+    onValueChange?: (raw: string) => void;
+    /** แสดง `_` ในช่องที่ยังไม่ได้กรอก (เฉพาะรูปแบบที่เป็น mask) */
+    showMask?: boolean;
+    /** ตัวคั่นหลักพัน · เฉพาะรูปแบบตัวเลข */
+    thousandSeparator?: string;
+    /** จำนวนทศนิยม · เฉพาะรูปแบบตัวเลข */
+    decimalScale?: number;
+    allowNegative?: boolean;
+};
+declare function FormatInput({ format, value, onValueChange, showMask, thousandSeparator, decimalScale, allowNegative, ...rest }: FormatInputProps): react_jsx_runtime.JSX.Element;
+declare namespace FormatInput {
+    var displayName: string;
+}
+
+type TextareaProps = React.ComponentProps<"textarea"> & {
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
     alwaysFloatLabel?: boolean;
@@ -98,65 +169,127 @@ type TextareaProps = React$1.ComponentProps<"textarea"> & {
     /** Show character count in the hint slot (requires `maxLength`). */
     showCount?: boolean;
     containerClassName?: string;
+    /** ข้อความยังมาไม่ถึง — แทนช่องด้วยโครงร่างที่สูงเท่ากันทุกประการ */
+    isLoading?: boolean;
 };
-declare const Textarea: React$1.ForwardRefExoticComponent<Omit<TextareaProps, "ref"> & React$1.RefAttributes<HTMLTextAreaElement>>;
+declare const Textarea: React.ForwardRefExoticComponent<Omit<TextareaProps, "ref"> & React.RefAttributes<HTMLTextAreaElement>>;
 
-type CheckboxProps = Omit<React$1.ComponentProps<typeof RadixCheckbox.Root>, "asChild"> & {
-    /** Label rendered to the right of the box. Click toggles the checkbox. */
-    label?: React$1.ReactNode;
-    /** Description rendered under the label. */
-    description?: React$1.ReactNode;
-    /** Error message — switches to error styling. */
-    error?: React$1.ReactNode;
-    /** Wrapper className (the outer label). */
+type ToggleSize = "sm" | "md";
+/**
+ * รูปทรงกล่องติ๊ก
+ *
+ * 📐 มุมโค้ง 2px (`rounded-xs`) — วัดจาก Portal ได้ `border-radius: 2px` เป๊ะ
+ * ของเดิมใน DS เป็น `rounded-sm` ซึ่งใน Tailwind v4 = 4px คนละค่า
+ */
+declare function checkboxShapeClasses(size?: ToggleSize): string;
+/**
+ * รูปทรงปุ่มตัวเลือกเดียว
+ *
+ * 🔴 เลือกแล้ว = **ขอบบาง + จุดทึบตรงกลาง** ไม่ใช่ "วงแหวนหนาเจาะรูขาว"
+ * ของจริง Portal/MediHR ใช้ `data-[state=checked]:border-[6px]` แล้ววาดจุด **ขาว**
+ * ทับตรงกลาง ⇒ ภาพที่ได้คือวงกลมทึบที่ถูกเจาะรู ซึ่งกลับด้าน figure/ground:
+ * สิ่งที่ "ถูกเลือก" กลายเป็นช่องว่าง ส่วนขอบกลายเป็นเนื้อ
+ * และเทคนิคนี้พังทันทีเมื่อเปลี่ยนขนาด — 6px บนกล่อง 16px เหลือรูแค่ 4px
+ * Medimatch ทำแบบขอบบาง+จุด ซึ่งตรงกับที่ทุกระบบใช้กัน จึงเอาแบบนั้น
+ */
+declare function radioShapeClasses(size?: ToggleSize): string;
+
+/** @doc ./toggle.md */
+
+type CheckboxProps = Omit<React.ComponentProps<typeof RadixCheckbox.Root>, "asChild"> & {
+    /** ข้อความข้างกล่อง กดที่ข้อความก็ติ๊กได้ */
+    label?: React.ReactNode;
+    /** คำอธิบายใต้ป้ายกำกับ */
+    description?: React.ReactNode;
+    /** ข้อความผิดพลาด — ใส่แล้วสลับไปสไตล์ error */
+    error?: React.ReactNode;
+    /** ขนาดตัวควบคุม `md` 20px (ค่าเริ่มต้น) · `sm` 16px สำหรับแถวตารางที่แน่น */
+    size?: ToggleSize;
+    /** ยังไม่มีข้อมูล — แสดงโครงร่างแทนทั้งแถว */
+    isLoading?: boolean;
+    /** className ของกล่องนอก */
     containerClassName?: string;
 };
-declare const Checkbox: React$1.ForwardRefExoticComponent<Omit<CheckboxProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+declare const Checkbox: React.ForwardRefExoticComponent<Omit<CheckboxProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
-type SwitchProps = Omit<React$1.ComponentProps<typeof RadixSwitch.Root>, "asChild"> & {
-    label?: React$1.ReactNode;
-    description?: React$1.ReactNode;
-    error?: React$1.ReactNode;
-    /** Position of label relative to the switch. Default `right`. */
+/** @doc ./toggle.md */
+
+/** คำที่แสดง**ในราง** — ใช้กับการ์ดหน่วยงานที่ไม่มีที่ให้เขียนป้ายข้างนอก */
+type SwitchTrackLabels = {
+    on: React.ReactNode;
+    off: React.ReactNode;
+};
+type SwitchProps = Omit<React.ComponentProps<typeof RadixSwitch.Root>, "asChild"> & {
+    label?: React.ReactNode;
+    description?: React.ReactNode;
+    error?: React.ReactNode;
+    /** ป้ายกำกับอยู่ซ้ายหรือขวาของสวิตช์ ค่าเริ่มต้น `right` */
     labelPosition?: "left" | "right";
+    /**
+     * ผู้ใช้กดแล้ว **กำลังบันทึกอยู่** — หมุนอยู่ในปุ่มเลื่อน กดซ้ำไม่ได้
+     * แต่ยังคงสถานะเดิมไว้จนกว่าเซิร์ฟเวอร์จะตอบ
+     *
+     * คนละเรื่องกับ `isLoading` (ยังไม่มีข้อมูล ⇒ โครงร่าง) — ดู CLAUDE.md §4.5
+     */
+    loading?: boolean;
+    /** ยังไม่มีข้อมูล — แสดงโครงร่างแทนทั้งแถว */
+    isLoading?: boolean;
+    /** ข้อความให้โปรแกรมอ่านหน้าจอตอน `loading` — แอปส่งคำแปลมาเอง */
+    loadingLabel?: string;
+    /**
+     * ใส่คำว่า "เปิด/ปิด" **ไว้ในราง** แทนป้ายกำกับข้างนอก
+     *
+     * ใช้ในการ์ดที่มีที่ว่างจำกัด (การ์ดหน่วยงานของ MediHR) — รางจะกว้างขึ้นตาม
+     * คำที่ยาวที่สุด และปุ่มเลื่อนสลับข้างแทนการเลื่อน
+     *
+     * ⚠️ ยังส่ง `aria-label` มาด้วยเสมอ ถ้าไม่มี `label` ข้างนอก —
+     * คำในรางเป็นแค่ภาพ ไม่ได้ผูกกับ `role="switch"` ให้โดยอัตโนมัติ
+     */
+    trackLabels?: SwitchTrackLabels;
     containerClassName?: string;
 };
-declare const Switch: React$1.ForwardRefExoticComponent<Omit<SwitchProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+declare const Switch: React.ForwardRefExoticComponent<Omit<SwitchProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
 type RadioOption<V extends string = string> = {
     value: V;
-    label: React$1.ReactNode;
-    description?: React$1.ReactNode;
+    label: React.ReactNode;
+    description?: React.ReactNode;
     disabled?: boolean;
 };
-type RadioGroupProps<V extends string = string> = Omit<React$1.ComponentProps<typeof RadixRadio.Root>, "asChild" | "children"> & {
-    label?: React$1.ReactNode;
-    hint?: React$1.ReactNode;
-    error?: React$1.ReactNode;
+type RadioGroupProps<V extends string = string> = Omit<React.ComponentProps<typeof RadixRadio.Root>, "asChild" | "children"> & {
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
     required?: boolean;
-    /** Options to render. Pass children directly for custom layouts. */
+    /** ตัวเลือกที่จะแสดง — ส่ง children เองได้ถ้าต้องการเลย์เอาต์พิเศษ */
     options?: RadioOption<V>[];
-    /** Layout direction. Default `vertical`. */
+    /** ทิศทางการเรียง ค่าเริ่มต้น `vertical` */
     orientation?: "vertical" | "horizontal";
+    /** ขนาดตัวควบคุม `md` 20px (ค่าเริ่มต้น) · `sm` 16px */
+    size?: ToggleSize;
+    /** ยังไม่มีข้อมูล — แสดงโครงร่างแทนทั้งกลุ่ม */
+    isLoading?: boolean;
     containerClassName?: string;
-    children?: React$1.ReactNode;
+    children?: React.ReactNode;
 };
-declare function RadioGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, orientation, children, ...props }: RadioGroupProps<V>): react_jsx_runtime.JSX.Element;
-type RadioGroupItemProps = Omit<React$1.ComponentProps<typeof RadixRadio.Item>, "asChild"> & {
-    description?: React$1.ReactNode;
+declare function RadioGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, orientation, size, isLoading, children, ...props }: RadioGroupProps<V>): react_jsx_runtime.JSX.Element;
+type RadioGroupItemProps = Omit<React.ComponentProps<typeof RadixRadio.Item>, "asChild"> & {
+    description?: React.ReactNode;
+    /** ทับขนาดที่ได้จากกลุ่ม — ปกติไม่ต้องใส่ */
+    size?: ToggleSize;
 };
-declare const RadioGroupItem: React$1.ForwardRefExoticComponent<Omit<RadioGroupItemProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+declare const RadioGroupItem: React.ForwardRefExoticComponent<Omit<RadioGroupItemProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
 type SelectOption<V extends string = string> = {
     value: V;
-    label: React$1.ReactNode;
+    label: React.ReactNode;
     disabled?: boolean;
 };
 type SelectProps<V extends string = string> = {
     id?: string;
-    label?: React$1.ReactNode;
-    hint?: React$1.ReactNode;
-    error?: React$1.ReactNode;
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
     /** Force the label into the floated position. */
@@ -173,51 +306,317 @@ type SelectProps<V extends string = string> = {
     className?: string;
     containerClassName?: string;
     /** When passing children directly (for grouping/custom items). */
-    children?: React$1.ReactNode;
+    children?: React.ReactNode;
+    /**
+     * Shows a × button once a value is set, resetting the field to `""`
+     * (same "no selection" sentinel already used by `hasValue`/floating-label logic).
+     * `onChange`'s signature is unchanged — for typed unions narrower than `string`,
+     * treat an `onChange("")` call as "cleared".
+     */
+    clearable?: boolean;
+    /**
+     * ตัวเลือกยังมาไม่ถึง — แทนช่องด้วยโครงร่างที่สูงเท่ากันทุกประการ
+     *
+     * ต่างจาก `disabled`: `disabled` แปลว่า "เลือกไม่ได้" (ผู้ใช้ต้องเข้าใจว่าทำไม)
+     * ส่วน `isLoading` แปลว่า "ยังไม่รู้ว่ามีอะไรให้เลือกบ้าง"
+     * ⇒ dropdown ที่รอ API อยู่ต้องใช้ตัวนี้ ไม่ใช่ `disabled`
+     */
+    isLoading?: boolean;
+    /**
+     * จองที่ว่างใต้ช่องไว้ 1 บรรทัดเสมอ กันเลย์เอาต์กระโดดตอนขึ้น error · ค่าเริ่มต้น `true`
+     *
+     * 🔴 **ปิดเมื่ออยู่ในแถบเครื่องมือ** (แถบแบ่งหน้า ตัวกรอง ฯลฯ) — ที่นั่นไม่มี error
+     * มาแสดงอยู่แล้ว บรรทัดที่จองไว้จึงเป็นที่ว่างเปล่าที่ดันแถบสูงขึ้นเฉย ๆ
+     * (วัดแล้ว: ช่องสูง 36 แต่กินที่ 56 ⇒ แถบแบ่งหน้าสูง 73px ทั้งที่ของจริงใช้ 32px)
+     */
+    reserveMessageSpace?: boolean;
+    /**
+     * ข้อความตอนไม่มีตัวเลือกให้เลือก · ค่าเริ่มต้น `"No options"`
+     *
+     * 🔴 เดิม `options=[]` ได้ **กล่องเปล่าไม่มีอะไรเลย** — ผู้ใช้กดแล้วไม่รู้ว่า
+     * โหลดไม่มา ระบบพัง หรือไม่มีข้อมูลจริง ๆ
+     * (ของจริงเรียกสิ่งนี้ว่า `noOptionsText` อยู่แล้ว 6 จุดบน Mediwork และ
+     *  `no_options` บน Portal — DS เป็นตัวเดียวที่ไม่มี)
+     */
+    emptyText?: React.ReactNode;
+    /**
+     * ทางออกในสถานะว่าง — ปุ่มที่พาไปสร้างของที่ยังไม่มี
+     *
+     * 🔴 **dropdown ว่างที่ไม่มีทางออกคือทางตัน** — บันทึกไว้ตอน dev MediHR F3:
+     * โรงพยาบาลที่ยังไม่เคยตั้งนโยบายเวลาทำงานเปิด dropdown แล้วเจอช่องว่าง
+     * แล้วไปต่อไม่ได้ ทั้งที่ทางแก้คือไปสร้างที่หน้าตั้งค่า
+     *
+     * ```tsx
+     * emptyAction={{ label: "เพิ่มหน่วยงาน", onClick: () => router.push("/sub-units") }}
+     * ```
+     */
+    emptyAction?: {
+        label: React.ReactNode;
+        onClick: () => void;
+        /** ไอคอนหน้าป้าย — ไม่ส่ง = เครื่องหมายบวก */
+        icon?: React.ReactNode;
+    };
+    /** วาดสถานะว่างเอง — ชนะ `emptyText`/`emptyAction` */
+    renderEmpty?: () => React.ReactNode;
 };
-declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, }: SelectProps<V>): react_jsx_runtime.JSX.Element;
-declare const SelectItem: React$1.ForwardRefExoticComponent<Omit<RadixSelect.SelectItemProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, clearable, isLoading, reserveMessageSpace, emptyText, emptyAction, renderEmpty, }: SelectProps<V>): react_jsx_runtime.JSX.Element;
+declare const SelectItem: React.ForwardRefExoticComponent<Omit<RadixSelect.SelectItemProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+
+type CheckboxOption<V extends string = string> = {
+    value: V;
+    label: React.ReactNode;
+    description?: React.ReactNode;
+    disabled?: boolean;
+};
+type CheckboxGroupProps<V extends string = string> = {
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
+    required?: boolean;
+    id?: string;
+    /** Wired to each item's native `name` — useful for uncontrolled native form submission. */
+    name?: string;
+    /** Disables every item. A per-option `disabled` still wins for that item. */
+    disabled?: boolean;
+    /** Options to render. Pass children (`CheckboxGroupItem`) directly for custom layouts. */
+    options?: CheckboxOption<V>[];
+    /** Controlled selected values. */
+    value?: V[];
+    /** Initial selected values (uncontrolled). */
+    defaultValue?: V[];
+    /** Fires with the next array whenever an item toggles. */
+    onValueChange?: (next: V[]) => void;
+    /** Layout direction. Default `vertical`. */
+    orientation?: "vertical" | "horizontal";
+    /** ขนาดตัวควบคุม `md` 20px (ค่าเริ่มต้น) · `sm` 16px */
+    size?: ToggleSize;
+    /** ยังไม่มีข้อมูล — แสดงโครงร่างแทนทั้งกลุ่ม */
+    isLoading?: boolean;
+    className?: string;
+    containerClassName?: string;
+    children?: React.ReactNode;
+};
+declare function CheckboxGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, name, disabled, options, value: valueProp, defaultValue, onValueChange, orientation, size, isLoading, children, }: CheckboxGroupProps<V>): react_jsx_runtime.JSX.Element;
+declare namespace CheckboxGroup {
+    var displayName: string;
+}
+type CheckboxGroupItemProps = Omit<React.ComponentProps<typeof RadixCheckbox.Root>, "asChild" | "checked" | "onCheckedChange" | "value"> & {
+    value: string;
+    description?: React.ReactNode;
+};
+declare const CheckboxGroupItem: React.ForwardRefExoticComponent<Omit<CheckboxGroupItemProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
+
+type PillSwitchOption<V extends string = string> = {
+    value: V;
+    label: React.ReactNode;
+    icon?: React.ReactNode;
+    disabled?: boolean;
+};
+type PillSwitchProps<V extends string = string> = Omit<React.ComponentProps<typeof RadixRadio.Root>, "asChild" | "children" | "value" | "defaultValue" | "onValueChange" | "orientation"> & {
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
+    required?: boolean;
+    /** Controlled selected value. */
+    value?: V;
+    /** Initial selected value (uncontrolled). */
+    defaultValue?: V;
+    onValueChange?: (value: V) => void;
+    /**
+     * Exactly 2 options today — PillSwitch is a binary segmented toggle (both
+     * labels always visible, selected one highlighted). Typed as a fixed tuple
+     * so a 3rd option is a compile error now.
+     *
+     * Designed to extend to N options later without a breaking change: it's
+     * already `value`/`defaultValue`/`onValueChange` + an `options` list on top
+     * of a real Radix `RadioGroup` (which gives roving-tabindex arrow-key nav
+     * and `role="radiogroup"`/`role="radio"` for free, and already scales to
+     * any option count). The only change needed to support N options is
+     * widening this type to `PillSwitchOption<V>[]` — every existing 2-option
+     * caller stays source-compatible since a 2-tuple is assignable to an array.
+     */
+    options: readonly [PillSwitchOption<V>, PillSwitchOption<V>];
+    containerClassName?: string;
+};
+declare function PillSwitch<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, disabled, ...props }: PillSwitchProps<V>): react_jsx_runtime.JSX.Element;
+declare namespace PillSwitch {
+    var displayName: string;
+}
 
 declare const chipVariants: (props?: ({
-    variant?: "primary" | "success" | "warning" | "info" | "neutral" | "danger" | null | undefined;
+    variant?: "primary" | "info" | "success" | "warning" | "neutral" | "danger" | null | undefined;
+    fill?: "subtle" | "solid" | null | undefined;
     size?: "sm" | "md" | "lg" | null | undefined;
     interactive?: boolean | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type ChipProps = React$1.ComponentProps<"span"> & VariantProps<typeof chipVariants> & {
-    leftIcon?: React$1.ReactNode;
+type ChipProps = React.ComponentProps<"span"> & VariantProps<typeof chipVariants> & {
+    leftIcon?: React.ReactNode;
     /** Show an × button. Calls `onRemove` (preferred) or falls back to `onClick`. */
     removable?: boolean;
-    onRemove?: (e: React$1.MouseEvent<HTMLButtonElement>) => void;
+    onRemove?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    /** ข้อมูลยังมาไม่ถึง — แทนด้วยแคปซูลเทาขนาดเท่าชิปจริง */
+    isLoading?: boolean;
 };
-declare const Chip: React$1.ForwardRefExoticComponent<Omit<ChipProps, "ref"> & React$1.RefAttributes<HTMLSpanElement>>;
+declare const Chip: React.ForwardRefExoticComponent<Omit<ChipProps, "ref"> & React.RefAttributes<HTMLSpanElement>>;
 
 declare const avatarVariants: (props?: ({
     size?: "xs" | "sm" | "md" | "lg" | "xl" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type AvatarProps = Omit<React$1.ComponentProps<typeof RadixAvatar.Root>, "asChild"> & VariantProps<typeof avatarVariants> & {
+type AvatarProps = Omit<React.ComponentProps<typeof RadixAvatar.Root>, "asChild"> & VariantProps<typeof avatarVariants> & {
     /** Image URL. */
     src?: string;
     /** Alt text + source for fallback initials when `fallback` is omitted. */
     name?: string;
     /** Custom fallback content (overrides initials). */
-    fallback?: React$1.ReactNode;
+    fallback?: React.ReactNode;
+    /** ข้อมูลยังมาไม่ถึง — แทนด้วยวงกลมเทาขนาดเท่ากัน */
+    isLoading?: boolean;
 };
-declare const Avatar: React$1.ForwardRefExoticComponent<Omit<AvatarProps, "ref"> & React$1.RefAttributes<HTMLSpanElement>>;
+declare const Avatar: React.ForwardRefExoticComponent<Omit<AvatarProps, "ref"> & React.RefAttributes<HTMLSpanElement>>;
 
-type TopNavProps = React$1.ComponentProps<"header"> & {
+declare const iconButtonVariants: (props?: ({
+    variant?: "ghost" | "solid" | "outline" | "ghost-destructive" | null | undefined;
+    size?: "sm" | "md" | "lg" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type IconButtonProps = Omit<React.ComponentProps<"button">, "aria-label"> & VariantProps<typeof iconButtonVariants> & {
+    /**
+     * Required — icon-only buttons have no visible text for assistive tech
+     * to fall back on. Describe the action, e.g. "Edit", "Delete row".
+     */
+    "aria-label": string;
+    /** Icon to render. Ignored when `asChild` — pass your own child element instead. */
+    icon?: React.ReactNode;
+    asChild?: boolean;
+    /** ผู้ใช้กดแล้วกำลังทำงาน — แสดงสปินเนอร์ ปุ่มยังอยู่ที่เดิม */
+    loading?: boolean;
+    /** ข้อมูลยังมาไม่ถึง — แทนทั้งปุ่มด้วยวงกลมเทา (คนละเรื่องกับ `loading`) */
+    isLoading?: boolean;
+};
+/**
+ * Icon-only action button — table-row actions, toolbars. Always pass
+ * `aria-label`; use `asChild` to wrap a router `<Link>` while keeping real
+ * button semantics (fixes the div+Link pattern found in the audit, which
+ * wasn't keyboard-focusable at all).
+ */
+declare const IconButton: React.ForwardRefExoticComponent<Omit<IconButtonProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
+
+declare const buttonGroupVariants: (props?: ({
+    align?: "end" | "fill" | "start" | "between" | null | undefined;
+    gap?: "sm" | "md" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type ButtonGroupProps = React.ComponentProps<"div"> & VariantProps<typeof buttonGroupVariants>;
+/** Alignment/spacing wrapper for a row of 1-3 buttons (dialog/drawer footers, toolbars). */
+declare const ButtonGroup: React.ForwardRefExoticComponent<Omit<ButtonGroupProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
+type ConfirmCancelActionsProps = {
+    onConfirm: () => void;
+    onCancel: () => void;
+    /** Localized confirm-button text — required, no hardcoded English default. */
+    confirmLabel: string;
+    /** Localized cancel-button text — required, no hardcoded English default. */
+    cancelLabel: string;
+    confirmVariant?: ButtonProps["variant"];
+    cancelVariant?: ButtonProps["variant"];
+    size?: ButtonProps["size"];
+    /** Independent from `isLoading` — lets confirm be disabled by form validity while nothing is submitting. */
+    isConfirmDisabled?: boolean;
+    isCancelDisabled?: boolean;
+    /** Disables both buttons and shows a spinner on confirm. */
+    isLoading?: boolean;
+    align?: Extract<VariantProps<typeof buttonGroupVariants>["align"], "end" | "between" | "fill">;
+    gap?: VariantProps<typeof buttonGroupVariants>["gap"];
+    className?: string;
+};
+/**
+ * Convenience Confirm+Cancel action row on top of `ButtonGroup` — the ~90%
+ * common case (mirrors mediwork's `PlacementDrawerFooter`, the only place
+ * this was already done properly). For anything else, compose `Button`
+ * inside `ButtonGroup` directly.
+ */
+declare const ConfirmCancelActions: React.ForwardRefExoticComponent<ConfirmCancelActionsProps & React.RefAttributes<HTMLDivElement>>;
+
+/** ขนาดตัวอักษรสำหรับเนื้อความ — ระดับ `title-*` อยู่ที่ `Heading` แทน
+ *
+ * แยกเป็นคนละ component เพราะข้อมูลจริงแยกตัวเองที่ 18/20px: ทุกอย่างต่ำกว่านั้น
+ * ใช้ weight 400 เป็นค่าปกติ ส่วน `title-*` พบเฉพาะ 600/700 ในทั้ง 3 แอป
+ * ถ้ารวมเป็น component เดียวจะต้องแบก union ของทุก prop โดยไม่มีอะไรกันการผสมมั่ว
+ */
+declare const textVariants: (props?: ({
+    variant?: "caption" | "body-sm" | "body-md" | "body-lg" | null | undefined;
+    weight?: "bold" | "normal" | "medium" | "semibold" | null | undefined;
+    tone?: "link" | "body" | "inherit" | "success" | "warning" | "disabled" | "brand" | "danger" | "default" | "muted" | null | undefined;
+    truncate?: boolean | null | undefined;
+    numeric?: boolean | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type TextProps = Omit<React.ComponentProps<"p">, "color"> & VariantProps<typeof textVariants> & {
+    /** element ที่จะ render — default `p` · ใช้ `span` เมื่ออยู่ในบรรทัดเดียวกับข้อความอื่น */
+    as?: React.ElementType;
+    /** ข้อมูลยังมาไม่ถึง — แทนด้วยแถบสูงเท่าบรรทัดจริงของระดับตัวอักษรนั้น */
+    isLoading?: boolean;
+    /** ความกว้างของแถบตอนโหลด · ค่าเริ่มต้น `100%` — ใส่เป็น `8rem` หรือ `60%` ก็ได้ */
+    skeletonWidth?: string;
+};
+declare const Text: React.ForwardRefExoticComponent<Omit<TextProps, "ref"> & React.RefAttributes<HTMLParagraphElement>>;
+
+declare const headingVariants: (props?: ({
+    size?: "body-lg" | "title-sm" | "title-md" | "title-lg" | null | undefined;
+    weight?: "bold" | "medium" | "semibold" | null | undefined;
+    tone?: "inherit" | "heading" | "brand" | "default" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type HeadingProps = Omit<React.ComponentProps<"h2">, "color"> & VariantProps<typeof headingVariants> & {
+    /** ระดับหัวข้อทางความหมาย (h1-h6) — **แยกจาก `size` โดยตั้งใจ**
+     *
+     * ลำดับหัวข้อในหน้าเป็นเรื่องของ screen reader ส่วนขนาดเป็นเรื่องของสายตา
+     * การผูกสองอย่างเข้าด้วยกันบังคับให้ต้องเลือกอย่างใดอย่างหนึ่ง —
+     * เช่นหัวข้อ h2 ที่ต้องดูเล็กกว่า h3 ข้าง ๆ ในการ์ด
+     */
+    level?: 1 | 2 | 3 | 4 | 5 | 6;
+    /** ข้อมูลยังมาไม่ถึง — แทนด้วยแถบสูงเท่าบรรทัดจริงของขนาดหัวข้อนั้น */
+    isLoading?: boolean;
+    /** ความกว้างของแถบตอนโหลด · หัวข้อมักไม่เต็มบรรทัด ค่าเริ่มต้นจึงเป็น `16rem` */
+    skeletonWidth?: string;
+};
+declare const Heading: React.ForwardRefExoticComponent<Omit<HeadingProps, "ref"> & React.RefAttributes<HTMLHeadingElement>>;
+
+type TopNavProps = React.ComponentProps<"header"> & {
     /** Render as fixed/sticky bar that floats with rounded corners. Default `false` (inline). */
     floating?: boolean;
 };
-declare const TopNav: React$1.ForwardRefExoticComponent<Omit<TopNavProps, "ref"> & React$1.RefAttributes<HTMLElement>>;
-type TopNavBrandProps = React$1.ComponentProps<"div"> & {
-    logo?: React$1.ReactNode;
+declare const TopNav: React.ForwardRefExoticComponent<Omit<TopNavProps, "ref"> & React.RefAttributes<HTMLElement>>;
+type TopNavToggleProps = Omit<React.ComponentProps<"button">, "children" | "onToggle"> & {
+    /** แถบเมนูซ้ายยุบอยู่หรือไม่ — คุมว่าจะโชว์ไอคอน "กาง" หรือ "พับ" */
+    collapsed?: boolean;
+    onToggle?: (next: boolean) => void;
+    /**
+     * ข้อความสำหรับ `title`/`aria-label` — แอปส่งคำแปลมาเอง (DS ไม่มี i18n)
+     *
+     * ⚠️ ปุ่มนี้มีแต่ไอคอน ถ้าไม่ส่งมา โปรแกรมอ่านหน้าจอจะเจอปุ่มไม่มีชื่อ
+     * (บทเรียนเดียวกับปุ่มเมนูตอน `Sidebar` ยุบ) จึงมีค่าตั้งต้นภาษาอังกฤษให้
+     */
+    labels?: {
+        expand: string;
+        collapse: string;
+    };
 };
-declare const TopNavBrand: React$1.ForwardRefExoticComponent<Omit<TopNavBrandProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+/**
+ * ปุ่มพับ/กางแถบเมนูซ้าย — ไอคอนเป็นไฟล์เดียวกับที่ Portal ใช้จริง
+ *
+ * 📐 วัดจาก Portal: **32×32** · มุม 8 · ไอคอน **20×20** · hover พื้นเทาอ่อน
+ */
+declare const TopNavToggle: React.ForwardRefExoticComponent<Omit<TopNavToggleProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
+type TopNavBrandProps = React.ComponentProps<"div"> & {
+    logo?: React.ReactNode;
+};
+declare const TopNavBrand: React.ForwardRefExoticComponent<Omit<TopNavBrandProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
 declare const TopNavSpacer: ({ className }: {
     className?: string;
 }) => react_jsx_runtime.JSX.Element;
 /** Canonical app keys across the Mediact ecosystem. */
-type MediactAppKey = "mediwork" | "medimatch" | "medipay" | "medistock" | "medicare" | "medirefer";
+/** แอปในระบบนิเวศ Mediact ที่ **ปล่อยจริงแล้ว**
+ *
+ * เดิมมี `medipay` · `medistock` · `medicare` · `medirefer` เป็น Coming Soon
+ * ตัดออก 2026-08-09 — ไม่มีแอปไหน import `AppLauncher` เลย (ตรวจครบ 6 checkout)
+ * และช่องที่ขึ้นว่า "เร็ว ๆ นี้" ค้างมานานกลายเป็นสัญญาที่ไม่มีใครถือ */
+type MediactAppKey = "mediwork" | "medimatch" | "medihr";
 type MediactAppConfig = {
     /** Where this app lives. Falsy → tile is rendered as not-clickable. */
     baseUrl?: string;
@@ -230,11 +629,11 @@ type MediactAppConfig = {
     /** Override label. */
     label?: string;
     /** Override icon. */
-    icon?: React$1.ReactNode;
+    icon?: React.ReactNode;
 };
 type AppLauncherProps = {
     apps: Partial<Record<MediactAppKey, MediactAppConfig>>;
-    /** Render order. Default: mediwork → medimatch → medipay → medistock → medicare → medirefer. */
+    /** ลำดับการแสดง ค่าเริ่มต้น: mediwork → medimatch → medihr */
     order?: MediactAppKey[];
     /** Override default `<a href>` navigation (e.g. for SPA routing). */
     onAppClick?: (key: MediactAppKey, app: MediactAppConfig) => void;
@@ -242,17 +641,27 @@ type AppLauncherProps = {
     label?: string;
     /** Subtitle shown beneath disabled / coming-soon tiles. */
     comingSoonText?: string;
+    /**
+     * ปุ่มก้นลิ้นชักที่พาไปหน้าตั้งค่าของ Portal — ของจริงมีทุกแอป
+     *
+     * ข้อความส่งมาจากแอปเสมอ (DS ไม่มี i18n)
+     */
+    settingsAction?: {
+        label: React.ReactNode;
+        href?: string;
+        onClick?: (e: React.MouseEvent) => void;
+    };
     className?: string;
 };
-declare function AppLauncher({ apps, order, onAppClick, label, comingSoonText, className, }: AppLauncherProps): react_jsx_runtime.JSX.Element;
-type NotificationBellProps = React$1.ComponentProps<"button"> & {
+declare function AppLauncher({ apps, order, onAppClick, label, comingSoonText, settingsAction, className, }: AppLauncherProps): react_jsx_runtime.JSX.Element;
+type NotificationBellProps = React.ComponentProps<"button"> & {
     hasUnread?: boolean;
     unreadCount?: number;
     label?: string;
 };
-declare const NotificationBell: React$1.ForwardRefExoticComponent<Omit<NotificationBellProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
+declare const NotificationBell: React.ForwardRefExoticComponent<Omit<NotificationBellProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 type UserMenuItem = {
-    label: React$1.ReactNode;
+    label: React.ReactNode;
     onClick?: () => void;
     href?: string;
 };
@@ -260,15 +669,15 @@ type UserMenuProps = {
     user: {
         name?: string;
         src?: string;
-        role?: React$1.ReactNode;
+        role?: React.ReactNode;
     };
     /** Body items rendered between the role and the bottom row. */
     items?: UserMenuItem[];
     /** Click handler for the Log Out button. Pass `null` to hide the button. */
     onLogout?: (() => void) | null;
-    logoutLabel?: React$1.ReactNode;
+    logoutLabel?: React.ReactNode;
     /** Slot rendered to the left of the Log Out button — typically a language switcher. */
-    bottomLeft?: React$1.ReactNode;
+    bottomLeft?: React.ReactNode;
     /** Tooltip / aria-label for the trigger. Default "Account". */
     label?: string;
     className?: string;
@@ -280,11 +689,11 @@ type UserMenuProps = {
  */
 declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): react_jsx_runtime.JSX.Element;
 
-type SidebarProps = React$1.ComponentProps<"aside"> & {
+type SidebarProps = React.ComponentProps<"aside"> & {
     /** Logo / brand block rendered at the top. */
-    header?: React$1.ReactNode;
+    header?: React.ReactNode;
     /** Footer block rendered at the bottom (e.g. version label). */
-    footer?: React$1.ReactNode;
+    footer?: React.ReactNode;
     /** Currently active item id — children compare via context. */
     activeItemId?: string;
     /** Click handler invoked by `SidebarItem`. Receives `(id, href?)`. */
@@ -295,64 +704,179 @@ type SidebarProps = React$1.ComponentProps<"aside"> & {
     expandedWidth?: number | string;
     /** Width when collapsed. Default `72px`. */
     collapsedWidth?: number | string;
+    /** Component used to render `SidebarItem`'s `href` links — e.g. next/link's
+     *  `Link`. Must accept `href`, `className`, and `children`. Defaults to a
+     *  plain `<a>`, which keeps this package framework-agnostic. Same shape as
+     *  `Breadcrumb`'s `linkComponent`. */
+    linkComponent?: React.ElementType;
+    /**
+     * Presentational-only mobile off-canvas mode. When set (`true`/`false`,
+     * not `undefined`), the sidebar becomes a fixed drawer + backdrop below the
+     * `lg` breakpoint, sliding in/out based on this value, and renders as a
+     * normal static rail at `lg` and above. The app owns *when* to open it
+     * (e.g. a hamburger button) and any persistence — this prop is not read
+     * from / written to storage by the DS.
+     */
+    mobileOpen?: boolean;
+    /** Called when the backdrop is clicked or Escape is pressed while `mobileOpen`. */
+    onMobileOpenChange?: (open: boolean) => void;
+    /**
+     * ยุบอยู่แล้วเอาเมาส์ไปวาง = กางออกชั่วคราว (ของจริงใน Portal ทำแบบนี้)
+     *
+     * ⚠️ กางแล้ว **ราง sidebar กว้างขึ้นจริง** เนื้อหาข้าง ๆ จึงขยับตาม
+     * ไม่ใช่การลอยทับ — ตรงกับพฤติกรรมของ Portal ถ้าไม่ต้องการให้ขยับ ส่ง `false`
+     * @default true
+     */
+    expandOnHover?: boolean;
+    /**
+     * ปุ่มติดต่อฝ่ายสนับสนุนที่ก้นราง — ของจริงมีทุกจอ
+     *
+     * ข้อความส่งมาจากแอปเสมอ (DS ไม่มี i18n) · ไอคอนไม่ส่งก็ได้ ค่าเริ่มต้นเป็นหูฟัง
+     * ตอนยุบจะเหลือแค่ไอคอน และใช้ `label` เป็น `title`/`aria-label`
+     */
+    supportAction?: {
+        label: React.ReactNode;
+        onClick: () => void;
+        icon?: React.ReactNode;
+    };
 };
-declare const Sidebar: React$1.ForwardRefExoticComponent<Omit<SidebarProps, "ref"> & React$1.RefAttributes<HTMLElement>>;
-type IconType = React$1.ComponentType<{
+declare const Sidebar: React.ForwardRefExoticComponent<Omit<SidebarProps, "ref"> & React.RefAttributes<HTMLElement>>;
+type IconType = React.ComponentType<{
     className?: string;
 }>;
 type SidebarItemProps = {
     id: string;
-    label: React$1.ReactNode;
+    label: React.ReactNode;
     icon?: IconType;
     href?: string;
     onClick?: () => void;
     /** Optional small text below the label (badge / sub-label). */
-    badge?: React$1.ReactNode;
+    badge?: React.ReactNode;
     className?: string;
 };
 declare function SidebarItem({ id, label, icon: Icon, href, onClick, badge, className, }: SidebarItemProps): react_jsx_runtime.JSX.Element;
 type SidebarGroupProps = {
     /** Stable id used for the chevron-toggle aria. */
     id: string;
-    label: React$1.ReactNode;
+    label: React.ReactNode;
     icon?: IconType;
     /** Whether the group is expanded by default. */
     defaultExpanded?: boolean;
     /** Controlled expanded state. */
     expanded?: boolean;
     onExpandedChange?: (expanded: boolean) => void;
-    children?: React$1.ReactNode;
+    /**
+     * เมนูลูกตัวใดตัวหนึ่งของกลุ่มนี้คือหน้าที่เปิดอยู่
+     *
+     * ใช้เฉพาะตอนราง**ยุบ** — ตอนนั้นเมนูลูกถูกซ่อน ถ้าไม่บอก จะไม่มีอะไรบนจอ
+     * บอกว่าผู้ใช้อยู่หน้าไหน · ผู้เรียกเป็นคนรู้รายการเมนู component เห็นแค่ children
+     * ที่ render มาแล้ว จึงคำนวณเองไม่ได้
+     */
+    isChildActive?: boolean;
+    children?: React.ReactNode;
     className?: string;
 };
-declare function SidebarGroup({ id, label, icon: Icon, defaultExpanded, expanded, onExpandedChange, children, className, }: SidebarGroupProps): react_jsx_runtime.JSX.Element;
+declare function SidebarGroup({ id, label, icon: Icon, defaultExpanded, expanded, onExpandedChange, isChildActive: hasActiveChild, children, className, }: SidebarGroupProps): react_jsx_runtime.JSX.Element;
 
 type FormFieldProps = {
     /** Field label rendered above the input. Omit for unlabeled fields. */
-    label?: React$1.ReactNode;
+    label?: React.ReactNode;
     /** Helper text under the input. Hidden when `error` is set. */
-    hint?: React$1.ReactNode;
+    hint?: React.ReactNode;
     /** Error message — when truthy, switches the field to error styling. */
-    error?: React$1.ReactNode;
+    error?: React.ReactNode;
     /** Marks the label with a red asterisk. Does NOT enforce HTML required (caller controls). */
     required?: boolean;
     /** id wired to the input via htmlFor — caller passes the same id to the input. */
     htmlFor?: string;
     /** Visually hide the label but keep it for screen readers. */
     hideLabel?: boolean;
+    /**
+     * Always reserve one line of height for the hint/error slot below the field, even when
+     * neither is set — prevents layout shift when an error appears/disappears.
+     *
+     * ⚠️ Default is `true`, which matches what every real consumer app already does today
+     * (spacer div or `helperText={error ?? ' '}` workarounds) — but it changes the rendered
+     * height of every existing field using this shell that doesn't explicitly pass this prop.
+     * Confirm this default with the team before relying on it in layouts that assumed the old
+     * zero-height "no message" behavior.
+     * @default true
+     */
+    reserveMessageSpace?: boolean;
     className?: string;
-    children: React$1.ReactNode;
+    children: React.ReactNode;
 };
 /**
  * Layout shell shared by every form primitive (Input, Textarea, Select, ...).
  * Renders: [Label] [children] [hint | error]
  */
-declare function FormField({ label, hint, error, required, htmlFor, hideLabel, className, children, }: FormFieldProps): react_jsx_runtime.JSX.Element;
+declare function FormField({ label, hint, error, required, htmlFor, hideLabel, reserveMessageSpace, className, children, }: FormFieldProps): react_jsx_runtime.JSX.Element;
+
+/** @doc ./Calendar.md */
+
+/** 🔴 ห้ามใช้ `toISOString()` ทำ key — มันแปลงเป็น UTC ก่อน ⇒ ไทย (UTC+7)
+ * ได้วันที่ย้อนไป 1 วันทุกครั้งที่เวลาต่ำกว่า 07:00 */
+declare const dayKey: (d: Date) => string;
+type CalendarView = "day" | "month";
+type CalendarLabels = {
+    prevMonth: string;
+    nextMonth: string;
+    prevYear: string;
+    nextYear: string;
+    chooseMonth: string;
+};
+type CalendarProps = {
+    /** เดือนที่กำลังแสดง — ผู้เรียกถือ state เอง เพื่อให้อยู่รอดตอน popover re-render */
+    month: Date;
+    onMonthChange: (month: Date) => void;
+    /** วันที่เลือก (หรือปลายต้นของช่วง) */
+    selected?: Date | null;
+    /** ปลายท้ายของช่วง — ส่งมาเมื่อเลือกเป็นช่วงวัน จะวาดแถบเชื่อม */
+    rangeEnd?: Date | null;
+    /** พรีวิวปลายท้ายระหว่างลากเลือก — ไม่มีผลถ้าไม่ได้เลือกเป็นช่วง */
+    hoverEnd?: Date | null;
+    minDate?: Date | null;
+    maxDate?: Date | null;
+    /** ปิดวันเป็นราย ๆ นอกเหนือจากช่วง min/max (เช่นวันหยุด) */
+    disabledDate?: (day: Date) => boolean;
+    onSelect?: (day: Date) => void;
+    onDayHover?: (day: Date | null) => void;
+    /** มุมมองเริ่มต้น · `month` = เปิดมาที่ตาราง 12 เดือนเลย */
+    defaultView?: CalendarView;
+    /**
+     * เลือกเดือนแล้วจบเลย ไม่ต้องลงไปเลือกวัน
+     *
+     * ใช้กับตัวเลื่อนเดือน (`DateNavigator unit="month"`) ซึ่งหน่วยของมันคือเดือน
+     * ไม่ใช่วัน — ถ้าไม่มีอันนี้ผู้ใช้ต้องกดเดือนแล้วกดวันอีกทีทั้งที่วันไม่มีความหมาย
+     */
+    selectMonth?: boolean;
+    /** BCP-47 · ค่าเริ่มต้น `th-TH` = ปี พ.ศ. อัตโนมัติ */
+    locale?: string;
+    /** วันแรกของสัปดาห์ · ค่าเริ่มต้น 0 = อาทิตย์ (ตรงกับของจริงในแอป) */
+    weekStartsOn?: 0 | 1;
+    labels?: Partial<CalendarLabels>;
+    className?: string;
+};
+/**
+ * ตารางเดือน — ฐานเดียวของ `DatePicker` และ `DateNavigator`
+ *
+ * 📐 ทรงยึดตาม `PickerCalendar` ของ Mediwork (หน้า productivity) ทั้งหมด:
+ * กว้าง 340 · ช่องวัน 40 สูง วงกลม 34 · ตาราง 12 เดือนช่องละ 44 มุม 10
+ *
+ * เขียนเองไม่ได้ใช้ `react-day-picker` / `DateCalendar` ด้วยเหตุผลเดียวกับที่แอป
+ * เขียนเอง: ไม่มีตัวแปลง พ.ศ. และแถบช่วงวันเป็นสิ่งที่ทั้งสองตัวไม่มี · พอเขียนเพื่อ
+ * ช่วงแล้ว วันเดี่ยวก็ใช้ตัวเดียวกัน ไม่งั้นแอปจะมีปฏิทินสองแบบที่นับปีคนละอย่าง
+ *
+ * โครง DOM เป็น `<table role="grid">` + `<td role="gridcell" data-day="YYYY-MM-DD">`
+ * ตามสัญญาเดิมของ `react-day-picker` — เทสของ `DatePicker` ที่มีอยู่จึงใช้ได้ต่อ
+ */
+declare const Calendar: React.ForwardRefExoticComponent<CalendarProps & React.RefAttributes<HTMLDivElement>>;
 
 type DatePickerProps = {
     id?: string;
-    label?: React$1.ReactNode;
-    hint?: React$1.ReactNode;
-    error?: React$1.ReactNode;
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
     alwaysFloatLabel?: boolean;
@@ -368,24 +892,24 @@ type DatePickerProps = {
     maxDate?: Date;
     disabled?: boolean;
     size?: FieldSize;
-    /** Caption layout for the calendar header. Default `"dropdown"` (month + year dropdowns). */
-    captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years";
-    /** Earliest year selectable in the year dropdown. Default: current year − 100. */
-    fromYear?: number;
-    /** Latest year selectable in the year dropdown. Default: current year + 10. */
-    toYear?: number;
+    /** BCP-47 locale ของปฏิทิน · `th-TH` = ปี พ.ศ. อัตโนมัติ @default "th-TH" */
+    calendarLocale?: string;
+    /** วันแรกของสัปดาห์ในปฏิทิน @default 0 (อาทิตย์) */
+    weekStartsOn?: 0 | 1;
+    /** ข้อความ a11y ของปุ่มในปฏิทิน — แอปส่งคำแปลมาเอง */
+    calendarLabels?: Partial<CalendarLabels>;
     className?: string;
     containerClassName?: string;
 };
-declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, disabled, size, captionLayout, fromYear, toYear, className, containerClassName, }: DatePickerProps): react_jsx_runtime.JSX.Element;
+declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): react_jsx_runtime.JSX.Element;
 
 /** "HH:mm" string in 24-hour format. */
 type TimeValue = string;
 type TimePickerProps = {
     id?: string;
-    label?: React$1.ReactNode;
-    hint?: React$1.ReactNode;
-    error?: React$1.ReactNode;
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
     alwaysFloatLabel?: boolean;
@@ -396,83 +920,367 @@ type TimePickerProps = {
     minuteStep?: number;
     /** @deprecated use `minuteStep` */
     step?: number;
+    /**
+     * Earliest selectable time, inclusive — 24h "HH:mm" string (e.g. "08:00").
+     * Disables out-of-range hour/minute options in the popover and snaps a
+     * typed value back into range once focus leaves the field. `value`/`onChange`
+     * always stay 24h "HH:mm" regardless.
+     */
+    minTime?: TimeValue;
+    /**
+     * Latest selectable time, inclusive — 24h "HH:mm" string (e.g. "17:00").
+     * See `minTime`.
+     */
+    maxTime?: TimeValue;
+    /**
+     * Display the field + popover in 12-hour format with an AM/PM toggle.
+     * Display-only — the committed `value`/`onChange` shape never changes,
+     * it stays 24h "HH:mm".
+     * @default false
+     */
+    ampm?: boolean;
     disabled?: boolean;
     size?: FieldSize;
     className?: string;
     containerClassName?: string;
 };
-declare function TimePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, disabled, size, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
+declare function TimePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
+
+/** คืนชื่อกลุ่มของรายการหนึ่ง · คืน `null`/`undefined` = ไม่เข้ากลุ่มไหน */
+type GroupBy<T> = (item: T) => string | null | undefined;
+
+type OptionRowState = {
+    /** ถูกเลือกอยู่ */
+    selected: boolean;
+    /**
+     * ล็อกไว้ — เลือกอยู่แล้วและถอดออกไม่ได้
+     *
+     * 🔴 ต่างจาก `disabled` ตรงที่ **ถูกเลือกอยู่เสมอ** · `disabled` คือกดไม่ได้
+     * เพราะเลือกไม่ได้ ส่วน `locked` คือกดไม่ได้เพราะเอาออกไม่ได้
+     */
+    locked: boolean;
+    /** กดไม่ได้ — ปิดใช้งานมาเอง หรือเลือกครบเพดาน `maxItems` แล้ว */
+    disabled: boolean;
+};
+/**
+ * สถานะที่ส่งให้ `renderChip` (เฉพาะโหมดเลือกหลายอัน)
+ *
+ * แยกจาก `OptionRowState` เพราะ chip ไม่มีสถานะ "ถูกเลือก" (อยู่บน chip แปลว่าเลือกแล้ว)
+ * และไม่มี "กดไม่ได้"
+ */
+type ChipState = {
+    /** ถอดออกไม่ได้ — ต้องบอกผู้ใช้ด้วยว่าทำไม ไม่ใช่แค่ซ่อนปุ่ม × */
+    locked: boolean;
+};
 
 type ComboBoxOption<V extends string = string> = {
     value: V;
     label: string;
     description?: string;
     disabled?: boolean;
+    /**
+     * เลือกไว้แล้วและถอดออกไม่ได้ — เช่นหน่วยงานประจำที่ระบบผูกมาให้
+     *
+     * ⚠️ มีผลเฉพาะ `multiple` — โหมดเลือกอันเดียว การเลือกทับคือการ*เปลี่ยนค่า*
+     * ไม่ใช่การถอดออก ล็อกไว้จะกลายเป็นช่องที่แก้ไม่ได้เลย ใช้ `disabled` แทน
+     */
+    locked?: boolean;
 };
-type ComboBoxProps<V extends string = string> = {
+type ComboBoxOptionGroup<V extends string = string> = {
+    heading: string;
+    options: ComboBoxOption<V>[];
+};
+type ComboBoxCommonProps<V extends string = string> = {
     id?: string;
-    label?: React$1.ReactNode;
-    hint?: React$1.ReactNode;
-    error?: React$1.ReactNode;
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
     alwaysFloatLabel?: boolean;
     placeholder?: string;
     searchPlaceholder?: string;
     emptyText?: string;
+    options?: ComboBoxOption<V>[];
+    /**
+     * ตัวเลือกที่**จัดกลุ่มมาแล้ว** — ใช้เมื่อหลังบ้านคืนข้อมูลเป็นกลุ่มอยู่แล้ว
+     * (เช่น `getGrouped()` ที่คืนหน่วยงานแยกตามแผนก) · มีค่าแล้วจะชนะ `options`
+     */
+    groups?: ComboBoxOptionGroup<V>[];
+    /**
+     * จัดกลุ่มจาก `options` ที่เป็นรายการแบน — คืนชื่อกลุ่มของแต่ละตัว
+     * คืน `null` = ไม่เข้ากลุ่มไหน ไปอยู่ก้อนแรกที่ไม่มีหัวข้อ
+     *
+     * ⚠️ ส่งมาทั้งคู่ `groups` ชนะ (ของที่ระบุมาตรง ๆ ชนะของที่คำนวณเอาเสมอ)
+     */
+    groupBy?: GroupBy<ComboBoxOption<V>>;
+    /** ลำดับกลุ่ม · ไม่ส่ง = ลำดับที่เจอครั้งแรก · กลุ่มที่ไม่อยู่ในลิสต์นี้ต่อท้าย ไม่ถูกทิ้ง */
+    groupOrder?: string[];
+    /**
+     * ค้นหาเอง — ส่งมาแล้ว cmdk จะ**เลิกกรองในเครื่อง** เพราะถือว่าผลที่ส่งกลับมา
+     * กรองมาแล้ว (กรองซ้ำ = ตัดของที่ตั้งใจส่งมาทิ้ง)
+     *
+     * ต้องค้นหลังบ้านจริงจัง + ทรงข้อมูลไม่ใช่ `{value,label}` → ใช้ `EntityAutocomplete`
+     */
+    onSearch?: (query: string) => void;
+    /**
+     * ตัวเลือกกำลังโหลด — ช่องยังอยู่ครบ แต่ในลิสต์ที่เปิดอยู่โชว์แถวกำลังโหลดแทนรายการ
+     *
+     * ⚠️ **ไม่ใช่** `isLoading` — ตัวนั้นแทนทั้งช่องด้วยโครงร่างเหมือน component อื่นทั้งระบบ
+     */
+    optionsLoading?: boolean;
+    /** ยังไม่รู้ว่าช่องนี้คืออะไร — แทนทั้งช่องด้วยโครงร่างที่สูงเท่ากันทุกประการ */
+    isLoading?: boolean;
+    loadingText?: string;
+    /** วาดแถวตัวเลือกเอง — ได้ `{ selected, locked, disabled }` ครบ */
+    renderOption?: (option: ComboBoxOption<V>, state: OptionRowState) => React.ReactNode;
+    disabled?: boolean;
+    size?: FieldSize;
+    className?: string;
+    containerClassName?: string;
+};
+/** เฉพาะโหมดเลือกหลายอัน — ไม่มีความหมายตอนเลือกอันเดียว */
+type ComboBoxMultiOnlyProps<V extends string = string> = {
+    /**
+     * วาด chip ของตัวที่เลือกไว้เอง
+     *
+     * ⚠️ ได้ `state.locked` มาด้วย — **ต้องเอาไปแสดงจริง** ไม่งั้นผู้ใช้จะเห็นแค่
+     * chip ที่ไม่มีปุ่ม × แล้วนึกว่าจอเสีย
+     */
+    renderChip?: (option: ComboBoxOption<V>, state: ChipState) => React.ReactNode;
+    /** จำนวน chip ที่โชว์ ที่เหลือยุบเป็น "+N" · ค่าเริ่มต้น `3` */
+    maxVisibleChips?: number;
+    /** เพดานจำนวนที่เลือกได้ */
+    maxItems?: number;
+};
+type ComboBoxSingleProps<V extends string = string> = ComboBoxCommonProps<V> & {
+    multiple?: false;
     value?: V | null;
     defaultValue?: V;
-    onChange?: (value: V | undefined) => void;
-    options: ComboBoxOption<V>[];
-    /** Hook for async search — caller fetches and updates `options`. */
-    onSearch?: (query: string) => void;
-    disabled?: boolean;
-    size?: FieldSize;
-    className?: string;
-    containerClassName?: string;
+    /** ไม่มีค่า = `null` (ตรงกับ `EntityAutocomplete`) */
+    onChange?: (value: V | null) => void;
 };
-declare function ComboBox<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, searchPlaceholder, emptyText, value, defaultValue, onChange, options, onSearch, disabled, size, className, containerClassName, }: ComboBoxProps<V>): react_jsx_runtime.JSX.Element;
+type ComboBoxMultiProps<V extends string = string> = ComboBoxCommonProps<V> & ComboBoxMultiOnlyProps<V> & {
+    multiple: true;
+    value?: V[];
+    defaultValue?: V[];
+    onChange?: (value: V[]) => void;
+};
+type ComboBoxProps<V extends string = string> = ComboBoxSingleProps<V> | ComboBoxMultiProps<V>;
+declare function ComboBox<V extends string = string>(props: ComboBoxProps<V>): react_jsx_runtime.JSX.Element;
 
-type MultiOption<V extends string = string> = {
-    value: V;
-    label: string;
-    disabled?: boolean;
-};
-type MultiAutocompleteProps<V extends string = string> = {
+type EntityAutocompleteCommonProps<T> = {
     id?: string;
-    label?: React$1.ReactNode;
-    hint?: React$1.ReactNode;
-    error?: React$1.ReactNode;
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
     alwaysFloatLabel?: boolean;
     placeholder?: string;
     searchPlaceholder?: string;
     emptyText?: string;
-    value?: V[];
-    defaultValue?: V[];
-    onChange?: (values: V[]) => void;
-    options: MultiOption<V>[];
-    onSearch?: (query: string) => void;
-    /** Maximum visible chips — extras collapse into "+N". Default `3`. */
-    maxVisibleChips?: number;
-    /** Cap selection. */
-    maxItems?: number;
+    /** Rendered in the popover instead of the list when the last search failed. */
+    searchError?: React.ReactNode;
     disabled?: boolean;
     size?: FieldSize;
     className?: string;
     containerClassName?: string;
+    /** Result set for the current query — this component never fetches on its own, only asks via `onSearch`. */
+    options: T[];
+    /**
+     * Called with the debounced query text as the user types, and once (with `""`)
+     * the first time the popover opens — so callers can show an initial/recent
+     * result set. Fetch and update `options` (+ `optionsLoading`/`searchError`) from here.
+     */
+    onSearch: (query: string) => void;
+    /** Debounce delay (ms) between the last keystroke and `onSearch` firing. Default `300`. */
+    debounceMs?: number;
+    /**
+     * ตัวเลือกกำลังโหลด — ช่องยังอยู่ครบ แต่ในลิสต์ที่เปิดอยู่โชว์แถวกำลังโหลดแทนรายการ
+     *
+     * ⚠️ **ไม่ใช่** `isLoading` — ตัวนั้นแทนทั้งช่องด้วยโครงร่างเหมือน component อื่นทั้งระบบ
+     * (ชื่อเดิมของ prop นี้คือ `isLoading` ซึ่งชนความหมายกับ `Select` ที่คนสลับกันใช้ตลอด)
+     */
+    optionsLoading?: boolean;
+    /** ยังไม่รู้ว่าช่องนี้คืออะไร — แทนทั้งช่องด้วยโครงร่างที่สูงเท่ากันทุกประการ */
+    isLoading?: boolean;
+    loadingText?: string;
+    /** Stable identity for an item — used to compare selection, dedupe, and as the list key. */
+    getOptionValue: (item: T) => string | number;
+    getOptionLabel: (item: T) => string;
+    getOptionDescription?: (item: T) => React.ReactNode;
+    /** Custom row renderer for an option in the popover list. */
+    renderOption?: (item: T, state: OptionRowState) => React.ReactNode;
+    /**
+     * วาด chip ของตัวที่เลือกไว้เอง (เฉพาะโหมดเลือกหลายอัน)
+     *
+     * ⚠️ ได้ `state.locked` มาด้วย — **ต้องเอาไปแสดงจริง** ไม่งั้นผู้ใช้จะเห็นแค่
+     * chip ที่ไม่มีปุ่ม × แล้วนึกว่าจอเสีย (ตัวเริ่มต้นใช้สีต่าง + ไอคอนกุญแจ)
+     */
+    renderChip?: (item: T, state: ChipState) => React.ReactNode;
+    /**
+     * รายการที่**เลือกไว้แล้วและถอดออกไม่ได้** — เช่นหน่วยงานประจำที่ระบบผูกมาให้
+     *
+     * ปิดทางถอดออกครบ 3 ทาง: กดที่ chip · กดซ้ำในลิสต์ · ปุ่มล้างทั้งหมด
+     * และแสดงให้เห็นว่าล็อกอยู่ (สี chip ต่างกัน + ไอคอนกุญแจ) ไม่ใช่แค่ซ่อนปุ่ม ×
+     *
+     * ```tsx
+     * isOptionLocked={(u) => u.isHome}
+     * ```
+     *
+     * ⚠️ **ไม่ได้ทำให้ถูกเลือกให้อัตโนมัติ** — ต้องใส่ใน `defaultValue`/`value` เองด้วย
+     * (ตัวนี้ตอบว่า "ถอดออกได้ไหม" ไม่ใช่ "ต้องมีไหม")
+     *
+     * ⚠️ ใช้ได้เฉพาะโหมดเลือกหลายอัน — โหมดเลือกอันเดียวการเลือกทับคือการเปลี่ยนค่า
+     * ไม่ใช่การถอดออก ล็อกไว้จะกลายเป็นช่องที่แก้ไม่ได้เลย ให้ใช้ `disabled` แทน
+     */
+    isOptionLocked?: (item: T) => boolean;
+    /**
+     * จัดกลุ่มผลค้นหาใต้หัวข้อ — คืนชื่อกลุ่มของแต่ละรายการ
+     * คืน `null` = ไม่เข้ากลุ่มไหน ไปอยู่ก้อนแรกที่ไม่มีหัวข้อ
+     *
+     * ```tsx
+     * groupBy={(u) => u.departmentName}
+     * ```
+     *
+     * ⚠️ จัดกลุ่มจาก **ผลที่หลังบ้านคืนมาหน้านี้เท่านั้น** ไม่ใช่ทั้งฐานข้อมูล —
+     * ค้นแล้วได้ 20 แถวจาก 3 แผนก หัวข้อจะมี 3 อัน ไม่ใช่ทุกแผนกที่มีอยู่จริง
+     * ถ้าต้องการหัวข้อครบทุกกลุ่มเสมอ ต้องให้หลังบ้านคืนมาครบเอง
+     */
+    groupBy?: GroupBy<T>;
+    /** ลำดับกลุ่ม · ไม่ส่ง = ลำดับที่เจอครั้งแรก · กลุ่มที่ไม่อยู่ในลิสต์นี้ต่อท้าย ไม่ถูกทิ้ง */
+    groupOrder?: string[];
+    /** Maximum visible chips in multi mode — extras collapse into "+N". Default `3`. */
+    maxVisibleChips?: number;
+    /** Cap selection in multi mode. */
+    maxItems?: number;
 };
-declare function MultiAutocomplete<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, searchPlaceholder, emptyText, value, defaultValue, onChange, options, onSearch, maxVisibleChips, maxItems, disabled, size, className, containerClassName, }: MultiAutocompleteProps<V>): react_jsx_runtime.JSX.Element;
+type EntityAutocompleteSingleProps<T> = EntityAutocompleteCommonProps<T> & {
+    multiple?: false;
+    value?: T | null;
+    defaultValue?: T;
+    onChange?: (value: T | null) => void;
+};
+type EntityAutocompleteMultiProps<T> = EntityAutocompleteCommonProps<T> & {
+    multiple: true;
+    value?: T[];
+    defaultValue?: T[];
+    onChange?: (value: T[]) => void;
+};
+type EntityAutocompleteProps<T> = EntityAutocompleteSingleProps<T> | EntityAutocompleteMultiProps<T>;
+/**
+ * Generic remote-search combobox for domain entities (users, sub-units, ...)
+ * where the option shape isn't `{value,label}` — the component asks (debounced)
+ * via `onSearch`, the caller owns the fetch and hands back `options`.
+ * Single or multi selection from the same component (`multiple` prop).
+ *
+ * Shares its Popover + cmdk + FloatingFieldShell internals/style with
+ * `ComboBox` (single) / `MultiAutocomplete` (multi) — this is the generic-`T`
+ * counterpart for remote entity search specifically.
+ */
+declare function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>): react_jsx_runtime.JSX.Element;
 
-declare const Table: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.TableHTMLAttributes<HTMLTableElement>, HTMLTableElement>, "ref"> & React$1.RefAttributes<HTMLTableElement>>;
-declare const TableHeader: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React$1.RefAttributes<HTMLTableSectionElement>>;
-declare const TableBody: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React$1.RefAttributes<HTMLTableSectionElement>>;
-declare const TableFooter: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React$1.RefAttributes<HTMLTableSectionElement>>;
-declare const TableRow: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>, "ref"> & React$1.RefAttributes<HTMLTableRowElement>>;
-declare const TableHead: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.ThHTMLAttributes<HTMLTableHeaderCellElement>, HTMLTableHeaderCellElement>, "ref"> & React$1.RefAttributes<HTMLTableCellElement>>;
-declare const TableCell: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>, "ref"> & React$1.RefAttributes<HTMLTableCellElement>>;
-declare const TableCaption: React$1.ForwardRefExoticComponent<Omit<React$1.DetailedHTMLProps<React$1.HTMLAttributes<HTMLElement>, HTMLElement>, "ref"> & React$1.RefAttributes<HTMLTableCaptionElement>>;
+declare const Table: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.TableHTMLAttributes<HTMLTableElement>, HTMLTableElement>, "ref"> & React.RefAttributes<HTMLTableElement>>;
+declare const TableHeader: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React.RefAttributes<HTMLTableSectionElement>>;
+declare const TableBody: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React.RefAttributes<HTMLTableSectionElement>>;
+declare const TableFooter: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React.RefAttributes<HTMLTableSectionElement>>;
+declare const TableRow: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>, "ref"> & React.RefAttributes<HTMLTableRowElement>>;
+declare const TableHead: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.ThHTMLAttributes<HTMLTableHeaderCellElement>, HTMLTableHeaderCellElement>, "ref"> & React.RefAttributes<HTMLTableCellElement>>;
+declare const TableCell: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>, "ref"> & React.RefAttributes<HTMLTableCellElement>>;
+declare const TableCaption: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>, "ref"> & React.RefAttributes<HTMLTableCaptionElement>>;
+
+/** สิ่งที่ผู้เรียกได้รับตอนวาดป้ายกลุ่มเอง */
+type DataTableGroupLabelContext<TData> = {
+    /** ค่าที่ `groupBy` คืนมา — คีย์คงที่ ไม่ใช่ข้อความบนจอ */
+    key: string;
+    /** แถวในกลุ่มนี้ (เรียงแล้ว ตามที่ตารางเรียง) */
+    rows: TData[];
+    /** = `rows.length` — ส่งมาให้เพราะ **8 ใน 8 ที่ของจริงแสดงจำนวนในป้าย** */
+    count: number;
+    /** ลำดับกลุ่ม เริ่มที่ 0 */
+    index: number;
+};
+type DataTableGroupingProps<TData> = {
+    /**
+     * แบ่งแถวเป็นกลุ่ม — คืนคีย์กลุ่มของแถวนั้น · คืน `null` = ไม่เข้ากลุ่มไหน
+     *
+     * ใช้ตัวเดียวกับที่ `ComboBox`/`EntityAutocomplete` ใช้จัดกลุ่มตัวเลือก
+     * (`form/group-options.ts`) ⇒ "จัดกลุ่ม" แปลว่าเรื่องเดียวกันทั้งระบบ
+     *
+     * ```tsx
+     * groupBy={(p) => (p.isPartTime ? "partTime" : "fullTime")}
+     * groupOrder={["fullTime", "partTime"]}
+     * ```
+     *
+     * 🔴 **คืนคีย์ ไม่ใช่ข้อความที่จะแสดง** — ข้อความมาจาก `groupLabel` เพราะต้องแปลภาษา
+     * ถ้า `groupBy` คืนคำแปลตรง ๆ กลุ่มจะแตกเป็นคนละกลุ่มทันทีที่สลับภาษา
+     */
+    groupBy?: GroupBy<TData>;
+    /**
+     * ลำดับกลุ่มตายตัว — ไม่ส่ง = เรียงตามลำดับที่เจอครั้งแรกในข้อมูล
+     *
+     * กลุ่มที่ไม่อยู่ในลิสต์**ไม่ถูกทิ้ง** แต่ต่อท้ายให้ (ทิ้ง = แถวหายจากจอเงียบ ๆ)
+     */
+    groupOrder?: readonly string[];
+    /**
+     * ป้ายหัวกลุ่ม — ไม่ส่ง = ใช้ `คีย์ (จำนวน)`
+     *
+     * รับ `count` มาให้เลยเพราะของจริงทุกที่แสดงจำนวน แต่**รูปแบบไม่ตรงกัน**
+     * ("9 ส.ค. (3 คำขอ)" · "พนักงานประจำ (5)") ⇒ ปล่อยให้ผู้เรียกประกอบเอง
+     * ดีกว่าเติม `(n)` ให้อัตโนมัติแล้วชนกับ `t(key, {count})` ที่นับซ้ำ
+     *
+     * คืน element ได้ ⇒ จุดสี/ไอคอนหน้าป้ายเป็นของผู้เรียก — DS ไม่รับสีดิบเข้ามา
+     */
+    groupLabel?: (ctx: DataTableGroupLabelContext<TData>) => React.ReactNode;
+    /** พับ/กางกลุ่มได้ — มีที่มาจากตารางเวรซึ่งทำเองอยู่แล้ว */
+    collapsibleGroups?: boolean;
+    /** กลุ่มที่พับไว้ตั้งแต่แรก (uncontrolled) */
+    defaultCollapsedGroups?: readonly string[];
+    /** กลุ่มที่พับอยู่ (controlled) — ส่งมาแล้วต้องส่ง `onCollapsedGroupsChange` ด้วย */
+    collapsedGroups?: readonly string[];
+    onCollapsedGroupsChange?: (keys: string[]) => void;
+};
+type ResolvedGroup<TData> = {
+    /** `null` = ก้อนที่ `groupBy` ไม่จัดกลุ่มให้ — ไม่มีแถวหัว อยู่บนสุด */
+    key: string | null;
+    rows: Row<TData>[];
+    collapsed: boolean;
+};
+/**
+ * แบ่ง row model ที่**เรียงแล้ว**ออกเป็นกลุ่ม
+ *
+ * 🔴 รับ `Row<TData>` ไม่ใช่ข้อมูลดิบ — เพราะต้องจัดกลุ่ม**หลัง**การเรียงและการแบ่งหน้า
+ * ของ TanStack ไม่งั้นกลุ่มจะไม่ตรงกับสิ่งที่ตารางกำลังแสดง และ `row.getIsSelected()`
+ * กับ `row.id` ที่ทั้งการติ๊กเลือกใช้อยู่จะหลุดหายไปด้วย
+ */
+declare function resolveGroups<TData>(rows: Row<TData>[], groupBy: GroupBy<TData>, groupOrder: readonly string[] | undefined, collapsedKeys: readonly string[]): ResolvedGroup<TData>[];
+/**
+ * แถวหัวกลุ่ม — DS เป็นเจ้าของ `<tr>` และ `colSpan` เอง ผู้เรียกกำหนดได้แค่เนื้อป้าย
+ *
+ * ตั้งใจไม่เปิด render prop ที่คืน `<tr>` เอง เพราะนั่นคือคืน `colSpan` กลับไปให้
+ * ผู้เรียกเขียนเลขเอง = บั๊กเดิมที่ของจริงเป็นอยู่ 5 หน้า
+ */
+declare function DataTableGroupRow({ colSpan, label, collapsible, collapsed, onToggle, toggleAriaLabel, }: {
+    colSpan: number;
+    label: React.ReactNode;
+    collapsible?: boolean;
+    collapsed?: boolean;
+    onToggle?: () => void;
+    toggleAriaLabel?: string;
+}): react_jsx_runtime.JSX.Element;
+
+type FreezeColumns = {
+    /**
+     * จำนวนคอลัมน์**ข้อมูล**ที่แช่ไว้ทางซ้าย (นับจาก `columns` ที่ส่งเข้ามา)
+     *
+     * ⚠️ ช่องติ๊กเลือกแช่ตามให้อัตโนมัติเมื่อ `left ≥ 1` — ไม่ต้องนับรวมเอง
+     * (ปล่อยให้ช่องติ๊กเลื่อนหายไปขณะที่ชื่อยังอยู่ = ติ๊กแถวที่มองไม่เห็นว่าแถวไหน)
+     */
+    left?: number;
+    /** จำนวนคอลัมน์ที่แช่ไว้ทางขวา — ปกติคือคอลัมน์ปฏิบัติการ */
+    right?: number;
+};
 
 type DataTablePagination = {
     /** 0-based page index. */
@@ -485,6 +1293,51 @@ type DataTablePagination = {
     onPageSizeChange?: (pageSize: number) => void;
     pageSizeOptions?: number[];
 };
+/**
+ * Overrides for every piece of built-in copy `DataTable` renders on its own
+ * (all English by default — this package has no i18n lib bound in, so the
+ * consuming app supplies translated strings here). Every field is optional;
+ * omitted fields keep the English default.
+ */
+type DataTableLabels = {
+    /** aria-label on the header "select all rows" checkbox. Default `"Select all"`. */
+    selectAllAriaLabel?: string;
+    /** aria-label on each row's own checkbox. Default `"Select row"`. */
+    selectRowAriaLabel?: string;
+    /**
+     * Default empty state (no rows, no `error`). `title` is `string` (not
+     * `ReactNode`) because it flows into `EmptyState`, which — like any native
+     * `<div>` — only accepts a plain string for its `title` attribute.
+     */
+    empty?: {
+        title?: string;
+        description?: React.ReactNode;
+    };
+    /** Default error state, shown when `error` is set and `errorSlot` isn't. Same `title: string` constraint as `empty`. */
+    error?: {
+        title?: string;
+        description?: React.ReactNode;
+    };
+    /** Retry button label inside the default error state. Default `"Retry"`. */
+    retry?: React.ReactNode;
+    /**
+     * ชื่อปุ่ม "หน้าก่อนหน้า" · ค่าเริ่มต้น `"Previous page"`
+     *
+     * 🔴 เป็น `string` ไม่ใช่ `ReactNode` เพราะปุ่มเป็น**ไอคอนล้วน** ⇒ ข้อความนี้ไป
+     * เป็น `aria-label` ซึ่งรับได้เฉพาะ string · ส่ง element มาจะได้ `[object Object]`
+     */
+    prev?: string;
+    /** ชื่อปุ่ม "หน้าถัดไป" · ค่าเริ่มต้น `"Next page"` · เป็น `string` ด้วยเหตุผลเดียวกับ `prev` */
+    next?: string;
+    /** Label next to the page-size select. Default `"Rows per page"`. */
+    rowsPerPage?: React.ReactNode;
+    /** ชื่อปุ่มพับ/กางกลุ่ม (ไอคอนล้วน) · ค่าเริ่มต้น `"Toggle group"` */
+    toggleGroup?: string;
+    /** Selected-row-count label. Default `` (n) => `${n} selected` ``. */
+    selected?: (count: number) => React.ReactNode;
+    /** Visible-range label, e.g. `"1–10 of 53"`. Default is `"0 of 0"` when `total` is 0. */
+    of?: (start: number, end: number, total: number) => React.ReactNode;
+};
 type DataTableProps<TData> = {
     columns: ColumnDef<TData, any>[];
     data: TData[];
@@ -493,75 +1346,194 @@ type DataTableProps<TData> = {
     pagination?: DataTablePagination;
     /** Controlled sorting state. When omitted, table is uncontrolled. */
     sorting?: SortingState;
-    onSortingChange?: OnChangeFn<SortingState>;
+    /**
+     * เรียงคอลัมน์เปลี่ยน — **ได้ `SortingState` มาตรง ๆ พร้อมใช้**
+     *
+     * 🔴 ไม่ใช่ `OnChangeFn` ของ TanStack ที่ส่ง **ฟังก์ชัน** `(old) => next` กลับมา
+     * (พิสูจน์แล้ว: กดหัวตาราง 3 ครั้ง ได้ `typeof === "function"` ทั้ง 3 ครั้ง)
+     * ⇒ ทางที่ TanStack ให้มาจะพังทันทีที่เอาไปต่อกับอะไรที่ไม่ใช่ `useState`
+     * — queryKey ของ react-query · URL state (`nuqs`) · zustand — เพราะได้ฟังก์ชัน
+     * ไปใส่แทนค่า แล้ว key ไม่เปลี่ยน/URL เพี้ยนโดยไม่มี error
+     *
+     * DS คลี่ให้แล้วที่นี่ที่เดียว ⇒ เหมือน `onPageChange` และ `onCollapsedGroupsChange`
+     * ในตัวเดียวกัน · ส่ง `setSorting` ของ `useState` ตรง ๆ ก็ยังใช้ได้เหมือนเดิม
+     *
+     * ```tsx
+     * const [sorting, setSorting] = useState<SortingState>([]);
+     * const q = useQuery({ queryKey: ["staff", page, sorting], queryFn: ... });
+     * <DataTable manualSorting sorting={sorting} onSortingChange={setSorting} … />
+     * ```
+     */
+    onSortingChange?: (sorting: SortingState) => void;
     /** Manual sorting (server-side). When `true`, the table will not sort rows itself. */
     manualSorting?: boolean;
     /** Enable a checkbox selection column. */
     enableSelection?: boolean;
+    /**
+     * แถวไหนติ๊กได้บ้าง — ไม่ส่ง = ติ๊กได้ทุกแถว
+     *
+     * 🔴 **select-all จะติ๊กเฉพาะแถวที่ผ่านเงื่อนไขนี้** และตัวนับ "เลือกแล้ว N จาก M"
+     * ใช้ M = จำนวนแถวที่ติ๊กได้ ไม่ใช่จำนวนแถวทั้งหมด
+     *
+     * ของจริงบน Mediwork ต้องการแบบนี้ทุกหน้าคำขอ — ติ๊กได้เฉพาะใบที่ยัง "รออนุมัติ"
+     * ใบที่อนุมัติ/ปฏิเสธไปแล้วต้องเห็นในตารางแต่ทำอะไรไม่ได้
+     * (วันนี้แต่ละฟีเจอร์ส่ง `pendingCount` เข้าไปเอง ซ้ำกัน 6 ที่)
+     *
+     * ```tsx
+     * isRowSelectable={(r) => r.status === "PENDING"}
+     * ```
+     */
+    isRowSelectable?: (row: TData) => boolean;
+    /**
+     * ความกว้างขั้นต่ำของตาราง (px) — แคบกว่านี้แล้วเลื่อนแนวนอนแทนที่จะบีบคอลัมน์
+     *
+     * ไม่ส่ง = ตารางกว้างเท่ากล่องที่อยู่ ไม่มีการเลื่อน
+     */
+    minTableWidth?: number;
+    /**
+     * แช่คอลัมน์ไว้กับที่เวลาเลื่อนแนวนอน — ใช้คู่กับ `minTableWidth`
+     *
+     * ```tsx
+     * minTableWidth={1200}
+     * freezeColumns={{ left: 1, right: 1 }}   // ชื่อค้างซ้าย · ปุ่มค้างขวา
+     * ```
+     *
+     * นับเฉพาะคอลัมน์**ข้อมูล** — ช่องติ๊กเลือกแช่ตามให้เองเมื่อ `left ≥ 1`
+     *
+     * 🔴 **ไม่มีผลถ้าไม่มีอะไรให้เลื่อน** — ตารางที่พอดีกล่องอยู่แล้วจะดูเหมือนไม่ทำงาน
+     * ต้องตั้ง `minTableWidth` หรือมีคอลัมน์กว้างพอจนล้นก่อน
+     *
+     * ⚠️ ของจริงวันนี้แช่ซ้ายอย่างเดียว 1 คอลัมน์ (ตารางเวร 4 ไฟล์) —
+     * **ฝั่งขวายังไม่มีที่ไหนทำ** ตัวนี้จึงเป็นของใหม่ ไม่ได้ลอกของเดิมมา
+     */
+    freezeColumns?: FreezeColumns;
     rowSelection?: RowSelectionState;
-    onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+    /** แถวที่ติ๊กเปลี่ยน — **ได้ `RowSelectionState` มาตรง ๆ** เหตุผลเดียวกับ `onSortingChange` */
+    onRowSelectionChange?: (rowSelection: RowSelectionState) => void;
     /** Stable id for selection — required when data resets. Default uses array index. */
     getRowId?: (row: TData, index: number) => string;
     /** Click handler for a row. Selection checkbox stops propagation. */
     onRowClick?: (row: TData, index: number) => void;
     /** Sticky header inside scrolling container. */
     stickyHeader?: boolean;
-    /** Custom empty state. */
-    empty?: React$1.ReactNode;
+    /** Custom empty state. Rendered when there's no error and 0 rows. */
+    empty?: React.ReactNode;
+    /**
+     * ไอคอนของสถานะว่าง — ไม่ส่ง = กล่องจดหมายเปล่า
+     *
+     * ควรส่งให้ตรงกับสิ่งที่ตารางนี้แสดง — "ยังไม่มีคำขอ" กับ "ยังไม่มีบุคลากร"
+     * เป็นความว่างคนละอย่าง และรูปคือทางที่บอกได้เร็วที่สุดว่าอันไหน
+     */
+    emptyIcon?: React.ReactNode;
+    /** ไอคอนของสถานะผิดพลาด — ไม่ส่ง = สามเหลี่ยมเตือน */
+    errorIcon?: React.ReactNode;
+    /**
+     * วาดสถานะว่างเอง — ได้รู้ด้วยว่า **ว่างเพราะกรองแล้วไม่เจอ หรือว่างเพราะยังไม่มีข้อมูลเลย**
+     *
+     * 🔴 สองอย่างนี้ต้องพูดคนละแบบ: "ไม่พบผลลัพธ์ ลองแก้คำค้น" กับ "ยังไม่มีรายการ กดเพิ่ม"
+     * — บอกให้ผู้ใช้ไปสร้างใหม่ทั้งที่เขาแค่กรองผิด คือทางที่ทำให้เขาสร้างข้อมูลซ้ำ
+     *
+     * ```tsx
+     * renderEmpty={({ isFiltered }) => isFiltered ? <NoMatch/> : <FirstRun/>}
+     * ```
+     *
+     * ชนะ `empty` เมื่อส่งมาทั้งคู่
+     */
+    renderEmpty?: (ctx: {
+        isFiltered: boolean;
+    }) => React.ReactNode;
+    /**
+     * ตารางนี้กำลังถูกกรอง/ค้นอยู่หรือเปล่า — ตัวตารางไม่รู้เอง เพราะการกรองเกิดนอกตัวมัน
+     * (ช่องค้นหาอยู่เหนือตาราง · ตัวกรองอยู่คนละที่) ⇒ ผู้เรียกต้องบอก
+     */
+    isFiltered?: boolean;
     className?: string;
-};
-declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, empty, className, }: DataTableProps<TData>): react_jsx_runtime.JSX.Element;
+    /**
+     * Truthy → renders the error state instead of rows/empty state. Pass the
+     * actual caught error (for future use / telemetry) or just `true`.
+     * `isLoading` still takes priority, so a background refetch doesn't flash
+     * a stale error.
+     */
+    error?: unknown;
+    /** Override the default error block entirely. Caller closes over `error` / `onRetry` itself. */
+    errorSlot?: React.ReactNode;
+    /**
+     * วาดสถานะผิดพลาดเอง — **ได้ตัว error กับปุ่มลองใหม่ส่งมาให้** ไม่ต้อง closure เอง
+     *
+     * ต่างจาก `errorSlot` ตรงที่ไม่ต้องหอบ `error`/`onRetry` ไปผูกไว้ข้างนอก
+     * ⇒ แยกเป็น component ที่ใช้ซ้ำได้จริง
+     *
+     * ```tsx
+     * renderError={({ error, retry }) => <ApiError err={error} onRetry={retry} />}
+     * ```
+     *
+     * ชนะ `errorSlot` เมื่อส่งมาทั้งคู่
+     */
+    renderError?: (ctx: {
+        error: unknown;
+        retry: (() => void) | undefined;
+    }) => React.ReactNode;
+    /** Retry action wired into the default error state's button. No-op if `errorSlot` is set. */
+    onRetry?: () => void;
+    /** Override any built-in copy — see `DataTableLabels`. All English by default. */
+    labels?: DataTableLabels;
+} & DataTableGroupingProps<TData>;
+declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): react_jsx_runtime.JSX.Element;
 
 declare const cardVariants: (props?: ({
     variant?: "flat" | "elevated" | "outlined" | null | undefined;
-    padding?: "sm" | "md" | "lg" | "none" | null | undefined;
+    padding?: "none" | "sm" | "md" | "lg" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type CardProps = React$1.ComponentProps<"div"> & VariantProps<typeof cardVariants>;
-declare const Card: React$1.ForwardRefExoticComponent<Omit<CardProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const CardHeader: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const CardTitle: ({ className, ...props }: React$1.ComponentProps<"h3">) => react_jsx_runtime.JSX.Element;
-declare const CardDescription: ({ className, ...props }: React$1.ComponentProps<"p">) => react_jsx_runtime.JSX.Element;
-declare const CardContent: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const CardFooter: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+type CardProps = React.ComponentProps<"div"> & VariantProps<typeof cardVariants>;
+declare const Card: React.ForwardRefExoticComponent<Omit<CardProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const CardHeader: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const CardTitle: ({ className, ...props }: React.ComponentProps<"h3">) => react_jsx_runtime.JSX.Element;
+declare const CardDescription: ({ className, ...props }: React.ComponentProps<"p">) => react_jsx_runtime.JSX.Element;
+declare const CardContent: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const CardFooter: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
 
-declare const Tabs: React$1.ForwardRefExoticComponent<RadixTabs.TabsProps & React$1.RefAttributes<HTMLDivElement>>;
+declare const Tabs: React.ForwardRefExoticComponent<RadixTabs.TabsProps & React.RefAttributes<HTMLDivElement>>;
 declare const tabsListVariants: (props?: ({
     variant?: "underline" | "pill" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 declare const tabsTriggerVariants: (props?: ({
     variant?: "underline" | "pill" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type TabsListProps = React$1.ComponentProps<typeof RadixTabs.List> & VariantProps<typeof tabsListVariants>;
-declare const TabsList: React$1.ForwardRefExoticComponent<Omit<TabsListProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-type TabsTriggerProps = React$1.ComponentProps<typeof RadixTabs.Trigger> & VariantProps<typeof tabsTriggerVariants>;
-declare const TabsTrigger: React$1.ForwardRefExoticComponent<Omit<TabsTriggerProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
-declare const TabsContent: React$1.ForwardRefExoticComponent<Omit<RadixTabs.TabsContentProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+type TabsListProps = React.ComponentProps<typeof RadixTabs.List> & VariantProps<typeof tabsListVariants>;
+declare const TabsList: React.ForwardRefExoticComponent<Omit<TabsListProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
+type TabsTriggerProps = React.ComponentProps<typeof RadixTabs.Trigger> & VariantProps<typeof tabsTriggerVariants>;
+declare const TabsTrigger: React.ForwardRefExoticComponent<Omit<TabsTriggerProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
+declare const TabsContent: React.ForwardRefExoticComponent<Omit<RadixTabs.TabsContentProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
 
 type BreadcrumbItem = {
-    label: React$1.ReactNode;
+    label: React.ReactNode;
     /** Optional leading icon — typically used on the first/Home item. */
-    icon?: React$1.ReactNode;
+    icon?: React.ReactNode;
     href?: string;
     /** When provided, renders as <button> instead of <a>. */
     onClick?: () => void;
 };
-type BreadcrumbProps = React$1.ComponentProps<"nav"> & {
+type BreadcrumbProps = React.ComponentProps<"nav"> & {
     items: BreadcrumbItem[];
     /** Custom separator. Default `"/"` (forward slash). */
-    separator?: React$1.ReactNode;
+    separator?: React.ReactNode;
     /** Collapse middle items when more than this number. Default `0` (no collapse). */
     maxItems?: number;
+    /** Component used to render `items[].href` links — e.g. next/link's `Link`.
+     *  Must accept `href`, `className`, and `children`. Defaults to a plain `<a>`,
+     *  which keeps this package framework-agnostic (no router import inside DS). */
+    linkComponent?: React.ElementType;
 };
-declare function Breadcrumb({ items, separator, maxItems, className, ...props }: BreadcrumbProps): react_jsx_runtime.JSX.Element;
+declare function Breadcrumb({ items, separator, maxItems, linkComponent: LinkComponent, className, ...props }: BreadcrumbProps): react_jsx_runtime.JSX.Element;
 /** Low-level escape hatch — use `<BreadcrumbRoot>` + `<BreadcrumbLink>` for custom rendering. */
-declare const BreadcrumbRoot: ({ className, ...props }: React$1.ComponentProps<"nav">) => react_jsx_runtime.JSX.Element;
-declare const BreadcrumbLink: React$1.ForwardRefExoticComponent<Omit<React$1.ClassAttributes<HTMLAnchorElement> & React$1.AnchorHTMLAttributes<HTMLAnchorElement> & {
+declare const BreadcrumbRoot: ({ className, ...props }: React.ComponentProps<"nav">) => react_jsx_runtime.JSX.Element;
+declare const BreadcrumbLink: React.ForwardRefExoticComponent<Omit<React.ClassAttributes<HTMLAnchorElement> & React.AnchorHTMLAttributes<HTMLAnchorElement> & {
     asChild?: boolean;
-}, "ref"> & React$1.RefAttributes<HTMLAnchorElement>>;
+}, "ref"> & React.RefAttributes<HTMLAnchorElement>>;
 
 type StepperStep = {
-    label: React$1.ReactNode;
-    description?: React$1.ReactNode;
+    label: React.ReactNode;
+    description?: React.ReactNode;
 };
 type StepperProps = {
     steps: StepperStep[];
@@ -574,40 +1546,113 @@ type StepperProps = {
 };
 declare function Stepper({ steps, current, orientation, className, onStepClick, }: StepperProps): react_jsx_runtime.JSX.Element;
 
-type SkeletonProps = React$1.ComponentProps<"div"> & {
+type SkeletonProps = React.ComponentProps<"div"> & {
     /** Shape preset. `text` defaults to a 1em-height bar. `circle` is square + rounded-full. */
     shape?: "rect" | "text" | "circle";
 };
-declare const Skeleton: React$1.ForwardRefExoticComponent<Omit<SkeletonProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const Skeleton: React.ForwardRefExoticComponent<Omit<SkeletonProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
+type SkeletonBoxProps = Omit<SkeletonProps, "shape"> & {
+    /** class รูปทรงของ component ตัวจริง — ปกติคือผลลัพธ์ของ cva ตัวเดียวกับที่มันใช้ */
+    shape?: string;
+    /** ข้อความให้โปรแกรมอ่านหน้าจอ — ตั้งค่าเริ่มต้นไว้แล้ว ไม่ต้องส่งทุกที่ */
+    label?: string;
+};
+declare const SkeletonBox: React.ForwardRefExoticComponent<Omit<SkeletonBoxProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
 
-type SpinnerProps = React$1.ComponentProps<"span"> & {
+type SpinnerProps = React.ComponentProps<"span"> & {
     size?: "xs" | "sm" | "md" | "lg" | "xl";
     /** Optional accessible label. Default `"Loading"`. */
     label?: string;
 };
-declare const Spinner: React$1.ForwardRefExoticComponent<Omit<SpinnerProps, "ref"> & React$1.RefAttributes<HTMLSpanElement>>;
+declare const Spinner: React.ForwardRefExoticComponent<Omit<SpinnerProps, "ref"> & React.RefAttributes<HTMLSpanElement>>;
 /** Full-screen / panel-fill loading state. Centers a spinner with optional label. */
 declare function LoadingScreen({ label, className, }: {
-    label?: React$1.ReactNode;
+    label?: React.ReactNode;
     className?: string;
 }): react_jsx_runtime.JSX.Element;
 
-type EmptyStateProps = React$1.ComponentProps<"div"> & {
-    /** Icon / illustration shown in the colored circle. Caller controls size + color
-     * (e.g. `<Calendar className="size-15 text-info-blue-primary" />`). */
-    icon?: React$1.ReactNode;
-    title?: React$1.ReactNode;
-    /** Body message — accepts strings or rich content. */
-    description?: React$1.ReactNode;
-    /** Action(s) — typically a `<Button>` or pair of buttons. */
-    action?: React$1.ReactNode;
-    /** Background tone of the icon circle. Default `info`. Set to `none` to
-     * skip the wrapper entirely (caller renders their own illustration). */
-    iconTone?: "info" | "success" | "warning" | "danger" | "neutral" | "none";
+/** โทนสีพื้นของป้ายรูป · `brand` = ตามธีมของแอป */
+type StateTone = "brand" | "info" | "success" | "warning" | "danger" | "neutral" | "none";
+/**
+ * ป้ายรูปมีทรงเดียว — **กลม**
+ *
+ * MediHR มีสี่เหลี่ยมมนอยู่ที่หน้ารายละเอียด แต่ผู้ใช้เคาะให้เหลือทรงเดียว (2026-08-09)
+ * — สองทรงในระบบเดียวไม่ได้สื่ออะไรต่างกัน มีแต่ทำให้แต่ละจอเลือกไม่เหมือนกัน
+ *
+ * `none` = ไม่มีป้าย (ค่าตั้งต้นของ `image` · ภาพประกอบมักมีพื้นในตัวอยู่แล้ว)
+ */
+type StateMediaShape = "circle" | "none";
+type StateSize = "sm" | "md";
+type StateBlockProps = Omit<React.ComponentProps<"div">, "title"> & {
+    /**
+     * ไอคอน — วางในป้ายสีพื้นตามธีมแอป
+     *
+     * ⚠️ **ขนาดถูกบังคับโดย component** (`sm` 24 · `md` 32) ผู้เรียกกำหนดเองไม่ได้
+     * เพราะของจริงเคยมีจอที่พกไอคอนเทา 44px ของตัวเองมาแล้วรับดีไซน์ครึ่งเดียว
+     * — ถ้าต้องการขนาดอื่นจริง ๆ ให้ใช้ `image` แทน ซึ่งไม่ถูกบังคับ
+     */
+    icon?: React.ReactNode;
+    /**
+     * รูปหรือภาพประกอบ — **ชนะ `icon` เมื่อส่งมาทั้งคู่**
+     *
+     * รับเป็น element ไม่ใช่ `src` เพราะแต่ละแอปโหลดรูปคนละทาง
+     * (`next/image` ของ Next ต้อง import จากฝั่งแอป · DS ดึงเข้ามาไม่ได้)
+     *
+     * ```tsx
+     * image={<Image src={emptyBox} alt="" width={160} height={160} />}
+     * ```
+     *
+     * ตั้งต้น**ไม่มีป้ายสีพื้น** (`mediaShape="none"`) เพราะภาพประกอบมักมีพื้นในตัวอยู่แล้ว
+     * — อยากได้พื้นด้วยให้ส่ง `mediaShape` มาเอง
+     */
+    image?: React.ReactNode;
+    title?: React.ReactNode;
+    description?: React.ReactNode;
+    /** ปุ่ม/ลิงก์ทางออก — ปกติเป็น `<Button>` หรือคู่ปุ่ม */
+    action?: React.ReactNode;
+    tone?: StateTone;
+    mediaShape?: StateMediaShape;
+    size?: StateSize;
+    /** class ของป้ายรูป — ทางออกเมื่อต้องการขนาด/สีนอกเหนือจากที่กำหนด */
+    mediaClassName?: string;
+    /** ความสูงขั้นต่ำ — กันหน้าที่ว่างแล้วสั้นลงจนทุกอย่างข้างล่างกระโดด */
+    minHeight?: number | string;
 };
-declare function EmptyState({ icon, title, description, action, iconTone, className, ...props }: EmptyStateProps): react_jsx_runtime.JSX.Element;
+type EmptyStateProps = StateBlockProps & {
+    /** @deprecated ใช้ `tone` — ชื่อเดิมสื่อว่าใช้ได้กับไอคอนอย่างเดียว ทั้งที่คุมพื้นของรูปด้วย */
+    iconTone?: StateTone;
+};
+/**
+ * ไม่มีข้อมูลให้แสดง
+ *
+ * ⚠️ **"ว่างเพราะกรองไม่เจอ" กับ "ว่างเพราะยังไม่มีข้อมูลเลย" ต้องพูดคนละแบบ** —
+ * บอกให้ผู้ใช้ไปสร้างใหม่ทั้งที่เขาแค่กรองผิด คือทางที่ทำให้เขาสร้างข้อมูลซ้ำ
+ * (ใน `DataTable` ใช้ `renderEmpty` ที่ได้ `isFiltered` มาแยกสองกรณีนี้)
+ */
+declare function EmptyState({ iconTone, tone, ...props }: EmptyStateProps): react_jsx_runtime.JSX.Element;
+type ErrorStateProps = Omit<StateBlockProps, "action"> & {
+    /** ปุ่มลองใหม่ — ไม่ส่ง = ไม่มีปุ่ม */
+    onRetry?: () => void;
+    /** ข้อความบนปุ่มลองใหม่ · ค่าเริ่มต้น `"Retry"` — แอปส่งคำแปลมาเอง */
+    retryLabel?: React.ReactNode;
+    /** ปุ่ม/ทางออกอื่นนอกเหนือจากลองใหม่ */
+    action?: React.ReactNode;
+    /** ตัว error จริง — ไม่ถูกแสดง มีไว้ให้ผู้เรียกใช้ต่อ (log/telemetry) */
+    error?: unknown;
+};
+/**
+ * โหลดไม่สำเร็จ
+ *
+ * ต่างจาก `EmptyState` แค่ค่าตั้งต้น (โทนแดง · ไอคอนเตือน · ปุ่มลองใหม่) —
+ * ใช้โครงเดียวกันโดยตั้งใจ เพราะสองสถานะนี้ยืนอยู่ที่เดียวกันบนจอ
+ * ถ้าโครงต่างกัน จอจะกระโดดตอนสลับจาก "กำลังโหลด" ไป "ผิดพลาด"
+ *
+ * ⚠️ **ไม่มีข้อความตั้งต้นเป็นภาษาไทย** — DS ไม่มี i18n และไม่ควรมี
+ * ทุกคำมาจากแอป ที่นี่มีแต่ค่าอังกฤษไว้กันจอว่างเปล่าตอนลืมส่ง
+ */
+declare function ErrorState({ icon, image, tone, onRetry, retryLabel, action, error: _error, ...props }: ErrorStateProps): react_jsx_runtime.JSX.Element;
 
-type ToasterProps = React$1.ComponentProps<typeof Toaster$1>;
+type ToasterProps = React.ComponentProps<typeof Toaster$1>;
 /**
  * Mount once near the app root. All `toast.*` calls render through this.
  *
@@ -622,53 +1667,99 @@ type ToasterProps = React$1.ComponentProps<typeof Toaster$1>;
  */
 declare function Toaster(props: ToasterProps): react_jsx_runtime.JSX.Element;
 
-declare const Popover: React$1.FC<RadixPopover.PopoverProps>;
-declare const PopoverTrigger: React$1.ForwardRefExoticComponent<RadixPopover.PopoverTriggerProps & React$1.RefAttributes<HTMLButtonElement>>;
-declare const PopoverAnchor: React$1.ForwardRefExoticComponent<RadixPopover.PopoverAnchorProps & React$1.RefAttributes<HTMLDivElement>>;
-declare const PopoverClose: React$1.ForwardRefExoticComponent<RadixPopover.PopoverCloseProps & React$1.RefAttributes<HTMLButtonElement>>;
-declare const PopoverContent: React$1.ForwardRefExoticComponent<Omit<RadixPopover.PopoverContentProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const Popover: React.FC<RadixPopover.PopoverProps>;
+declare const PopoverTrigger: React.ForwardRefExoticComponent<RadixPopover.PopoverTriggerProps & React.RefAttributes<HTMLButtonElement>>;
+declare const PopoverAnchor: React.ForwardRefExoticComponent<RadixPopover.PopoverAnchorProps & React.RefAttributes<HTMLDivElement>>;
+declare const PopoverClose: React.ForwardRefExoticComponent<RadixPopover.PopoverCloseProps & React.RefAttributes<HTMLButtonElement>>;
+declare const PopoverContent: React.ForwardRefExoticComponent<Omit<RadixPopover.PopoverContentProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
 
-declare const Dialog: React$1.FC<RadixDialog.DialogProps>;
-declare const DialogTrigger: React$1.ForwardRefExoticComponent<RadixDialog.DialogTriggerProps & React$1.RefAttributes<HTMLButtonElement>>;
-declare const DialogPortal: React$1.FC<RadixDialog.DialogPortalProps>;
-declare const DialogClose: React$1.ForwardRefExoticComponent<RadixDialog.DialogCloseProps & React$1.RefAttributes<HTMLButtonElement>>;
-declare const DialogOverlay: React$1.ForwardRefExoticComponent<Omit<RadixDialog.DialogOverlayProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-type DialogContentProps = React$1.ComponentProps<typeof RadixDialog.Content> & {
+declare const Dialog: React.FC<RadixDialog.DialogProps>;
+declare const DialogTrigger: React.ForwardRefExoticComponent<RadixDialog.DialogTriggerProps & React.RefAttributes<HTMLButtonElement>>;
+declare const DialogPortal: React.FC<RadixDialog.DialogPortalProps>;
+declare const DialogClose: React.ForwardRefExoticComponent<RadixDialog.DialogCloseProps & React.RefAttributes<HTMLButtonElement>>;
+declare const DialogOverlay: React.ForwardRefExoticComponent<Omit<RadixDialog.DialogOverlayProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+type DialogContentProps = React.ComponentProps<typeof RadixDialog.Content> & {
     size?: "sm" | "md" | "lg" | "xl";
     /** Show the built-in close (×) button. Default `true`. */
     showClose?: boolean;
 };
-declare const DialogContent: React$1.ForwardRefExoticComponent<Omit<DialogContentProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const DialogHeader: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const DialogFooter: ({ className, ...props }: React$1.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const DialogTitle: React$1.ForwardRefExoticComponent<Omit<RadixDialog.DialogTitleProps & React$1.RefAttributes<HTMLHeadingElement>, "ref"> & React$1.RefAttributes<HTMLHeadingElement>>;
-declare const DialogDescription: React$1.ForwardRefExoticComponent<Omit<RadixDialog.DialogDescriptionProps & React$1.RefAttributes<HTMLParagraphElement>, "ref"> & React$1.RefAttributes<HTMLParagraphElement>>;
+declare const DialogContent: React.ForwardRefExoticComponent<Omit<DialogContentProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const DialogHeader: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const DialogFooter: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const DialogTitle: React.ForwardRefExoticComponent<Omit<RadixDialog.DialogTitleProps & React.RefAttributes<HTMLHeadingElement>, "ref"> & React.RefAttributes<HTMLHeadingElement>>;
+declare const DialogDescription: React.ForwardRefExoticComponent<Omit<RadixDialog.DialogDescriptionProps & React.RefAttributes<HTMLParagraphElement>, "ref"> & React.RefAttributes<HTMLParagraphElement>>;
 
+/** โทนของ dialog — คุมสีเส้นคั่นและสีปุ่มยืนยัน */
+type ConfirmTone = "info" | "warning" | "danger" | "success";
+/** ไอคอนสำเร็จรูปตามโทน — ส่งเข้า `icon` เองเมื่ออยากได้ไอคอนด้านบน
+ *
+ * ไม่ถูกใส่ให้อัตโนมัติ เพราะ **ของจริงส่วนใหญ่ไม่มีทั้งไอคอนและเส้นคั่น**
+ * (10 ใน 14 จอของ Portal เป็นหัวข้อ + คำอธิบาย + ปุ่ม เท่านั้น)
+ * (`<ConfirmDialog icon={toneIcon.danger} … />`)
+ */
+declare const toneIcon: {
+    readonly info: react_jsx_runtime.JSX.Element;
+    readonly warning: react_jsx_runtime.JSX.Element;
+    readonly danger: react_jsx_runtime.JSX.Element;
+    readonly success: react_jsx_runtime.JSX.Element;
+};
 type ConfirmDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    title: React$1.ReactNode;
-    description?: React$1.ReactNode;
-    /** Visual tone — affects icon and confirm button variant. */
-    tone?: "info" | "warning" | "danger" | "success";
-    confirmLabel?: React$1.ReactNode;
-    cancelLabel?: React$1.ReactNode;
-    /** Called on Confirm. Return a Promise to keep dialog open with loading state until it resolves. */
+    title: React.ReactNode;
+    description?: React.ReactNode;
+    /** โทน — คุมสีเส้นคั่นและสีปุ่มยืนยัน */
+    tone?: ConfirmTone;
+    /**
+     * ไอคอนด้านบนกึ่งกลาง (ไม่บังคับ)
+     *
+     * ส่งมาแล้วเส้นคั่นใต้หัวข้อจะหายไปเอง — กติกาเดียวกับทั้งสามแอป
+     * ใช้ไอคอนสำเร็จรูปได้จาก `toneIcon`
+     */
+    icon?: React.ReactNode;
+    /** สั่งเปิด/ปิดเส้นคั่นเอง แทนกติกาอัตโนมัติ (ค่าปกติ = แสดงเมื่อไม่มี `icon`) */
+    divider?: boolean;
+    confirmLabel?: React.ReactNode;
+    cancelLabel?: React.ReactNode;
+    /** เรียกเมื่อกดยืนยัน — คืน Promise เพื่อให้ dialog ค้างพร้อมสถานะโหลดจนกว่าจะเสร็จ */
     onConfirm?: () => void | Promise<void>;
-    /** Called on Cancel/× (defaults to closing the dialog). */
+    /** เรียกเมื่อกดยกเลิก (ค่าปกติคือปิด dialog) */
     onCancel?: () => void;
-    size?: React$1.ComponentProps<typeof DialogContent>["size"];
+    size?: React.ComponentProps<typeof DialogContent>["size"];
+    /**
+     * สั่งสถานะโหลดจากภายนอก — ชนะสถานะที่ dialog จัดการเองจาก Promise
+     *
+     * ใช้เมื่อ mutation อยู่นอก dialog (เช่น `mutation.isPending` ของ react-query)
+     * ในโหมดนี้ dialog จะไม่รอ `onConfirm` และไม่ปิดตัวเอง — ผู้เรียกเป็นคนปิด
+     * (ปกติทำใน `onSuccess`) · ไม่ส่งมา = ใช้พฤติกรรมเดิมที่ dialog จัดการเอง
+     */
+    isLoading?: boolean;
+    /** โชว์ข้อความผิดพลาดคาไว้ในกล่อง โดยไม่ปิด dialog */
+    errorMessage?: React.ReactNode;
+    /** `false` = โหมดแจ้งเตือนปุ่มเดียว ไม่มีปุ่มยกเลิก · ค่าปกติ `true` */
+    showCancel?: boolean;
+    /**
+     * เนื้อหาเพิ่มเติม **ใต้คำอธิบาย เหนือปุ่ม** — ใส่อะไรก็ได้
+     *
+     * ใช้ตอนที่ข้อความอย่างเดียวไม่พอ เช่น รายการที่จะถูกลบ · ตารางสรุป · ช่องกรอก
+     *
+     * ⚠️ **ไม่บังคับการจัดวาง** — สืบทอด `text-center` ของกล่องมา ซึ่งตรงกับของจริง
+     * ทุกเคสใน Portal ที่ส่ง JSX เข้ามา (ล้วนเป็นข้อความจัดกึ่งกลาง)
+     * ถ้าเป็น **ฟอร์ม ต้องสั่ง `text-left` เอง** — label/ตัวนับ/ข้อความ error ที่ลอย
+     * กลางอ่านยากและผิดหลักฟอร์ม
+     */
+    children?: React.ReactNode;
 };
-declare function ConfirmDialog({ open, onOpenChange, title, description, tone, confirmLabel, cancelLabel, onConfirm, onCancel, size, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
+declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, errorMessage, showCancel, children, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
 
-type PopoverContentProps = React$1.ComponentProps<typeof RadixPopover.Content>;
+type PopoverContentProps = React.ComponentProps<typeof RadixPopover.Content>;
 type FilterProps = {
     /** Popover content — typically the filter form fields plus an Apply button. */
-    children: React$1.ReactNode;
+    children: React.ReactNode;
     /** Trigger button label. Default `"Filter"`. */
-    triggerLabel?: React$1.ReactNode;
+    triggerLabel?: React.ReactNode;
     /** Replace the trigger entirely (overrides `triggerLabel`/`triggerProps`). */
-    trigger?: React$1.ReactNode;
+    trigger?: React.ReactNode;
     /** Props forwarded to the default trigger Button. */
     triggerProps?: Omit<ButtonProps, "children">;
     open?: boolean;
@@ -682,18 +1773,18 @@ type FilterProps = {
 };
 declare function Filter({ children, triggerLabel, trigger, triggerProps, open, defaultOpen, onOpenChange, align, side, sideOffset, contentClassName, }: FilterProps): react_jsx_runtime.JSX.Element;
 
-declare const TooltipProvider: React$1.FC<RadixTooltip.TooltipProviderProps>;
-declare const TooltipRoot: React$1.FC<RadixTooltip.TooltipProps>;
-declare const TooltipTrigger: React$1.ForwardRefExoticComponent<RadixTooltip.TooltipTriggerProps & React$1.RefAttributes<HTMLButtonElement>>;
-declare const TooltipPortal: React$1.FC<RadixTooltip.TooltipPortalProps>;
-type TooltipContentProps = React$1.ComponentProps<typeof RadixTooltip.Content> & {
+declare const TooltipProvider: React.FC<RadixTooltip.TooltipProviderProps>;
+declare const TooltipRoot: React.FC<RadixTooltip.TooltipProps>;
+declare const TooltipTrigger: React.ForwardRefExoticComponent<RadixTooltip.TooltipTriggerProps & React.RefAttributes<HTMLButtonElement>>;
+declare const TooltipPortal: React.FC<RadixTooltip.TooltipPortalProps>;
+type TooltipContentProps = React.ComponentProps<typeof RadixTooltip.Content> & {
     /** Show a pointing arrow toward the trigger. Default `true`. */
     arrow?: boolean;
 };
-declare const TooltipContent: React$1.ForwardRefExoticComponent<Omit<TooltipContentProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const TooltipContent: React.ForwardRefExoticComponent<Omit<TooltipContentProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
 type TooltipProps = {
-    content: React$1.ReactNode;
-    children: React$1.ReactNode;
+    content: React.ReactNode;
+    children: React.ReactNode;
     side?: RadixTooltip.TooltipContentProps["side"];
     align?: RadixTooltip.TooltipContentProps["align"];
     delayDuration?: number;
@@ -703,128 +1794,41 @@ type TooltipProps = {
     asChild?: boolean;
     /** Show a pointing arrow toward the trigger. Default `true`. */
     arrow?: boolean;
+    /** Override the content panel's classes — e.g. a non-brand tone (dark/light). */
+    contentClassName?: string;
 };
 /**
  * Convenience wrapper. For grouped tooltips wrap your tree in <TooltipProvider>.
  * This component creates its own provider if none is in scope (safe to nest).
  */
-declare function Tooltip({ content, children, side, align, delayDuration, open, defaultOpen, onOpenChange, asChild, arrow, }: TooltipProps): react_jsx_runtime.JSX.Element;
+declare function Tooltip({ content, children, side, align, delayDuration, open, defaultOpen, onOpenChange, asChild, arrow, contentClassName, }: TooltipProps): react_jsx_runtime.JSX.Element;
 
-declare const DropdownMenu: React$1.FC<RadixMenu.DropdownMenuProps>;
-declare const DropdownMenuTrigger: React$1.ForwardRefExoticComponent<RadixMenu.DropdownMenuTriggerProps & React$1.RefAttributes<HTMLButtonElement>>;
-declare const DropdownMenuGroup: React$1.ForwardRefExoticComponent<RadixMenu.DropdownMenuGroupProps & React$1.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuRadioGroup: React$1.ForwardRefExoticComponent<RadixMenu.DropdownMenuRadioGroupProps & React$1.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuPortal: React$1.FC<RadixMenu.DropdownMenuPortalProps>;
-declare const DropdownMenuSub: React$1.FC<RadixMenu.DropdownMenuSubProps>;
-declare const DropdownMenuContent: React$1.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuContentProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-type ItemProps = React$1.ComponentProps<typeof RadixMenu.Item> & {
+declare const DropdownMenu: React.FC<RadixMenu.DropdownMenuProps>;
+declare const DropdownMenuTrigger: React.ForwardRefExoticComponent<RadixMenu.DropdownMenuTriggerProps & React.RefAttributes<HTMLButtonElement>>;
+declare const DropdownMenuGroup: React.ForwardRefExoticComponent<RadixMenu.DropdownMenuGroupProps & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuRadioGroup: React.ForwardRefExoticComponent<RadixMenu.DropdownMenuRadioGroupProps & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuPortal: React.FC<RadixMenu.DropdownMenuPortalProps>;
+declare const DropdownMenuSub: React.FC<RadixMenu.DropdownMenuSubProps>;
+declare const DropdownMenuContent: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuContentProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+type ItemProps = React.ComponentProps<typeof RadixMenu.Item> & {
     destructive?: boolean;
     inset?: boolean;
 };
-declare const DropdownMenuItem: React$1.ForwardRefExoticComponent<Omit<ItemProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuCheckboxItem: React$1.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuCheckboxItemProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuRadioItem: React$1.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuRadioItemProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuLabel: React$1.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuLabelProps & React$1.RefAttributes<HTMLDivElement> & {
+declare const DropdownMenuItem: React.ForwardRefExoticComponent<Omit<ItemProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuCheckboxItem: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuCheckboxItemProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuRadioItem: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuRadioItemProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuLabel: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuLabelProps & React.RefAttributes<HTMLDivElement> & {
     inset?: boolean;
-}, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuSeparator: React$1.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuSeparatorProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuSubTrigger: React$1.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuSubTriggerProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuSubContent: React$1.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuSubContentProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-
-/**
- * Shared types for schedule components (ShiftTable / TimeGrid).
- * All display strings (dates, Buddhist years, weekday labels, time ranges)
- * are pre-formatted by the caller — these components never do date math.
- */
-/** Constrained avatar color palette — maps to design tokens, never hex. */
-type AssignmentColor = "blue" | "green" | "orange" | "yellow" | "red" | "teal" | "gray";
-/** Token class lookup for {@link AssignmentColor}. */
-declare const ASSIGNMENT_COLOR_CLASSES: Record<AssignmentColor, string>;
-/** One person assigned to a slot (doctor/nurse). */
-type AssignmentSlot = {
-    id: string;
-    /** 1-based order number shown in the badge. */
-    order: number;
-    /** Display name, e.g. "นพ. วรวิทย์ ตันสกุล". */
-    name: string;
-    color: AssignmentColor;
-    /**
-     * Explicit avatar initials (e.g. "วก"). Falls back to auto-initials
-     * derived from `name` when omitted.
-     */
-    avatarLabel?: string;
-    /** Avatar image URL. */
-    src?: string;
-};
-/** A shift-period column in {@link ShiftTable} (Pattern A). */
-type ShiftTableColumn = {
-    id: string;
-    /** Shift name, e.g. "เช้า". */
-    name: string;
-    /** Pre-formatted time range, e.g. "08:00 – 16:00". */
-    timeRange: string;
-    /** Number of ordered slots per cell. */
-    slotCount: number;
-};
-/** A day row in {@link ShiftTable} (Pattern A). */
-type ShiftTableDay = {
-    /**
-     * Stable identifier — **ต้องเป็น Gregorian ISO date** เช่น `"2026-06-02"` (ค.ศ.)
-     * ห้ามใช้ปีพุทธศักราช (2569) เพราะ component ใช้ id นี้คำนวณ `isToday` อัตโนมัติ
-     */
-    id: string;
-    /** Day-of-month label, e.g. 2. */
-    dayNumber: number;
-    /** Pre-formatted weekday label, e.g. "อังคาร". */
-    weekdayLabel: string;
-    isToday?: boolean;
-    isWeekend?: boolean;
-    /** Filled slots per column id. Missing keys = empty cell. */
-    slots: Record<string, AssignmentSlot[]>;
-};
-/** A room/resource column in {@link TimeGrid} (Pattern B). */
-type TimeGridRoom = {
-    id: string;
-    /** Room name, e.g. "ห้องตรวจ 1". */
-    name: string;
-    icon?: React.ReactNode;
-};
-/** An event block in {@link TimeGrid} (Pattern B). */
-type TimeGridEventData = {
-    id: string;
-    roomId: string;
-    /** Display name, e.g. "นพ. วรวิทย์ ตันสกุล". */
-    name: string;
-    color: AssignmentColor;
-    avatarLabel?: string;
-    src?: string;
-    /** 24h "HH:mm", e.g. "08:00". */
-    start: string;
-    /** 24h "HH:mm", e.g. "12:00". */
-    end: string;
-    /** Pre-formatted time label. Defaults to `${start} – ${end}`. */
-    timeLabel?: string;
-    /** Optional note line, e.g. "เฉพาะผู้ป่วยนัด". */
-    note?: string;
-};
-
-type ScheduleAvatarProps = Omit<AvatarProps, "fallback"> & {
-    /** Constrained palette color (token-backed, never hex). */
-    color: AssignmentColor;
-    /**
-     * Explicit initials (e.g. "วก"). Falls back to auto-initials derived
-     * from `name` when omitted.
-     */
-    label?: string;
-};
-/** Avatar with a constrained per-person color from the schedule palette. */
-declare const ScheduleAvatar: React$1.ForwardRefExoticComponent<Omit<ScheduleAvatarProps, "ref"> & React$1.RefAttributes<HTMLSpanElement>>;
+}, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuSeparator: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuSeparatorProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuSubTrigger: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuSubTriggerProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuSubContent: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuSubContentProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
 
 declare const statusBadgeVariants: (props?: ({
-    tone?: "success" | "warning" | "info" | "neutral" | "danger" | null | undefined;
+    tone?: "info" | "success" | "warning" | "neutral" | "danger" | null | undefined;
     size?: "sm" | "md" | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
-type StatusBadgeProps = React$1.ComponentProps<"span"> & VariantProps<typeof statusBadgeVariants> & {
+type StatusBadgeProps = React.ComponentProps<"span"> & VariantProps<typeof statusBadgeVariants> & {
     /** Hide the leading dot. */
     hideDot?: boolean;
 };
@@ -832,19 +1836,20 @@ type StatusBadgeProps = React$1.ComponentProps<"span"> & VariantProps<typeof sta
  * Dot + label status pill, e.g. "● Published", "● Draft",
  * "● มีการแก้ไขที่ยังไม่บันทึก". Dot inherits the tone's text color.
  */
-declare const StatusBadge: React$1.ForwardRefExoticComponent<Omit<StatusBadgeProps, "ref"> & React$1.RefAttributes<HTMLSpanElement>>;
+declare const StatusBadge: React.ForwardRefExoticComponent<Omit<StatusBadgeProps, "ref"> & React.RefAttributes<HTMLSpanElement>>;
 
 declare const dateNavigatorVariants: (props?: ({
     size?: "sm" | "md" | null | undefined;
+    fullWidth?: boolean | null | undefined;
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 type DateNavigatorUnit = "month" | "day";
-type DateNavigatorProps = Omit<React$1.ComponentProps<"div">, "children" | "onChange"> & VariantProps<typeof dateNavigatorVariants> & {
+type DateNavigatorProps = Omit<React.ComponentProps<"div">, "children" | "onChange"> & VariantProps<typeof dateNavigatorVariants> & {
     /**
      * Controlled mode — เมื่อส่ง `value` มา component จะ format label
      * และคำนวณ ‹ › ให้เองตาม `unit` (สไตล์เดียวกับ MUI controlled component)
      */
     value?: Date;
-    /** เรียกพร้อม Date ใหม่เมื่อกด ‹ › (เฉพาะ controlled mode) */
+    /** เรียกพร้อม Date ใหม่เมื่อกด ‹ › หรือเลือกจากปฏิทิน */
     onChange?: (date: Date) => void;
     /** Granularity ของ label และ step. @default "month" */
     unit?: DateNavigatorUnit;
@@ -859,9 +1864,11 @@ type DateNavigatorProps = Omit<React$1.ComponentProps<"div">, "children" | "onCh
     maxDate?: Date;
     /**
      * Custom label — override การ format จาก `value`
-     * (ใช้เมื่อ format มาตรฐานไม่ครอบ เช่น "สัปดาห์ที่ 24 / 2569")
+     *
+     * ของจริงในหน้า productivity ใส่สองส่วนในบรรทัดเดียว ("18 ส.ค. 2569 · เวรบ่าย")
+     * โดยครึ่งหลังเป็นสีแบรนด์ — รับ ReactNode จึงทำแบบนั้นได้
      */
-    label?: React$1.ReactNode;
+    label?: React.ReactNode;
     /** Hook เพิ่มเติมเมื่อกด ‹ (ทำงานร่วมกับ onChange ได้) */
     onPrev?: () => void;
     /** Hook เพิ่มเติมเมื่อกด › (ทำงานร่วมกับ onChange ได้) */
@@ -874,168 +1881,48 @@ type DateNavigatorProps = Omit<React$1.ComponentProps<"div">, "children" | "onCh
     prevLabel?: string;
     /** aria-label ปุ่ม › */
     nextLabel?: string;
+    /**
+     * กดตรงกลางแล้วเปิดปฏิทิน
+     *
+     * `unit="month"` จะเปิดมาที่ตาราง 12 เดือนและเลือกจบที่เดือนเลย
+     * @default false — ตัวเลื่อนแบบอ่านอย่างเดียวยังมีอยู่จริง (การ์ดตารางแพทย์)
+     */
+    calendar?: boolean;
+    /** หัวข้อเหนือปฏิทิน — ไม่ส่งก็ไม่มี */
+    calendarTitle?: React.ReactNode;
+    /**
+     * เนื้อหาเพิ่มใต้ปฏิทิน — เช่นแถวปุ่มเลือกเวรของหน้า productivity
+     *
+     * DS ไม่รู้จักเวร/แผนก/อะไรก็ตามที่แอปเอามาวาง จึงเป็นสล็อตเปล่า
+     * state ของสิ่งที่วางเป็นของผู้เรียกทั้งหมด
+     */
+    children?: React.ReactNode;
+    /**
+     * มีข้อความนี้ = **โหมดร่าง** — เลือกวันแล้วยังไม่ commit จนกดปุ่มนี้
+     *
+     * ใช้เมื่อ popover มีมากกว่าวันที่ (เช่นวัน + เวร) เพราะถ้า commit ทันที
+     * ที่กดวัน หน้าจอข้างหลังจะโหลดใหม่ทั้งที่ผู้ใช้ยังเลือกไม่ครบคู่
+     * ไม่ส่ง = กดวันแล้ว commit และปิดทันที (แบบ DatePicker)
+     */
+    confirmLabel?: React.ReactNode;
+    /** เรียกตอนกดปุ่มยืนยัน · ไม่ส่งจะ fallback ไปที่ `onChange` */
+    onConfirm?: (date: Date) => void;
+    /** คุมการเปิด/ปิดปฏิทินเอง */
+    calendarOpen?: boolean;
+    onCalendarOpenChange?: (open: boolean) => void;
+    /** ส่งต่อให้ `Calendar` (เช่น `weekStartsOn`, `labels`) */
+    calendarProps?: Omit<CalendarProps, "month" | "onMonthChange" | "selected" | "onSelect" | "minDate" | "maxDate">;
 };
 /**
- * `‹ label ›` stepper สำหรับเลื่อนเดือน/วัน
+ * `‹ label ›` stepper สำหรับเลื่อนเดือน/วัน — กดตรงกลางเปิดปฏิทินได้
  *
- * 2 โหมด:
+ * 2 โหมดของ label:
  * - **Controlled (แนะนำ):** ส่ง `value` + `onChange` — format ไทย/พ.ศ. ให้เอง
  *   ผ่าน Intl ตาม `locale` และ step ตาม `unit`
  * - **Manual:** ส่ง `label` + `onPrev`/`onNext` — ควบคุมเองทั้งหมด
  */
-declare const DateNavigator: React$1.ForwardRefExoticComponent<Omit<DateNavigatorProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-
-type AssignmentChipProps = Omit<React$1.ComponentProps<"button">, "onClick" | "children" | "slot"> & {
-    slot: AssignmentSlot;
-    /** Hide the order-number badge. */
-    hideOrder?: boolean;
-    /** Renders as a non-interactive `<div>` when omitted. */
-    onClick?: (slot: AssignmentSlot) => void;
-};
-/**
- * Filled assignment slot in a schedule cell:
- * `[order badge] [colored avatar] [name]`.
- */
-declare const AssignmentChip: React$1.ForwardRefExoticComponent<Omit<AssignmentChipProps, "ref"> & React$1.RefAttributes<HTMLElement>>;
-
-type AddSlotButtonProps = Omit<React$1.ComponentProps<"button">, "children"> & {
-    /** Localized label, e.g. "เพิ่มหมอ" / "เพิ่มแพทย์เวร". */
-    label?: string;
-    icon?: React$1.ReactNode;
-};
-/** Dashed "+ add" placeholder for an empty schedule slot. */
-declare const AddSlotButton: React$1.ForwardRefExoticComponent<Omit<AddSlotButtonProps, "ref"> & React$1.RefAttributes<HTMLButtonElement>>;
-
-type ShiftTableProps = Omit<React$1.ComponentProps<"div">, "children"> & {
-    /** Shift-period columns, e.g. เช้า / บ่าย / ดึก. */
-    columns: ShiftTableColumn[];
-    /** Day rows (typically one month). */
-    days: ShiftTableDay[];
-    /** Click on a filled slot chip. */
-    onSlotClick?: (dayId: string, columnId: string, slot: AssignmentSlot) => void;
-    /** Click on an empty add-slot placeholder. `order` is 1-based. */
-    onAddSlot?: (dayId: string, columnId: string, order: number) => void;
-    /** Click on a column header's edit (pencil) button. */
-    onEditColumn?: (columnId: string) => void;
-    /** Label for empty slots, e.g. "เพิ่มหมอ". */
-    addLabel?: string;
-    /** Header label for the day column. */
-    dayColumnLabel?: string;
-    /** Keep the header visible while scrolling vertically. */
-    stickyHeader?: boolean;
-    /** Max body height (enables vertical scroll), e.g. "70vh" or 640. */
-    maxHeight?: React$1.CSSProperties["maxHeight"];
-    /**
-     * Min width (px) ของแต่ละคอลัมน์กะ — ลดเมื่อพื้นที่แคบเพื่อเลี่ยง
-     * horizontal scroll
-     * @default 220
-     */
-    minColumnWidth?: number;
-};
-/**
- * Pattern A — monthly shift table (ตารางกะ).
- * Rows = days, columns = shift periods, cells = ordered assignment slots.
- * Purely presentational: all data via props, interactions via callbacks.
- */
-declare const ShiftTable: React$1.ForwardRefExoticComponent<Omit<ShiftTableProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-
-type TimeGridProps = Omit<React$1.ComponentProps<"div">, "children"> & {
-    /** Room/resource columns. */
-    rooms: TimeGridRoom[];
-    /** Events for the displayed day (all rooms, flat). */
-    events: TimeGridEventData[];
-    /** Window start, 24h "HH:mm", e.g. "08:00". */
-    windowStart: string;
-    /** Window end, 24h "HH:mm", e.g. "12:00". */
-    windowEnd: string;
-    /** Time-axis tick interval in minutes. @default 30 */
-    tickMinutes?: number;
-    /** Vertical scale. @default 2 (30 min = 60px) */
-    pixelsPerMinute?: number;
-    /** Click on an event card. */
-    onEventClick?: (event: TimeGridEventData) => void;
-    /** Click on a room header's edit (pencil) button. */
-    onEditRoom?: (roomId: string) => void;
-    /**
-     * Click on an empty-gap placeholder. When provided, dashed add
-     * placeholders render in event-free intervals of each room column.
-     */
-    onAddEvent?: (roomId: string, startMinutes: number) => void;
-    /** Label for add placeholders, e.g. "เพิ่มแพทย์เวร". */
-    addLabel?: string;
-    /** Keep the room header visible while scrolling vertically. */
-    stickyHeader?: boolean;
-    /** Max height (enables vertical scroll), e.g. "70vh" or 640. */
-    maxHeight?: React$1.CSSProperties["maxHeight"];
-    /**
-     * Min width (px) ของแต่ละคอลัมน์ห้อง — ลดเมื่อพื้นที่แคบเพื่อเลี่ยง
-     * horizontal scroll (ซึ่งพ่วง vertical scrollbar ~17px ตามมา)
-     * @default 240
-     */
-    minColumnWidth?: number;
-};
-/**
- * Pattern B — daily resource time grid (ตารางห้องตรวจ).
- * Columns = rooms, vertical axis = time; events are absolutely positioned
- * by start/end time, with side-by-side layout for overlaps.
- * Purely presentational. Click-only (no drag/resize).
- *
- * Note: event cards intentionally use a uniform tint (per design) —
- * `event.color` differentiates people via the avatar only.
- */
-declare const TimeGrid: React$1.ForwardRefExoticComponent<Omit<TimeGridProps, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
-
-/**
- * Pure layout math for TimeGrid (Pattern B).
- * No React imports — fully unit-testable.
- */
-/** Parse 24h "HH:mm" into minutes since midnight. Returns NaN if malformed. */
-declare function parseTimeToMinutes(time: string): number;
-type EventLayoutInput = {
-    id: string;
-    /** 24h "HH:mm". */
-    start: string;
-    /** 24h "HH:mm". */
-    end: string;
-};
-type EventLayout = {
-    id: string;
-    /** Pixels from the top of the time window. */
-    top: number;
-    /** Pixel height. */
-    height: number;
-    /** CSS percentage, e.g. "0%" / "50%". */
-    left: string;
-    /** CSS percentage, e.g. "100%" / "50%". */
-    width: string;
-    /** 0-based overlap column index. */
-    column: number;
-    /** Total overlap columns in this event's cluster. */
-    totalColumns: number;
-};
-/**
- * Compute absolute positions for events within a time window.
- *
- * Overlapping events in the same cluster are laid out side-by-side:
- * each takes the leftmost free column, width = 100% / cluster columns.
- * Events fully outside the window are dropped; partial ones are clamped.
- */
-declare function computeEventLayouts(events: EventLayoutInput[], windowStart: string, windowEnd: string, pixelsPerMinute: number): EventLayout[];
-type FreeGap = {
-    /** Pixels from the top of the time window. */
-    top: number;
-    /** Pixel height. */
-    height: number;
-    /** Gap start in minutes since midnight. */
-    startMinutes: number;
-};
-/**
- * Free (event-less) intervals within the window, in pixels.
- * Used to position "add" placeholders. Gaps shorter than `minMinutes`
- * are skipped.
- */
-declare function computeFreeGaps(events: EventLayoutInput[], windowStart: string, windowEnd: string, pixelsPerMinute: number, minMinutes?: number): FreeGap[];
+declare const DateNavigator: React.ForwardRefExoticComponent<Omit<DateNavigatorProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { ASSIGNMENT_COLOR_CLASSES, AddButton, type AddButtonProps, AddSlotButton, type AddSlotButtonProps, AppLauncher, type AppLauncherProps, AssignmentChip, type AssignmentChipProps, type AssignmentColor, type AssignmentSlot, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, type CheckboxProps, Chip, type ChipProps, ComboBox, type ComboBoxOption, type ComboBoxProps, ConfirmDialog, type ConfirmDialogProps, DataTable, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, type EventLayout, type EventLayoutInput, Filter, type FilterProps, FormField, type FormFieldProps, type FreeGap, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, MultiAutocomplete, type MultiAutocompleteProps, type MultiOption, NotificationBell, type NotificationBellProps, OutlineButton, type OutlineButtonProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, ScheduleAvatar, type ScheduleAvatarProps, Select, SelectItem, type SelectOption, type SelectProps, ShiftTable, type ShiftTableColumn, type ShiftTableDay, type ShiftTableProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, type TextareaProps, TimeGrid, type TimeGridEventData, type TimeGridProps, type TimeGridRoom, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonVariants, chipVariants, cn, computeEventLayouts, computeFreeGaps, outlineButtonVariants, parseTimeToMinutes, solidButtonVariants, statusBadgeVariants };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, Filter, type FilterProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, headingVariants, iconButtonVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, textVariants, toneIcon };

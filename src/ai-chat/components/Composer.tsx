@@ -65,7 +65,7 @@ export function Composer({
         placeholder={placeholder}
         aria-label={placeholder}
         className={cn(
-          "max-h-40 min-h-9 flex-1 resize-none rounded-md border border-border-input px-3 py-2 text-sm",
+          "max-h-40 min-h-9 flex-1 resize-none rounded-md border border-border-input px-3 py-2 text-body-sm",
           "outline-none placeholder:text-gray-400",
           "focus-visible:border-brand-active focus-visible:ring-1 focus-visible:ring-brand-active",
           "disabled:bg-gray-50 disabled:text-gray-400",

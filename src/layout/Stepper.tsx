@@ -43,7 +43,7 @@ function Stepper({
         const circle = (
           <div
             className={cn(
-              "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors",
+              "flex size-7 shrink-0 items-center justify-center rounded-full text-caption font-semibold transition-colors",
               status === "todo"
                 ? "bg-gray-200 text-text-tertiary"
                 : "bg-brand-active text-white",
@@ -90,7 +90,7 @@ function Stepper({
               {!isVertical && (
                 <div
                   className={cn(
-                    "text-sm",
+                    "text-body-sm",
                     status === "todo"
                       ? "text-text-tertiary font-normal"
                       : "text-text-primary font-semibold",
@@ -98,7 +98,7 @@ function Stepper({
                 >
                   {step.label}
                   {step.description && (
-                    <div className="text-xs font-normal text-text-tertiary">
+                    <div className="text-caption font-normal text-text-tertiary">
                       {step.description}
                     </div>
                   )}
@@ -110,7 +110,7 @@ function Stepper({
               <div className="min-w-0 pb-4">
                 <div
                   className={cn(
-                    "text-sm",
+                    "text-body-sm",
                     status === "todo"
                       ? "text-text-tertiary font-normal"
                       : "text-text-primary font-semibold",
@@ -119,7 +119,7 @@ function Stepper({
                   {step.label}
                 </div>
                 {step.description && (
-                  <div className="text-xs text-text-tertiary">
+                  <div className="text-caption text-text-tertiary">
                     {step.description}
                   </div>
                 )}

@@ -23,7 +23,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
           ref={ref}
           sideOffset={sideOffset}
           className={cn(
-            "z-50 max-w-xs rounded-md bg-brand px-4 py-2.5 text-sm font-medium text-brand-foreground shadow-lg",
+            "z-50 max-w-xs rounded-md bg-brand px-4 py-2.5 text-body-sm font-medium text-brand-foreground shadow-lg",
             "data-[state=delayed-open]:animate-in data-[state=closed]:animate-out",
             className,
           )}
@@ -55,6 +55,8 @@ export type TooltipProps = {
   asChild?: boolean;
   /** Show a pointing arrow toward the trigger. Default `true`. */
   arrow?: boolean;
+  /** Override the content panel's classes — e.g. a non-brand tone (dark/light). */
+  contentClassName?: string;
 };
 
 /**
@@ -72,6 +74,7 @@ function Tooltip({
   onOpenChange,
   asChild = true,
   arrow = true,
+  contentClassName,
 }: TooltipProps) {
   return (
     <TooltipProvider delayDuration={delayDuration}>
@@ -81,7 +84,12 @@ function Tooltip({
         onOpenChange={onOpenChange}
       >
         <TooltipTrigger asChild={asChild}>{children}</TooltipTrigger>
-        <TooltipContent side={side} align={align} arrow={arrow}>
+        <TooltipContent
+          side={side}
+          align={align}
+          arrow={arrow}
+          className={contentClassName}
+        >
           {content}
         </TooltipContent>
       </TooltipRoot>

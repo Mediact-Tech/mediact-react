@@ -1,19 +1,34 @@
+/** @doc ./toggle.md */
 import * as React from "react";
 import * as RadixCheckbox from "@radix-ui/react-checkbox";
 import { Check, Minus } from "lucide-react";
 import { cn } from "../lib/cn";
+import { SkeletonBox } from "../feedback/Skeleton";
+import {
+  ToggleText,
+  TOGGLE_GLYPH_STROKE,
+  checkboxShapeClasses,
+  toggleAlignClass,
+  toggleGlyphClass,
+  toggleLabelClasses,
+  type ToggleSize,
+} from "./toggle-parts";
 
 export type CheckboxProps = Omit<
   React.ComponentProps<typeof RadixCheckbox.Root>,
   "asChild"
 > & {
-  /** Label rendered to the right of the box. Click toggles the checkbox. */
+  /** ข้อความข้างกล่อง กดที่ข้อความก็ติ๊กได้ */
   label?: React.ReactNode;
-  /** Description rendered under the label. */
+  /** คำอธิบายใต้ป้ายกำกับ */
   description?: React.ReactNode;
-  /** Error message — switches to error styling. */
+  /** ข้อความผิดพลาด — ใส่แล้วสลับไปสไตล์ error */
   error?: React.ReactNode;
-  /** Wrapper className (the outer label). */
+  /** ขนาดตัวควบคุม `md` 20px (ค่าเริ่มต้น) · `sm` 16px สำหรับแถวตารางที่แน่น */
+  size?: ToggleSize;
+  /** ยังไม่มีข้อมูล — แสดงโครงร่างแทนทั้งแถว */
+  isLoading?: boolean;
+  /** className ของกล่องนอก */
   containerClassName?: string;
 };
 
@@ -26,6 +41,8 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
       label,
       description,
       error,
+      size = "md",
+      isLoading,
       checked,
       disabled,
       ...props
@@ -36,6 +53,7 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
     const inputId = id ?? reactId;
     const hasError = Boolean(error);
     const isIndeterminate = checked === "indeterminate";
+    const hasText = label != null || description != null;
 
     const box = (
       <RadixCheckbox.Root
@@ -45,51 +63,68 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
         disabled={disabled}
         aria-invalid={hasError || undefined}
         className={cn(
-          "peer relative flex size-5 shrink-0 items-center justify-center rounded-sm border bg-white transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
-          "disabled:cursor-not-allowed disabled:opacity-50",
-          "data-[state=checked]:bg-brand data-[state=checked]:border-brand",
-          "data-[state=indeterminate]:bg-brand data-[state=indeterminate]:border-brand",
-          hasError
-            ? "border-cherry-red-600"
-            : "border-border-input",
+          checkboxShapeClasses(size),
+          hasText && toggleAlignClass(size),
+          hasError && "border-cherry-red-600",
           className,
         )}
         {...props}
       >
-        <RadixCheckbox.Indicator className="text-white">
-          {isIndeterminate ? <Minus className="size-3.5" /> : <Check className="size-3.5" />}
+        {/* 🔴 `Indicator` ของ Radix จะ render **ก็ต่อเมื่อ** state เป็น
+         * checked หรือ indeterminate เท่านั้น
+         * ⇒ สถานะ "เลือกบางส่วน" ต้องส่งผ่าน `checked="indeterminate"`
+         * ห้ามทำเป็น prop แยกโดยที่ `checked` ยังเป็น false
+         * (พิสูจน์แล้ว: ทำแบบนั้นได้ `data-state="unchecked"` · `aria-checked="false"`
+         * และ **ไม่มี indicator ในหน้าเลย** — หัวตารางของ Portal · MediHR ·
+         * Medimatch ตอนเลือกบางแถวจึงว่างเปล่าอยู่ทุกวันนี้) */}
+        <RadixCheckbox.Indicator className="text-brand-foreground">
+          {isIndeterminate ? (
+            <Minus
+              className={toggleGlyphClass(size)}
+              strokeWidth={TOGGLE_GLYPH_STROKE}
+            />
+          ) : (
+            <Check
+              className={toggleGlyphClass(size)}
+              strokeWidth={TOGGLE_GLYPH_STROKE}
+            />
+          )}
         </RadixCheckbox.Indicator>
       </RadixCheckbox.Root>
     );
 
-    if (label == null && description == null && error == null) {
-      return box;
+    if (isLoading) {
+      /* โครงร่างสวมทรงของ "ทั้งแถว" แล้วเก็บเนื้อหาจริงไว้ใน DOM แบบ invisible
+       * ⇒ กว้างเท่าของจริงเป๊ะ ไม่ต้องเดาความกว้างของป้ายกำกับ
+       * ไม่มีป้ายกำกับ ⇒ โครงร่างคือกล่องติ๊กเปล่า ๆ ขนาดเท่าเดิม */
+      return hasText ? (
+        <SkeletonBox
+          shape="inline-flex items-start gap-2 rounded-xs text-body-sm"
+          className={containerClassName}
+        >
+          <span
+            className={cn(checkboxShapeClasses(size), toggleAlignClass(size))}
+          />
+          <ToggleText description={description}>{label}</ToggleText>
+        </SkeletonBox>
+      ) : (
+        <SkeletonBox
+          shape={checkboxShapeClasses(size)}
+          className={containerClassName}
+        />
+      );
     }
+
+    if (!hasText && error == null) return box;
 
     return (
       <div className={cn("flex flex-col gap-1", containerClassName)}>
-        <label
-          htmlFor={inputId}
-          className={cn(
-            "inline-flex items-start gap-2 text-sm font-medium text-text-primary",
-            disabled && "cursor-not-allowed opacity-60",
-          )}
-        >
+        <label htmlFor={inputId} className={toggleLabelClasses(disabled)}>
           {box}
-          {(label != null || description != null) && (
-            <span className="flex flex-col gap-0.5 leading-tight">
-              {label != null && <span>{label}</span>}
-              {description != null && (
-                <span className="text-xs font-normal text-text-tertiary">
-                  {description}
-                </span>
-              )}
-            </span>
-          )}
+          <ToggleText description={description}>{label}</ToggleText>
         </label>
         {hasError && (
-          <p role="alert" className="text-xs font-medium text-cherry-red-600">
+          <p role="alert" className="text-caption font-medium text-cherry-red-600">
             {error}
           </p>
         )}

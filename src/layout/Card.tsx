@@ -47,7 +47,7 @@ const CardTitle = ({
   ...props
 }: React.ComponentProps<"h3">) => (
   <h3
-    className={cn("text-base font-semibold text-text-primary", className)}
+    className={cn("text-body-md font-semibold text-text-primary", className)}
     {...props}
   />
 );
@@ -56,7 +56,7 @@ const CardDescription = ({
   className,
   ...props
 }: React.ComponentProps<"p">) => (
-  <p className={cn("text-sm text-text-body", className)} {...props} />
+  <p className={cn("text-body-sm text-text-body", className)} {...props} />
 );
 
 const CardContent = ({ className, ...props }: React.ComponentProps<"div">) => (

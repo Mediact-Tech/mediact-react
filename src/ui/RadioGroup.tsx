@@ -1,7 +1,17 @@
+/** @doc ./toggle.md */
 import * as React from "react";
 import * as RadixRadio from "@radix-ui/react-radio-group";
 import { cn } from "../lib/cn";
 import { FormField } from "../form/FormField";
+import { SkeletonBox } from "../feedback/Skeleton";
+import {
+  ToggleText,
+  radioDotClasses,
+  radioShapeClasses,
+  toggleAlignClass,
+  toggleLabelClasses,
+  type ToggleSize,
+} from "./toggle-parts";
 
 export type RadioOption<V extends string = string> = {
   value: V;
@@ -18,13 +28,20 @@ export type RadioGroupProps<V extends string = string> = Omit<
   hint?: React.ReactNode;
   error?: React.ReactNode;
   required?: boolean;
-  /** Options to render. Pass children directly for custom layouts. */
+  /** ตัวเลือกที่จะแสดง — ส่ง children เองได้ถ้าต้องการเลย์เอาต์พิเศษ */
   options?: RadioOption<V>[];
-  /** Layout direction. Default `vertical`. */
+  /** ทิศทางการเรียง ค่าเริ่มต้น `vertical` */
   orientation?: "vertical" | "horizontal";
+  /** ขนาดตัวควบคุม `md` 20px (ค่าเริ่มต้น) · `sm` 16px */
+  size?: ToggleSize;
+  /** ยังไม่มีข้อมูล — แสดงโครงร่างแทนทั้งกลุ่ม */
+  isLoading?: boolean;
   containerClassName?: string;
   children?: React.ReactNode;
 };
+
+/** ส่งขนาดลงไปให้ `RadioGroupItem` โดยไม่ต้องให้ผู้เรียกมาใส่ซ้ำทุกตัว */
+const RadioSizeContext = React.createContext<ToggleSize>("md");
 
 function RadioGroup<V extends string = string>({
   id,
@@ -36,12 +53,20 @@ function RadioGroup<V extends string = string>({
   required,
   options,
   orientation = "vertical",
+  size = "md",
+  isLoading,
   children,
   ...props
 }: RadioGroupProps<V>) {
   const reactId = React.useId();
   const groupId = id ?? reactId;
   const hasError = Boolean(error);
+
+  const layout = cn(
+    "flex gap-4",
+    orientation === "vertical" ? "flex-col" : "flex-row flex-wrap",
+    className,
+  );
 
   return (
     <FormField
@@ -52,29 +77,45 @@ function RadioGroup<V extends string = string>({
       htmlFor={groupId}
       className={containerClassName}
     >
-      <RadixRadio.Root
-        id={groupId}
-        aria-invalid={hasError || undefined}
-        className={cn(
-          "flex gap-4",
-          orientation === "vertical" ? "flex-col" : "flex-row flex-wrap",
-          className,
-        )}
-        {...props}
-      >
-        {options
-          ? options.map((opt) => (
-              <RadioGroupItem
-                key={opt.value}
-                value={opt.value}
-                disabled={opt.disabled}
-                description={opt.description}
-              >
-                {opt.label}
-              </RadioGroupItem>
-            ))
-          : children}
-      </RadixRadio.Root>
+      {isLoading ? (
+        <div className={layout}>
+          {/* จำนวนโครงร่าง = จำนวนตัวเลือกที่รู้อยู่แล้ว ถ้ายังไม่รู้ใช้ 3
+           * ⇒ ตอนข้อมูลมาถึงความสูงไม่กระโดด ถ้าผู้เรียกรู้จำนวนล่วงหน้า */}
+          {Array.from({ length: options?.length || 3 }).map((_, i) => (
+            <SkeletonBox
+              key={i}
+              shape="inline-flex items-start gap-2 rounded-full text-body-sm"
+            >
+              <span className={cn(radioShapeClasses(size), toggleAlignClass(size))} />
+              <ToggleText description={options?.[i]?.description}>
+                {options?.[i]?.label ?? "ตัวเลือก"}
+              </ToggleText>
+            </SkeletonBox>
+          ))}
+        </div>
+      ) : (
+        <RadixRadio.Root
+          id={groupId}
+          aria-invalid={hasError || undefined}
+          className={layout}
+          {...props}
+        >
+          <RadioSizeContext.Provider value={size}>
+            {options
+              ? options.map((opt) => (
+                  <RadioGroupItem
+                    key={opt.value}
+                    value={opt.value}
+                    disabled={opt.disabled}
+                    description={opt.description}
+                  >
+                    {opt.label}
+                  </RadioGroupItem>
+                ))
+              : children}
+          </RadioSizeContext.Provider>
+        </RadixRadio.Root>
+      )}
     </FormField>
   );
 }
@@ -84,47 +125,36 @@ type RadioGroupItemProps = Omit<
   "asChild"
 > & {
   description?: React.ReactNode;
+  /** ทับขนาดที่ได้จากกลุ่ม — ปกติไม่ต้องใส่ */
+  size?: ToggleSize;
 };
 
 const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
   function RadioGroupItem(
-    { id, value, disabled, description, children, className, ...props },
+    { id, value, disabled, description, size, children, className, ...props },
     ref,
   ) {
     const reactId = React.useId();
     const itemId = id ?? reactId;
+    const groupSize = React.useContext(RadioSizeContext);
+    const resolved = size ?? groupSize;
     return (
-      <label
-        htmlFor={itemId}
-        className={cn(
-          "inline-flex cursor-pointer items-start gap-2 text-sm font-medium text-text-primary",
-          disabled && "cursor-not-allowed opacity-60",
-        )}
-      >
+      <label htmlFor={itemId} className={toggleLabelClasses(disabled)}>
         <RadixRadio.Item
           ref={ref}
           id={itemId}
           value={value}
           disabled={disabled}
           className={cn(
-            "mt-0.5 size-4 shrink-0 rounded-full border border-border-input bg-white transition-colors",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
-            "data-[state=checked]:border-brand",
-            "disabled:cursor-not-allowed disabled:opacity-50",
+            radioShapeClasses(resolved),
+            toggleAlignClass(resolved),
             className,
           )}
           {...props}
         >
-          <RadixRadio.Indicator className="flex size-full items-center justify-center after:size-2 after:rounded-full after:bg-brand" />
+          <RadixRadio.Indicator className={radioDotClasses(resolved)} />
         </RadixRadio.Item>
-        <span className="flex flex-col gap-0.5 leading-tight">
-          {children}
-          {description != null && (
-            <span className="text-xs font-normal text-text-tertiary">
-              {description}
-            </span>
-          )}
-        </span>
+        <ToggleText description={description}>{children}</ToggleText>
       </label>
     );
   },

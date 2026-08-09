@@ -1,33 +1,7 @@
 import * as React from "react";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/style.css";
 import { format, isValid } from "date-fns";
-import {
-  Calendar as CalendarIcon,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-} from "lucide-react";
-
-/** Slim chevron used for nav arrows + caption dropdowns inside the calendar. */
-function CalendarChevron({
-  orientation = "right",
-  className,
-}: {
-  orientation?: "up" | "down" | "left" | "right";
-  className?: string;
-}) {
-  const Icon =
-    orientation === "up"
-      ? ChevronUp
-      : orientation === "down"
-        ? ChevronDown
-        : orientation === "left"
-          ? ChevronLeft
-          : ChevronRight;
-  return <Icon className={className} strokeWidth={1.75} />;
-}
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar, startOfMonth, type CalendarLabels } from "../ui/Calendar";
 import { cn } from "../lib/cn";
 import {
   FloatingFieldShell,
@@ -56,12 +30,12 @@ export type DatePickerProps = {
   maxDate?: Date;
   disabled?: boolean;
   size?: FieldSize;
-  /** Caption layout for the calendar header. Default `"dropdown"` (month + year dropdowns). */
-  captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years";
-  /** Earliest year selectable in the year dropdown. Default: current year − 100. */
-  fromYear?: number;
-  /** Latest year selectable in the year dropdown. Default: current year + 10. */
-  toYear?: number;
+  /** BCP-47 locale ของปฏิทิน · `th-TH` = ปี พ.ศ. อัตโนมัติ @default "th-TH" */
+  calendarLocale?: string;
+  /** วันแรกของสัปดาห์ในปฏิทิน @default 0 (อาทิตย์) */
+  weekStartsOn?: 0 | 1;
+  /** ข้อความ a11y ของปุ่มในปฏิทิน — แอปส่งคำแปลมาเอง */
+  calendarLabels?: Partial<CalendarLabels>;
   className?: string;
   containerClassName?: string;
 };
@@ -84,9 +58,9 @@ function DatePicker({
   maxDate,
   disabled,
   size = "md",
-  captionLayout = "dropdown",
-  fromYear,
-  toYear,
+  calendarLocale = "th-TH",
+  weekStartsOn,
+  calendarLabels,
   className,
   containerClassName,
 }: DatePickerProps) {
@@ -102,27 +76,27 @@ function DatePicker({
   const floating =
     Boolean(alwaysFloatLabel) || open || hasValue || Boolean(placeholder);
 
-  const handleSelect = (date: Date | undefined) => {
+  /* หนึ่งคลิกคือทั้งการตัดสินใจ — commit แล้วปิดเลย ไม่มีปุ่ม OK
+   * (ปุ่มยืนยันเป็นเรื่องของช่วงวัน/วัน+เวร ซึ่งเลือกครั้งเดียวยังไม่ครบคู่) */
+  const handleSelect = (date: Date) => {
+    if (disabledDate?.(date)) return;
     if (!isControlled) setInternal(date);
     onChange?.(date);
-    if (date) setOpen(false);
+    setOpen(false);
   };
 
   const display =
     selected && isValid(selected) ? format(selected, displayFormat) : "";
 
-  const dpDisabled = React.useMemo(() => {
-    const list: Array<(d: Date) => boolean> = [];
-    if (disabledDate) list.push(disabledDate);
-    if (minDate) list.push((d) => d < minDate);
-    if (maxDate) list.push((d) => d > maxDate);
-    return list.length === 0 ? undefined : (d: Date) => list.some((f) => f(d));
-  }, [disabledDate, minDate, maxDate]);
-
-  const currentYear = new Date().getFullYear();
-  const startMonth =
-    minDate ?? new Date((fromYear ?? currentYear - 100), 0, 1);
-  const endMonth = maxDate ?? new Date((toYear ?? currentYear + 10), 11, 31);
+  /* เดือนที่ปฏิทินเปิดค้างอยู่ — เปิดใหม่ทุกครั้งที่เดือนของค่าที่เลือกอยู่
+   * ไม่ใช่เดือนที่ค้างจากรอบก่อน */
+  const [month, setMonth] = React.useState<Date>(() =>
+    startOfMonth(selected ?? new Date()),
+  );
+  const handleOpenChange = (next: boolean) => {
+    if (next) setMonth(startOfMonth(selected ?? new Date()));
+    setOpen(next);
+  };
 
   return (
     <FloatingFieldShell
@@ -139,7 +113,7 @@ function DatePicker({
       containerClassName={containerClassName}
       rightAdornment={<CalendarIcon />}
     >
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <button
             id={triggerId}
@@ -158,28 +132,22 @@ function DatePicker({
             </span>
           </button>
         </PopoverTrigger>
-        <PopoverContent className="p-0" align="start">
-          <DayPicker
-            mode="single"
-            selected={selected}
+        <PopoverContent
+          align="start"
+          sideOffset={8}
+          className="w-auto rounded-2xl p-0 pb-4"
+        >
+          <Calendar
+            month={month}
+            onMonthChange={setMonth}
+            selected={selected ?? null}
+            minDate={minDate ?? null}
+            maxDate={maxDate ?? null}
+            disabledDate={disabledDate}
             onSelect={handleSelect}
-            disabled={dpDisabled}
-            defaultMonth={selected}
-            captionLayout={captionLayout}
-            startMonth={startMonth}
-            endMonth={endMonth}
-            className="p-3 [&_.rdp-caption_label]:font-medium [&_.rdp-caption_label]:text-base"
-            components={{ Chevron: CalendarChevron }}
-            style={
-              {
-                "--rdp-accent-color": "var(--color-brand)",
-                "--rdp-accent-background-color": "var(--color-brand-subtle)",
-                "--rdp-selected-border": "0",
-                "--rdp-today-color": "var(--color-brand)",
-                "--rdp-range_middle-background-color": "var(--color-brand-subtle)",
-                "--rdp-range_middle-color": "var(--color-brand)",
-              } as React.CSSProperties
-            }
+            locale={calendarLocale}
+            weekStartsOn={weekStartsOn}
+            labels={calendarLabels}
           />
         </PopoverContent>
       </Popover>

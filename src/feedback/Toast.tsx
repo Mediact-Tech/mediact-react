@@ -7,7 +7,7 @@ export { toast } from "sonner";
 export type ToasterProps = React.ComponentProps<typeof SonnerToaster>;
 
 const baseToast =
-  "flex items-center gap-3 rounded-sm border px-5 py-3 shadow-sm font-semibold text-base [&_svg]:size-6 [&_svg]:shrink-0";
+  "flex items-center gap-3 rounded-sm border px-5 py-3 shadow-sm font-semibold text-body-md [&_svg]:size-6 [&_svg]:shrink-0";
 
 // Tone classes use `!` (important) because Sonner applies BOTH the `default`
 // class AND the `<type>` class on the same element. Without `!`, Tailwind's
@@ -58,7 +58,7 @@ function Toaster(props: ToasterProps) {
           warning: tones.warning,
           info: tones.info,
           title: "leading-tight",
-          description: "text-sm font-medium opacity-90",
+          description: "text-body-sm font-medium opacity-90",
         },
       }}
       {...props}

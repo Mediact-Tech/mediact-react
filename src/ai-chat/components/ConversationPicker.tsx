@@ -46,7 +46,7 @@ export function ConversationPicker({ load, onPick, activeId, labels }: Conversat
   }, [load]);
 
   if (error) {
-    return <p className="px-4 py-3 text-xs text-error-red-600">{error}</p>;
+    return <p className="px-4 py-3 text-caption text-error-red-600">{error}</p>;
   }
 
   if (!items) {
@@ -58,7 +58,7 @@ export function ConversationPicker({ load, onPick, activeId, labels }: Conversat
   }
 
   if (items.length === 0) {
-    return <p className="px-4 py-3 text-xs text-gray-500">{labels.emptyHint}</p>;
+    return <p className="px-4 py-3 text-caption text-gray-500">{labels.emptyHint}</p>;
   }
 
   return (
@@ -76,7 +76,7 @@ export function ConversationPicker({ load, onPick, activeId, labels }: Conversat
           >
             <MessageSquare className="mt-0.5 size-3.5 shrink-0 text-gray-400" />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm text-black">
+              <span className="block truncate text-body-sm text-black">
                 {item.title || item.preview || "(ไม่มีชื่อ)"}
               </span>
               <span className="block text-[11px] text-gray-400">{relativeTime(item.createdAt)}</span>

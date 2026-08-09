@@ -62,7 +62,7 @@ export const FloatingButton = React.forwardRef<HTMLButtonElement, FloatingButton
         ) : (
           <>
             <Sparkles className="size-6 shrink-0 transition-transform group-hover:scale-110" />
-            <span className="hidden text-sm font-medium whitespace-nowrap sm:inline">{label}</span>
+            <span className="hidden text-body-sm font-medium whitespace-nowrap sm:inline">{label}</span>
           </>
         )}
       </button>

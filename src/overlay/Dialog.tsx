@@ -98,7 +98,10 @@ const DialogTitle = React.forwardRef<
   return (
     <RadixDialog.Title
       ref={ref}
-      className={cn("text-lg font-semibold text-text-primary", className)}
+      /* 🔴 ดำคงที่ ไม่ตามแบรนด์ — `text-text-primary` ถูก alias ไป `--color-brand`
+       * ใน `theme.css` ถ้าปล่อยไว้ หัวข้อ dialog ธรรมดาจะเป็นคนละสีกับหัวข้อของ
+       * `ConfirmDialog` ที่แก้แล้ว ทั้งที่เป็นหัวข้อเหมือนกันบนจอเดียวกัน */
+      className={cn("text-body-lg font-semibold text-text-black", className)}
       {...props}
     />
   );
@@ -111,7 +114,7 @@ const DialogDescription = React.forwardRef<
   return (
     <RadixDialog.Description
       ref={ref}
-      className={cn("text-sm text-text-body", className)}
+      className={cn("text-body-sm text-text-body", className)}
       {...props}
     />
   );
