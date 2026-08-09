@@ -5775,13 +5775,16 @@ import * as React36 from "react";
 import { AlertTriangle as AlertTriangle4, Info as Info2, CheckCircle2 as CheckCircle22 } from "lucide-react";
 import { jsx as jsx43, jsxs as jsxs33 } from "react/jsx-runtime";
 var toneDivider = {
-  info: "bg-brand-active",
+  /* `info-blue-primary` ไม่ใช่ `brand-active` — โทน "ข้อมูล" ต้องเป็นสีข้อมูล ไม่ใช่
+   * สถานะกดของแบรนด์ · บนแอปที่ไม่ override ทั้งสองตัวชี้ค่าเดียวกันอยู่แล้ว
+   * แต่บนแอปที่ตั้ง `--color-info-blue-primary` เองจะได้สีที่ตั้งใจ ไม่ใช่สีแบรนด์ */
+  info: "bg-info-blue-primary",
   warning: "bg-warning-yellow-600",
   danger: "bg-cherry-red-600",
   success: "bg-success-green-primary"
 };
 var toneIcon = {
-  info: /* @__PURE__ */ jsx43(Info2, { className: "size-10 text-brand-active" }),
+  info: /* @__PURE__ */ jsx43(Info2, { className: "size-10 text-info-blue-primary" }),
   warning: /* @__PURE__ */ jsx43(AlertTriangle4, { className: "size-10 text-warning-yellow-600" }),
   danger: /* @__PURE__ */ jsx43(AlertTriangle4, { className: "size-10 text-cherry-red-600" }),
   success: /* @__PURE__ */ jsx43(CheckCircle22, { className: "size-10 text-success-green-primary" })
@@ -5808,42 +5811,54 @@ function ConfirmDialogHeading({
   title,
   description,
   tone,
-  divider
+  divider,
+  align = "center"
 }) {
+  const centered = align === "center";
   const showDivider = divider ?? false;
+  const descriptionClass = cn(
+    "whitespace-pre-line text-body-md leading-relaxed text-text-black",
+    /* มีเส้นคั่น ⇒ เว้น 16 ตามที่วัดจาก Portal · ไม่มี ⇒ เว้น 8 จากหัวข้อ */
+    showDivider ? "mt-4" : "mt-2"
+  );
   return (
     // `gap-0` จำเป็น — `DialogHeader` ตั้ง `gap-1.5` ไว้เป็นค่าเริ่มต้น
     // ถ้าไม่ล้าง ระยะจริงจะเป็น 6px + `mt-*` ของทุกชิ้นด้านล่าง
-    /* @__PURE__ */ jsxs33(DialogHeader, { className: "items-center gap-0 pb-0 pr-0 text-center", children: [
-      icon && /* @__PURE__ */ jsx43("div", { className: "mb-3 mt-2 flex justify-center", children: icon }),
-      /* @__PURE__ */ jsx43(DialogTitle, { className: "text-title-md font-semibold text-text-black", children: title }),
-      showDivider && /* 📐 48×4 · ห่างจากหัวข้อ 8 · ห่างจากคำอธิบาย 16
-       * วัดจาก 4 จอของ Portal ที่วาดเส้นเอง (`mx-auto mb-4 h-1 w-12`)
-       * ของเดิมที่นี่เป็น 40×4 ห่าง 10/8 ซึ่งไม่ตรงกับที่ไหน */
-      /* @__PURE__ */ jsx43(
-        "span",
-        {
-          "aria-hidden": true,
-          className: cn("mt-2 h-1 w-12 rounded-full", toneDivider[tone])
-        }
-      ),
-      description && /* วัดจาก Portal: 16px / **line-height 26** (`leading-relaxed`) · เกือบดำ
-       * เท่าหัวข้อ · ห่างจากหัวข้อ 8px และห่างจากปุ่ม 20px
-       *
-       * ⚠️ สีเข้มเท่าหัวข้อโดยตั้งใจ — ใน confirm dialog บรรทัดนี้คือ "ผลที่จะเกิด"
-       * (เช่น "ลบแล้วกู้คืนไม่ได้") ไม่ใช่คำอธิบายประกอบ Portal จึงไม่ทำให้จาง */
-      /* @__PURE__ */ jsx43(
-        DialogDescription,
-        {
-          className: cn(
-            "whitespace-pre-line text-body-md leading-relaxed text-text-black",
-            /* มีเส้นคั่น ⇒ เว้น 16 ตามที่วัดจาก Portal · ไม่มี ⇒ เว้น 8 จากหัวข้อ */
-            showDivider ? "mt-4" : "mt-2"
+    /* @__PURE__ */ jsxs33(
+      DialogHeader,
+      {
+        className: cn(
+          "gap-0 pb-0 pr-0",
+          centered ? "items-center text-center" : "items-start text-left"
+        ),
+        children: [
+          icon && /* @__PURE__ */ jsx43("div", { className: cn("mb-3 mt-2 flex", centered ? "justify-center" : "justify-start"), children: icon }),
+          /* @__PURE__ */ jsx43(DialogTitle, { className: "text-title-md font-semibold text-text-black", children: title }),
+          showDivider && /* 📐 48×4 · ห่างจากหัวข้อ 8 · ห่างจากคำอธิบาย 16
+           * วัดจาก 4 จอของ Portal ที่วาดเส้นเอง (`mx-auto mb-4 h-1 w-12`)
+           * ของเดิมที่นี่เป็น 40×4 ห่าง 10/8 ซึ่งไม่ตรงกับที่ไหน */
+          /* @__PURE__ */ jsx43(
+            "span",
+            {
+              "aria-hidden": true,
+              className: cn("mt-2 h-1 w-12 rounded-full", toneDivider[tone])
+            }
           ),
-          children: description
-        }
-      )
-    ] })
+          description ? (
+            /* วัดจาก Portal: 16px / **line-height 26** (`leading-relaxed`) · เกือบดำ
+             * เท่าหัวข้อ · ห่างจากหัวข้อ 8px และห่างจากปุ่ม 20px
+             *
+             * ⚠️ สีเข้มเท่าหัวข้อโดยตั้งใจ — ใน confirm dialog บรรทัดนี้คือ "ผลที่จะเกิด"
+             * (เช่น "ลบแล้วกู้คืนไม่ได้") ไม่ใช่คำอธิบายประกอบ Portal จึงไม่ทำให้จาง */
+            /* 🔴 `DialogDescription` ของ Radix render เป็น `<p>` ⇒ ถ้าผู้เรียกส่ง JSX ที่มี
+             * block element (เส้นคั่นที่วาดเอง · `<p>` ซ้อน · รายการ) เข้ามา จะได้ HTML ที่
+             * ผิดสเปกและเบราว์เซอร์จะแยกแท็กให้เองแบบเงียบ ๆ จนระยะเพี้ยน
+             * ⇒ ข้อความล้วนใช้ `<p>` ตามเดิม · อย่างอื่นสวมเป็น `<div>` ผ่าน `asChild` */
+            typeof description === "string" ? /* @__PURE__ */ jsx43(DialogDescription, { className: descriptionClass, children: description }) : /* @__PURE__ */ jsx43(DialogDescription, { asChild: true, children: /* @__PURE__ */ jsx43("div", { className: descriptionClass, children: description }) })
+          ) : null
+        ]
+      }
+    )
   );
 }
 function ConfirmDialogError({
@@ -5908,13 +5923,17 @@ function ConfirmDialog({
   onCancel,
   size = "lg",
   isLoading,
+  loading: loadingProp,
+  dismissible = true,
+  align = "center",
   errorMessage,
   showCancel = true,
   children
 }) {
   const [internalLoading, setInternalLoading] = React36.useState(false);
-  const isLoadingControlled = isLoading !== void 0;
-  const loading = isLoadingControlled ? isLoading : internalLoading;
+  const controlled = loadingProp ?? isLoading;
+  const isLoadingControlled = controlled !== void 0;
+  const loading = isLoadingControlled ? controlled : internalLoading;
   const handleConfirm = async () => {
     if (!onConfirm) {
       onOpenChange(false);
@@ -5943,10 +5962,17 @@ function ConfirmDialog({
       size,
       showClose: false,
       className: confirmDialogContentClass,
+      onEscapeKeyDown: (e) => {
+        if (loading || !dismissible) e.preventDefault();
+      },
+      onInteractOutside: (e) => {
+        if (loading || !dismissible) e.preventDefault();
+      },
       children: [
         /* @__PURE__ */ jsx43(
           ConfirmDialogHeading,
           {
+            align,
             icon,
             title,
             description,

@@ -1917,6 +1917,21 @@ type ConfirmDialogProps = {
      * (ปกติทำใน `onSuccess`) · ไม่ส่งมา = ใช้พฤติกรรมเดิมที่ dialog จัดการเอง
      */
     isLoading?: boolean;
+    /**
+     * ชื่อที่ถูกตามกติกา §4.5 ของ DS — `loading` = "สิ่งที่ผู้ใช้สั่งกำลังทำอยู่"
+     * `isLoading` ยังใช้ได้เพื่อไม่ให้ผู้เรียกเดิมพัง แต่ `loading` ชนะเมื่อส่งมาทั้งคู่
+     */
+    loading?: boolean;
+    /**
+     * ปิดกล่องด้วย Esc / คลิกนอกกล่องได้ไหม — ค่าปกติ `true`
+     *
+     * ⚠️ **ตอน `loading` จะปิดไม่ได้เสมอ ไม่ว่า prop นี้เป็นอะไร** — กดยืนยันแล้วเผลอ
+     * คลิกนอกกล่องระหว่างรอ API ตอบ ผู้ใช้จะไม่รู้ว่าสิ่งที่สั่งไปสำเร็จหรือไม่
+     * (ของจริงในแอปเขียน `if (!isLoading) onClose()` ไว้เองทุกจอด้วยเหตุผลนี้)
+     */
+    dismissible?: boolean;
+    /** `start` = หัวข้อและคำอธิบายชิดซ้าย — สำหรับกล่องที่เนื้อหาเป็นรายการหรือฟอร์ม */
+    align?: "center" | "start";
     /** โชว์ข้อความผิดพลาดคาไว้ในกล่อง โดยไม่ปิด dialog */
     errorMessage?: React.ReactNode;
     /** `false` = โหมดแจ้งเตือนปุ่มเดียว ไม่มีปุ่มยกเลิก · ค่าปกติ `true` */
@@ -1933,7 +1948,7 @@ type ConfirmDialogProps = {
      */
     children?: React.ReactNode;
 };
-declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, errorMessage, showCancel, children, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
+declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, loading: loadingProp, dismissible, align, errorMessage, showCancel, children, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
 
 type PopoverContentProps = React.ComponentProps<typeof RadixPopover.Content>;
 type FilterProps = {

@@ -51,7 +51,8 @@ export type ConfirmTone = "info" | "warning" | "danger" | "success";
  *
  * **สีตามโทนถอดมาจากของจริง** — 4 จอของ Portal ที่วาดเส้นเองใช้
  * `bg-info-blue-primary` (2 จอ) และ `bg-error-red-icon` (2 จอ)
- * `info` ที่นี่ตรงเป๊ะ เพราะ `--color-info-blue-primary` alias ไป `--color-brand-active`
+ * `info` ที่นี่ใช้ `--color-info-blue-primary` ตรง ๆ — บนแอปที่ไม่ override มันคือค่าเดียว
+ * กับ `--color-brand-active` อยู่แล้ว แต่แอปที่ตั้งเองจะได้สีที่ตั้งใจ ไม่ใช่สีแบรนด์
  *
  * ⚠️ `danger` ใช้ `cherry-red-600` (`#e02c2c`) ไม่ใช่ `error-red-icon` (`#f52d0a`)
  * ที่ Portal ใช้ — จงใจ เพื่อให้เส้นคั่นกับปุ่มยืนยันในกล่องเดียวกันเป็นแดงเดียวกัน
@@ -59,7 +60,10 @@ export type ConfirmTone = "info" | "warning" | "danger" | "success";
  *
  * ⚠️ Mediwork ใช้ฟ้าคงที่ทุกโทน ไม่ใช่สีตามโทน — ยังไม่ตรงกับ Mediwork */
 const toneDivider: Record<ConfirmTone, string> = {
-  info: "bg-brand-active",
+  /* `info-blue-primary` ไม่ใช่ `brand-active` — โทน "ข้อมูล" ต้องเป็นสีข้อมูล ไม่ใช่
+   * สถานะกดของแบรนด์ · บนแอปที่ไม่ override ทั้งสองตัวชี้ค่าเดียวกันอยู่แล้ว
+   * แต่บนแอปที่ตั้ง `--color-info-blue-primary` เองจะได้สีที่ตั้งใจ ไม่ใช่สีแบรนด์ */
+  info: "bg-info-blue-primary",
   warning: "bg-warning-yellow-600",
   danger: "bg-cherry-red-600",
   success: "bg-success-green-primary",
@@ -72,7 +76,7 @@ const toneDivider: Record<ConfirmTone, string> = {
  * (`<ConfirmDialog icon={toneIcon.danger} … />`)
  */
 export const toneIcon = {
-  info: <Info className="size-10 text-brand-active" />,
+  info: <Info className="size-10 text-info-blue-primary" />,
   warning: <AlertTriangle className="size-10 text-warning-yellow-600" />,
   danger: <AlertTriangle className="size-10 text-cherry-red-600" />,
   success: <CheckCircle2 className="size-10 text-success-green-primary" />,
@@ -136,13 +140,17 @@ export function ConfirmDialogHeading({
   description,
   tone,
   divider,
+  align = "center",
 }: {
   icon?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;
   tone: ConfirmTone;
   divider?: boolean;
+  /** `start` = ชิดซ้าย — สำหรับกล่องที่เนื้อหาเป็นรายการหรือฟอร์ม ไม่ใช่ประโยคเดียว */
+  align?: "center" | "start";
 }) {
+  const centered = align === "center";
   /* ค่าเริ่มต้นคือ **ไม่มีเส้นคั่น** — `ConfirmModal` ของ Portal ไม่มีช่องให้ใส่
    *
    * ⚠️ แต่ **4 จอของ Portal วาดเส้นเองใน `subtitle`** และเป็น**สีตามโทน**จริง:
@@ -152,12 +160,26 @@ export function ConfirmDialogHeading({
    * ⇒ 4 ใน 14 จอมีเส้น จึงยัง **ไม่ควรเป็นค่าเริ่มต้น** แต่ก็ไม่ใช่ของที่ไม่มีใครใช้
    * และชุดสีตามโทนก็ไม่ได้เป็นของที่ DS คิดขึ้นเอง */
   const showDivider = divider ?? false;
+  const descriptionClass = cn(
+    "whitespace-pre-line text-body-md leading-relaxed text-text-black",
+    /* มีเส้นคั่น ⇒ เว้น 16 ตามที่วัดจาก Portal · ไม่มี ⇒ เว้น 8 จากหัวข้อ */
+    showDivider ? "mt-4" : "mt-2",
+  );
   return (
     // `gap-0` จำเป็น — `DialogHeader` ตั้ง `gap-1.5` ไว้เป็นค่าเริ่มต้น
     // ถ้าไม่ล้าง ระยะจริงจะเป็น 6px + `mt-*` ของทุกชิ้นด้านล่าง
-    <DialogHeader className="items-center gap-0 pb-0 pr-0 text-center">
+    <DialogHeader
+      className={cn(
+        "gap-0 pb-0 pr-0",
+        centered ? "items-center text-center" : "items-start text-left",
+      )}
+    >
       {/* `mt-2 mb-3` — วัดจาก Portal (margin `8px 0 12px`) */}
-      {icon && <div className="mb-3 mt-2 flex justify-center">{icon}</div>}
+      {icon && (
+        <div className={cn("mb-3 mt-2 flex", centered ? "justify-center" : "justify-start")}>
+          {icon}
+        </div>
+      )}
       {/* 🔴 สีดำคงที่ **ห้ามเปลี่ยนตามแอป** — ของจริงทั้งสามแอปฝังสีเข้มไว้ตายตัว
         * portal `#283541` · medimatch `#283541` · mediwork `#374151`
         * ไม่มีแอปไหนให้หัวข้อ dialog ตามสีแบรนด์เลย
@@ -174,22 +196,26 @@ export function ConfirmDialogHeading({
           className={cn("mt-2 h-1 w-12 rounded-full", toneDivider[tone])}
         />
       )}
-      {description && (
+      {description ? (
         /* วัดจาก Portal: 16px / **line-height 26** (`leading-relaxed`) · เกือบดำ
          * เท่าหัวข้อ · ห่างจากหัวข้อ 8px และห่างจากปุ่ม 20px
          *
          * ⚠️ สีเข้มเท่าหัวข้อโดยตั้งใจ — ใน confirm dialog บรรทัดนี้คือ "ผลที่จะเกิด"
          * (เช่น "ลบแล้วกู้คืนไม่ได้") ไม่ใช่คำอธิบายประกอบ Portal จึงไม่ทำให้จาง */
-        <DialogDescription
-          className={cn(
-            "whitespace-pre-line text-body-md leading-relaxed text-text-black",
-            /* มีเส้นคั่น ⇒ เว้น 16 ตามที่วัดจาก Portal · ไม่มี ⇒ เว้น 8 จากหัวข้อ */
-            showDivider ? "mt-4" : "mt-2",
-          )}
-        >
-          {description}
-        </DialogDescription>
-      )}
+        /* 🔴 `DialogDescription` ของ Radix render เป็น `<p>` ⇒ ถ้าผู้เรียกส่ง JSX ที่มี
+         * block element (เส้นคั่นที่วาดเอง · `<p>` ซ้อน · รายการ) เข้ามา จะได้ HTML ที่
+         * ผิดสเปกและเบราว์เซอร์จะแยกแท็กให้เองแบบเงียบ ๆ จนระยะเพี้ยน
+         * ⇒ ข้อความล้วนใช้ `<p>` ตามเดิม · อย่างอื่นสวมเป็น `<div>` ผ่าน `asChild` */
+        typeof description === "string" ? (
+          <DialogDescription className={descriptionClass}>
+            {description}
+          </DialogDescription>
+        ) : (
+          <DialogDescription asChild>
+            <div className={descriptionClass}>{description}</div>
+          </DialogDescription>
+        )
+      ) : null}
     </DialogHeader>
   );
 }
@@ -292,6 +318,21 @@ export type ConfirmDialogProps = {
    * (ปกติทำใน `onSuccess`) · ไม่ส่งมา = ใช้พฤติกรรมเดิมที่ dialog จัดการเอง
    */
   isLoading?: boolean;
+  /**
+   * ชื่อที่ถูกตามกติกา §4.5 ของ DS — `loading` = "สิ่งที่ผู้ใช้สั่งกำลังทำอยู่"
+   * `isLoading` ยังใช้ได้เพื่อไม่ให้ผู้เรียกเดิมพัง แต่ `loading` ชนะเมื่อส่งมาทั้งคู่
+   */
+  loading?: boolean;
+  /**
+   * ปิดกล่องด้วย Esc / คลิกนอกกล่องได้ไหม — ค่าปกติ `true`
+   *
+   * ⚠️ **ตอน `loading` จะปิดไม่ได้เสมอ ไม่ว่า prop นี้เป็นอะไร** — กดยืนยันแล้วเผลอ
+   * คลิกนอกกล่องระหว่างรอ API ตอบ ผู้ใช้จะไม่รู้ว่าสิ่งที่สั่งไปสำเร็จหรือไม่
+   * (ของจริงในแอปเขียน `if (!isLoading) onClose()` ไว้เองทุกจอด้วยเหตุผลนี้)
+   */
+  dismissible?: boolean;
+  /** `start` = หัวข้อและคำอธิบายชิดซ้าย — สำหรับกล่องที่เนื้อหาเป็นรายการหรือฟอร์ม */
+  align?: "center" | "start";
   /** โชว์ข้อความผิดพลาดคาไว้ในกล่อง โดยไม่ปิด dialog */
   errorMessage?: React.ReactNode;
   /** `false` = โหมดแจ้งเตือนปุ่มเดียว ไม่มีปุ่มยกเลิก · ค่าปกติ `true` */
@@ -323,13 +364,17 @@ function ConfirmDialog({
   onCancel,
   size = "lg",
   isLoading,
+  loading: loadingProp,
+  dismissible = true,
+  align = "center",
   errorMessage,
   showCancel = true,
   children,
 }: ConfirmDialogProps) {
   const [internalLoading, setInternalLoading] = React.useState(false);
-  const isLoadingControlled = isLoading !== undefined;
-  const loading = isLoadingControlled ? isLoading : internalLoading;
+  const controlled = loadingProp ?? isLoading;
+  const isLoadingControlled = controlled !== undefined;
+  const loading = isLoadingControlled ? controlled : internalLoading;
 
   const handleConfirm = async () => {
     if (!onConfirm) {
@@ -363,8 +408,17 @@ function ConfirmDialog({
         size={size}
         showClose={false}
         className={confirmDialogContentClass}
+        /* กันปิดตอนกำลังทำงานเสมอ — ผู้ใช้กดยืนยันแล้วเผลอคลิกนอกกล่อง
+         * จะไม่รู้ว่าสิ่งที่สั่งไปสำเร็จหรือไม่ */
+        onEscapeKeyDown={(e) => {
+          if (loading || !dismissible) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if (loading || !dismissible) e.preventDefault();
+        }}
       >
         <ConfirmDialogHeading
+          align={align}
           icon={icon}
           title={title}
           description={description}
