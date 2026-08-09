@@ -103,6 +103,17 @@ export {
 
 // Form layout + complex form fields
 export { FormField, type FormFieldProps } from "./form/FormField";
+/* เปลือกของช่องกรอก — เปิดออกมาให้แอปประกอบฟิลด์ของตัวเองที่หน้าตาตรงกับของ DS ได้
+ * โดยไม่ต้องลอก class · เดิมเป็นของภายใน ผลคือผิวสัมผัสของ "ฟิลด์" มีสองมาตรฐาน:
+ * ตัวที่ DS ให้มา กับตัวที่แอปวาดเอง (hr-web มี 3 ตัว · Portal มีอีก) */
+export {
+  FloatingFieldShell,
+  FieldSkeleton,
+  fieldShapeClasses,
+  fieldLabelId,
+  type FieldSize,
+  type FloatingFieldShellProps,
+} from "./form/FloatingFieldShell";
 export { DatePicker, type DatePickerProps } from "./form/DatePicker";
 export {
   TimePicker,

@@ -155,7 +155,7 @@ export function FloatingFieldShell({
         )}
 
         {leftAdornment && (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary [&_svg]:size-4">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary [&_svg:not([class*='size-'])]:size-4">
             {leftAdornment}
           </span>
         )}
@@ -163,7 +163,7 @@ export function FloatingFieldShell({
         {children}
 
         {rightAdornment && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-text-tertiary [&_svg]:size-4">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-text-tertiary [&_svg:not([class*='size-'])]:size-4">
             {rightAdornment}
           </span>
         )}

@@ -78,6 +78,90 @@ type OutlineButtonProps = React.ComponentProps<"button"> & VariantProps<typeof o
 declare const OutlineButton: React.ForwardRefExoticComponent<Omit<OutlineButtonProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
 type FieldSize = "sm" | "md" | "lg";
+/**
+ * id ของป้าย — ใช้กับ trigger ที่**ไม่ใช่ element ที่ label ผูกได้**
+ *
+ * 🔴 `<label htmlFor>` ผูกได้เฉพาะ element ที่ labellable ตามสเปก HTML
+ * (`input` `select` `textarea` `button` …) — **`<div role="combobox">` ผูกไม่ได้**
+ * ช่องแบบเลือกหลายอันใช้ `div` เป็น trigger เพราะต้องใส่ chip หลายบรรทัด
+ * ⇒ ต้องผูกด้วย `aria-labelledby` แทน ไม่งั้นโปรแกรมอ่านหน้าจอไม่รู้ว่าช่องนี้คืออะไร
+ *
+ * เจอตอนเขียน unit test ของ `EntityAutocomplete` (2026-08-08)
+ */
+declare function fieldLabelId(htmlFor?: string): string | undefined;
+type FloatingFieldShellProps = {
+    /** Floating label — sits inside the field as placeholder, floats up when filled/focused. */
+    label?: React.ReactNode;
+    /** Helper text under the field. Hidden when `error` is set. */
+    hint?: React.ReactNode;
+    /** Error message — switches the field shell to error styling. */
+    error?: React.ReactNode;
+    /** Marks the label with a red asterisk. Caller controls actual HTML required. */
+    required?: boolean;
+    /** Visually hide the label but keep it for screen readers. */
+    hideLabel?: boolean;
+    /** id of the inner field — wired to label via `htmlFor`. */
+    htmlFor?: string;
+    /** Size variant — affects height and label vertical positioning. */
+    size?: FieldSize;
+    /** Should the label be in the floated position right now? Caller computes from focused/hasValue/alwaysFloat. */
+    floating: boolean;
+    /** Is the field currently focused — used for label color while floating. */
+    focused?: boolean;
+    /** Whether the field has an error (controls border/label color). Derived from `error` if not supplied. */
+    hasError?: boolean;
+    /**
+     * Always reserve one line of height for the hint/error slot below the field, even when
+     * neither is set — prevents layout shift when an error appears/disappears.
+     *
+     * ⚠️ Default is `true`, which matches what every real consumer app already does today
+     * (spacer div or `helperText={error ?? ' '}` workarounds) — but it changes the rendered
+     * height of every existing field using this shell that doesn't explicitly pass this prop.
+     * Confirm this default with the team before relying on it in layouts that assumed the old
+     * zero-height "no message" behavior.
+     * @default true
+     */
+    reserveMessageSpace?: boolean;
+    /** Left-side icon/element rendered absolutely inside the field. */
+    leftAdornment?: React.ReactNode;
+    /** Right-side icon/element rendered absolutely inside the field. */
+    rightAdornment?: React.ReactNode;
+    /** Wrapper className (the outer flex column). */
+    containerClassName?: string;
+    /** When true, position the rest label near the top (for textareas) instead of vertically centered. */
+    multiline?: boolean;
+    /** The actual interactive element (input / textarea / button). */
+    children: React.ReactNode;
+};
+/**
+ * Shared shell for any text-like field with a floating label
+ * (Input / Textarea / Select / DatePicker / TimePicker / ...).
+ *
+ * The shell renders:
+ *   - the label (positioned absolutely, animates between rest and float positions)
+ *   - any left/right adornments
+ *   - hint or error text below
+ *
+ * The caller renders the interactive element as `children` and is responsible for:
+ *   - matching `id` with `htmlFor`
+ *   - computing `floating` / `focused`
+ *   - applying its own padding (the shell does not enforce the field's internal padding,
+ *     but does shift the rest-position label right when `leftAdornment` is provided)
+ */
+declare function FloatingFieldShell({ label, hint, error, required, hideLabel, htmlFor, size, floating, focused, hasError: hasErrorProp, leftAdornment, rightAdornment, containerClassName, multiline, reserveMessageSpace, children, }: FloatingFieldShellProps): react_jsx_runtime.JSX.Element;
+type FieldSkeletonProps = Pick<FloatingFieldShellProps, "label" | "hint" | "required" | "hideLabel" | "size" | "containerClassName" | "multiline" | "reserveMessageSpace" | "leftAdornment" | "rightAdornment"> & {
+    /** class รูปทรงของช่อง — ปกติคือ `fieldShapeClasses(...)` ตัวเดียวกับที่ component ใช้ */
+    shape?: string;
+};
+declare function FieldSkeleton({ size, shape, ...shellProps }: FieldSkeletonProps): react_jsx_runtime.JSX.Element;
+/**
+ * Field shape classes shared by all interactive elements (input/textarea/button).
+ * Apply to the inner element so border/focus ring/error states stay consistent.
+ */
+declare function fieldShapeClasses({ hasError, size, }: {
+    hasError: boolean;
+    size: FieldSize;
+}): string;
 
 type NativeInputProps = Omit<React.ComponentProps<"input">, "size">;
 type InputProps = NativeInputProps & {
@@ -85,6 +169,18 @@ type InputProps = NativeInputProps & {
     label?: React.ReactNode;
     hint?: React.ReactNode;
     error?: React.ReactNode;
+    /**
+     * บอกว่า "ช่องนี้ผิด" โดยไม่ต้องมีข้อความ — แอปที่เก็บ `hasError:boolean` กับ
+     * `errorMessage?:string` เป็นคนละตัวจะได้ไม่ต้องปลอมข้อความว่างเพื่อให้กรอบแดง
+     * ไม่ส่งมา = คิดจาก `error` เหมือนเดิม
+     */
+    invalid?: boolean;
+    /**
+     * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+     * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อฟอร์มเดิมคิดความสูงบนสมมติฐานว่า
+     * "ไม่มีข้อความ = ไม่กินที่" (ฟอร์มของทั้ง 3 แอปวันนี้เป็นแบบนั้น)
+     */
+    reserveMessageSpace?: boolean;
     required?: boolean;
     hideLabel?: boolean;
     /** Force the label into the floated position (e.g. for fields with fixed prefixes/masks). */
@@ -162,6 +258,18 @@ type TextareaProps = React.ComponentProps<"textarea"> & {
     label?: React.ReactNode;
     hint?: React.ReactNode;
     error?: React.ReactNode;
+    /**
+     * บอกว่า "ช่องนี้ผิด" โดยไม่ต้องมีข้อความ — แอปที่เก็บ `hasError:boolean` กับ
+     * `errorMessage?:string` เป็นคนละตัวจะได้ไม่ต้องปลอมข้อความว่างเพื่อให้กรอบแดง
+     * ไม่ส่งมา = คิดจาก `error` เหมือนเดิม
+     */
+    invalid?: boolean;
+    /**
+     * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+     * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อฟอร์มเดิมคิดความสูงบนสมมติฐานว่า
+     * "ไม่มีข้อความ = ไม่กินที่" (ฟอร์มของทั้ง 3 แอปวันนี้เป็นแบบนั้น)
+     */
+    reserveMessageSpace?: boolean;
     required?: boolean;
     hideLabel?: boolean;
     alwaysFloatLabel?: boolean;
@@ -329,6 +437,8 @@ type SelectProps<V extends string = string> = {
      * มาแสดงอยู่แล้ว บรรทัดที่จองไว้จึงเป็นที่ว่างเปล่าที่ดันแถบสูงขึ้นเฉย ๆ
      * (วัดแล้ว: ช่องสูง 36 แต่กินที่ 56 ⇒ แถบแบ่งหน้าสูง 73px ทั้งที่ของจริงใช้ 32px)
      */
+    /** บอกว่า "ช่องนี้ผิด" โดยไม่ต้องมีข้อความ — ดู `InputProps.invalid` */
+    invalid?: boolean;
     reserveMessageSpace?: boolean;
     /**
      * ข้อความตอนไม่มีตัวเลือกให้เลือก · ค่าเริ่มต้น `"No options"`
@@ -359,7 +469,7 @@ type SelectProps<V extends string = string> = {
     /** วาดสถานะว่างเอง — ชนะ `emptyText`/`emptyAction` */
     renderEmpty?: () => React.ReactNode;
 };
-declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, clearable, isLoading, reserveMessageSpace, emptyText, emptyAction, renderEmpty, }: SelectProps<V>): react_jsx_runtime.JSX.Element;
+declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, clearable, isLoading, invalid, reserveMessageSpace, emptyText, emptyAction, renderEmpty, }: SelectProps<V>): react_jsx_runtime.JSX.Element;
 declare const SelectItem: React.ForwardRefExoticComponent<Omit<RadixSelect.SelectItemProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
 
 type CheckboxOption<V extends string = string> = {
@@ -1925,4 +2035,4 @@ declare const DateNavigator: React.ForwardRefExoticComponent<Omit<DateNavigatorP
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, Filter, type FilterProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, headingVariants, iconButtonVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, textVariants, toneIcon };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, textVariants, toneIcon };

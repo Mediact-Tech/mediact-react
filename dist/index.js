@@ -399,9 +399,9 @@ function FloatingFieldShell({
           ]
         }
       ),
-      leftAdornment && /* @__PURE__ */ jsx6("span", { className: "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary [&_svg]:size-4", children: leftAdornment }),
+      leftAdornment && /* @__PURE__ */ jsx6("span", { className: "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary [&_svg:not([class*='size-'])]:size-4", children: leftAdornment }),
       children,
-      rightAdornment && /* @__PURE__ */ jsx6("span", { className: "absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-text-tertiary [&_svg]:size-4", children: rightAdornment })
+      rightAdornment && /* @__PURE__ */ jsx6("span", { className: "absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-text-tertiary [&_svg:not([class*='size-'])]:size-4", children: rightAdornment })
     ] }),
     showMessageSlot ? /* @__PURE__ */ jsx6(
       "p",
@@ -461,6 +461,8 @@ var Input = React6.forwardRef(function Input2({
   label,
   hint,
   error,
+  invalid,
+  reserveMessageSpace,
   required,
   hideLabel,
   alwaysFloatLabel,
@@ -487,7 +489,7 @@ var Input = React6.forwardRef(function Input2({
   const [internalValue, setInternalValue] = React6.useState(defaultValue ?? "");
   const isPassword = type === "password";
   const effectiveType = isPassword && showPassword ? "text" : type;
-  const hasError = Boolean(error);
+  const hasError = invalid ?? Boolean(error);
   const isControlled = value !== void 0;
   const currentValue = isControlled ? value : internalValue;
   const hasValue = currentValue != null && String(currentValue).length > 0;
@@ -515,6 +517,7 @@ var Input = React6.forwardRef(function Input2({
       label,
       hint,
       error,
+      reserveMessageSpace,
       required,
       hideLabel,
       htmlFor: inputId,
@@ -692,6 +695,8 @@ var Textarea = React7.forwardRef(
     label,
     hint,
     error,
+    invalid,
+    reserveMessageSpace,
     required,
     hideLabel,
     alwaysFloatLabel,
@@ -712,7 +717,7 @@ var Textarea = React7.forwardRef(
     const inputId = id ?? reactId;
     const [focused, setFocused] = React7.useState(false);
     const [internalValue, setInternalValue] = React7.useState(defaultValue ?? "");
-    const hasError = Boolean(error);
+    const hasError = invalid ?? Boolean(error);
     const isControlled = value !== void 0;
     const currentValue = isControlled ? value : internalValue;
     const hasValue = currentValue != null && String(currentValue).length > 0;
@@ -744,6 +749,7 @@ var Textarea = React7.forwardRef(
         label,
         hint: hintWithCounter,
         error,
+        reserveMessageSpace,
         required,
         hideLabel,
         htmlFor: inputId,
@@ -1355,6 +1361,7 @@ function Select({
   children,
   clearable,
   isLoading,
+  invalid,
   reserveMessageSpace,
   emptyText = "No options",
   emptyAction,
@@ -1369,7 +1376,7 @@ function Select({
   const isControlled = value !== void 0;
   const currentValue = isControlled ? value : internalValue;
   const hasValue = currentValue != null && currentValue !== "";
-  const hasError = Boolean(error);
+  const hasError = invalid ?? Boolean(error);
   const floating = Boolean(alwaysFloatLabel) || open || hasValue || Boolean(placeholder);
   const handleClear = (e) => {
     e.preventDefault();
@@ -6508,7 +6515,9 @@ export {
   EntityAutocomplete,
   ErrorState,
   FORMAT_PRESETS,
+  FieldSkeleton,
   Filter,
+  FloatingFieldShell,
   FormField,
   FormatInput,
   Heading,
@@ -6573,6 +6582,8 @@ export {
   chipVariants,
   cn,
   dayKey,
+  fieldLabelId,
+  fieldShapeClasses,
   headingVariants,
   iconButtonVariants,
   outlineButtonVariants,

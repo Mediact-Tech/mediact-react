@@ -59,6 +59,8 @@ export type SelectProps<V extends string = string> = {
    * มาแสดงอยู่แล้ว บรรทัดที่จองไว้จึงเป็นที่ว่างเปล่าที่ดันแถบสูงขึ้นเฉย ๆ
    * (วัดแล้ว: ช่องสูง 36 แต่กินที่ 56 ⇒ แถบแบ่งหน้าสูง 73px ทั้งที่ของจริงใช้ 32px)
    */
+  /** บอกว่า "ช่องนี้ผิด" โดยไม่ต้องมีข้อความ — ดู `InputProps.invalid` */
+  invalid?: boolean;
   reserveMessageSpace?: boolean;
   /**
    * ข้อความตอนไม่มีตัวเลือกให้เลือก · ค่าเริ่มต้น `"No options"`
@@ -110,6 +112,7 @@ function Select<V extends string = string>({
   children,
   clearable,
   isLoading,
+  invalid,
   reserveMessageSpace,
   emptyText = "No options",
   emptyAction,
@@ -124,7 +127,7 @@ function Select<V extends string = string>({
   const isControlled = value !== undefined;
   const currentValue = isControlled ? value : internalValue;
   const hasValue = currentValue != null && currentValue !== "";
-  const hasError = Boolean(error);
+  const hasError = invalid ?? Boolean(error);
   const floating =
     Boolean(alwaysFloatLabel) || open || hasValue || Boolean(placeholder);
 

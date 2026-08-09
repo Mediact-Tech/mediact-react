@@ -10,6 +10,18 @@ export type TextareaProps = React.ComponentProps<"textarea"> & {
   label?: React.ReactNode;
   hint?: React.ReactNode;
   error?: React.ReactNode;
+  /**
+   * บอกว่า "ช่องนี้ผิด" โดยไม่ต้องมีข้อความ — แอปที่เก็บ `hasError:boolean` กับ
+   * `errorMessage?:string` เป็นคนละตัวจะได้ไม่ต้องปลอมข้อความว่างเพื่อให้กรอบแดง
+   * ไม่ส่งมา = คิดจาก `error` เหมือนเดิม
+   */
+  invalid?: boolean;
+  /**
+   * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+   * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อฟอร์มเดิมคิดความสูงบนสมมติฐานว่า
+   * "ไม่มีข้อความ = ไม่กินที่" (ฟอร์มของทั้ง 3 แอปวันนี้เป็นแบบนั้น)
+   */
+  reserveMessageSpace?: boolean;
   required?: boolean;
   hideLabel?: boolean;
   alwaysFloatLabel?: boolean;
@@ -63,6 +75,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       label,
       hint,
       error,
+    invalid,
+    reserveMessageSpace,
       required,
       hideLabel,
       alwaysFloatLabel,
@@ -86,7 +100,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     const [focused, setFocused] = React.useState(false);
     const [internalValue, setInternalValue] = React.useState(defaultValue ?? "");
 
-    const hasError = Boolean(error);
+    const hasError = invalid ?? Boolean(error);
     const isControlled = value !== undefined;
     const currentValue = isControlled ? value : internalValue;
     const hasValue = currentValue != null && String(currentValue).length > 0;
@@ -126,6 +140,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         label={label}
         hint={hintWithCounter}
         error={error}
+      reserveMessageSpace={reserveMessageSpace}
         required={required}
         hideLabel={hideLabel}
         htmlFor={inputId}
