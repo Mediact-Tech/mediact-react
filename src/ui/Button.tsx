@@ -18,6 +18,8 @@ import { SkeletonBox } from "../feedback/Skeleton";
  * ของ hr-web ที่คอมเมนต์เหตุผลไว้ว่าระยะไอคอน→ข้อความต้องเท่ากันทุกขนาด
  * ──────────────────────────────────────────────────────────────────────────── */
 const buttonVariants = cva(
+  // `rounded-md` ยังตรงกับ SolidButton / OutlineButton / AddButton เหมือนเดิม — ปุ่มทุกตัวใน DS
+  // ใช้รัศมีมุมเดียวกัน (ข้อสรุปเดิมจาก main ยังอยู่ครบ ไม่ได้ถูกกลืนตอน merge)
   "inline-flex items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0 [&_svg]:pointer-events-none",
   {
     variants: {

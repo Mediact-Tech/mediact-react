@@ -81,8 +81,17 @@ describe("ด่านกันสีดิบ", () => {
     /* 161 = จำนวน ณ 2026-08-10 หลังตระกูลปฏิทิน (`Calendar` · `DateNavigator` ·
      * `DatePicker`) ขึ้นโดย **ไม่มีสีดิบเลยสักตัว** — ใช้ `bg-overlay-hover` /
      * `bg-overlay-press` / `border-border-default` / `bg-bg-default` แทนทั้งหมด
-     * ที่เหลือกระจุกอยู่ที่ navigation (44) · ai-chat (45) · ปุ่มกับ chip (27) */
-    expect(total).toBeLessThanOrEqual(161);
+     * ที่เหลือกระจุกอยู่ที่ navigation (44) · ai-chat (45) · ปุ่มกับ chip (27)
+     *
+     * +3 = `bg-black` · `text-white` ใน `overlay/Tooltip.tsx` ที่ merge เข้ามาจาก main
+     * (`fix(ui): a tooltip reads as a neutral hint, not a brand surface`) — **ไม่ใช่หนี้
+     * ที่เพิ่งก่อในสาขานี้ แต่เป็นของที่ไหลเข้ามาพร้อม merge**
+     *
+     * ทำไมไม่แก้ให้จบตรงนี้: ทางแก้ที่ถูกคือเพิ่ม `--color-bg-inverse` เข้า semantic layer
+     * แล้วใช้ `bg-bg-inverse text-text-inverse` — แต่ **3 ใน 4 แอปยังไม่ import token ของ DS**
+     * ⇒ tooltip จะกลายเป็นพื้นโปร่งทันทีในวันที่เปลี่ยน · ทำได้เมื่อแอปย้ายมากิน
+     * `@mediact/react/tokens.css` แล้ว และตอนนั้นให้ลดเลขนี้กลับเป็น 161 */
+    expect(total).toBeLessThanOrEqual(164);
   });
 
   /* ไฟล์ที่ทำความสะอาดแล้ว ห้ามถอยกลับ */

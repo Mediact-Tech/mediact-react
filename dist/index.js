@@ -77,6 +77,8 @@ SkeletonBox.displayName = "SkeletonBox";
 // src/ui/Button.tsx
 import { Fragment, jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 var buttonVariants = cva(
+  // `rounded-md` ยังตรงกับ SolidButton / OutlineButton / AddButton เหมือนเดิม — ปุ่มทุกตัวใน DS
+  // ใช้รัศมีมุมเดียวกัน (ข้อสรุปเดิมจาก main ยังอยู่ครบ ไม่ได้ถูกกลืนตอน merge)
   "inline-flex items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0 [&_svg]:pointer-events-none",
   {
     variants: {
@@ -218,11 +220,14 @@ var solidButtonVariants = cva2(
   "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap px-3 py-2 text-body-sm font-medium leading-6 tracking-normal text-slate-50 transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
+      // rounded-md on every variant. `success` and `primary` used to be rounded-sm, so a screen that
+      // mixed variants — or mixed SolidButton with AddButton/OutlineButton — showed two different
+      // corner radii on buttons of the same kind.
       variant: {
-        info: "rounded-md bg-brand-active shadow-sm hover:bg-info-blue-primary-hover disabled:hover:bg-brand-active",
+        info: "rounded-md bg-brand-active shadow-sm hover:bg-brand-active-hover disabled:hover:bg-brand-active",
         warning: "rounded-md bg-warning-normal shadow-md hover:bg-warning-hover disabled:hover:bg-warning-normal",
-        success: "rounded-sm bg-success-green-primary shadow-sm hover:bg-success-green-primary-hover disabled:hover:bg-success-green-primary",
-        primary: "rounded-sm bg-brand shadow-xs hover:bg-brand-hover disabled:hover:bg-brand"
+        success: "rounded-md bg-success-green-primary shadow-sm hover:bg-success-green-primary-hover disabled:hover:bg-success-green-primary",
+        primary: "rounded-md bg-brand shadow-xs hover:bg-brand-hover disabled:hover:bg-brand"
       },
       size: {
         sm: "h-8 [&_svg:not([class*='size-'])]:size-4",
@@ -3124,70 +3129,76 @@ var Calendar = React24.forwardRef(
           },
           i
         );
-      }) }) : /* @__PURE__ */ jsxs22(
-        "table",
-        {
-          role: "grid",
-          className: "w-full border-collapse",
-          onKeyDown: onGridKeyDown,
-          children: [
-            /* @__PURE__ */ jsx28("thead", { children: /* @__PURE__ */ jsx28("tr", { children: grid.slice(0, 7).map((d) => /* @__PURE__ */ jsx28(
-              "th",
-              {
-                scope: "col",
-                abbr: fmt.full.format(d),
-                className: "py-1 text-center text-caption font-normal text-text-tertiary",
-                children: fmt.weekday.format(d)
-              },
-              d.getDay()
-            )) }) }),
-            /* @__PURE__ */ jsx28("tbody", { children: Array.from({ length: 6 }, (_, row) => /* @__PURE__ */ jsx28("tr", { children: grid.slice(row * 7, row * 7 + 7).map((day) => {
-              const outside = day.getMonth() !== month.getMonth();
-              const disabled = outside || outOfBounds(day);
-              const isStart = isSameDay(day, selected);
-              const isEnd = isSameDay(day, end);
-              const edge = isStart || isEnd;
-              const between = !!selected && !!end && startOfDay(day) > startOfDay(selected) && startOfDay(day) < startOfDay(end);
-              const isFocus = isSameDay(day, focusDay);
-              return /* @__PURE__ */ jsx28(
-                "td",
+      }) }) : (
+        /* 🔴 ระยะระหว่างแถว 4 มาจาก `rowGap` ของตารางจริง — `border-collapse`
+         * ทำแบบนั้นไม่ได้ ต้อง `border-separate` + `border-spacing`
+         * ถ้าไม่มี ระยะห่างแถวหายไป 4 ทุกแถว = ปฏิทินเตี้ยลง 24 และแถบช่วงวัน
+         * กลายเป็นก้อนทึบแทนที่จะเป็นแถบต่อแถว */
+        /* @__PURE__ */ jsxs22(
+          "table",
+          {
+            role: "grid",
+            className: "-mt-1 w-full border-separate border-spacing-x-0 border-spacing-y-1",
+            onKeyDown: onGridKeyDown,
+            children: [
+              /* @__PURE__ */ jsx28("thead", { children: /* @__PURE__ */ jsx28("tr", { children: grid.slice(0, 7).map((d) => /* @__PURE__ */ jsx28(
+                "th",
                 {
-                  role: "gridcell",
-                  "data-day": dayKey(day),
-                  "aria-selected": edge || void 0,
-                  className: cn(
-                    "h-10 p-0 text-center align-middle",
-                    (between || edge && isSpan) && "bg-brand-subtle",
-                    isStart && isSpan && "rounded-l-full",
-                    isEnd && isSpan && "rounded-r-full"
-                  ),
-                  children: /* @__PURE__ */ jsx28(
-                    "button",
-                    {
-                      type: "button",
-                      ref: isFocus ? focusRef : void 0,
-                      tabIndex: isFocus ? 0 : -1,
-                      disabled,
-                      "aria-label": fmt.full.format(day),
-                      onClick: () => {
-                        setFocusDay(day);
-                        onSelect?.(day);
-                      },
-                      onMouseEnter: () => !disabled && onDayHover?.(day),
-                      onMouseLeave: () => onDayHover?.(null),
-                      className: cn(
-                        "size-[34px] rounded-full text-body-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
-                        edge ? "bg-brand font-bold text-brand-foreground" : disabled ? "cursor-default text-text-disabled" : "cursor-pointer text-text-black hover:bg-overlay-hover"
-                      ),
-                      children: day.getDate()
-                    }
-                  )
+                  scope: "col",
+                  abbr: fmt.full.format(d),
+                  className: "py-1 text-center text-caption font-normal text-text-tertiary",
+                  children: fmt.weekday.format(d)
                 },
-                dayKey(day)
-              );
-            }) }, row)) })
-          ]
-        }
+                d.getDay()
+              )) }) }),
+              /* @__PURE__ */ jsx28("tbody", { children: Array.from({ length: 6 }, (_, row) => /* @__PURE__ */ jsx28("tr", { children: grid.slice(row * 7, row * 7 + 7).map((day) => {
+                const outside = day.getMonth() !== month.getMonth();
+                const disabled = outside || outOfBounds(day);
+                const isStart = isSameDay(day, selected);
+                const isEnd = isSameDay(day, end);
+                const edge = isStart || isEnd;
+                const between = !!selected && !!end && startOfDay(day) > startOfDay(selected) && startOfDay(day) < startOfDay(end);
+                const isFocus = isSameDay(day, focusDay);
+                return /* @__PURE__ */ jsx28(
+                  "td",
+                  {
+                    role: "gridcell",
+                    "data-day": dayKey(day),
+                    "aria-selected": edge || void 0,
+                    className: cn(
+                      "h-10 p-0 text-center align-middle",
+                      (between || edge && isSpan) && "bg-brand-subtle",
+                      isStart && isSpan && "rounded-l-full",
+                      isEnd && isSpan && "rounded-r-full"
+                    ),
+                    children: /* @__PURE__ */ jsx28(
+                      "button",
+                      {
+                        type: "button",
+                        ref: isFocus ? focusRef : void 0,
+                        tabIndex: isFocus ? 0 : -1,
+                        disabled,
+                        "aria-label": fmt.full.format(day),
+                        onClick: () => {
+                          setFocusDay(day);
+                          onSelect?.(day);
+                        },
+                        onMouseEnter: () => !disabled && onDayHover?.(day),
+                        onMouseLeave: () => onDayHover?.(null),
+                        className: cn(
+                          "size-[34px] rounded-full text-body-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+                          edge ? "bg-brand font-bold text-brand-foreground" : disabled ? "cursor-default text-text-disabled" : "cursor-pointer text-text-black hover:bg-overlay-hover"
+                        ),
+                        children: day.getDate()
+                      }
+                    )
+                  },
+                  dayKey(day)
+                );
+              }) }, row)) })
+            ]
+          }
+        )
       )
     ] });
   }
@@ -5965,7 +5976,16 @@ var TooltipContent = React37.forwardRef(
         ref,
         sideOffset,
         className: cn(
-          "z-50 max-w-xs rounded-md bg-brand px-4 py-2.5 text-body-sm font-medium text-brand-foreground shadow-lg",
+          // Neutral black surface, not the brand colour: a tooltip is a passive hint attached to
+          // whatever it points at, so it must read the same over brand-coloured and neutral UI
+          // alike. `bg-black` resolves to the --color-black token (#191919), not pure black.
+          //
+          // ⚠️ ยังเป็น `text-sm` ของ Tailwind ไม่ใช่ `text-body-sm` ของ type scale ทั้งที่ค่าเท่ากัน
+          // (14px) — เพราะ **3 ใน 4 แอปยังไม่ import token ของ DS** (portal · medimatch · hr-web
+          // ประกาศ token เองในไฟล์ตัวเอง และไม่มี `--text-*` เลยสักตัว) Tailwind v4 จะไม่ generate
+          // `.text-body-sm` ถ้าไม่มีตัวแปรรองรับ ⇒ ตัวหนังสือจะไหลไปตามขนาดของ parent เงียบ ๆ
+          // ปลดล็อกเมื่อแอปเหล่านั้น import `@mediact/react/tokens.css` แล้ว
+          "z-50 max-w-xs rounded-md bg-black px-4 py-2.5 text-sm font-medium text-white shadow-lg",
           "data-[state=delayed-open]:animate-in data-[state=closed]:animate-out",
           className
         ),
@@ -5977,7 +5997,7 @@ var TooltipContent = React37.forwardRef(
             {
               width: 14,
               height: 7,
-              className: "fill-brand"
+              className: "fill-black"
             }
           )
         ]
