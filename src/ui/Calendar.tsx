@@ -280,9 +280,17 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
             })}
           </div>
         ) : (
+          /* 🔴 ระยะระหว่างแถว 4 มาจาก `rowGap` ของตารางจริง — `border-collapse`
+           * ทำแบบนั้นไม่ได้ ต้อง `border-separate` + `border-spacing`
+           * ถ้าไม่มี ระยะห่างแถวหายไป 4 ทุกแถว = ปฏิทินเตี้ยลง 24 และแถบช่วงวัน
+           * กลายเป็นก้อนทึบแทนที่จะเป็นแถบต่อแถว */
           <table
             role="grid"
-            className="w-full border-collapse"
+            /* `-mt-1` หักระยะ 4 ที่ `border-spacing` แถมไว้ **เหนือ**แถวแรก ซึ่ง
+             * `rowGap` ของตารางจริงไม่มี · ของที่แถมไว้ใต้แถวสุดท้ายอีก 4 ปล่อยไว้
+             * (`-mb-1` ไม่มีผลเพราะ margin collapse ออกนอกกล่องที่ `pb-0`)
+             * ⇒ สูงกว่าของจริง 4 ที่ก้นปฏิทิน ซึ่งอยู่ในช่องว่างของ popover อยู่แล้ว */
+            className="-mt-1 w-full border-separate border-spacing-x-0 border-spacing-y-1"
             onKeyDown={onGridKeyDown}
           >
             <thead>

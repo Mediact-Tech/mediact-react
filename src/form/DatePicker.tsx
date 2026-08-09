@@ -1,3 +1,4 @@
+/** @doc ../ui/Calendar.md */
 import * as React from "react";
 import { format, isValid } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
