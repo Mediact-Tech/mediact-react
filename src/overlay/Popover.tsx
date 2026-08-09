@@ -18,6 +18,12 @@ const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentProps>(
       <RadixPopover.Portal>
         <RadixPopover.Content
           ref={ref}
+          /* จุดเกาะที่เสถียรสำหรับผู้เรียก — เนื้อหาถูก portal ออกไปนอกต้นไม้ DOM เดิม
+           * แต่ event ของ React ยังลอยขึ้นตามต้นไม้ React ⇒ การ์ดที่คลิกได้ซึ่งมีเมนูอยู่ข้างใน
+           * ต้องมีทางแยกแยะว่า "คลิกนี้เกิดในเมนู ไม่ใช่บนการ์ด" · จับเฉพาะ `button` ไม่พอ
+           * เพราะช่องว่าง/padding ของเมนูก็ต้องนับด้วย (ของจริงเคยพลาดคลิกออกไปนอกปุ่มไม่กี่พิกเซล
+           * แล้วเด้งไปหน้าอื่น) · ชื่อ attribute ตามแบบ shadcn ที่ทั้ง 4 แอปคุ้นอยู่แล้ว */
+          data-slot="popover-content"
           align={align}
           sideOffset={sideOffset}
           className={cn(

@@ -2312,6 +2312,7 @@ var PopoverContent = React21.forwardRef(
       RadixPopover.Content,
       {
         ref,
+        "data-slot": "popover-content",
         align,
         sideOffset,
         className: cn(
