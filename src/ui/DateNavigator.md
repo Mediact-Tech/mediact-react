@@ -8,7 +8,7 @@
 | Storybook | `UI/DateNavigator` |
 | เทส | `DateNavigator.test.tsx` — 9 เคส |
 | ปฏิทินข้างใน | [`Calendar`](./Calendar.md) |
-| Figma | ไฟล์ **Mediact Design System** → หน้า `Navigation` |
+| Figma | ไฟล์ **Mediact Design System** → หน้า `Date` → `DateNavigator` (`184:37`) + เฟรมลิ้นชักจริง (`186:2`) |
 | สถานะ sync | ✅ ตรงกัน — 2026-08-10 |
 
 ---

@@ -8,7 +8,7 @@
 | Storybook | `UI/Calendar` |
 | เทส | `Calendar.test.tsx` — 24 เคส |
 | ใครใช้ | `form/DatePicker.tsx` · `ui/DateNavigator.tsx` |
-| Figma | ไฟล์ **Mediact Design System** → หน้า `Navigation` |
+| Figma | ไฟล์ **Mediact Design System** → หน้า `Date` → `Calendar` (`181:2`) · 4 มุมมอง |
 | สถานะ sync | ✅ ตรงกัน — 2026-08-10 |
 
 ---

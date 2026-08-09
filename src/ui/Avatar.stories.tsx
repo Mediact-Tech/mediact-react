@@ -12,7 +12,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Image: Story = {
   args: {
-    src: "https://i.pravatar.cc/80?img=5",
+    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='%230395d8'/><circle cx='40' cy='31' r='14' fill='%23fff'/><path d='M11 80a29 29 0 0 1 58 0Z' fill='%23fff'/></svg>",
     name: "Jane Cooper",
   },
 };

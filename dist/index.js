@@ -79,7 +79,11 @@ import { Fragment, jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 var buttonVariants = cva(
   // `rounded-md` ยังตรงกับ SolidButton / OutlineButton / AddButton เหมือนเดิม — ปุ่มทุกตัวใน DS
   // ใช้รัศมีมุมเดียวกัน (ข้อสรุปเดิมจาก main ยังอยู่ครบ ไม่ได้ถูกกลืนตอน merge)
-  "inline-flex items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0 [&_svg]:pointer-events-none",
+  // `shrink-0` — ให้เท่ากับพี่น้องอีก 3 ตัวในโฟลเดอร์เดียวกัน (SolidButton · OutlineButton ·
+  // IconButton มีอยู่แล้ว) ปุ่มที่อยู่ในแถว flex ไม่ควรถูกบีบจนข้อความหาย
+  // `ring-focus-ring/50` — เดิมเขียน `ring-2` เฉย ๆ ไม่ระบุสี ⇒ Tailwind ใช้ `currentcolor`
+  // แปลว่าบนปุ่มพื้นทึบที่ตัวอักษรเป็นสีขาว วงแหวนก็ขาวไปด้วย = โฟกัสคีย์บอร์ดหายทั้งใบ
+  "inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0 [&_svg]:pointer-events-none",
   {
     variants: {
       variant: {
@@ -217,7 +221,7 @@ import { Slot as Slot2 } from "@radix-ui/react-slot";
 import { cva as cva2 } from "class-variance-authority";
 import { jsx as jsx3 } from "react/jsx-runtime";
 var solidButtonVariants = cva2(
-  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap px-3 py-2 text-body-sm font-medium leading-6 tracking-normal text-slate-50 transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap px-3 py-2 text-body-sm font-medium leading-6 tracking-normal text-slate-50 transition-all outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       // rounded-md on every variant. `success` and `primary` used to be rounded-sm, so a screen that
@@ -286,7 +290,7 @@ import { Slot as Slot4 } from "@radix-ui/react-slot";
 import { cva as cva3 } from "class-variance-authority";
 import { jsx as jsx5 } from "react/jsx-runtime";
 var outlineButtonVariants = cva3(
-  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-white px-3 py-2 text-body-sm font-medium leading-6 tracking-normal shadow-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-white px-3 py-2 text-body-sm font-medium leading-6 tracking-normal shadow-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -1972,7 +1976,7 @@ import { Slot as Slot5 } from "@radix-ui/react-slot";
 import { cva as cva6 } from "class-variance-authority";
 import { jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
 var iconButtonVariants = cva6(
-  "inline-flex shrink-0 items-center justify-center rounded-full transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center rounded-full transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {

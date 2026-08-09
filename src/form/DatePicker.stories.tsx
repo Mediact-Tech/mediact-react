@@ -21,6 +21,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** 🔴 story ที่ผูกกับ `new Date()` จะเปลี่ยนภาพทุกเดือน (ปฏิทินเปิดคนละเดือน
+ * และวันที่ถูกเลือกคนละวัน) ⇒ Chromatic จะรายงาน visual diff ทุกต้นเดือน
+ * โดยที่ไม่มีใครแก้อะไร · ตรึงวันไว้ให้ภาพนิ่ง */
+const FIXED = new Date(2026, 4, 18);
+
 export const Default: Story = {};
 
 export const WithPlaceholder: Story = {
@@ -29,7 +34,7 @@ export const WithPlaceholder: Story = {
 
 export const Controlled: Story = {
   render: (args: React.ComponentProps<typeof DatePicker>) => {
-    const [d, setD] = useState<Date | undefined>(new Date());
+    const [d, setD] = useState<Date | undefined>(FIXED);
     return <DatePicker {...args} value={d ?? null} onChange={setD} />;
   },
   args: { label: "Birthday" },
@@ -69,8 +74,8 @@ export const WeekStartsMonday: Story = {
 export const WithBounds: Story = {
   args: {
     label: "Within next 30 days",
-    minDate: new Date(),
-    maxDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    minDate: FIXED,
+    maxDate: new Date(2026, 5, 17),
   },
 };
 
@@ -78,8 +83,8 @@ export const States: Story = {
   render: () => (
     <div className="flex flex-col gap-4 w-72">
       <DatePicker label="Empty (rest)" />
-      <DatePicker label="With value" defaultValue={new Date()} />
-      <DatePicker label="Disabled" disabled defaultValue={new Date()} />
+      <DatePicker label="With value" defaultValue={FIXED} />
+      <DatePicker label="Disabled" disabled defaultValue={FIXED} />
       <DatePicker label="Required" required />
       <DatePicker label="With error" error="Required" />
     </div>

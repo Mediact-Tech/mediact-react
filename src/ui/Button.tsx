@@ -20,7 +20,11 @@ import { SkeletonBox } from "../feedback/Skeleton";
 const buttonVariants = cva(
   // `rounded-md` ยังตรงกับ SolidButton / OutlineButton / AddButton เหมือนเดิม — ปุ่มทุกตัวใน DS
   // ใช้รัศมีมุมเดียวกัน (ข้อสรุปเดิมจาก main ยังอยู่ครบ ไม่ได้ถูกกลืนตอน merge)
-  "inline-flex items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0 [&_svg]:pointer-events-none",
+  // `shrink-0` — ให้เท่ากับพี่น้องอีก 3 ตัวในโฟลเดอร์เดียวกัน (SolidButton · OutlineButton ·
+  // IconButton มีอยู่แล้ว) ปุ่มที่อยู่ในแถว flex ไม่ควรถูกบีบจนข้อความหาย
+  // `ring-focus-ring/50` — เดิมเขียน `ring-2` เฉย ๆ ไม่ระบุสี ⇒ Tailwind ใช้ `currentcolor`
+  // แปลว่าบนปุ่มพื้นทึบที่ตัวอักษรเป็นสีขาว วงแหวนก็ขาวไปด้วย = โฟกัสคีย์บอร์ดหายทั้งใบ
+  "inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0 [&_svg]:pointer-events-none",
   {
     variants: {
       variant: {
