@@ -70,7 +70,17 @@ interface ChatSendParams extends ChatScope {
     mode?: ChatMode;
     ops?: unknown[];
 }
-type ChatEventName = "token" | "tool_call" | "widget" | "proposal" | "task_state" | "done";
+type ChatEventName = "user_turn" | "token" | "tool_call" | "widget" | "proposal" | "task_state" | "done";
+/**
+ * The question that opened a turn.
+ *
+ * Every other event is the ASSISTANT half of a turn, so the channel used to carry only half a conversation:
+ * a client that did not type the question had no way to hear it. Published before the answer is queued, so
+ * it is always on screen before the first token.
+ */
+interface UserTurnPayload {
+    message: string;
+}
 interface TokenPayload {
     delta: string;
 }
@@ -200,26 +210,41 @@ interface WidgetEnvelope<T extends WidgetType = WidgetType> {
     type: T;
     payload: WidgetPayloadMap[T];
 }
+/**
+ * Which turn an event belongs to (`ai_runs.id`), carried on every member of the union below.
+ *
+ * `chat:{conversationId}` is shared by every client the owner has open, so two browser tabs on the same
+ * conversation both receive every publication. Without a turn name a client can only guess whose tokens
+ * these are — and the guess it used to make ("I have a bubble open, so they must be mine") is wrong in
+ * exactly the case that matters. Optional: an older service sends nothing here, and the session falls
+ * back to that same guess rather than breaking.
+ */
+interface TurnStamp {
+    turnId?: string;
+}
 /** One message on `chat:{conversationId}` — the discriminated union of the §4 protocol. */
-type ChatEvent = {
+type ChatEvent = ({
+    event: "user_turn";
+    payload: UserTurnPayload;
+} & TurnStamp) | ({
     event: "token";
     payload: TokenPayload;
-} | {
+} & TurnStamp) | ({
     event: "tool_call";
     payload: ToolCallPayload;
-} | {
+} & TurnStamp) | ({
     event: "widget";
     payload: WidgetEnvelope;
-} | {
+} & TurnStamp) | ({
     event: "proposal";
     payload: ProposalPayload;
-} | {
+} & TurnStamp) | ({
     event: "task_state";
     payload: TaskStatePayload;
-} | {
+} & TurnStamp) | ({
     event: "done";
     payload: DonePayload;
-};
+} & TurnStamp);
 
 /** A tool call plus when the client first saw it — the elapsed counter is rendered from this. */
 interface ToolCallEntry extends ToolCallPayload {
@@ -688,4 +713,4 @@ declare function resolveTokenProvider(auth: AiChatAuthConfig | undefined, hostGe
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, extractEnterMode, extractRedirect, hasExitMode, openAiChat, resolveLabels, resolveTokenProvider, stripSentinels, useAiChatSession };
+export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type UserTurnPayload, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, extractEnterMode, extractRedirect, hasExitMode, openAiChat, resolveLabels, resolveTokenProvider, stripSentinels, useAiChatSession };

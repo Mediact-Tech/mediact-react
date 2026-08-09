@@ -1368,6 +1368,31 @@ function reducer(state, action) {
         messages
       };
     }
+    // The user is talking to this conversation from another tab. Both tabs are subscribed to
+    // `chat:{conversationId}` and both receive every publication — but until now only the tab that called
+    // `send` had a bubble to fold them into, so the other one dropped the whole turn on the floor and sat
+    // there looking like an empty chat. Give the turn a bubble here and the existing fold logic just works.
+    case "follow_start":
+      return {
+        ...state,
+        // Anything still open belongs to a turn that is over as far as this screen can tell; leaving it
+        // `streaming` would spin a placeholder forever. (Two turns genuinely overlapping means both tabs
+        // hit send inside the same instant — rare, and this closes the first one honestly rather than
+        // garbling the two answers into one bubble.)
+        messages: [...closeOpenTurns(state.messages), remoteTurn()],
+        status: "streaming",
+        // Adopt the run so Cancel works from here too: it is the same person and the same conversation,
+        // just a different window.
+        activeRunId: action.turnId,
+        error: null
+      };
+    // The question of a turn this tab did not type. It arrives before the answer's first token, so it lands
+    // above the bubble `follow_start` is about to create, in the order a reader expects.
+    case "remote_question":
+      return {
+        ...state,
+        messages: [...state.messages, { id: nextId(), role: "user", content: action.content }]
+      };
     case "error":
       return {
         ...state,
@@ -1428,6 +1453,12 @@ ${event.payload.summary_th}` : event.payload.summary_th
       return { ...state, messages, status: "streaming" };
     case "task_state":
       return state;
+    // Forward compatibility, deliberately at the cost of exhaustiveness checking. These events come off a
+    // wire from a service that deploys on its own schedule, so a name this build has never heard of is a
+    // NORMAL event, not a bug — and falling off the end of this switch returned `undefined`, which the
+    // reducer then made the whole session state. That is a white screen, not a dropped event.
+    default:
+      return state;
   }
 }
 function applyDone(state, action) {
@@ -1461,6 +1492,17 @@ function lastStreamingIndex(messages) {
     if (messages[i]?.streaming) return i;
   }
   return -1;
+}
+var remoteTurn = () => ({
+  id: nextId(),
+  role: "assistant",
+  content: "",
+  streaming: true
+});
+function closeOpenTurns(messages) {
+  return messages.map(
+    (message) => message.streaming ? { ...message, streaming: false, content: message.content || NO_ANSWER_TEXT } : message
+  );
 }
 function failStreamingTurn(messages, reason) {
   const index = lastStreamingIndex(messages);
@@ -1510,6 +1552,7 @@ function useAiChatSession(config) {
   const storageKey = `mediact-ai-chat:conversation:${config.baseUrl}`;
   const reportError = React8.useCallback((error, fallback) => {
     const err = error instanceof Error ? error : new Error(fallback);
+    turnRef.current = null;
     configRef.current.onError?.(err);
     dispatch({ type: "error", message: err.message || fallback });
   }, []);
@@ -1523,33 +1566,64 @@ function useAiChatSession(config) {
     clearUnackedGrace();
     unackedTimerRef.current = setTimeout(() => {
       unackedTimerRef.current = null;
+      turnRef.current = null;
       dispatch({ type: "error", message: UNACKED_EXPIRED_TEXT });
     }, UNACKED_GRACE_MS);
   }, [clearUnackedGrace]);
   React8.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
-  const handleEvent = React8.useCallback((event) => {
-    clearUnackedGrace();
-    if (event.event !== "done") {
-      if (event.event === "token") streamRef.current += event.payload.delta;
-      dispatch({ type: "event", event });
-      return;
-    }
-    const raw = streamRef.current;
-    streamRef.current = "";
-    const redirect = extractRedirect(raw);
-    if (redirect && typeof window !== "undefined") {
-      window.open(redirect, "_blank", "noopener,noreferrer");
-    }
-    const seed = extractEnterMode(raw);
-    dispatch({
-      type: "done",
-      payload: event.payload,
-      content: stripSentinels(raw),
-      seed,
-      exit: hasExitMode(raw),
-      greeting: buildScheduleGreeting(labelsRef.current, seed)
-    });
+  const turnRef = React8.useRef(null);
+  const adoptTurn = React8.useCallback(
+    (turnId) => {
+      const current = turnRef.current;
+      if (current && (!turnId || current.id === null || current.id === turnId)) {
+        if (current.id === null && turnId) current.id = turnId;
+        return current.own;
+      }
+      turnRef.current = { id: turnId ?? null, own: false };
+      dispatch({ type: "follow_start", turnId: turnId ?? null });
+      return false;
+    },
+    []
+  );
+  const isOwnTurn = React8.useCallback((turnId) => {
+    const current = turnRef.current;
+    if (!current?.own) return false;
+    return !turnId || current.id === null || current.id === turnId;
   }, []);
+  const handleEvent = React8.useCallback(
+    (event) => {
+      if (event.event === "user_turn") {
+        if (!isOwnTurn(event.turnId)) {
+          dispatch({ type: "remote_question", content: event.payload.message });
+        }
+        return;
+      }
+      const own = adoptTurn(event.turnId);
+      if (own) clearUnackedGrace();
+      if (event.event !== "done") {
+        if (event.event === "token") streamRef.current += event.payload.delta;
+        dispatch({ type: "event", event });
+        return;
+      }
+      const raw = streamRef.current;
+      streamRef.current = "";
+      turnRef.current = null;
+      const redirect = extractRedirect(raw);
+      if (own && redirect && typeof window !== "undefined") {
+        window.open(redirect, "_blank", "noopener,noreferrer");
+      }
+      const seed = extractEnterMode(raw);
+      dispatch({
+        type: "done",
+        payload: event.payload,
+        content: stripSentinels(raw),
+        seed,
+        exit: hasExitMode(raw),
+        greeting: buildScheduleGreeting(labelsRef.current, seed)
+      });
+    },
+    [adoptTurn, isOwnTurn, clearUnackedGrace]
+  );
   const start = React8.useCallback(
     async (conversationId) => {
       if (transportRef.current && !conversationId) return;
@@ -1559,6 +1633,7 @@ function useAiChatSession(config) {
         try {
           transportRef.current?.disconnect();
           transportRef.current = null;
+          turnRef.current = null;
           const remembered = conversationId ?? readStored(storageKey);
           let id;
           let transcript = [];
@@ -1620,7 +1695,9 @@ function useAiChatSession(config) {
         reportError(new Error("\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E2B\u0E49\u0E2D\u0E07\u0E2A\u0E19\u0E17\u0E19\u0E32"), "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D");
         return;
       }
+      if (stateRef.current.status === "sending" || stateRef.current.status === "streaming") return;
       streamRef.current = "";
+      turnRef.current = { id: null, own: true };
       dispatch({
         type: "user_turn",
         message: { id: nextId(), role: "user", content: trimmed },
@@ -1636,6 +1713,7 @@ function useAiChatSession(config) {
           // A scheduling hand-off already resolved dept/month — carry it so the agent doesn't re-ask.
           ...state.mode === "schedule" ? state.scheduleSeed : null
         });
+        if (turnRef.current?.own) turnRef.current.id = ticket.runId;
         dispatch({ type: "run_accepted", runId: ticket.runId });
       } catch (error) {
         if (error instanceof ChatSendTimeoutError) {
@@ -1663,6 +1741,7 @@ function useAiChatSession(config) {
     transportRef.current?.disconnect();
     transportRef.current = null;
     streamRef.current = "";
+    turnRef.current = null;
     writeStored(storageKey, null);
     dispatch({ type: "reset" });
   }, [storageKey]);
