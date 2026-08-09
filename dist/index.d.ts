@@ -7,7 +7,7 @@ import * as RadixSwitch from '@radix-ui/react-switch';
 import * as RadixRadio from '@radix-ui/react-radio-group';
 import * as RadixSelect from '@radix-ui/react-select';
 import * as RadixAvatar from '@radix-ui/react-avatar';
-import { Row, ColumnDef, SortingState, RowSelectionState } from '@tanstack/react-table';
+import { Row, RowData, ColumnDef, SortingState, RowSelectionState } from '@tanstack/react-table';
 import * as RadixTabs from '@radix-ui/react-tabs';
 import { Toaster as Toaster$1 } from 'sonner';
 export { toast } from 'sonner';
@@ -1427,6 +1427,27 @@ type FreezeColumns = {
     right?: number;
 };
 
+/**
+ * ช่องเสริมของคอลัมน์ที่ `DataTable` อ่าน
+ *
+ * TanStack เปิด `ColumnMeta` ไว้ให้ augment ได้ — ประกาศที่นี่ที่เดียว ผู้เรียกทุกแอป
+ * จึงได้ทั้ง autocomplete และการตรวจชนิด โดยไม่ต้องประกาศซ้ำในแต่ละรีโป
+ */
+declare module "@tanstack/react-table" {
+    interface ColumnMeta<TData extends RowData, TValue> {
+        /** class เพิ่มที่ `<th>` — เช่น `text-right` ให้หัวคอลัมน์ปฏิบัติการตรงกับปุ่มที่ชิดขวา */
+        headerClassName?: string;
+        /** class เพิ่มที่ `<td>` — เช่น `max-w-50 truncate` สำหรับคอลัมน์ที่ข้อความยาวได้ */
+        cellClassName?: string;
+        /**
+         * ความกว้าง**เป๊ะ** (px) — คนละเรื่องกับ `columnDef.size` ที่ตัวนี้ตีเป็น *ขั้นต่ำ*
+         *
+         * คอลัมน์ปุ่มกับป้ายสถานะต้องการ "อย่าให้กว้างกว่านี้" ไม่ใช่ "อย่างน้อยเท่านี้"
+         * ถ้าใช้ `size` มันจะกินพื้นที่ที่เหลือแล้วบีบคอลัมน์ข้อมูลให้แคบลง
+         */
+        width?: number;
+    }
+}
 type DataTablePagination = {
     /** 0-based page index. */
     pageIndex: number;
@@ -1434,6 +1455,13 @@ type DataTablePagination = {
     pageSize: number;
     /** Total rows across all pages (server-side). */
     rowCount: number;
+    /**
+     * จำนวนหน้าที่หลังบ้านบอกมา — ไม่ส่ง = คิดจาก `rowCount / pageSize` เหมือนเดิม
+     *
+     * ต้องมีเพราะ API บางเส้นนับหน้าไม่ตรงกับสูตรนั้น (เช่นตัดแถวที่ผู้ใช้ไม่มีสิทธิ์เห็น
+     * ออกหลังนับ) ⇒ ปุ่ม "หน้าถัดไป" จะเปิด/ปิดผิดจากที่หลังบ้านตั้งใจ
+     */
+    pageCount?: number;
     onPageChange: (pageIndex: number) => void;
     onPageSizeChange?: (pageSize: number) => void;
     pageSizeOptions?: number[];
@@ -1561,6 +1589,16 @@ type DataTableProps<TData> = {
     onRowClick?: (row: TData, index: number) => void;
     /** Sticky header inside scrolling container. */
     stickyHeader?: boolean;
+    /**
+     * จำนวนแถวโครงร่างตอน `isLoading`
+     *
+     * ไม่ส่ง = `min(pageSize, 10)` — ต้องมีเพดานเพราะ `pageSize` เป็น 50/100 ได้
+     * แล้วจะวาดแถวปลอมเป็นร้อยแถวซึ่งไม่ได้ช่วยให้ใครอ่านอะไรออก · ตารางที่ไม่มี
+     * pagination เลย (roster ที่แบ่งกลุ่มเอง) ก็ต้องสั่งเองได้เพราะค่าเริ่มต้น 5 ไม่ตรง
+     */
+    skeletonRowCount?: number;
+    /** class ของกล่องที่เลื่อนได้ — ทางเดียวที่จะปลด `max-h` ตั้งต้นออกได้ */
+    containerClassName?: string;
     /** Custom empty state. Rendered when there's no error and 0 rows. */
     empty?: React.ReactNode;
     /**
@@ -1623,7 +1661,7 @@ type DataTableProps<TData> = {
     /** Override any built-in copy — see `DataTableLabels`. All English by default. */
     labels?: DataTableLabels;
 } & DataTableGroupingProps<TData>;
-declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): react_jsx_runtime.JSX.Element;
+declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, skeletonRowCount, containerClassName, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): react_jsx_runtime.JSX.Element;
 
 declare const cardVariants: (props?: ({
     variant?: "flat" | "elevated" | "outlined" | null | undefined;

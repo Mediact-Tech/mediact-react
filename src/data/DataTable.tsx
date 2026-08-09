@@ -11,6 +11,7 @@ import {
   type Updater,
   type Row,
   type Table as TanstackTable,
+  type RowData,
 } from "@tanstack/react-table";
 import {
   AlertTriangle,
@@ -49,6 +50,29 @@ import {
   type FrozenOffsets,
 } from "./use-frozen-columns";
 
+/**
+ * ช่องเสริมของคอลัมน์ที่ `DataTable` อ่าน
+ *
+ * TanStack เปิด `ColumnMeta` ไว้ให้ augment ได้ — ประกาศที่นี่ที่เดียว ผู้เรียกทุกแอป
+ * จึงได้ทั้ง autocomplete และการตรวจชนิด โดยไม่ต้องประกาศซ้ำในแต่ละรีโป
+ */
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /** class เพิ่มที่ `<th>` — เช่น `text-right` ให้หัวคอลัมน์ปฏิบัติการตรงกับปุ่มที่ชิดขวา */
+    headerClassName?: string;
+    /** class เพิ่มที่ `<td>` — เช่น `max-w-50 truncate` สำหรับคอลัมน์ที่ข้อความยาวได้ */
+    cellClassName?: string;
+    /**
+     * ความกว้าง**เป๊ะ** (px) — คนละเรื่องกับ `columnDef.size` ที่ตัวนี้ตีเป็น *ขั้นต่ำ*
+     *
+     * คอลัมน์ปุ่มกับป้ายสถานะต้องการ "อย่าให้กว้างกว่านี้" ไม่ใช่ "อย่างน้อยเท่านี้"
+     * ถ้าใช้ `size` มันจะกินพื้นที่ที่เหลือแล้วบีบคอลัมน์ข้อมูลให้แคบลง
+     */
+    width?: number;
+  }
+}
+
 export type DataTablePagination = {
   /** 0-based page index. */
   pageIndex: number;
@@ -56,6 +80,13 @@ export type DataTablePagination = {
   pageSize: number;
   /** Total rows across all pages (server-side). */
   rowCount: number;
+  /**
+   * จำนวนหน้าที่หลังบ้านบอกมา — ไม่ส่ง = คิดจาก `rowCount / pageSize` เหมือนเดิม
+   *
+   * ต้องมีเพราะ API บางเส้นนับหน้าไม่ตรงกับสูตรนั้น (เช่นตัดแถวที่ผู้ใช้ไม่มีสิทธิ์เห็น
+   * ออกหลังนับ) ⇒ ปุ่ม "หน้าถัดไป" จะเปิด/ปิดผิดจากที่หลังบ้านตั้งใจ
+   */
+  pageCount?: number;
   onPageChange: (pageIndex: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
   pageSizeOptions?: number[];
@@ -179,6 +210,16 @@ export type DataTableProps<TData> = {
   onRowClick?: (row: TData, index: number) => void;
   /** Sticky header inside scrolling container. */
   stickyHeader?: boolean;
+  /**
+   * จำนวนแถวโครงร่างตอน `isLoading`
+   *
+   * ไม่ส่ง = `min(pageSize, 10)` — ต้องมีเพดานเพราะ `pageSize` เป็น 50/100 ได้
+   * แล้วจะวาดแถวปลอมเป็นร้อยแถวซึ่งไม่ได้ช่วยให้ใครอ่านอะไรออก · ตารางที่ไม่มี
+   * pagination เลย (roster ที่แบ่งกลุ่มเอง) ก็ต้องสั่งเองได้เพราะค่าเริ่มต้น 5 ไม่ตรง
+   */
+  skeletonRowCount?: number;
+  /** class ของกล่องที่เลื่อนได้ — ทางเดียวที่จะปลด `max-h` ตั้งต้นออกได้ */
+  containerClassName?: string;
   /** Custom empty state. Rendered when there's no error and 0 rows. */
   empty?: React.ReactNode;
   /**
@@ -259,6 +300,8 @@ function DataTable<TData>({
   getRowId,
   onRowClick,
   stickyHeader,
+  skeletonRowCount,
+  containerClassName,
   empty,
   emptyIcon,
   errorIcon,
@@ -402,7 +445,10 @@ function DataTable<TData>({
   });
 
   const totalPages = pagination
-    ? Math.max(1, Math.ceil(pagination.rowCount / pagination.pageSize))
+    ? Math.max(
+        1,
+        pagination.pageCount ?? Math.ceil(pagination.rowCount / pagination.pageSize),
+      )
     : 1;
   const currentPage = pagination ? pagination.pageIndex + 1 : 1;
 
@@ -426,14 +472,19 @@ function DataTable<TData>({
     >
       {/* `Table` ห่อตัวเองด้วย `overflow-auto` อยู่แล้ว ⇒ การเลื่อนแนวนอนได้มาฟรี
           เมื่อตั้ง `minWidth` — ไม่ต้องเพิ่มกล่อง scroll ซ้อนอีกชั้น */}
-      <div className={cn(stickyHeader && "max-h-[600px] overflow-auto")}>
+      <div className={cn(stickyHeader && "max-h-[600px] overflow-auto", containerClassName)}>
         <Table
           ref={tableRef}
           style={minTableWidth != null ? { minWidth: minTableWidth } : undefined}
         >
           <TableHeader
             className={cn(
-              stickyHeader && "sticky top-0 z-10 bg-bg-default shadow-[0_1px_0_0_#0000001f]",
+              /* 🔴 ห้ามใส่สีพื้นตรงนี้ — `TableHeader` มี `bg-bg-table-header` อยู่ที่ base
+               * แล้ว และ class ที่ส่งเข้ามาทาง `className` ชนะเสมอผ่าน tailwind-merge
+               * ⇒ เคยเขียน `bg-bg-default` ไว้ หัวที่ค้างจึงกลายเป็น**สีขาว** ตอนเลื่อน
+               * ทั้งที่ตอนไม่เลื่อนเป็น #ededf5 · สีพื้นของ base ทึบอยู่แล้วจึงยังบังแถว
+               * ที่เลื่อนผ่านได้ตามหน้าที่ของ sticky */
+              stickyHeader && "sticky top-0 z-10 shadow-[0_1px_0_0_#0000001f]",
             )}
           >
             {table.getHeaderGroups().map((hg) => (
@@ -447,7 +498,10 @@ function DataTable<TData>({
                       key={header.id}
                       /* ตัววัดจับคู่หัวคอลัมน์กับระยะแช่ด้วยค่านี้ — ห้ามถอดออก */
                       data-col-id={header.column.id}
-                      className={pin.className}
+                      className={cn(
+                        pin.className,
+                        header.column.columnDef.meta?.headerClassName,
+                      )}
                       /* 🔴 `size` = ความกว้าง **ขั้นต่ำ** ไม่ใช่ความกว้างเป๊ะ
                        *
                        * ของจริงทั้ง 4 แอปเขียน `minWidth: '200px'` (อย่างน้อยเท่านี้
@@ -457,6 +511,14 @@ function DataTable<TData>({
                       style={{
                         ...(explicitWidths.has(header.column.id)
                           ? { minWidth: explicitWidths.get(header.column.id) }
+                          : null),
+                        /* `meta.width` = กว้างเป๊ะ ⇒ ตั้งทั้ง width และ maxWidth
+                         * ไม่งั้น `table-auto` จะยืดคอลัมน์ตามเนื้อหาอยู่ดี */
+                        ...(header.column.columnDef.meta?.width != null
+                          ? {
+                              width: header.column.columnDef.meta.width,
+                              maxWidth: header.column.columnDef.meta.width,
+                            }
                           : null),
                         ...pin.style,
                       }}
@@ -495,7 +557,7 @@ function DataTable<TData>({
             {isLoading ? (
               <SkeletonRows
                 columnCount={finalColumns.length}
-                rowCount={pagination?.pageSize ?? 5}
+                rowCount={skeletonRowCount ?? Math.min(pagination?.pageSize ?? 5, 10)}
               />
             ) : error ? (
               <TableRow className="hover:bg-transparent">
@@ -617,8 +679,16 @@ function DataRow<TData>({
           <TableCell
             key={cell.id}
             data-col-id={cell.column.id}
-            className={pin.className}
-            style={pin.style}
+            className={cn(pin.className, cell.column.columnDef.meta?.cellClassName)}
+            style={{
+              ...(cell.column.columnDef.meta?.width != null
+                ? {
+                    width: cell.column.columnDef.meta.width,
+                    maxWidth: cell.column.columnDef.meta.width,
+                  }
+                : null),
+              ...pin.style,
+            }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </TableCell>

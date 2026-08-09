@@ -4829,6 +4829,8 @@ function DataTable({
   getRowId,
   onRowClick,
   stickyHeader,
+  skeletonRowCount,
+  containerClassName,
   empty,
   emptyIcon,
   errorIcon,
@@ -4936,7 +4938,10 @@ function DataTable({
     rowCount: pagination?.rowCount,
     getRowId
   });
-  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.rowCount / pagination.pageSize)) : 1;
+  const totalPages = pagination ? Math.max(
+    1,
+    pagination.pageCount ?? Math.ceil(pagination.rowCount / pagination.pageSize)
+  ) : 1;
   const currentPage = pagination ? pagination.pageIndex + 1 : 1;
   const tableRef = React31.useRef(null);
   const renderedIds = table.getVisibleLeafColumns().map((c) => c.id);
@@ -4956,7 +4961,7 @@ function DataTable({
         className
       ),
       children: [
-        /* @__PURE__ */ jsx36("div", { className: cn(stickyHeader && "max-h-[600px] overflow-auto"), children: /* @__PURE__ */ jsxs29(
+        /* @__PURE__ */ jsx36("div", { className: cn(stickyHeader && "max-h-[600px] overflow-auto", containerClassName), children: /* @__PURE__ */ jsxs29(
           Table,
           {
             ref: tableRef,
@@ -4966,7 +4971,12 @@ function DataTable({
                 TableHeader,
                 {
                   className: cn(
-                    stickyHeader && "sticky top-0 z-10 bg-bg-default shadow-[0_1px_0_0_#0000001f]"
+                    /* 🔴 ห้ามใส่สีพื้นตรงนี้ — `TableHeader` มี `bg-bg-table-header` อยู่ที่ base
+                     * แล้ว และ class ที่ส่งเข้ามาทาง `className` ชนะเสมอผ่าน tailwind-merge
+                     * ⇒ เคยเขียน `bg-bg-default` ไว้ หัวที่ค้างจึงกลายเป็น**สีขาว** ตอนเลื่อน
+                     * ทั้งที่ตอนไม่เลื่อนเป็น #ededf5 · สีพื้นของ base ทึบอยู่แล้วจึงยังบังแถว
+                     * ที่เลื่อนผ่านได้ตามหน้าที่ของ sticky */
+                    stickyHeader && "sticky top-0 z-10 shadow-[0_1px_0_0_#0000001f]"
                   ),
                   children: table.getHeaderGroups().map((hg) => /* @__PURE__ */ jsx36(TableRow, { className: "hover:bg-transparent", children: hg.headers.map((header) => {
                     const sortable = header.column.getCanSort();
@@ -4976,9 +4986,18 @@ function DataTable({
                       TableHead,
                       {
                         "data-col-id": header.column.id,
-                        className: pin.className,
+                        className: cn(
+                          pin.className,
+                          header.column.columnDef.meta?.headerClassName
+                        ),
                         style: {
                           ...explicitWidths.has(header.column.id) ? { minWidth: explicitWidths.get(header.column.id) } : null,
+                          /* `meta.width` = กว้างเป๊ะ ⇒ ตั้งทั้ง width และ maxWidth
+                           * ไม่งั้น `table-auto` จะยืดคอลัมน์ตามเนื้อหาอยู่ดี */
+                          ...header.column.columnDef.meta?.width != null ? {
+                            width: header.column.columnDef.meta.width,
+                            maxWidth: header.column.columnDef.meta.width
+                          } : null,
                           ...pin.style
                         },
                         children: header.isPlaceholder ? null : sortable ? /* @__PURE__ */ jsxs29(
@@ -5009,7 +5028,7 @@ function DataTable({
                 SkeletonRows,
                 {
                   columnCount: finalColumns.length,
-                  rowCount: pagination?.pageSize ?? 5
+                  rowCount: skeletonRowCount ?? Math.min(pagination?.pageSize ?? 5, 10)
                 }
               ) : error ? /* @__PURE__ */ jsx36(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx36(TableCell, { colSpan: finalColumns.length, className: "p-0", children: renderError ? renderError({ error, retry: onRetry }) : errorSlot ?? /* ใช้ `ErrorState` ตัวเดียวกับที่แอปใช้ ไม่ประกอบเองในตาราง —
                * ไม่งั้นสถานะผิดพลาดในตารางจะหน้าตาต่างจากที่อื่นในจอเดียวกัน */
@@ -5104,8 +5123,14 @@ function DataRow({
           TableCell,
           {
             "data-col-id": cell.column.id,
-            className: pin.className,
-            style: pin.style,
+            className: cn(pin.className, cell.column.columnDef.meta?.cellClassName),
+            style: {
+              ...cell.column.columnDef.meta?.width != null ? {
+                width: cell.column.columnDef.meta.width,
+                maxWidth: cell.column.columnDef.meta.width
+              } : null,
+              ...pin.style
+            },
             children: flexRender(cell.column.columnDef.cell, cell.getContext())
           },
           cell.id
