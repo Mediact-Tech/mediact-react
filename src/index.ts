@@ -31,6 +31,7 @@ export {
   type SwitchProps,
   type SwitchTrackLabels,
 } from "./ui/Switch";
+export { switchToneClasses, type SwitchTone } from "./ui/toggle-parts";
 export {
   RadioGroup,
   RadioGroupItem,

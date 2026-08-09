@@ -189,11 +189,26 @@ export const toggleAlignClass = (size: ToggleSize) => SIZES[size].align;
  *
  * ⚠️ รางตอนปิดใช้ `gray-200` = `#e5e7eb` ซึ่ง **ตรงกับที่วัดได้เป๊ะ**
  */
+/**
+ * โทนของรางตอนเปิด — แยกออกจากรูปทรงเพื่อให้รางธรรมดากับรางแบบมีคำใช้ชุดเดียวกัน
+ *
+ * ของจริงมีสองความหมายปนกันอยู่: สวิตช์ "เปิด/ปิดการใช้งาน" ที่สื่อผลลัพธ์ (เขียว) กับสวิตช์
+ * ที่เป็นแค่ตัวเลือกในฟอร์ม (ควรเป็นสีกลางของแอป) — ก่อนหน้านี้แอปที่ต้องการอย่างหลังต้อง
+ * ส่งสี hex เข้ามาทับเอง ซึ่งหลุดออกจากชั้น token ทันที
+ */
+export const switchToneClasses = {
+  success: "data-[state=checked]:bg-success-green-primary",
+  info: "data-[state=checked]:bg-info-blue-primary",
+  brand: "data-[state=checked]:bg-brand",
+} as const;
+
+export type SwitchTone = keyof typeof switchToneClasses;
+
 export const switchTrackClasses = cn(
   "peer relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors",
   "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2",
-  "bg-gray-200 data-[state=checked]:bg-success-green-primary",
+  "bg-gray-200",
 );
 
 /**
@@ -229,7 +244,7 @@ export const switchLabeledTrackClasses = cn(
   "group/switch peer relative inline-flex h-6 items-center gap-1 rounded-full px-0.5 transition-colors",
   "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2",
-  "bg-gray-200 data-[state=checked]:bg-success-green-primary",
+  "bg-gray-200",
 );
 
 /** ปุ่มเลื่อนของแบบมีข้อความ — **สลับข้างด้วย `order`** ไม่ใช่ `translate` */

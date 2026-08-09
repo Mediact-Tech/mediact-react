@@ -867,11 +867,16 @@ function ToggleText({ children, description }) {
   ] });
 }
 var toggleAlignClass = (size) => SIZES[size].align;
+var switchToneClasses = {
+  success: "data-[state=checked]:bg-success-green-primary",
+  info: "data-[state=checked]:bg-info-blue-primary",
+  brand: "data-[state=checked]:bg-brand"
+};
 var switchTrackClasses = cn(
   "peer relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors",
   "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2",
-  "bg-gray-200 data-[state=checked]:bg-success-green-primary"
+  "bg-gray-200"
 );
 var switchThumbClasses = cn(
   "pointer-events-none flex size-5 items-center justify-center rounded-full bg-bg-default shadow-md ring-0 transition-transform",
@@ -881,7 +886,7 @@ var switchLabeledTrackClasses = cn(
   "group/switch peer relative inline-flex h-6 items-center gap-1 rounded-full px-0.5 transition-colors",
   "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2",
-  "bg-gray-200 data-[state=checked]:bg-success-green-primary"
+  "bg-gray-200"
 );
 var switchLabeledThumbClasses = cn(
   "pointer-events-none flex size-5 shrink-0 items-center justify-center rounded-full bg-bg-default shadow",
@@ -1069,6 +1074,7 @@ var Switch = React10.forwardRef(function Switch2({
   loading,
   isLoading,
   loadingLabel = "Saving",
+  tone = "success",
   trackLabels,
   disabled,
   ...props
@@ -1078,7 +1084,10 @@ var Switch = React10.forwardRef(function Switch2({
   const hasError = Boolean(error);
   const hasText = label != null || description != null;
   const labeled = trackLabels != null;
-  const trackShape = labeled ? switchLabeledTrackClasses : switchTrackClasses;
+  const trackShape = cn(
+    labeled ? switchLabeledTrackClasses : switchTrackClasses,
+    switchToneClasses[tone]
+  );
   const sw = /* @__PURE__ */ jsxs10(
     RadixSwitch.Root,
     {
@@ -6591,6 +6600,7 @@ export {
   resolveGroups,
   solidButtonVariants,
   statusBadgeVariants,
+  switchToneClasses,
   textVariants,
   toast,
   toneIcon

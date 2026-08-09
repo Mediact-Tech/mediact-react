@@ -301,6 +301,36 @@ declare function checkboxShapeClasses(size?: ToggleSize): string;
  * Medimatch ทำแบบขอบบาง+จุด ซึ่งตรงกับที่ทุกระบบใช้กัน จึงเอาแบบนั้น
  */
 declare function radioShapeClasses(size?: ToggleSize): string;
+/**
+ * รูปทรงรางของสวิตช์ — 44×24 ขอบโปร่ง 2px ปุ่มเลื่อน 20px
+ *
+ * 📐 วัดจาก Portal (ไฟล์เดียวกับ MediHR ทุกไบต์): ราง 44×24 · `border-2` โปร่ง ·
+ * ปุ่ม 20px ⇒ ระยะเลื่อน = 44 − 2×2 − 20 = 20px พอดี (`translate-x-5`)
+ *
+ * 🔴 **"เปิด" เป็นสีเขียว ไม่ใช่สีแบรนด์**
+ * นับของจริงได้ 6 แบบใน 4 แอป และ 5 ใน 6 แบบใช้เขียว:
+ * `#0CB679` (Portal/MediHR) · `#0BB767` (Medimatch VisibilityToggle) ·
+ * `#10b981` (MediHR ตั้งเป็นโทเคนชื่อ `--color-switch-on` เลย) ·
+ * success-green (Portal ProductAccessToggle) — มีแต่ Mediwork MUI ที่ใช้ primary
+ * และไฟล์เดียวในนั้นยัง override เป็นน้ำเงิน `#1565C0`
+ * เหตุผลเชิงความหมายก็ตรงกัน: เปิด/ปิดคือ **สถานะ** ไม่ใช่แบรนด์
+ * — เหตุผลเดียวกับที่ตัวเลขในตารางไม่เปลี่ยนสีตามแอป
+ *
+ * ⚠️ รางตอนปิดใช้ `gray-200` = `#e5e7eb` ซึ่ง **ตรงกับที่วัดได้เป๊ะ**
+ */
+/**
+ * โทนของรางตอนเปิด — แยกออกจากรูปทรงเพื่อให้รางธรรมดากับรางแบบมีคำใช้ชุดเดียวกัน
+ *
+ * ของจริงมีสองความหมายปนกันอยู่: สวิตช์ "เปิด/ปิดการใช้งาน" ที่สื่อผลลัพธ์ (เขียว) กับสวิตช์
+ * ที่เป็นแค่ตัวเลือกในฟอร์ม (ควรเป็นสีกลางของแอป) — ก่อนหน้านี้แอปที่ต้องการอย่างหลังต้อง
+ * ส่งสี hex เข้ามาทับเอง ซึ่งหลุดออกจากชั้น token ทันที
+ */
+declare const switchToneClasses: {
+    readonly success: "data-[state=checked]:bg-success-green-primary";
+    readonly info: "data-[state=checked]:bg-info-blue-primary";
+    readonly brand: "data-[state=checked]:bg-brand";
+};
+type SwitchTone = keyof typeof switchToneClasses;
 
 /** @doc ./toggle.md */
 
@@ -353,6 +383,11 @@ type SwitchProps = Omit<React.ComponentProps<typeof RadixSwitch.Root>, "asChild"
      * ⚠️ ยังส่ง `aria-label` มาด้วยเสมอ ถ้าไม่มี `label` ข้างนอก —
      * คำในรางเป็นแค่ภาพ ไม่ได้ผูกกับ `role="switch"` ให้โดยอัตโนมัติ
      */
+    /**
+     * สีของรางตอนเปิด — `success` (ค่าเริ่มต้น) สื่อ "ใช้งานอยู่" · `info`/`brand` สำหรับสวิตช์
+     * ที่เป็นแค่ตัวเลือกในฟอร์ม ซึ่งไม่ควรอ่านเป็นสถานะสำเร็จ
+     */
+    tone?: SwitchTone;
     trackLabels?: SwitchTrackLabels;
     containerClassName?: string;
 };
@@ -2035,4 +2070,4 @@ declare const DateNavigator: React.ForwardRefExoticComponent<Omit<DateNavigatorP
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, textVariants, toneIcon };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon };

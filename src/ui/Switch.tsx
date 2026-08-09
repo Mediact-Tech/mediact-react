@@ -5,10 +5,12 @@ import { cn } from "../lib/cn";
 import { SkeletonBox } from "../feedback/Skeleton";
 import { Spinner } from "../feedback/Spinner";
 import {
+  type SwitchTone,
   ToggleText,
   switchLabeledThumbClasses,
   switchLabeledTrackClasses,
   switchThumbClasses,
+  switchToneClasses,
   switchTrackClasses,
   switchTrackLabelClasses,
   switchTrackLabelItemClasses,
@@ -50,6 +52,11 @@ export type SwitchProps = Omit<
    * ⚠️ ยังส่ง `aria-label` มาด้วยเสมอ ถ้าไม่มี `label` ข้างนอก —
    * คำในรางเป็นแค่ภาพ ไม่ได้ผูกกับ `role="switch"` ให้โดยอัตโนมัติ
    */
+  /**
+   * สีของรางตอนเปิด — `success` (ค่าเริ่มต้น) สื่อ "ใช้งานอยู่" · `info`/`brand` สำหรับสวิตช์
+   * ที่เป็นแค่ตัวเลือกในฟอร์ม ซึ่งไม่ควรอ่านเป็นสถานะสำเร็จ
+   */
+  tone?: SwitchTone;
   trackLabels?: SwitchTrackLabels;
   containerClassName?: string;
 };
@@ -66,6 +73,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function Switch(
     loading,
     isLoading,
     loadingLabel = "Saving",
+    tone = "success",
     trackLabels,
     disabled,
     ...props
@@ -78,7 +86,10 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function Switch(
   const hasText = label != null || description != null;
   const labeled = trackLabels != null;
 
-  const trackShape = labeled ? switchLabeledTrackClasses : switchTrackClasses;
+  const trackShape = cn(
+    labeled ? switchLabeledTrackClasses : switchTrackClasses,
+    switchToneClasses[tone],
+  );
 
   const sw = (
     <RadixSwitch.Root
