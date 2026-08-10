@@ -18,7 +18,10 @@ const headingVariants = cva("text-balance", {
       bold: "font-bold",
     },
     tone: {
-      default: "text-text-primary",
+      /* 🔴 `default` = **สีหัวข้อปกติ** ไม่ใช่ `text-text-primary` ซึ่ง `theme.css`
+       * alias ไป `--color-brand` ⇒ หัวข้อทุกอันที่ไม่ได้ส่ง tone จะเปลี่ยนสีตามแอป
+       * ชี้ค่าเดียวกับ `heading` โดยตั้งใจ · อยากได้สีแบรนด์ใช้ `tone="brand"` */
+      default: "text-text-heading",
       heading: "text-text-heading",
       brand: "text-brand",
       inherit: "",

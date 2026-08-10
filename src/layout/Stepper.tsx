@@ -93,7 +93,10 @@ function Stepper({
                     "text-body-sm",
                     status === "todo"
                       ? "text-text-tertiary font-normal"
-                      : "text-text-primary font-semibold",
+                      /* 🔴 สีเนื้อความปกติ — `text-text-primary` alias ไป `--color-brand`
+                       * ⇒ ป้ายขั้นตอนเปลี่ยนสีตามแอป · ความต่างจากขั้นที่ยังไม่ถึง
+                       * มาจาก **น้ำหนัก** กับเทาที่อ่อนกว่า ไม่ต้องพึ่งสีแบรนด์ */
+                      : "text-text-body font-semibold",
                   )}
                 >
                   {step.label}
@@ -113,7 +116,10 @@ function Stepper({
                     "text-body-sm",
                     status === "todo"
                       ? "text-text-tertiary font-normal"
-                      : "text-text-primary font-semibold",
+                      /* 🔴 สีเนื้อความปกติ — `text-text-primary` alias ไป `--color-brand`
+                       * ⇒ ป้ายขั้นตอนเปลี่ยนสีตามแอป · ความต่างจากขั้นที่ยังไม่ถึง
+                       * มาจาก **น้ำหนัก** กับเทาที่อ่อนกว่า ไม่ต้องพึ่งสีแบรนด์ */
+                      : "text-text-body font-semibold",
                   )}
                 >
                   {step.label}

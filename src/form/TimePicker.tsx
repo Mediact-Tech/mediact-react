@@ -471,7 +471,11 @@ function TimeColumn<T extends string | number>({
                 ? "cursor-not-allowed text-text-tertiary/40"
                 : isSelected
                   ? "bg-brand-active text-white"
-                  : "text-text-primary hover:bg-brand-subtle",
+                  /* 🔴 สีเนื้อความปกติ — `text-text-primary` alias ไป `--color-brand`
+                   * ⇒ รายการเวลาที่ยังไม่ถูกเลือกจะเป็นสีแบรนด์ อ่านเหมือนถูกเลือกไว้แล้ว
+                   * ตัวที่เลือกจริงคือแถบทึบสีแบรนด์ตัวอักษรขาวในกิ่งด้านบน
+                   * (ห้ามเขียนชื่อคลาสสีขาวตรง ๆ ในคอมเมนต์ — `tokens.guard` สแกนคอมเมนต์ด้วย) */
+                  : "text-text-body hover:bg-brand-subtle",
             )}
           >
             {formatLabel

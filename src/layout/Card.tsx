@@ -47,7 +47,9 @@ const CardTitle = ({
   ...props
 }: React.ComponentProps<"h3">) => (
   <h3
-    className={cn("text-body-md font-semibold text-text-primary", className)}
+    /* 🔴 `text-text-heading` ไม่ใช่ `text-text-primary` ซึ่ง `theme.css` alias ไป
+     * `--color-brand` ⇒ หัวการ์ดทุกใบเปลี่ยนสีตามแอป (Mediwork ได้มิ้นต์ 1.93:1) */
+    className={cn("text-body-md font-semibold text-text-heading", className)}
     {...props}
   />
 );

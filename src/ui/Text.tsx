@@ -24,7 +24,15 @@ const textVariants = cva("", {
       bold: "font-bold",
     },
     tone: {
-      default: "text-text-primary",
+      /* 🔴 `default` = **สีเนื้อความปกติ** ไม่ใช่ `text-text-primary`
+       *
+       * ใน `theme.css` (ชั้นที่ DS ยังกินอยู่) `--color-text-primary` ถูก alias ไปที่
+       * `--color-brand` ⇒ `<Text>` ที่ไม่ได้ส่ง tone มา — ซึ่งคือ **ส่วนใหญ่ของทุกจอ** —
+       * จะได้ตัวอักษรสีแบรนด์ตามแอป (MediHR คราม · Mediwork มิ้นต์ 1.93:1 อ่านไม่ออก)
+       *
+       * ตอนนี้ชี้ค่าเดียวกับ `body` โดยตั้งใจ: "ไม่เลือก tone = ได้สีเนื้อความ"
+       * ใครอยากได้สีแบรนด์จริง ๆ ยังมี `tone="brand"` ให้เรียกตรง ๆ อยู่แล้ว */
+      default: "text-text-body",
       body: "text-text-body",
       muted: "text-text-tertiary",
       disabled: "text-text-disabled",
