@@ -33,11 +33,12 @@ describe("สีไม่ตามแบรนด์", () => {
     expect(classes).not.toMatch(/(?<![\w-])(hover:)?text-text-primary(?![\w-])/);
   });
 
-  it("หน้าปัจจุบันเป็น text-heading คงที่ + หนา", () => {
+  /* หน้าปัจจุบันใช้ **สีตัวหนังสือปกติ** — ลำดับความสำคัญมาจากน้ำหนัก ไม่ใช่สี */
+  it("หน้าปัจจุบันเป็น text-body คงที่ + หนา", () => {
     render(<Breadcrumb items={items} />);
     const current = screen.getByText("ตั้งค่าตำแหน่ง");
     expect(current).toHaveAttribute("aria-current", "page");
-    expect(current.className).toContain("text-text-heading");
+    expect(current.className).toContain("text-text-body");
     expect(current.className).toContain("font-semibold");
   });
 

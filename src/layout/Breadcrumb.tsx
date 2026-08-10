@@ -72,9 +72,11 @@ function Breadcrumb({
            * และถ้าปล่อยไว้ บน Mediwork จะได้มิ้นต์บนขาว **1.93:1** อ่านไม่ออก —
            * กับดักเดียวกับที่เมนูย่อยของ `Sidebar` และตัวหนังสือใน `DataTable` เจอมาแล้ว
            *
-           * `text-text-heading` (#3f454a) คือ token ที่ DS เลือกไว้แล้วสำหรับเคสนี้เป๊ะ ๆ
-           * — ป้ายบนหัวหน้าที่ห้ามตามสีแบรนด์ (ชื่อโรงพยาบาลใน `TopNavBrand`) */
-          const currentClass = "font-semibold text-text-heading";
+           * ใช้ `text-text-body` — **สีตัวหนังสือปกติ** ของระบบ (`semantic.css` เขียนกำกับ
+           * ไว้ว่า "เนื้อความ — ใช้เยอะสุด") ตรงกับที่ Portal ใช้ในแถบนำทางจริงพอดี
+           * ลำดับความสำคัญมาจาก **น้ำหนักตัวอักษร** ไม่ใช่สี — ของ Portal ก็พึ่งตำแหน่ง
+           * กับตัวคั่นเป็นหลัก ไม่ได้ย้อมสีหน้าปัจจุบันให้ต่างออกไป */
+          const currentClass = "font-semibold text-text-body";
           const linkClass =
             "text-text-tertiary transition-colors hover:text-text-black";
           return (
