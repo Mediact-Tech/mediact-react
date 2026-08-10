@@ -122,7 +122,11 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function Switch(
           <span
             className={cn(
               switchTrackLabelItemClasses,
-              "text-text-black group-data-[state=unchecked]/switch:invisible",
+              /* 🔴 ตัวอักษร **ขาว** — คำว่า "เปิดใช้งาน" อยู่บนรางสีเขียวทึบ (#10b981)
+               * ของเดิม `text-text-black` อ่านได้ยากมากบนพื้นเข้ม (ดีไซน์ 544-16678 เป็นขาว)
+               * ใช้ token `text-inverse` (= #fff · วัดยืนยันในแอปแล้ว) ไม่ใช่ `text-white`
+               * เพราะ `white` เป็นสีดิบที่ด่าน `tokens.guard.test.ts` ตรึงจำนวนไว้ */
+              "text-text-inverse group-data-[state=unchecked]/switch:invisible",
             )}
           >
             {trackLabels.on}

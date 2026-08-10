@@ -94,6 +94,11 @@ export {
   type UserMenuItem,
 } from "./navigation/TopNav";
 export {
+  LanguageSwitcher,
+  type LanguageSwitcherProps,
+  type LanguageOption,
+} from "./navigation/LanguageSwitcher";
+export {
   Sidebar,
   SidebarItem,
   SidebarGroup,
@@ -124,6 +129,12 @@ export {
   type TimePickerProps,
   type TimeValue,
 } from "./form/TimePicker";
+/* ⚠️ คนละตัวกับ `Stepper` ใน `layout/` — ตัวนั้นคือแถบบอกขั้นตอนของฟอร์มหลายหน้า */
+export {
+  NumberStepper,
+  numberStepperVariants,
+  type NumberStepperProps,
+} from "./form/NumberStepper";
 export {
   ComboBox,
   type ComboBoxProps,

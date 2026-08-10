@@ -123,7 +123,9 @@ function DatePicker({
             aria-invalid={hasError || undefined}
             className={cn(
               fieldShapeClasses({ hasError, size }),
-              "flex items-center text-left pr-9",
+              /* `cursor-pointer` — ตัวเปิดเป็นปุ่มที่กดแล้วปฏิทินโผล่ ไม่ใช่ช่องพิมพ์
+               * เคอร์เซอร์ลูกศรทำให้อ่านว่าเป็นข้อความอ่านอย่างเดียว (คู่เดียวกับ `Select`) */
+              "flex cursor-pointer items-center text-left pr-9",
               !display && "text-text-tertiary",
               className,
             )}
@@ -136,6 +138,8 @@ function DatePicker({
         <PopoverContent
           align="start"
           sideOffset={8}
+          /* สิทธิ์รับ pointer ในโมดัลย้ายไปอยู่ที่ `PopoverContent` ของ DS แล้ว (เหตุผลเต็มอยู่ที่นั่น)
+           * — ที่นี่เหลือแค่รูปทรงของกล่องปฏิทิน */
           className="w-auto rounded-2xl p-0 pb-4"
         >
           <Calendar

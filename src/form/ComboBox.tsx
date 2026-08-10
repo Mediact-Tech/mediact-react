@@ -102,6 +102,16 @@ type ComboBoxCommonProps<V extends string = string> = {
   ) => React.ReactNode;
   disabled?: boolean;
   size?: FieldSize;
+  /**
+   * จองบรรทัดข้อความใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+   *
+   * 🔴 มีไว้เพราะ **ถ้าจองไว้ตลอด ช่องนี้จะเอาไปวางเรียงกับอะไรไม่ได้เลย** — กล่องนอกสูงกว่า
+   * ตัวช่องอยู่หนึ่งบรรทัด ⇒ `items-end` ยึดขอบล่างของ *กล่องนอก* ทำให้ตัวช่องลอยสูงกว่า
+   * หัวข้อ/ปุ่มข้าง ๆ (วัดจริงบนหน้าตั้งค่าสิทธิ์ของ Portal: เหลื่อมกัน 20px)
+   * ชื่อและค่าเริ่มต้นเดียวกับ `Input` เพื่อให้สองตัวนี้สลับกันได้โดยไม่ต้องจำข้อยกเว้น
+   * @default true
+   */
+  reserveMessageSpace?: boolean;
   className?: string;
   containerClassName?: string;
 };
@@ -159,6 +169,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
     hideLabel,
     alwaysFloatLabel,
     placeholder,
+    reserveMessageSpace,
     searchPlaceholder = "Search...",
     emptyText = "No results found.",
     options = [],
@@ -285,6 +296,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
         required={required}
         hideLabel={hideLabel}
         size={size}
+        reserveMessageSpace={reserveMessageSpace}
         containerClassName={containerClassName}
       />
     );
@@ -304,6 +316,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
       floating={floating}
       focused={open}
       hasError={hasError}
+      reserveMessageSpace={reserveMessageSpace}
       containerClassName={containerClassName}
       rightAdornment={<ChevronsUpDown />}
     >
@@ -335,7 +348,8 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
               className={cn(
                 "flex w-full cursor-pointer items-center gap-1.5 rounded-sm border bg-bg-default px-3 py-1.5 pr-9 font-medium transition-colors",
                 "focus:outline-none focus:ring-1",
-                "aria-disabled:cursor-not-allowed aria-disabled:bg-bg-subtle",
+                /* พื้นตอนปิดใช้งาน — ค่าเดียวกับ `fieldShapeClasses` (เหตุผลอยู่ที่นั่น) */
+                "aria-disabled:cursor-not-allowed aria-disabled:bg-bg-surface",
                 minHeights[size],
                 hasError
                   ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40"

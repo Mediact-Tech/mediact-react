@@ -153,7 +153,7 @@ type FieldSkeletonProps = Pick<FloatingFieldShellProps, "label" | "hint" | "requ
     /** class รูปทรงของช่อง — ปกติคือ `fieldShapeClasses(...)` ตัวเดียวกับที่ component ใช้ */
     shape?: string;
 };
-declare function FieldSkeleton({ size, shape, ...shellProps }: FieldSkeletonProps): react_jsx_runtime.JSX.Element;
+declare function FieldSkeleton({ size, shape, containerClassName, ...shellProps }: FieldSkeletonProps): react_jsx_runtime.JSX.Element;
 /**
  * Field shape classes shared by all interactive elements (input/textarea/button).
  * Apply to the inner element so border/focus ring/error states stay consistent.
@@ -629,7 +629,11 @@ type IconButtonProps = Omit<React.ComponentProps<"button">, "aria-label"> & Vari
      * to fall back on. Describe the action, e.g. "Edit", "Delete row".
      */
     "aria-label": string;
-    /** Icon to render. Ignored when `asChild` — pass your own child element instead. */
+    /**
+     * Icon to render. Ignored when `asChild` — pass your own child element instead.
+     *
+     * ส่งเป็น `children` ก็ได้ (`<IconButton><Pencil/></IconButton>`) — prop นี้ชนะเมื่อส่งมาทั้งคู่
+     */
     icon?: React.ReactNode;
     asChild?: boolean;
     /** ผู้ใช้กดแล้วกำลังทำงาน — แสดงสปินเนอร์ ปุ่มยังอยู่ที่เดิม */
@@ -840,6 +844,43 @@ type UserMenuProps = {
  * a bottom row that pairs an optional language switcher with a red Log Out button.
  */
 declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): react_jsx_runtime.JSX.Element;
+
+type LanguageOption = {
+    /** ค่าที่คืนกลับตอนเลือก — โดยมากคือรหัสภาษาของ i18n (`th-TH` · `en-EN`) */
+    value: string;
+    /**
+     * ชื่อภาษา **ในภาษานั้นเอง** — "ไทย" ไม่ใช่ "Thai"
+     *
+     * คนที่ต้องใช้เมนูนี้คือคนที่อ่านภาษาปัจจุบันไม่ออก การแปลชื่อภาษาตามภาษาที่
+     * เปิดอยู่จึงทำให้เขาหาบรรทัดของตัวเองไม่เจอ
+     */
+    label: string;
+};
+type LanguageSwitcherProps = {
+    languages: LanguageOption[];
+    /** รหัสภาษาที่ใช้อยู่ — ต้องตรงกับ `value` สักตัวในรายการ */
+    value?: string;
+    onChange?: (value: string) => void;
+    /** `aria-label` ของปุ่ม — DS ไม่มี i18n แอปส่งคำแปลมาเอง */
+    label?: string;
+    align?: "start" | "center" | "end";
+    className?: string;
+};
+/**
+ * ปุ่มเปลี่ยนภาษา — เมนูหล่นลงที่เลือกได้ในคลิกเดียว
+ *
+ * ใช้ `DropdownMenu` แบบ **radio** ไม่ใช่ `Select` โดยตั้งใจ: นี่ไม่ใช่ช่องกรอกในฟอร์ม
+ * (ไม่มีป้ายกำกับ ไม่ถูกส่งไปกับฟอร์ม ไม่มีสถานะผิด) แต่เป็นคำสั่งที่มีผลทันทีที่กด
+ * · `role="menuitemradio"` + `aria-checked` บอกโปรแกรมอ่านหน้าจอว่าตอนนี้อยู่ภาษาไหน
+ *
+ * 🔴 ถ้า `value` ไม่ตรงกับตัวไหนในรายการ ปุ่มจะโชว์แต่ลูกโลกเปล่า ๆ — **ตั้งใจ**
+ * เดาเป็นตัวแรกในรายการคือการบอกผู้ใช้ว่ากำลังอยู่ภาษาที่ไม่ได้อยู่จริง
+ * (แอปที่ i18n มี fallback ของตัวเองอยู่แล้ว ให้ normalize ก่อนส่งมา)
+ */
+declare function LanguageSwitcher({ languages, value, onChange, label, align, className, }: LanguageSwitcherProps): react_jsx_runtime.JSX.Element;
+declare namespace LanguageSwitcher {
+    var displayName: string;
+}
 
 /**
  * อ่านสถานะราง **จากข้างใน** `<Sidebar>` — สำหรับ `header`/`footer` ที่ต้องเปลี่ยนตอนยุบ
@@ -1077,6 +1118,12 @@ type TimePickerProps = {
     error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
+    /**
+     * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+     * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อช่องนี้อยู่ในแถวที่ต้องเรียงกับ
+     * ของอื่น (สวิตช์ · ปุ่ม) ที่ไม่มีที่ว่างนั้น แล้วกรอบที่ตาเห็นจะลอยไม่ตรงกัน
+     */
+    reserveMessageSpace?: boolean;
     alwaysFloatLabel?: boolean;
     value?: TimeValue | null;
     defaultValue?: TimeValue;
@@ -1109,7 +1156,55 @@ type TimePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function TimePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
+declare function TimePicker({ id, label, hint, error, required, hideLabel, reserveMessageSpace, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
+
+declare const numberStepperVariants: (props?: ({
+    invalid?: boolean | null | undefined;
+    fullWidth?: boolean | null | undefined;
+    disabled?: boolean | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type NumberStepperProps = Omit<React.ComponentProps<"input">, "value" | "onChange" | "type" | "size"> & Pick<VariantProps<typeof numberStepperVariants>, "fullWidth"> & {
+    /**
+     * ค่าเป็น **string ไม่ใช่ number** โดยตั้งใจ
+     *
+     * สิ่งที่พิมพ์ค้างไว้อย่าง `"2."` หรือ `""` ต้องรอดผ่านการ render ไปได้ ถ้าแปลงเป็นตัวเลข
+     * ทุกครั้งที่พิมพ์ จุดทศนิยมจะถูกกลืนหายทันทีที่กด และช่องว่างจะเด้งกลับเป็น 0
+     * ⇒ พิมพ์เองไม่ผ่านตัวแปลง มีแต่ปุ่ม −/+ เท่านั้นที่ผลิตตัวเลข
+     */
+    value: string;
+    onChange: (raw: string) => void;
+    /** ค่าที่ปุ่ม −/+ บวก/ลบต่อครั้ง */
+    step?: number;
+    min: number;
+    max: number;
+    /**
+     * จำนวนตำแหน่งทศนิยมที่ปุ่มควรผลิต
+     *
+     * ต้องมี เพราะบวกทศนิยมแบบ floating point ด้วย step 0.1 จะรั่วเป็น 2.5000000004
+     * ซึ่งเป็นค่าที่ช่องนี้ไม่มีสิทธิ์มี
+     */
+    precision?: number;
+    invalid?: boolean;
+    /** `aria-label` ของปุ่มสองข้าง — DS ไม่มี i18n แอปส่งคำแปลมาเอง */
+    labels?: {
+        decrease: string;
+        increase: string;
+    };
+    className?: string;
+    inputClassName?: string;
+};
+/**
+ * ช่องกรอกตัวเลขที่มีปุ่ม − / + ประกบสองข้าง
+ *
+ * ปุ่มมีไว้สำหรับกรณีปกติ — ปรับทีละขั้นจากค่าที่เห็นอยู่ · ส่วนช่องพิมพ์มีไว้สำหรับกรณีที่ปุ่มผิดที่
+ * คือค่าที่ห่างจากค่าปัจจุบันมาก (กด 28 ครั้งไม่ใช่การกรอกข้อมูล) · ต้องมีทั้งคู่
+ *
+ * ใช้ `type="text"` ไม่ใช่ `type="number"` โดยตั้งใจ: number รับ `"1e3"` · ปล่อยให้เบราว์เซอร์
+ * ตีความค่าที่พิมพ์ค้างเอง · และกลืน scroll wheel ไปเปลี่ยนค่าโดยที่ผู้ใช้แค่เลื่อนหน้าจอ
+ *
+ * ⚠️ อย่าสับสนกับ `Stepper` ใน `layout/` — ตัวนั้นคือแถบบอกขั้นตอนของฟอร์มหลายหน้า
+ */
+declare const NumberStepper: React.ForwardRefExoticComponent<Omit<NumberStepperProps, "ref"> & React.RefAttributes<HTMLInputElement>>;
 
 /** คืนชื่อกลุ่มของรายการหนึ่ง · คืน `null`/`undefined` = ไม่เข้ากลุ่มไหน */
 type GroupBy<T> = (item: T) => string | null | undefined;
@@ -1201,6 +1296,16 @@ type ComboBoxCommonProps<V extends string = string> = {
     renderOption?: (option: ComboBoxOption<V>, state: OptionRowState) => React.ReactNode;
     disabled?: boolean;
     size?: FieldSize;
+    /**
+     * จองบรรทัดข้อความใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+     *
+     * 🔴 มีไว้เพราะ **ถ้าจองไว้ตลอด ช่องนี้จะเอาไปวางเรียงกับอะไรไม่ได้เลย** — กล่องนอกสูงกว่า
+     * ตัวช่องอยู่หนึ่งบรรทัด ⇒ `items-end` ยึดขอบล่างของ *กล่องนอก* ทำให้ตัวช่องลอยสูงกว่า
+     * หัวข้อ/ปุ่มข้าง ๆ (วัดจริงบนหน้าตั้งค่าสิทธิ์ของ Portal: เหลื่อมกัน 20px)
+     * ชื่อและค่าเริ่มต้นเดียวกับ `Input` เพื่อให้สองตัวนี้สลับกันได้โดยไม่ต้องจำข้อยกเว้น
+     * @default true
+     */
+    reserveMessageSpace?: boolean;
     className?: string;
     containerClassName?: string;
 };
@@ -1743,11 +1848,19 @@ type StepperProps = {
     /** Zero-based index of the current (active) step. Steps before are "done". */
     current: number;
     orientation?: "horizontal" | "vertical";
+    /**
+     * เส้นเชื่อมระหว่างขั้น (แนวนอนเท่านั้น)
+     *
+     * `fill` — ยืดเต็มความกว้างที่มี ขั้นตอนกระจายเต็มแถว (ค่าเริ่มต้น)
+     * `fixed` — เส้นสั้นคงที่ แล้วจัดทั้งแถบไว้กลาง · ใช้เมื่อ stepper อยู่ในโมดัลหรือกล่องแคบ
+     *           ที่การยืดเต็มทำให้ป้ายลอยห่างกันจนอ่านเป็นกลุ่มเดียวไม่ได้
+     */
+    connector?: "fill" | "fixed";
     className?: string;
-    /** Allow click on completed/active steps to navigate. */
+    /** Allow click on completed steps to navigate. */
     onStepClick?: (index: number) => void;
 };
-declare function Stepper({ steps, current, orientation, className, onStepClick, }: StepperProps): react_jsx_runtime.JSX.Element;
+declare function Stepper({ steps, current, orientation, connector, className, onStepClick, }: StepperProps): react_jsx_runtime.JSX.Element;
 
 type SkeletonProps = React.ComponentProps<"div"> & {
     /** Shape preset. `text` defaults to a 1em-height bar. `circle` is square + rounded-full. */
@@ -2143,4 +2256,4 @@ declare const DateNavigator: React.ForwardRefExoticComponent<Omit<DateNavigatorP
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };

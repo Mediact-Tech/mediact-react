@@ -128,7 +128,13 @@ export function FloatingFieldShell({
             id={fieldLabelId(htmlFor)}
             htmlFor={htmlFor}
             className={cn(
-              "pointer-events-none absolute truncate transition-all duration-150 ease-out",
+              /* 🔴 `z-10` — ตอนเป็นโครงร่าง (`FieldSkeleton`) กล่องเทาใช้ `animate-pulse`
+               * ซึ่งเป็นแอนิเมชัน opacity ⇒ มันสร้าง stacking context ของตัวเอง แล้ว
+               * ทับป้ายกำกับที่วางมาก่อนหน้าในลำดับ DOM
+               * ผลที่เห็นคือป้ายโผล่มาแค่เสี้ยวบนสุด ที่เหลือจมอยู่ใต้กล่องเทา —
+               * อ่านเป็น "ตัวหนังสือขาด" ไม่ใช่ป้ายกำกับ (ยืนยันด้วยภาพซูม 2026-08-10)
+               * ป้ายมี `pointer-events-none` อยู่แล้ว การยกชั้นจึงไม่บังการคลิกของช่อง */
+              "pointer-events-none absolute z-10 truncate transition-all duration-150 ease-out",
               "max-w-[calc(100%-1.5rem)]",
               floating
                 ? cn(
@@ -223,11 +229,17 @@ export type FieldSkeletonProps = Pick<
 export function FieldSkeleton({
   size = "md",
   shape,
+  containerClassName,
   ...shellProps
 }: FieldSkeletonProps) {
   return (
     <FloatingFieldShell
       {...shellProps}
+      /* 🔴 ป้ายกำกับตอนโหลด **ไม่มีพื้นขาว** — พื้นขาวของป้ายมีหน้าที่เดียวคือเจาะ
+       * เส้นขอบของช่องให้ขาดตรงที่ป้ายทับ แต่โครงร่างตั้ง `border-transparent`
+       * ไว้อยู่แล้ว ไม่มีเส้นให้เจาะ ⇒ เหลือแต่ผลข้างเคียง: แผ่นขาวปาดเข้าไปในกล่องเทา
+       * เห็นเป็นรอยแหว่ง (ยืนยันด้วยภาพซูม 2026-08-10) */
+      containerClassName={cn("[&_label]:bg-transparent", containerClassName)}
       size={size}
       /* ป้ายลอยขึ้นตลอดตอนโหลด — ถ้าปล่อยให้อยู่ตำแหน่งพัก มันจะทับโครงร่างเทา */
       floating
@@ -257,7 +269,12 @@ export function fieldShapeClasses({
   return [
     "w-full rounded-sm border bg-bg-default px-3 font-medium transition-colors",
     "focus:outline-none focus:ring-1",
-    "disabled:cursor-not-allowed disabled:bg-bg-subtle",
+    /* 🔴 `bg-bg-surface` (#f3f4f6) ไม่ใช่ `bg-bg-subtle` (#fbfbfd) — ของเดิมต่างจากพื้นขาว
+     * ของช่องปกติแค่ **1.5%** ⇒ ช่องที่แก้ไม่ได้ดูเหมือนช่องที่แก้ได้ทุกประการ ผู้ใช้จะรู้
+     * ก็ต่อเมื่อคลิกแล้วพิมพ์ไม่ได้ · จอ "ข้อมูลองค์กร" มี 9 ช่องที่อ่านอย่างเดียวถาวร
+     * เรียงติดกัน จึงเห็นปัญหานี้ชัดที่สุด (ดีไซน์ Figma 715-15581 วาดเป็นเทา #f0f0f0
+     * — ห่างจาก token นี้ 3 หน่วย มองด้วยตาไม่ออก) */
+    "disabled:cursor-not-allowed disabled:bg-bg-surface",
     heights[size],
     hasError
       ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40"

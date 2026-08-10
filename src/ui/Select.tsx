@@ -207,13 +207,27 @@ function Select<V extends string = string>({
           aria-invalid={hasError || undefined}
           className={cn(
             fieldShapeClasses({ hasError, size }),
-            "flex items-center justify-between gap-2 text-left",
+            /* `cursor-pointer` — ตัวเปิดเป็นปุ่มที่กดแล้วมีเมนูโผล่ ไม่ใช่ช่องพิมพ์
+             * เคอร์เซอร์ลูกศรทำให้ผู้ใช้อ่านว่าเป็นข้อความอ่านอย่างเดียว
+             * (`disabled:` ของ shell คุมเคสปิดใช้งานไว้แล้ว) */
+            "flex cursor-pointer items-center justify-between gap-2 text-left",
             clearable ? "pr-14" : "pr-9",
             "data-[placeholder]:text-text-tertiary",
             className,
           )}
         >
-          <RadixSelect.Value placeholder={floating ? placeholder ?? "" : ""} />
+          {/* 🔴 ค่าที่เลือกเป็นข้อความจากข้อมูลจริง จึงยาวเกินช่องได้เสมอ (ชื่อแผนก/หน่วยงาน
+            * ของโรงพยาบาลจริงยาวกว่าที่ mock ไว้ทุกที) · ถ้าไม่ตัด ข้อความจะล้นทะลุกรอบปุ่ม
+            * ไปทับหัวลูกศร — `<button>` ไม่ตัดเนื้อหาให้เองเหมือน `<input>`
+            *
+            * ⚠️ ต้องห่อสแปนของเราเอง **ใส่ `className` ให้ `RadixSelect.Value` ตรง ๆ ไม่ได้**
+            * — Radix รุ่นนี้ไม่ส่ง `className` ต่อ มันวาด `<span style="pointer-events:none">`
+            * ของมันเองแล้วทิ้งคลาสไป (พิสูจน์ด้วยการ dump DOM: สแปนนั้นไม่มี class เลย)
+            * ⚠️ `min-w-0` สำคัญพอ ๆ กับ `truncate` — flex item มี `min-width:auto` เป็นค่าตั้งต้น
+            * ซึ่งห้ามมันหดต่ำกว่าความกว้างเนื้อหา ⇒ `truncate` เฉย ๆ จะไม่มีผล */}
+          <span className="min-w-0 truncate">
+            <RadixSelect.Value placeholder={floating ? placeholder ?? "" : ""} />
+          </span>
         </RadixSelect.Trigger>
         <RadixSelect.Portal>
           <RadixSelect.Content

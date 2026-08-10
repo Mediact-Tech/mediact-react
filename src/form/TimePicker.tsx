@@ -14,6 +14,12 @@ export type TimePickerProps = {
   error?: React.ReactNode;
   required?: boolean;
   hideLabel?: boolean;
+  /**
+   * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+   * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อช่องนี้อยู่ในแถวที่ต้องเรียงกับ
+   * ของอื่น (สวิตช์ · ปุ่ม) ที่ไม่มีที่ว่างนั้น แล้วกรอบที่ตาเห็นจะลอยไม่ตรงกัน
+   */
+  reserveMessageSpace?: boolean;
   alwaysFloatLabel?: boolean;
   value?: TimeValue | null;
   defaultValue?: TimeValue;
@@ -117,6 +123,7 @@ function TimePicker({
   error,
   required,
   hideLabel,
+  reserveMessageSpace,
   alwaysFloatLabel = true,
   value,
   defaultValue,
@@ -297,6 +304,7 @@ function TimePicker({
       error={error}
       required={required}
       hideLabel={hideLabel}
+      reserveMessageSpace={reserveMessageSpace}
       htmlFor={inputId}
       size={size}
       floating={floating}
@@ -359,9 +367,17 @@ function TimePicker({
     >
       <div
         className={cn(
-          "flex w-full items-center gap-1 rounded-sm border bg-white pl-3 pr-3 transition-colors",
+          /* 🔴 `pr-9` ไม่ใช่ `pr-3` — ปุ่มนาฬิกาถูกวางเป็น `absolute right-3` โดย shell
+           * (ไอคอน 16px กินช่วง 12–28px จากขอบขวา) ถ้าเว้นขวาแค่ 12 **ตัวเลขนาทีจะอยู่
+           * ใต้ปุ่มพอดี** อ่านไม่ออก และไม่มีอะไรฟ้อง — ไม่มี type error ไม่มี warning
+           * (เจอของจริงในโมดัล "เพิ่มเวลาทำงาน" ตอนช่องกว้าง ~106px)
+           * แก้ที่ระยะเว้น ไม่ใช่ตั้ง `min-width` เพราะ min-width แค่ทำให้ช่องกว้างพอ
+           * "โดยบังเอิญ" แล้วพังอีกทันทีที่ใครใส่ไอคอนที่ใหญ่กว่าเดิม */
+          "flex w-full items-center gap-1 rounded-sm border bg-white pl-3 pr-9 transition-colors",
           "focus-within:outline-none focus-within:ring-1",
-          disabled && "cursor-not-allowed bg-gray-50",
+          /* พื้นตอนปิดใช้งาน — ค่าเดียวกับ `fieldShapeClasses` (ของเดิม `gray-50` เป็นสีดิบ
+           * และจางกว่าช่องอื่นในฟอร์มเดียวกัน) */
+          disabled && "cursor-not-allowed bg-bg-surface",
           heights[size],
           hasError
             ? "border-cherry-red-600 focus-within:border-cherry-red-600 focus-within:ring-cherry-red-600/40"

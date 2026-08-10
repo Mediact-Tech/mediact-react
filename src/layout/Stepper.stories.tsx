@@ -32,3 +32,27 @@ export const FirstStep: Story = {
 export const Complete: Story = {
   args: { steps, current: 4, orientation: "horizontal" },
 };
+
+/**
+ * เส้นเชื่อมความยาวคงที่ + จัดทั้งแถบไว้กลาง — รูปแบบที่โมดัลหลายขั้นตอนใช้
+ * (MediHR "เพิ่มบุคลากร") การยืดเต็มความกว้างในกล่องแคบทำให้ป้ายลอยห่างจนอ่านเป็นกลุ่มเดียวไม่ได้
+ */
+export const FixedConnector: Story = {
+  args: {
+    steps: [{ label: "ข้อมูลส่วนตัว" }, { label: "การจ้างงาน" }, { label: "เงินเดือนและค่าล่วงเวลา" }],
+    current: 1,
+    orientation: "horizontal",
+    connector: "fixed",
+  },
+};
+
+/** กดย้อนได้เฉพาะขั้นที่ทำเสร็จแล้ว — ขั้นที่กำลังทำอยู่และขั้นข้างหน้ากดไม่ได้ */
+export const Clickable: Story = {
+  args: {
+    steps,
+    current: 2,
+    orientation: "horizontal",
+    connector: "fixed",
+    onStepClick: (index: number) => console.log("go to step", index),
+  },
+};

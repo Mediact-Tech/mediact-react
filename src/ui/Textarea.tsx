@@ -58,7 +58,9 @@ export function textareaShapeClasses({
      * และทำให้โครงร่างตอนโหลด (ซึ่งเป็น <div> block) เตี้ยกว่าของจริง 7px */
     "block w-full rounded-sm border bg-bg-default px-3 py-2.5 text-body-sm font-medium transition-colors resize-y",
     "focus:outline-none focus:ring-1",
-    "disabled:cursor-not-allowed disabled:bg-bg-subtle",
+    /* พื้นตอนปิดใช้งานต้องเป็นค่าเดียวกับ `fieldShapeClasses` — เหตุผลอยู่ที่นั่น
+     * (ของเดิม `bg-bg-subtle` เกือบขาว ⇒ ช่องที่แก้ไม่ได้ดูเหมือนช่องที่แก้ได้) */
+    "disabled:cursor-not-allowed disabled:bg-bg-surface",
     minHeights[size],
     hasError
       ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40"

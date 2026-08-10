@@ -57,7 +57,11 @@ type IconButtonProps = Omit<React.ComponentProps<"button">, "aria-label"> &
      * to fall back on. Describe the action, e.g. "Edit", "Delete row".
      */
     "aria-label": string;
-    /** Icon to render. Ignored when `asChild` — pass your own child element instead. */
+    /**
+     * Icon to render. Ignored when `asChild` — pass your own child element instead.
+     *
+     * ส่งเป็น `children` ก็ได้ (`<IconButton><Pencil/></IconButton>`) — prop นี้ชนะเมื่อส่งมาทั้งคู่
+     */
     icon?: React.ReactNode;
     asChild?: boolean;
     /** ผู้ใช้กดแล้วกำลังทำงาน — แสดงสปินเนอร์ ปุ่มยังอยู่ที่เดิม */
@@ -110,7 +114,12 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         aria-busy={loading || undefined}
         {...props}
       >
-        {asChild ? children : loading ? <Spinner /> : icon}
+        {/* 🔴 `icon ?? children` — เดิมรับเฉพาะ prop `icon` แล้ว**ทิ้ง children ทิ้งเงียบ ๆ**
+          * ⇒ `<IconButton><Pencil/></IconButton>` ซึ่งเป็นวิธีเขียนที่ทุกคนเดาว่าใช้ได้
+          * ได้ปุ่มเปล่า ไม่มีไอคอน ไม่มี error ไม่มี type ฟ้อง (เพราะ `children` เป็น prop
+          * ที่ถูกต้องของ `<button>` อยู่แล้ว) — เจอของจริงหลุดขึ้นจอในจอ "ข้อมูลองค์กร"
+          * รับทั้งสองทางจึงถูกกว่า: prop `icon` ยังชนะเมื่อส่งมาทั้งคู่ */}
+        {asChild ? children : loading ? <Spinner /> : (icon ?? children)}
       </Comp>
     );
   },

@@ -400,7 +400,8 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
               className={cn(
                 "flex w-full items-center gap-1.5 rounded-sm border bg-bg-default px-3 py-1.5 pr-9 font-medium transition-colors cursor-pointer",
                 "focus:outline-none focus:ring-1",
-                "aria-disabled:cursor-not-allowed aria-disabled:bg-bg-subtle",
+                /* พื้นตอนปิดใช้งาน — ค่าเดียวกับ `fieldShapeClasses` (เหตุผลอยู่ที่นั่น) */
+                "aria-disabled:cursor-not-allowed aria-disabled:bg-bg-surface",
                 minHeights[size],
                 hasError
                   ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40"
