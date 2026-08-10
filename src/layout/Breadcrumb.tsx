@@ -62,14 +62,26 @@ function Breadcrumb({
           }
           const itemBaseClass =
             "inline-flex items-center gap-2 leading-none [&_svg]:size-5";
+          /* 🔴 หน้าปัจจุบันและ hover ของลิงก์เป็นสี **คงที่** ไม่ใช่ `text-brand`
+           *
+           * ของเดิมใช้ `text-brand` ทั้งสองที่ ⇒ แถบนำทางเปลี่ยนสีตามแอป · เช็คของจริง
+           * แล้ว **ไม่มีแอปไหนทำแบบนั้นเลย**: Portal ใช้ `text-text-body` ทั้งเส้น ·
+           * Medimatch ใช้เทาตัวเดียวหมด (`text-text-gray-body`) · Mediwork แตะสีแบรนด์
+           * แค่ที่ไอคอนอย่างเดียว
+           *
+           * และถ้าปล่อยไว้ บน Mediwork จะได้มิ้นต์บนขาว **1.93:1** อ่านไม่ออก —
+           * กับดักเดียวกับที่เมนูย่อยของ `Sidebar` และตัวหนังสือใน `DataTable` เจอมาแล้ว
+           *
+           * `text-text-heading` (#3f454a) คือ token ที่ DS เลือกไว้แล้วสำหรับเคสนี้เป๊ะ ๆ
+           * — ป้ายบนหัวหน้าที่ห้ามตามสีแบรนด์ (ชื่อโรงพยาบาลใน `TopNavBrand`) */
+          const currentClass = "font-semibold text-text-heading";
+          const linkClass =
+            "text-text-tertiary transition-colors hover:text-text-black";
           return (
             <li key={i} className="flex items-center gap-3 leading-none">
               {isLast ? (
                 <span
-                  className={cn(
-                    itemBaseClass,
-                    "font-semibold text-brand",
-                  )}
+                  className={cn(itemBaseClass, currentClass)}
                   aria-current="page"
                 >
                   {item.icon}
@@ -78,10 +90,7 @@ function Breadcrumb({
               ) : item.href ? (
                 <LinkComponent
                   href={item.href}
-                  className={cn(
-                    itemBaseClass,
-                    "text-text-tertiary transition-colors hover:text-brand",
-                  )}
+                  className={cn(itemBaseClass, linkClass)}
                 >
                   {item.icon}
                   {item.label}
@@ -90,10 +99,7 @@ function Breadcrumb({
                 <button
                   type="button"
                   onClick={item.onClick}
-                  className={cn(
-                    itemBaseClass,
-                    "text-text-tertiary transition-colors hover:text-brand",
-                  )}
+                  className={cn(itemBaseClass, linkClass)}
                 >
                   {item.icon}
                   {item.label}
@@ -130,8 +136,10 @@ const BreadcrumbLink = React.forwardRef<
   return (
     <Comp
       ref={ref}
+      /* สีเดียวกับลิงก์ใน `Breadcrumb` — hover เข้มขึ้น ไม่ใช่เปลี่ยนเป็นสีแบรนด์
+       * (ดูเหตุผลเต็มในคอมเมนต์ของ `linkClass` ด้านบน) */
       className={cn(
-        "text-text-tertiary transition-colors hover:text-brand",
+        "text-text-tertiary transition-colors hover:text-text-black",
         className,
       )}
       {...props}
