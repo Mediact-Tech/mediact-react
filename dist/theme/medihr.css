@@ -1,5 +1,5 @@
 /* ../tokens/src/themes/medihr.css */
-@theme { --color-brand: var(--mx-indigo-700); --color-brand-hover: var(--mx-indigo-500); --color-brand-active: var(--mx-indigo-900); --color-brand-subtle: var(--mx-indigo-50); --color-text-primary: var(--mx-indigo-700); --color-focus-ring: var(--mx-indigo-700); --color-info-hover: var(--mx-blue-700); }
+@theme { --color-brand: var(--mx-indigo-700); --color-brand-hover: var(--mx-indigo-500); --color-brand-active: var(--mx-indigo-900); --color-brand-subtle: var(--mx-indigo-50); --color-text-primary: var(--mx-indigo-700); --color-focus-ring: var(--mx-indigo-700); --color-info-hover: var(--mx-blue-700); --color-bg-nav-rail: var(--mx-indigo-700); }
 
 /* src/theme/medihr.css */
 /*# sourceMappingURL=medihr.css.map */

@@ -2434,6 +2434,7 @@ var DEFAULT_APP_DEFS = {
   medihr: { label: "Medi HR", src: medi_hrDataUrl }
 };
 var DEFAULT_APP_ORDER = ["mediwork", "medimatch", "medihr"];
+var settingsActionClass = "mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-info-blue-50 py-3 text-[15px] font-medium text-info-blue-800 transition-colors hover:bg-info-blue-100 [&_svg]:size-5";
 var NineDotIcon = (props) => /* @__PURE__ */ jsx26(
   "svg",
   {
@@ -2504,27 +2505,30 @@ function AppLauncher({
               key
             );
           }) }),
-          settingsAction && /* ปุ่มไปหน้าตั้งค่า (Portal) — วัดจากของจริง: เว้นบน 24 · เต็มความกว้าง
-           * · py 12 · มุม 16 · พื้น `#EAF4FF` ตัวอักษร `#1E78F2` · 15px/500
-           * ⚠️ ต้องเป็นฟ้า **คงที่** — ปุ่มนี้พาไป Portal เสมอไม่ว่าเปิดจากแอปไหน
-           * `text-info-blue-primary` ใช้ไม่ได้เพราะ alias ไป `--color-brand-active`
-           * ⇒ จะเปลี่ยนสีตามแอปที่ยืนอยู่
-           *
-           * 🔴 ใช้ `info-blue-800` (`#1e48cc`) ไม่ใช่ `#1E78F2` ของ Portal —
-           * ของ Portal บนพื้น `#EAF4FF` วัดได้ **3.80:1** ตกเกณฑ์ข้อความ 4.5:1
-           * (`info-blue-600` `#3b82f6` ก็ตก 3.42:1) ตัวที่เลือกได้ **6.85:1** */
-          /* @__PURE__ */ jsxs20(
+          settingsAction && /* ทรง/สีอยู่ที่ `settingsActionClass` — เหตุผลของสีฟ้าคงที่เขียนไว้ที่นั่น */
+          /* @__PURE__ */ jsx26(PopoverClose, { asChild: true, children: settingsAction.href ? /* @__PURE__ */ jsxs20(
             "a",
             {
               href: settingsAction.href,
               onClick: settingsAction.onClick,
-              className: "mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-info-blue-50 py-3 text-[15px] font-medium text-info-blue-800 transition-colors hover:bg-info-blue-100 [&_svg]:size-5",
+              className: settingsActionClass,
               children: [
                 /* @__PURE__ */ jsx26(Settings, { "aria-hidden": true }),
                 settingsAction.label
               ]
             }
-          )
+          ) : /* @__PURE__ */ jsxs20(
+            "button",
+            {
+              type: "button",
+              onClick: settingsAction.onClick,
+              className: settingsActionClass,
+              children: [
+                /* @__PURE__ */ jsx26(Settings, { "aria-hidden": true }),
+                settingsAction.label
+              ]
+            }
+          ) })
         ]
       }
     )
@@ -2568,7 +2572,7 @@ function AppLauncherTile({
     ] });
   }
   if (onClick) {
-    return /* @__PURE__ */ jsxs20(
+    return /* @__PURE__ */ jsx26(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs20(
       "button",
       {
         type: "button",
@@ -2579,12 +2583,12 @@ function AppLauncherTile({
           labelEl
         ]
       }
-    );
+    ) });
   }
-  return /* @__PURE__ */ jsxs20("a", { href: config.baseUrl, className: tileClass, children: [
+  return /* @__PURE__ */ jsx26(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs20("a", { href: config.baseUrl, className: tileClass, children: [
     iconBox,
     labelEl
-  ] });
+  ] }) });
 }
 var NotificationBell = React22.forwardRef(function NotificationBell2({ hasUnread, unreadCount, label = "Notifications", className, ...props }, ref) {
   const showCount = unreadCount != null && unreadCount > 0;
@@ -2644,6 +2648,7 @@ function UserMenu({
               size: "md",
               src: user.src,
               name: user.name,
+              fallback: user.fallback,
               className: "border-2 border-gray-100"
             }
           ),
@@ -2664,6 +2669,7 @@ function UserMenu({
               {
                 src: user.src,
                 name: user.name,
+                fallback: user.fallback,
                 className: "mb-3 size-[60px] border-2 border-gray-100"
               }
             ),
@@ -2676,7 +2682,7 @@ function UserMenu({
             /* @__PURE__ */ jsx26("hr", { className: "mb-5 mt-2 border-gray-100" }),
             /* @__PURE__ */ jsxs20("div", { className: "flex items-center justify-between gap-3", children: [
               bottomLeft ?? /* @__PURE__ */ jsx26("span", {}),
-              onLogout !== null && /* @__PURE__ */ jsxs20(
+              onLogout !== null && /* @__PURE__ */ jsx26(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs20(
                 "button",
                 {
                   type: "button",
@@ -2687,7 +2693,7 @@ function UserMenu({
                     logoutLabel
                   ]
                 }
-              )
+              ) })
             ] })
           ] })
         ]
@@ -2698,9 +2704,9 @@ function UserMenu({
 function UserMenuItemButton({ item }) {
   const className = "block w-full cursor-pointer text-left py-3 text-[16px] font-medium text-text-body transition-colors hover:text-text-primary";
   if (item.href) {
-    return /* @__PURE__ */ jsx26("a", { href: item.href, className, children: item.label });
+    return /* @__PURE__ */ jsx26(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsx26("a", { href: item.href, className, children: item.label }) });
   }
-  return /* @__PURE__ */ jsx26("button", { type: "button", onClick: item.onClick, className, children: item.label });
+  return /* @__PURE__ */ jsx26(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsx26("button", { type: "button", onClick: item.onClick, className, children: item.label }) });
 }
 TopNav.displayName = "TopNav";
 TopNavBrand.displayName = "TopNavBrand";
@@ -2717,6 +2723,9 @@ function useSidebar() {
   const ctx = React23.useContext(SidebarContext);
   if (!ctx) throw new Error("Sidebar.* must be used inside <Sidebar>");
   return ctx;
+}
+function useSidebarState() {
+  return { isCollapsed: useSidebar().isCollapsed };
 }
 var DepthContext = React23.createContext(0);
 var Sidebar = React23.forwardRef(function Sidebar2({
@@ -2753,7 +2762,9 @@ var Sidebar = React23.forwardRef(function Sidebar2({
   React23.useEffect(() => {
     if (!isMobileMode || !mobileOpen || !onMobileOpenChange) return;
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") onMobileOpenChange(false);
+      if (e.key !== "Escape") return;
+      if (window.matchMedia("(min-width: 1024px)").matches) return;
+      onMobileOpenChange(false);
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -2778,10 +2789,15 @@ var Sidebar = React23.forwardRef(function Sidebar2({
           ...style
         },
         className: cn(
-          /* 📐 วัดจาก Portal: พื้น `rgb(67,89,110)` = `state-700` เป๊ะ · **มุม 16px**
-           * · ไม่มีเส้นขอบขวา (โค้ดของ Portal เขียน `border-r` แล้วทับด้วย `border-0`)
-           * มุมโค้งเฉพาะ `lg` ขึ้นไป เพราะต่ำกว่านั้นมันเป็นลิ้นชักเต็มจอ */
-          "flex h-full shrink-0 flex-col bg-state-700 text-white transition-[width] duration-300 ease-in-out lg:rounded-2xl",
+          /* 📐 วัดจาก Portal: พื้น `rgb(67,89,110)` · **มุม 16px** · ไม่มีเส้นขอบขวา
+           * (โค้ดของ Portal เขียน `border-r` แล้วทับด้วย `border-0`)
+           * มุมโค้งเฉพาะ `lg` ขึ้นไป เพราะต่ำกว่านั้นมันเป็นลิ้นชักเต็มจอ
+           *
+           * 🔴 พื้นเป็น token `bg-nav-rail` ไม่ใช่ `bg-state-700` ตายตัว — ค่าเริ่มต้น
+           * เท่ากันเป๊ะ (Portal ไม่ขยับ) แต่แอปที่รางเป็นสีแบรนด์จริง ๆ (MediHR = คราม)
+           * ทับได้ที่ไฟล์ธีมของตัวเอง แทนที่จะต้อง `className` ทับทุกจุดที่เรียก
+           * เกณฑ์ว่าธีมไหนทับได้อยู่ในคอมเมนต์ของ token ใน `semantic.css` */
+          "flex h-full shrink-0 flex-col bg-bg-nav-rail text-white transition-[width] duration-300 ease-in-out lg:rounded-2xl",
           isMobileMode && [
             "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
             "lg:static lg:z-auto lg:translate-x-0 lg:transition-[width]",
@@ -6654,6 +6670,7 @@ export {
   switchToneClasses,
   textVariants,
   toast,
-  toneIcon
+  toneIcon,
+  useSidebarState
 };
 //# sourceMappingURL=index.js.map
