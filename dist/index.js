@@ -2172,7 +2172,15 @@ var textVariants = cva8("", {
       bold: "font-bold"
     },
     tone: {
-      default: "text-text-primary",
+      /* 🔴 `default` = **สีเนื้อความปกติ** ไม่ใช่ `text-text-primary`
+       *
+       * ใน `theme.css` (ชั้นที่ DS ยังกินอยู่) `--color-text-primary` ถูก alias ไปที่
+       * `--color-brand` ⇒ `<Text>` ที่ไม่ได้ส่ง tone มา — ซึ่งคือ **ส่วนใหญ่ของทุกจอ** —
+       * จะได้ตัวอักษรสีแบรนด์ตามแอป (MediHR คราม · Mediwork มิ้นต์ 1.93:1 อ่านไม่ออก)
+       *
+       * ตอนนี้ชี้ค่าเดียวกับ `body` โดยตั้งใจ: "ไม่เลือก tone = ได้สีเนื้อความ"
+       * ใครอยากได้สีแบรนด์จริง ๆ ยังมี `tone="brand"` ให้เรียกตรง ๆ อยู่แล้ว */
+      default: "text-text-body",
       body: "text-text-body",
       muted: "text-text-tertiary",
       disabled: "text-text-disabled",
@@ -2261,7 +2269,10 @@ var headingVariants = cva9("text-balance", {
       bold: "font-bold"
     },
     tone: {
-      default: "text-text-primary",
+      /* 🔴 `default` = **สีหัวข้อปกติ** ไม่ใช่ `text-text-primary` ซึ่ง `theme.css`
+       * alias ไป `--color-brand` ⇒ หัวข้อทุกอันที่ไม่ได้ส่ง tone จะเปลี่ยนสีตามแอป
+       * ชี้ค่าเดียวกับ `heading` โดยตั้งใจ · อยากได้สีแบรนด์ใช้ `tone="brand"` */
+      default: "text-text-heading",
       heading: "text-text-heading",
       brand: "text-brand",
       inherit: ""
@@ -3721,7 +3732,7 @@ function TimeColumn({
             onClick: () => onPick(item),
             className: cn(
               "mx-2 my-0.5 flex h-8 shrink-0 items-center justify-center rounded-md text-center font-medium tabular-nums transition-colors",
-              disabled ? "cursor-not-allowed text-text-tertiary/40" : isSelected ? "bg-brand-active text-white" : "text-text-primary hover:bg-brand-subtle"
+              disabled ? "cursor-not-allowed text-text-tertiary/40" : isSelected ? "bg-brand-active text-white" : "text-text-body hover:bg-brand-subtle"
             ),
             children: formatLabel ? formatLabel(item) : typeof item === "number" ? pad2(item) : String(item)
           },
@@ -4967,159 +4978,170 @@ function DataTable({
     Boolean(enableSelection)
   );
   const frozen = useFrozenOffsets(tableRef, frozenLeft, frozenRight);
-  return /* @__PURE__ */ jsxs29(
-    "div",
-    {
-      className: cn(
-        /* วัดจาก Portal จริง: radius 12 · เส้นขอบ #919eab33 · เงาบาง 2 ชั้น
-         * (ของเดิม radius 6 · ไม่มีเงา ⇒ ตารางกลืนไปกับพื้นหน้า) */
-        "flex flex-col overflow-hidden rounded-xl border border-divider-gray bg-bg-default shadow-sm",
-        className
-      ),
-      children: [
-        /* @__PURE__ */ jsx36("div", { className: cn(stickyHeader && "max-h-[600px] overflow-auto", containerClassName), children: /* @__PURE__ */ jsxs29(
-          Table,
-          {
-            ref: tableRef,
-            style: minTableWidth != null ? { minWidth: minTableWidth } : void 0,
-            children: [
-              /* @__PURE__ */ jsx36(
-                TableHeader,
-                {
-                  className: cn(
-                    /* 🔴 ห้ามใส่สีพื้นตรงนี้ — `TableHeader` มี `bg-bg-table-header` อยู่ที่ base
-                     * แล้ว และ class ที่ส่งเข้ามาทาง `className` ชนะเสมอผ่าน tailwind-merge
-                     * ⇒ เคยเขียน `bg-bg-default` ไว้ หัวที่ค้างจึงกลายเป็น**สีขาว** ตอนเลื่อน
-                     * ทั้งที่ตอนไม่เลื่อนเป็น #ededf5 · สีพื้นของ base ทึบอยู่แล้วจึงยังบังแถว
-                     * ที่เลื่อนผ่านได้ตามหน้าที่ของ sticky */
-                    stickyHeader && "sticky top-0 z-10 shadow-[0_1px_0_0_#0000001f]"
-                  ),
-                  children: table.getHeaderGroups().map((hg) => /* @__PURE__ */ jsx36(TableRow, { className: "hover:bg-transparent", children: hg.headers.map((header) => {
-                    const sortable = header.column.getCanSort();
-                    const sortDir = header.column.getIsSorted();
-                    const pin = frozenCellProps(frozen[header.column.id], "head");
-                    return /* @__PURE__ */ jsx36(
-                      TableHead,
-                      {
-                        "data-col-id": header.column.id,
-                        className: cn(
-                          pin.className,
-                          header.column.columnDef.meta?.headerClassName
-                        ),
-                        style: {
-                          ...explicitWidths.has(header.column.id) ? { minWidth: explicitWidths.get(header.column.id) } : null,
-                          /* `meta.width` = กว้างเป๊ะ ⇒ ตั้งทั้ง width และ maxWidth
-                           * ไม่งั้น `table-auto` จะยืดคอลัมน์ตามเนื้อหาอยู่ดี */
-                          ...header.column.columnDef.meta?.width != null ? {
-                            width: header.column.columnDef.meta.width,
-                            maxWidth: header.column.columnDef.meta.width
-                          } : null,
-                          ...pin.style
+  return (
+    /* 🔴 แถบแบ่งหน้าอยู่ **นอก**การ์ดที่มีขอบ — วัดจาก `ActionTabel` ของ Portal:
+     * กล่องนอกเป็น `flex flex-col gap-4` ไม่มีขอบ · การ์ดตารางอยู่ข้างใน ·
+     * แถบแบ่งหน้าเป็นพี่น้องของการ์ด ไม่ใช่ลูก ⇒ ไม่มีเส้นคั่นบนแถบ
+     * ของเดิมที่นี่เอาแถบไปไว้ในการ์ดแล้วขีดเส้น `border-t` คั่น ซึ่งไม่ตรงกับที่ไหน */
+    /* @__PURE__ */ jsxs29("div", { className: cn("flex min-h-0 flex-col gap-4", className), children: [
+      /* @__PURE__ */ jsx36(
+        "div",
+        {
+          className: cn(
+            /* วัดจาก Portal จริง: radius 12 · เส้นขอบ #919eab33 · เงาบาง 2 ชั้น
+             * (ของเดิม radius 6 · ไม่มีเงา ⇒ ตารางกลืนไปกับพื้นหน้า)
+             *
+             * `flex-auto` ไม่ใช่ `flex-1` — `flex-1` ตั้ง basis เป็น 0 พอคู่กับ
+             * `min-h-0` การ์ดจะยุบเหลือ 0 ในกล่องที่สูงตามเนื้อหา · `flex-auto`
+             * (basis auto) สูงตามเนื้อหาเป็นปกติ แต่ยังยืด/หดได้เมื่อพ่อจำกัดความสูง
+             * ซึ่งเป็นเคสที่ผู้เรียกส่ง `className="min-h-0 flex-1"` มาเพื่อให้ตาราง
+             * เลื่อนในตัวเอง (hr-web EmployeeTable ทำแบบนั้น) */
+            "flex min-h-0 flex-auto flex-col overflow-hidden rounded-xl border border-divider-gray bg-bg-default shadow-sm"
+          ),
+          children: /* @__PURE__ */ jsx36("div", { className: cn(stickyHeader && "max-h-[600px] overflow-auto", containerClassName), children: /* @__PURE__ */ jsxs29(
+            Table,
+            {
+              ref: tableRef,
+              style: minTableWidth != null ? { minWidth: minTableWidth } : void 0,
+              children: [
+                /* @__PURE__ */ jsx36(
+                  TableHeader,
+                  {
+                    className: cn(
+                      /* 🔴 ห้ามใส่สีพื้นตรงนี้ — `TableHeader` มี `bg-bg-table-header` อยู่ที่ base
+                       * แล้ว และ class ที่ส่งเข้ามาทาง `className` ชนะเสมอผ่าน tailwind-merge
+                       * ⇒ เคยเขียน `bg-bg-default` ไว้ หัวที่ค้างจึงกลายเป็น**สีขาว** ตอนเลื่อน
+                       * ทั้งที่ตอนไม่เลื่อนเป็น #ededf5 · สีพื้นของ base ทึบอยู่แล้วจึงยังบังแถว
+                       * ที่เลื่อนผ่านได้ตามหน้าที่ของ sticky */
+                      stickyHeader && "sticky top-0 z-10 shadow-[0_1px_0_0_#0000001f]"
+                    ),
+                    children: table.getHeaderGroups().map((hg) => /* @__PURE__ */ jsx36(TableRow, { className: "hover:bg-transparent", children: hg.headers.map((header) => {
+                      const sortable = header.column.getCanSort();
+                      const sortDir = header.column.getIsSorted();
+                      const pin = frozenCellProps(frozen[header.column.id], "head");
+                      return /* @__PURE__ */ jsx36(
+                        TableHead,
+                        {
+                          "data-col-id": header.column.id,
+                          className: cn(
+                            pin.className,
+                            header.column.columnDef.meta?.headerClassName
+                          ),
+                          style: {
+                            ...explicitWidths.has(header.column.id) ? { minWidth: explicitWidths.get(header.column.id) } : null,
+                            /* `meta.width` = กว้างเป๊ะ ⇒ ตั้งทั้ง width และ maxWidth
+                             * ไม่งั้น `table-auto` จะยืดคอลัมน์ตามเนื้อหาอยู่ดี */
+                            ...header.column.columnDef.meta?.width != null ? {
+                              width: header.column.columnDef.meta.width,
+                              maxWidth: header.column.columnDef.meta.width
+                            } : null,
+                            ...pin.style
+                          },
+                          children: header.isPlaceholder ? null : sortable ? /* @__PURE__ */ jsxs29(
+                            "button",
+                            {
+                              type: "button",
+                              onClick: header.column.getToggleSortingHandler(),
+                              className: "inline-flex cursor-pointer items-center gap-1 hover:text-brand",
+                              children: [
+                                flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                ),
+                                sortDir === "asc" ? /* @__PURE__ */ jsx36(ArrowUp, { className: "size-3" }) : sortDir === "desc" ? /* @__PURE__ */ jsx36(ArrowDown, { className: "size-3" }) : /* @__PURE__ */ jsx36(ChevronsUpDown3, { className: "size-3 opacity-60" })
+                              ]
+                            }
+                          ) : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )
                         },
-                        children: header.isPlaceholder ? null : sortable ? /* @__PURE__ */ jsxs29(
-                          "button",
-                          {
-                            type: "button",
-                            onClick: header.column.getToggleSortingHandler(),
-                            className: "inline-flex cursor-pointer items-center gap-1 hover:text-brand",
-                            children: [
-                              flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              ),
-                              sortDir === "asc" ? /* @__PURE__ */ jsx36(ArrowUp, { className: "size-3" }) : sortDir === "desc" ? /* @__PURE__ */ jsx36(ArrowDown, { className: "size-3" }) : /* @__PURE__ */ jsx36(ChevronsUpDown3, { className: "size-3 opacity-60" })
-                            ]
-                          }
-                        ) : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )
-                      },
-                      header.id
-                    );
-                  }) }, hg.id))
-                }
-              ),
-              /* @__PURE__ */ jsx36(TableBody, { children: isLoading ? /* @__PURE__ */ jsx36(
-                SkeletonRows,
-                {
-                  columnCount: finalColumns.length,
-                  rowCount: skeletonRowCount ?? Math.min(pagination?.pageSize ?? 5, 10)
-                }
-              ) : error ? /* @__PURE__ */ jsx36(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx36(TableCell, { colSpan: finalColumns.length, className: "p-0", children: renderError ? renderError({ error, retry: onRetry }) : errorSlot ?? /* ใช้ `ErrorState` ตัวเดียวกับที่แอปใช้ ไม่ประกอบเองในตาราง —
-               * ไม่งั้นสถานะผิดพลาดในตารางจะหน้าตาต่างจากที่อื่นในจอเดียวกัน */
-              /* @__PURE__ */ jsx36(
-                ErrorState,
-                {
-                  error,
-                  icon: errorIcon,
-                  title: labels?.error?.title ?? "Something went wrong",
-                  description: labels?.error?.description ?? "We couldn't load this data.",
-                  onRetry,
-                  retryLabel: labels?.retry ?? "Retry"
-                }
-              ) }) }) : table.getRowModel().rows.length === 0 ? /* @__PURE__ */ jsx36(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx36(
-                TableCell,
-                {
-                  colSpan: finalColumns.length,
-                  className: "p-0",
-                  children: renderEmpty ? renderEmpty({ isFiltered: Boolean(isFiltered) }) : empty ?? /* 🔴 ต้องมีไอคอนด้วย ไม่ใช่ข้อความเปล่า — ตารางเคยส่งแค่
-                   * `title`/`description` ⇒ `EmptyState` ไม่ render ป้ายเลย
-                   * แล้วสถานะว่างในตารางหน้าตาไม่เหมือน `EmptyState` ที่อื่นในจอเดียวกัน
-                   * ทั้งที่เรียก component ตัวเดียวกันอยู่ · ผู้เรียกเปลี่ยนไอคอน
-                   * ให้ตรงกับสิ่งที่ตารางนี้แสดงได้ผ่าน `emptyIcon` */
-                  /* @__PURE__ */ jsx36(
-                    EmptyState,
-                    {
-                      icon: emptyIcon ?? /* @__PURE__ */ jsx36(Inbox, {}),
-                      title: labels?.empty?.title ?? "No data",
-                      description: labels?.empty?.description ?? "There's nothing to show here yet."
-                    }
-                  )
-                }
-              ) }) : groupBy ? /* @__PURE__ */ jsx36(
-                GroupedRows,
-                {
-                  table,
-                  groupBy,
-                  groupOrder,
-                  groupLabel,
-                  collapsibleGroups,
-                  collapsedKeys,
-                  onToggleGroup: toggleGroup,
-                  toggleGroupLabel: labels?.toggleGroup ?? "Toggle group",
-                  onRowClick,
-                  frozen
-                }
-              ) : table.getRowModel().rows.map((row, idx) => /* @__PURE__ */ jsx36(
-                DataRow,
-                {
-                  row,
-                  frozen,
-                  onClick: onRowClick ? () => onRowClick(row.original, idx) : void 0
-                },
-                row.id
-              )) })
-            ]
-          }
-        ) }),
-        pagination ? /* @__PURE__ */ jsx36(
-          PaginationFooter,
-          {
-            pagination,
-            currentPage,
-            totalPages,
-            table,
-            labels
-          }
-        ) : (
-          /* 🔴 ตัวนับ "เลือกแล้ว N" เคยอยู่ในแถบแบ่งหน้าเท่านั้น ⇒ ตารางที่เลือกแถวได้
-           * แต่ไม่มีแบ่งหน้าจะ **ติ๊กแล้วไม่มีอะไรบอกเลย** (ของจริง: เลือกได้ 11 ตาราง
-           * แต่มีแบ่งหน้าแค่ 6) — การเลือกที่ไม่มีผลตอบกลับคือการเลือกที่ผู้ใช้ไม่มั่นใจ */
-          /* @__PURE__ */ jsx36(SelectedCountBar, { table, labels })
-        )
-      ]
-    }
+                        header.id
+                      );
+                    }) }, hg.id))
+                  }
+                ),
+                /* @__PURE__ */ jsx36(TableBody, { children: isLoading ? /* @__PURE__ */ jsx36(
+                  SkeletonRows,
+                  {
+                    columnCount: finalColumns.length,
+                    rowCount: skeletonRowCount ?? Math.min(pagination?.pageSize ?? 5, 10)
+                  }
+                ) : error ? /* @__PURE__ */ jsx36(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx36(TableCell, { colSpan: finalColumns.length, className: "p-0", children: renderError ? renderError({ error, retry: onRetry }) : errorSlot ?? /* ใช้ `ErrorState` ตัวเดียวกับที่แอปใช้ ไม่ประกอบเองในตาราง —
+                 * ไม่งั้นสถานะผิดพลาดในตารางจะหน้าตาต่างจากที่อื่นในจอเดียวกัน */
+                /* @__PURE__ */ jsx36(
+                  ErrorState,
+                  {
+                    error,
+                    icon: errorIcon,
+                    title: labels?.error?.title ?? "Something went wrong",
+                    description: labels?.error?.description ?? "We couldn't load this data.",
+                    onRetry,
+                    retryLabel: labels?.retry ?? "Retry"
+                  }
+                ) }) }) : table.getRowModel().rows.length === 0 ? /* @__PURE__ */ jsx36(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx36(
+                  TableCell,
+                  {
+                    colSpan: finalColumns.length,
+                    className: "p-0",
+                    children: renderEmpty ? renderEmpty({ isFiltered: Boolean(isFiltered) }) : empty ?? /* 🔴 ต้องมีไอคอนด้วย ไม่ใช่ข้อความเปล่า — ตารางเคยส่งแค่
+                     * `title`/`description` ⇒ `EmptyState` ไม่ render ป้ายเลย
+                     * แล้วสถานะว่างในตารางหน้าตาไม่เหมือน `EmptyState` ที่อื่นในจอเดียวกัน
+                     * ทั้งที่เรียก component ตัวเดียวกันอยู่ · ผู้เรียกเปลี่ยนไอคอน
+                     * ให้ตรงกับสิ่งที่ตารางนี้แสดงได้ผ่าน `emptyIcon` */
+                    /* @__PURE__ */ jsx36(
+                      EmptyState,
+                      {
+                        icon: emptyIcon ?? /* @__PURE__ */ jsx36(Inbox, {}),
+                        title: labels?.empty?.title ?? "No data",
+                        description: labels?.empty?.description ?? "There's nothing to show here yet."
+                      }
+                    )
+                  }
+                ) }) : groupBy ? /* @__PURE__ */ jsx36(
+                  GroupedRows,
+                  {
+                    table,
+                    groupBy,
+                    groupOrder,
+                    groupLabel,
+                    collapsibleGroups,
+                    collapsedKeys,
+                    onToggleGroup: toggleGroup,
+                    toggleGroupLabel: labels?.toggleGroup ?? "Toggle group",
+                    onRowClick,
+                    frozen
+                  }
+                ) : table.getRowModel().rows.map((row, idx) => /* @__PURE__ */ jsx36(
+                  DataRow,
+                  {
+                    row,
+                    frozen,
+                    onClick: onRowClick ? () => onRowClick(row.original, idx) : void 0
+                  },
+                  row.id
+                )) })
+              ]
+            }
+          ) })
+        }
+      ),
+      pagination ? /* @__PURE__ */ jsx36(
+        PaginationFooter,
+        {
+          pagination,
+          currentPage,
+          totalPages,
+          table,
+          labels
+        }
+      ) : (
+        /* 🔴 ตัวนับ "เลือกแล้ว N" เคยอยู่ในแถบแบ่งหน้าเท่านั้น ⇒ ตารางที่เลือกแถวได้
+         * แต่ไม่มีแบ่งหน้าจะ **ติ๊กแล้วไม่มีอะไรบอกเลย** (ของจริง: เลือกได้ 11 ตาราง
+         * แต่มีแบ่งหน้าแค่ 6) — การเลือกที่ไม่มีผลตอบกลับคือการเลือกที่ผู้ใช้ไม่มั่นใจ */
+        /* @__PURE__ */ jsx36(SelectedCountBar, { table, labels })
+      )
+    ] })
   );
 }
 function DataRow({
@@ -5221,7 +5243,18 @@ function SelectedCountBar({
 }) {
   const count = table.getSelectedRowModel().rows.length;
   if (count === 0) return null;
-  return /* @__PURE__ */ jsx36("div", { className: "border-t border-border-default px-3 py-2 text-body-sm font-medium text-text-black", children: labels?.selected ? labels.selected(count) : `${count} selected` });
+  return (
+    /* ไม่มีเส้นคั่นแล้ว — แถบนี้อยู่นอกการ์ด ระยะห่างมาจาก `gap-4` ของกล่องนอก
+     * pad เท่ากับแถบแบ่งหน้า เพราะสองอันนี้สลับที่กัน ต้องไม่ขยับตำแหน่ง */
+    /* @__PURE__ */ jsx36(
+      "div",
+      {
+        "data-slot": "selected-count",
+        className: "px-2 py-4 text-body-sm font-medium text-text-black",
+        children: labels?.selected ? labels.selected(count) : `${count} selected`
+      }
+    )
+  );
 }
 function PaginationFooter({
   pagination,
@@ -5240,56 +5273,70 @@ function PaginationFooter({
   const atFirst = pagination.pageIndex === 0;
   const atLast = pagination.pageIndex >= totalPages - 1;
   const pagerButton = "rounded-md p-1 text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-30";
-  return /* @__PURE__ */ jsxs29("div", { className: "flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border-default px-3 py-3 text-body-sm font-medium", children: [
-    pagination.onPageSizeChange && /* @__PURE__ */ jsxs29("div", { className: "flex items-center gap-3", children: [
-      /* @__PURE__ */ jsx36("span", { className: "whitespace-nowrap text-text-tertiary", children: labels?.rowsPerPage ?? "Rows per page" }),
-      /* @__PURE__ */ jsx36(
-        Select,
-        {
-          size: "sm",
-          value: String(pagination.pageSize),
-          onChange: (v) => pagination.onPageSizeChange?.(Number(v)),
-          options: sizeOptions.map((n) => ({
-            value: String(n),
-            label: String(n)
-          })),
-          reserveMessageSpace: false,
-          containerClassName: "w-auto",
-          className: "h-8 w-auto min-w-14 border-transparent bg-transparent px-2 hover:bg-overlay-hover"
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsxs29("div", { className: "flex items-center gap-4 text-text-body", children: [
-      /* @__PURE__ */ jsx36("span", { className: "whitespace-nowrap", children: labels?.of ? labels.of(start, end, pagination.rowCount) : defaultOfLabel(start, end, pagination.rowCount) }),
-      /* @__PURE__ */ jsxs29("div", { className: "flex items-center gap-1", children: [
-        /* @__PURE__ */ jsx36(
-          "button",
-          {
-            type: "button",
-            "aria-label": labels?.prev ?? "Previous page",
-            className: pagerButton,
-            disabled: atFirst,
-            onClick: () => pagination.onPageChange(Math.max(0, pagination.pageIndex - 1)),
-            children: /* @__PURE__ */ jsx36(ChevronLeft2, { className: "size-5" })
-          }
-        ),
-        /* @__PURE__ */ jsx36(
-          "button",
-          {
-            type: "button",
-            "aria-label": labels?.next ?? "Next page",
-            className: pagerButton,
-            disabled: atLast,
-            onClick: () => pagination.onPageChange(
-              Math.min(totalPages - 1, pagination.pageIndex + 1)
-            ),
-            children: /* @__PURE__ */ jsx36(ChevronRight2, { className: "size-5" })
-          }
-        )
-      ] })
-    ] }),
-    selectedCount > 0 && /* @__PURE__ */ jsx36("span", { className: "ml-auto whitespace-nowrap text-text-black", children: labels?.selected ? labels.selected(selectedCount) : `${selectedCount} selected` })
-  ] });
+  return (
+    /* 📐 วัดจาก `ActionTabel` ของ Portal: pad **8/16** · 14px/500 · ไม่มีเส้นคั่น
+     * และไม่มีพื้นหลัง — เพราะแถบนี้ลอยอยู่นอกการ์ด ระยะห่างมาจาก `gap-4` ของกล่องนอก */
+    /* `data-slot` เป็นที่เกาะที่มั่นคงกว่าการไล่ `closest("div")` — เทสรอบแรก
+     * ไล่ขึ้นไปเจอ div ชั้นในแล้วยืนยันว่า "ไม่มี border-t" ซึ่งจริงเสมอ
+     * โดยไม่ได้พิสูจน์อะไรเลย · ผู้เรียกก็เกาะ selector นี้จัดสไตล์เพิ่มได้ */
+    /* @__PURE__ */ jsxs29(
+      "div",
+      {
+        "data-slot": "pagination",
+        className: "flex flex-wrap items-center gap-x-8 gap-y-3 px-2 py-4 text-body-sm font-medium",
+        children: [
+          pagination.onPageSizeChange && /* @__PURE__ */ jsxs29("div", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ jsx36("span", { className: "whitespace-nowrap text-text-tertiary", children: labels?.rowsPerPage ?? "Rows per page" }),
+            /* @__PURE__ */ jsx36(
+              Select,
+              {
+                size: "sm",
+                value: String(pagination.pageSize),
+                onChange: (v) => pagination.onPageSizeChange?.(Number(v)),
+                options: sizeOptions.map((n) => ({
+                  value: String(n),
+                  label: String(n)
+                })),
+                reserveMessageSpace: false,
+                containerClassName: "w-auto",
+                className: "h-8 w-auto min-w-14 border-transparent bg-transparent px-2 hover:bg-overlay-hover"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs29("div", { className: "flex items-center gap-4 text-text-body", children: [
+            /* @__PURE__ */ jsx36("span", { className: "whitespace-nowrap", children: labels?.of ? labels.of(start, end, pagination.rowCount) : defaultOfLabel(start, end, pagination.rowCount) }),
+            /* @__PURE__ */ jsxs29("div", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ jsx36(
+                "button",
+                {
+                  type: "button",
+                  "aria-label": labels?.prev ?? "Previous page",
+                  className: pagerButton,
+                  disabled: atFirst,
+                  onClick: () => pagination.onPageChange(Math.max(0, pagination.pageIndex - 1)),
+                  children: /* @__PURE__ */ jsx36(ChevronLeft2, { className: "size-5" })
+                }
+              ),
+              /* @__PURE__ */ jsx36(
+                "button",
+                {
+                  type: "button",
+                  "aria-label": labels?.next ?? "Next page",
+                  className: pagerButton,
+                  disabled: atLast,
+                  onClick: () => pagination.onPageChange(
+                    Math.min(totalPages - 1, pagination.pageIndex + 1)
+                  ),
+                  children: /* @__PURE__ */ jsx36(ChevronRight2, { className: "size-5" })
+                }
+              )
+            ] })
+          ] }),
+          selectedCount > 0 && /* @__PURE__ */ jsx36("span", { className: "ml-auto whitespace-nowrap text-text-black", children: labels?.selected ? labels.selected(selectedCount) : `${selectedCount} selected` })
+        ]
+      }
+    )
+  );
 }
 
 // src/layout/Card.tsx
@@ -5335,7 +5382,7 @@ var CardTitle = ({
 }) => /* @__PURE__ */ jsx37(
   "h3",
   {
-    className: cn("text-body-md font-semibold text-text-primary", className),
+    className: cn("text-body-md font-semibold text-text-heading", className),
     ...props
   }
 );
@@ -5455,14 +5502,13 @@ function Breadcrumb({
           ] }, `ellipsis-${i}`);
         }
         const itemBaseClass = "inline-flex items-center gap-2 leading-none [&_svg]:size-5";
+        const currentClass = "font-semibold text-text-body";
+        const linkClass = "text-text-tertiary transition-colors hover:text-text-black";
         return /* @__PURE__ */ jsxs30("li", { className: "flex items-center gap-3 leading-none", children: [
           isLast ? /* @__PURE__ */ jsxs30(
             "span",
             {
-              className: cn(
-                itemBaseClass,
-                "font-semibold text-brand"
-              ),
+              className: cn(itemBaseClass, currentClass),
               "aria-current": "page",
               children: [
                 item.icon,
@@ -5473,10 +5519,7 @@ function Breadcrumb({
             LinkComponent,
             {
               href: item.href,
-              className: cn(
-                itemBaseClass,
-                "text-text-tertiary transition-colors hover:text-brand"
-              ),
+              className: cn(itemBaseClass, linkClass),
               children: [
                 item.icon,
                 item.label
@@ -5487,10 +5530,7 @@ function Breadcrumb({
             {
               type: "button",
               onClick: item.onClick,
-              className: cn(
-                itemBaseClass,
-                "text-text-tertiary transition-colors hover:text-brand"
-              ),
+              className: cn(itemBaseClass, linkClass),
               children: [
                 item.icon,
                 item.label
@@ -5521,7 +5561,7 @@ var BreadcrumbLink = React34.forwardRef(function BreadcrumbLink2({ className, as
     {
       ref,
       className: cn(
-        "text-text-tertiary transition-colors hover:text-brand",
+        "text-text-tertiary transition-colors hover:text-text-black",
         className
       ),
       ...props
@@ -5604,7 +5644,7 @@ function Stepper({
                       {
                         className: cn(
                           "text-body-sm",
-                          status === "todo" ? "text-text-tertiary font-normal" : "text-text-primary font-semibold"
+                          status === "todo" ? "text-text-tertiary font-normal" : "text-text-body font-semibold"
                         ),
                         children: [
                           step.label,
@@ -5621,7 +5661,7 @@ function Stepper({
                   {
                     className: cn(
                       "text-body-sm",
-                      status === "todo" ? "text-text-tertiary font-normal" : "text-text-primary font-semibold"
+                      status === "todo" ? "text-text-tertiary font-normal" : "text-text-body font-semibold"
                     ),
                     children: step.label
                   }
