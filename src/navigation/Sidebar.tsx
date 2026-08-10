@@ -22,6 +22,20 @@ function useSidebar() {
   return ctx;
 }
 
+/**
+ * อ่านสถานะราง **จากข้างใน** `<Sidebar>` — สำหรับ `header`/`footer` ที่ต้องเปลี่ยนตอนยุบ
+ * (เช่น สลับโลโก้เต็มเป็นตัวมาร์ค)
+ *
+ * 🔴 ผู้เรียกคำนวณเองไม่ได้ เพราะ `expandOnHover` ทำให้ "กางอยู่หรือไม่" ไม่เท่ากับ
+ * `collapsed` ที่ส่งเข้ามา — DS ถือ state ตัวนั้นไว้เอง
+ *
+ * ⚠️ `header` เป็น prop ก็จริง แต่ถูก **render อยู่ข้างใน** provider — context จึงถึง
+ * (React ผูก context ตามตำแหน่งที่ render ไม่ใช่ตำแหน่งที่สร้าง element)
+ */
+export function useSidebarState(): { isCollapsed: boolean } {
+  return { isCollapsed: useSidebar().isCollapsed };
+}
+
 /** Depth level — used by `SidebarItem` / `SidebarGroup` to render bullet prefixes
  * for nested items. Top-level items render icon + label, deeper levels render
  * bullet/dash prefixes. */
@@ -127,7 +141,13 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(function Sidebar(
   React.useEffect(() => {
     if (!isMobileMode || !mobileOpen || !onMobileOpenChange) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onMobileOpenChange(false);
+      if (e.key !== "Escape") return;
+      /* 🔴 โหมดลิ้นชักมีผลต่ำกว่า `lg` เท่านั้น (พื้นหลังทึบก็ `lg:hidden`) — บนจอใหญ่
+       * รางเป็นรางปกติที่กางค้างอยู่ ถ้าไม่กันไว้ Escape ที่กดเพื่อปิด dialog/dropdown
+       * จะไหลมาถึงตัวนี้แล้ว "ปิดลิ้นชัก" = **พับรางบนเดสก์ท็อป** โดยผู้ใช้ไม่ได้สั่ง
+       * (แอปที่ผูก `mobileOpen` กับสวิตช์ยุบตัวเดียวกันจะโดนเต็ม ๆ) */
+      if (window.matchMedia("(min-width: 1024px)").matches) return;
+      onMobileOpenChange(false);
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -151,10 +171,15 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(function Sidebar(
           ...style,
         }}
         className={cn(
-          /* 📐 วัดจาก Portal: พื้น `rgb(67,89,110)` = `state-700` เป๊ะ · **มุม 16px**
-           * · ไม่มีเส้นขอบขวา (โค้ดของ Portal เขียน `border-r` แล้วทับด้วย `border-0`)
-           * มุมโค้งเฉพาะ `lg` ขึ้นไป เพราะต่ำกว่านั้นมันเป็นลิ้นชักเต็มจอ */
-          "flex h-full shrink-0 flex-col bg-state-700 text-white transition-[width] duration-300 ease-in-out lg:rounded-2xl",
+          /* 📐 วัดจาก Portal: พื้น `rgb(67,89,110)` · **มุม 16px** · ไม่มีเส้นขอบขวา
+           * (โค้ดของ Portal เขียน `border-r` แล้วทับด้วย `border-0`)
+           * มุมโค้งเฉพาะ `lg` ขึ้นไป เพราะต่ำกว่านั้นมันเป็นลิ้นชักเต็มจอ
+           *
+           * 🔴 พื้นเป็น token `bg-nav-rail` ไม่ใช่ `bg-state-700` ตายตัว — ค่าเริ่มต้น
+           * เท่ากันเป๊ะ (Portal ไม่ขยับ) แต่แอปที่รางเป็นสีแบรนด์จริง ๆ (MediHR = คราม)
+           * ทับได้ที่ไฟล์ธีมของตัวเอง แทนที่จะต้อง `className` ทับทุกจุดที่เรียก
+           * เกณฑ์ว่าธีมไหนทับได้อยู่ในคอมเมนต์ของ token ใน `semantic.css` */
+          "flex h-full shrink-0 flex-col bg-bg-nav-rail text-white transition-[width] duration-300 ease-in-out lg:rounded-2xl",
           isMobileMode && [
             "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
             "lg:static lg:z-auto lg:translate-x-0 lg:transition-[width]",

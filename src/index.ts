@@ -97,6 +97,9 @@ export {
   Sidebar,
   SidebarItem,
   SidebarGroup,
+  /* ให้ `header`/`footer` รู้ว่ารางกางอยู่หรือยุบ — คำนวณจากข้างนอกไม่ได้
+   * เพราะ `expandOnHover` เก็บ state ไว้ใน DS */
+  useSidebarState,
   type SidebarProps,
   type SidebarItemProps,
   type SidebarGroupProps,

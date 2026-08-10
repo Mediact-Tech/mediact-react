@@ -8,7 +8,12 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Cog, Home } from "lucide-react";
-import { Sidebar, SidebarGroup, SidebarItem } from "./Sidebar";
+import {
+  Sidebar,
+  SidebarGroup,
+  SidebarItem,
+  useSidebarState,
+} from "./Sidebar";
 
 const tree = (props: Partial<React.ComponentProps<typeof Sidebar>> = {}) => (
   <Sidebar activeItemId="access" {...props}>
@@ -115,5 +120,53 @@ describe("ยุบแล้ว hover เพื่อกาง", () => {
     );
     await user.hover(container.querySelector("aside")!);
     expect(screen.queryByText("สิทธิ์การเข้าถึง")).toBeNull();
+  });
+});
+
+describe("useSidebarState — หัวรางอ่านสถานะจากข้างใน", () => {
+  const HeaderProbe = () => (
+    <span>{useSidebarState().isCollapsed ? "มาร์ค" : "โลโก้เต็ม"}</span>
+  );
+
+  it("hover กางราง แล้วหัวรางเปลี่ยนตาม (คำนวณจากข้างนอกไม่ได้)", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      tree({ collapsed: true, header: <HeaderProbe /> }),
+    );
+    // `collapsed` ที่ส่งเข้ามายัง true อยู่ — แต่ราง**กาง**เพราะ hover
+    expect(screen.getByText("มาร์ค")).toBeInTheDocument();
+    await user.hover(container.querySelector("aside")!);
+    expect(screen.getByText("โลโก้เต็ม")).toBeInTheDocument();
+  });
+});
+
+describe("Escape ปิดลิ้นชัก", () => {
+  const setViewport = (width: number) => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: width >= 1024,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+  };
+
+  it("ต่ำกว่า lg — Escape ปิดลิ้นชัก", async () => {
+    setViewport(390);
+    const onMobileOpenChange = vi.fn();
+    const user = userEvent.setup();
+    render(tree({ mobileOpen: true, onMobileOpenChange }));
+    await user.keyboard("{Escape}");
+    expect(onMobileOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  /* 🔴 บนเดสก์ท็อปรางกางค้างอยู่ ไม่ใช่ลิ้นชัก — Escape ที่กดปิด dialog ไม่ควรพับราง
+   * แอปที่ผูก `mobileOpen` กับสวิตช์ยุบตัวเดียวกันจะโดนเต็ม ๆ */
+  it("lg ขึ้นไป — Escape ไม่แตะราง", async () => {
+    setViewport(1440);
+    const onMobileOpenChange = vi.fn();
+    const user = userEvent.setup();
+    render(tree({ mobileOpen: true, onMobileOpenChange }));
+    await user.keyboard("{Escape}");
+    expect(onMobileOpenChange).not.toHaveBeenCalled();
   });
 });

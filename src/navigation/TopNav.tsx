@@ -4,6 +4,7 @@ import { cn } from "../lib/cn";
 import { Avatar } from "../ui/Avatar";
 import {
   Popover,
+  PopoverClose,
   PopoverContent,
   PopoverTrigger,
 } from "../overlay/Popover";
@@ -224,6 +225,18 @@ const DEFAULT_APP_DEFS: Record<
 
 const DEFAULT_APP_ORDER: MediactAppKey[] = ["mediwork", "medimatch", "medihr"];
 
+/** ปุ่มไปหน้าตั้งค่า (Portal) — วัดจากของจริง: เว้นบน 24 · เต็มความกว้าง · py 12
+ * · มุม 16 · พื้น `#EAF4FF` ตัวอักษร `#1E78F2` · 15px/500
+ * ⚠️ ต้องเป็นฟ้า **คงที่** — ปุ่มนี้พาไป Portal เสมอไม่ว่าเปิดจากแอปไหน
+ * `text-info-blue-primary` ใช้ไม่ได้เพราะ alias ไป `--color-brand-active`
+ * ⇒ จะเปลี่ยนสีตามแอปที่ยืนอยู่
+ *
+ * 🔴 ใช้ `info-blue-800` (`#1e48cc`) ไม่ใช่ `#1E78F2` ของ Portal — ของ Portal บนพื้น
+ * `#EAF4FF` วัดได้ **3.80:1** ตกเกณฑ์ข้อความ 4.5:1 (`info-blue-600` ก็ตก 3.42:1)
+ * ตัวที่เลือกได้ **6.85:1** */
+const settingsActionClass =
+  "mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-info-blue-50 py-3 text-[15px] font-medium text-info-blue-800 transition-colors hover:bg-info-blue-100 [&_svg]:size-5";
+
 /** 9-dot grid icon used by the AppLauncher trigger. */
 const NineDotIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -304,23 +317,31 @@ function AppLauncher({
         </div>
 
         {settingsAction && (
-          /* ปุ่มไปหน้าตั้งค่า (Portal) — วัดจากของจริง: เว้นบน 24 · เต็มความกว้าง
-           * · py 12 · มุม 16 · พื้น `#EAF4FF` ตัวอักษร `#1E78F2` · 15px/500
-           * ⚠️ ต้องเป็นฟ้า **คงที่** — ปุ่มนี้พาไป Portal เสมอไม่ว่าเปิดจากแอปไหน
-           * `text-info-blue-primary` ใช้ไม่ได้เพราะ alias ไป `--color-brand-active`
-           * ⇒ จะเปลี่ยนสีตามแอปที่ยืนอยู่
-           *
-           * 🔴 ใช้ `info-blue-800` (`#1e48cc`) ไม่ใช่ `#1E78F2` ของ Portal —
-           * ของ Portal บนพื้น `#EAF4FF` วัดได้ **3.80:1** ตกเกณฑ์ข้อความ 4.5:1
-           * (`info-blue-600` `#3b82f6` ก็ตก 3.42:1) ตัวที่เลือกได้ **6.85:1** */
-          <a
-            href={settingsAction.href}
-            onClick={settingsAction.onClick}
-            className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-info-blue-50 py-3 text-[15px] font-medium text-info-blue-800 transition-colors hover:bg-info-blue-100 [&_svg]:size-5"
-          >
-            <Settings aria-hidden />
-            {settingsAction.label}
-          </a>
+          /* ทรง/สีอยู่ที่ `settingsActionClass` — เหตุผลของสีฟ้าคงที่เขียนไว้ที่นั่น */
+          <PopoverClose asChild>
+            {/* 🔴 ไม่มี `href` ต้องเป็น `<button>` ไม่ใช่ `<a>` เปล่า ๆ — anchor ที่ไม่มี href
+              * ไม่อยู่ในลำดับ tab และ Enter ไม่ทำงาน ⇒ ปุ่มที่กดได้เฉพาะด้วยเมาส์
+              * (แอปที่พาไปหน้าในตัวเองด้วย router จะส่งแต่ `onClick` เสมอ) */}
+            {settingsAction.href ? (
+              <a
+                href={settingsAction.href}
+                onClick={settingsAction.onClick}
+                className={settingsActionClass}
+              >
+                <Settings aria-hidden />
+                {settingsAction.label}
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={settingsAction.onClick}
+                className={settingsActionClass}
+              >
+                <Settings aria-hidden />
+                {settingsAction.label}
+              </button>
+            )}
+          </PopoverClose>
         )}
       </PopoverContent>
     </Popover>
@@ -380,6 +401,8 @@ function AppLauncherTile({
   );
 
   if (disabled) {
+    /* ไม่ห่อ `PopoverClose` — การ์ดที่กดไม่ได้ต้องไม่ปิดลิ้นชักตอนโดนคลิก
+     * ไม่งั้นผู้ใช้จะอ่านว่า "กดแล้วมันทำอะไรสักอย่าง" ทั้งที่ไม่ได้ทำ */
     return (
       <div className={tileClass} aria-disabled="true">
         {iconBox}
@@ -387,23 +410,30 @@ function AppLauncherTile({
       </div>
     );
   }
+  /* 🔴 เลือกแอปแล้วลิ้นชักต้องปิด — Radix Popover ปิดให้เฉพาะตอนคลิก**นอก** เนื้อหา
+   * คลิกการ์ดข้างในจึงค้างเปิดอยู่ ทับหน้าที่เพิ่งเปิดไป (โดยเฉพาะเคส `onAppClick`
+   * ที่เปิดแท็บใหม่ — กลับมาแท็บเดิมแล้วเจอลิ้นชักค้าง) */
   if (onClick) {
     return (
-      <button
-        type="button"
-        onClick={() => onClick(appKey, config)}
-        className={tileClass}
-      >
-        {iconBox}
-        {labelEl}
-      </button>
+      <PopoverClose asChild>
+        <button
+          type="button"
+          onClick={() => onClick(appKey, config)}
+          className={tileClass}
+        >
+          {iconBox}
+          {labelEl}
+        </button>
+      </PopoverClose>
     );
   }
   return (
-    <a href={config.baseUrl} className={tileClass}>
-      {iconBox}
-      {labelEl}
-    </a>
+    <PopoverClose asChild>
+      <a href={config.baseUrl} className={tileClass}>
+        {iconBox}
+        {labelEl}
+      </a>
+    </PopoverClose>
   );
 }
 
@@ -468,6 +498,13 @@ export type UserMenuProps = {
     name?: string;
     src?: string;
     role?: React.ReactNode;
+    /**
+     * สิ่งที่แสดงแทนรูปเมื่อไม่มีรูป — ไม่ส่งก็ได้อักษรย่อจากชื่อ (ค่าเริ่มต้นของ `Avatar`)
+     *
+     * มีไว้เพราะบางแอปใช้ **ไอคอนคน** ไม่ใช่อักษรย่อ · ถ้าไม่มีช่องนี้ การย้ายมาใช้
+     * `UserMenu` จะเปลี่ยนสิ่งที่ผู้ใช้เห็นโดยไม่ได้ตั้งใจ
+     */
+    fallback?: React.ReactNode;
   };
   /** Body items rendered between the role and the bottom row. */
   items?: UserMenuItem[];
@@ -510,6 +547,7 @@ function UserMenu({
             size="md"
             src={user.src}
             name={user.name}
+            fallback={user.fallback}
             className="border-2 border-gray-100"
           />
           <ChevronDown className="size-4 text-gray-400 transition-transform group-data-[state=open]:rotate-180 group-hover:text-gray-600" />
@@ -525,6 +563,7 @@ function UserMenu({
           <Avatar
             src={user.src}
             name={user.name}
+            fallback={user.fallback}
             className="mb-3 size-[60px] border-2 border-gray-100"
           />
           {user.name && (
@@ -551,14 +590,16 @@ function UserMenu({
             <div className="flex items-center justify-between gap-3">
               {bottomLeft ?? <span />}
               {onLogout !== null && (
-                <button
-                  type="button"
-                  onClick={onLogout}
-                  className="flex cursor-pointer items-center gap-2 text-[16px] font-medium text-cherry-red-600 transition-colors hover:text-cherry-red-800"
-                >
-                  <LogOut className="size-5" />
-                  {logoutLabel}
-                </button>
+                <PopoverClose asChild>
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="flex cursor-pointer items-center gap-2 text-[16px] font-medium text-cherry-red-600 transition-colors hover:text-cherry-red-800"
+                  >
+                    <LogOut className="size-5" />
+                    {logoutLabel}
+                  </button>
+                </PopoverClose>
               )}
             </div>
           </>
@@ -568,20 +609,27 @@ function UserMenu({
   );
 }
 
+/* 🔴 ทุกอย่างที่กดแล้ว "ไปที่อื่น" ต้องปิดเมนูด้วย — Radix Popover ปิดให้เฉพาะตอนคลิก
+ * **นอก** เนื้อหา คลิกรายการข้างในจึงค้างเปิดคาหน้าใหม่ที่เพิ่งเปิดไป
+ * (ของเดิมในแอปปิดเองด้วย `setState` ตอนกด — ย้ายมาใช้ `UserMenu` แล้วต้องไม่หายไป) */
 function UserMenuItemButton({ item }: { item: UserMenuItem }) {
   const className =
     "block w-full cursor-pointer text-left py-3 text-[16px] font-medium text-text-body transition-colors hover:text-text-primary";
   if (item.href) {
     return (
-      <a href={item.href} className={className}>
-        {item.label}
-      </a>
+      <PopoverClose asChild>
+        <a href={item.href} className={className}>
+          {item.label}
+        </a>
+      </PopoverClose>
     );
   }
   return (
-    <button type="button" onClick={item.onClick} className={className}>
-      {item.label}
-    </button>
+    <PopoverClose asChild>
+      <button type="button" onClick={item.onClick} className={className}>
+        {item.label}
+      </button>
+    </PopoverClose>
   );
 }
 
