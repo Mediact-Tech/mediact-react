@@ -375,6 +375,58 @@ describe("DataTable", () => {
       expect(screen.getByText(/53/)).toBeInTheDocument();
     });
 
+    /* 🔴 แถบแบ่งหน้าต้องอยู่ **นอก**การ์ดที่มีขอบ — ทรงเดียวกับ `ActionTabel`
+     * ของ Portal (กล่องนอก `flex flex-col gap-4` · การ์ดกับแถบเป็นพี่น้องกัน)
+     * ของเดิมเอาไปไว้ในการ์ดแล้วขีด `border-t` คั่น ซึ่งไม่ตรงกับที่ไหน
+     *
+     * happy-dom ไม่คำนวณเลย์เอาต์ ⇒ ที่ล็อกได้คือ **ความเป็นพ่อลูกใน DOM**
+     * ซึ่งพอดีเป็นสิ่งที่ถ้าใครย้ายกลับเข้าไปจะพังตรงนี้ทันที */
+    const borderedCard = (container: HTMLElement) =>
+      container.querySelector('[class*="border-divider-gray"]')!;
+
+    /* ⚠️ อย่าไล่หาแถบด้วย `closest("div")` — รอบแรกเขียนแบบนั้นแล้วไปโดน div
+     * ชั้นในที่ไม่มีวันมี `border-t` อยู่แล้ว ⇒ ยืนยันผ่านโดยไม่ได้พิสูจน์อะไร
+     * (ลองใส่ `border-t` กลับเข้าไปแล้วเทสยังเขียว) · เกาะ `data-slot` แทน */
+    const slot = (container: HTMLElement, name: string) =>
+      container.querySelector<HTMLElement>(`[data-slot="${name}"]`)!;
+
+    it("แถบแบ่งหน้าอยู่นอกการ์ดที่มีขอบ", () => {
+      const { container } = render(
+        <DataTable
+          columns={columns}
+          data={rows}
+          getRowId={getRowId}
+          pagination={pagination}
+        />,
+      );
+      const bar = slot(container, "pagination");
+      const card = borderedCard(container);
+      expect(bar).toBeInTheDocument();
+      expect(card).toBeInTheDocument();
+      expect(card.contains(bar)).toBe(false);
+      /* และต้องไม่มีเส้นคั่นของตัวเอง — ระยะห่างมาจาก `gap` ของกล่องนอก */
+      expect(bar.className).not.toContain("border-t");
+    });
+
+    it("ตัวนับที่เลือก (ตอนไม่มีแบ่งหน้า) อยู่นอกการ์ดเหมือนกัน", () => {
+      /* สองอันนี้สลับที่กัน — ถ้าอยู่คนละที่ ตารางจะขยับตอนเปลี่ยนโหมด */
+      const { container } = render(
+        <DataTable
+          columns={columns}
+          data={rows}
+          getRowId={getRowId}
+          enableSelection
+          rowSelection={{ "1": true }}
+          onRowSelectionChange={vi.fn()}
+        />,
+      );
+      const bar = slot(container, "selected-count");
+      expect(bar).toBeInTheDocument();
+      expect(bar).toHaveTextContent(/1 selected/);
+      expect(borderedCard(container).contains(bar)).toBe(false);
+      expect(bar.className).not.toContain("border-t");
+    });
+
     it("ปุ่มย้อนกลับถูกปิดที่หน้าแรก", () => {
       render(
         <DataTable

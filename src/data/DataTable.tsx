@@ -462,17 +462,27 @@ function DataTable<TData>({
   const frozen = useFrozenOffsets(tableRef, frozenLeft, frozenRight);
 
   return (
-    <div
-      className={cn(
-        /* วัดจาก Portal จริง: radius 12 · เส้นขอบ #919eab33 · เงาบาง 2 ชั้น
-         * (ของเดิม radius 6 · ไม่มีเงา ⇒ ตารางกลืนไปกับพื้นหน้า) */
-        "flex flex-col overflow-hidden rounded-xl border border-divider-gray bg-bg-default shadow-sm",
-        className,
-      )}
-    >
-      {/* `Table` ห่อตัวเองด้วย `overflow-auto` อยู่แล้ว ⇒ การเลื่อนแนวนอนได้มาฟรี
-          เมื่อตั้ง `minWidth` — ไม่ต้องเพิ่มกล่อง scroll ซ้อนอีกชั้น */}
-      <div className={cn(stickyHeader && "max-h-[600px] overflow-auto", containerClassName)}>
+    /* 🔴 แถบแบ่งหน้าอยู่ **นอก**การ์ดที่มีขอบ — วัดจาก `ActionTabel` ของ Portal:
+     * กล่องนอกเป็น `flex flex-col gap-4` ไม่มีขอบ · การ์ดตารางอยู่ข้างใน ·
+     * แถบแบ่งหน้าเป็นพี่น้องของการ์ด ไม่ใช่ลูก ⇒ ไม่มีเส้นคั่นบนแถบ
+     * ของเดิมที่นี่เอาแถบไปไว้ในการ์ดแล้วขีดเส้น `border-t` คั่น ซึ่งไม่ตรงกับที่ไหน */
+    <div className={cn("flex min-h-0 flex-col gap-4", className)}>
+      <div
+        className={cn(
+          /* วัดจาก Portal จริง: radius 12 · เส้นขอบ #919eab33 · เงาบาง 2 ชั้น
+           * (ของเดิม radius 6 · ไม่มีเงา ⇒ ตารางกลืนไปกับพื้นหน้า)
+           *
+           * `flex-auto` ไม่ใช่ `flex-1` — `flex-1` ตั้ง basis เป็น 0 พอคู่กับ
+           * `min-h-0` การ์ดจะยุบเหลือ 0 ในกล่องที่สูงตามเนื้อหา · `flex-auto`
+           * (basis auto) สูงตามเนื้อหาเป็นปกติ แต่ยังยืด/หดได้เมื่อพ่อจำกัดความสูง
+           * ซึ่งเป็นเคสที่ผู้เรียกส่ง `className="min-h-0 flex-1"` มาเพื่อให้ตาราง
+           * เลื่อนในตัวเอง (hr-web EmployeeTable ทำแบบนั้น) */
+          "flex min-h-0 flex-auto flex-col overflow-hidden rounded-xl border border-divider-gray bg-bg-default shadow-sm",
+        )}
+      >
+        {/* `Table` ห่อตัวเองด้วย `overflow-auto` อยู่แล้ว ⇒ การเลื่อนแนวนอนได้มาฟรี
+            เมื่อตั้ง `minWidth` — ไม่ต้องเพิ่มกล่อง scroll ซ้อนอีกชั้น */}
+        <div className={cn(stickyHeader && "max-h-[600px] overflow-auto", containerClassName)}>
         <Table
           ref={tableRef}
           style={minTableWidth != null ? { minWidth: minTableWidth } : undefined}
@@ -635,6 +645,7 @@ function DataTable<TData>({
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {pagination ? (
@@ -818,7 +829,12 @@ function SelectedCountBar<TData>({
   const count = table.getSelectedRowModel().rows.length;
   if (count === 0) return null;
   return (
-    <div className="border-t border-border-default px-3 py-2 text-body-sm font-medium text-text-black">
+    /* ไม่มีเส้นคั่นแล้ว — แถบนี้อยู่นอกการ์ด ระยะห่างมาจาก `gap-4` ของกล่องนอก
+     * pad เท่ากับแถบแบ่งหน้า เพราะสองอันนี้สลับที่กัน ต้องไม่ขยับตำแหน่ง */
+    <div
+      data-slot="selected-count"
+      className="px-2 py-4 text-body-sm font-medium text-text-black"
+    >
       {labels?.selected ? labels.selected(count) : `${count} selected`}
     </div>
   );
@@ -857,7 +873,15 @@ function PaginationFooter<TData>({
     "rounded-md p-1 text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-30";
 
   return (
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border-default px-3 py-3 text-body-sm font-medium">
+    /* 📐 วัดจาก `ActionTabel` ของ Portal: pad **8/16** · 14px/500 · ไม่มีเส้นคั่น
+     * และไม่มีพื้นหลัง — เพราะแถบนี้ลอยอยู่นอกการ์ด ระยะห่างมาจาก `gap-4` ของกล่องนอก */
+    /* `data-slot` เป็นที่เกาะที่มั่นคงกว่าการไล่ `closest("div")` — เทสรอบแรก
+     * ไล่ขึ้นไปเจอ div ชั้นในแล้วยืนยันว่า "ไม่มี border-t" ซึ่งจริงเสมอ
+     * โดยไม่ได้พิสูจน์อะไรเลย · ผู้เรียกก็เกาะ selector นี้จัดสไตล์เพิ่มได้ */
+    <div
+      data-slot="pagination"
+      className="flex flex-wrap items-center gap-x-8 gap-y-3 px-2 py-4 text-body-sm font-medium"
+    >
       {pagination.onPageSizeChange && (
         <div className="flex items-center gap-3">
           {/* ป้ายต้องไม่ตกบรรทัด — วัดแล้วที่ 1000px "Rows per page" แตกเป็น 2 แถว

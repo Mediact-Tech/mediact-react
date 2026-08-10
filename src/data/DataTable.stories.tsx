@@ -178,6 +178,36 @@ export const StickyHeader: Story = {
   ),
 };
 
+/**
+ * ตารางกินความสูงที่เหลือของหน้า แล้วเลื่อนในตัวเอง — แถบแบ่งหน้าติดก้นเสมอ
+ *
+ * ทรงที่ `hr-web` ใช้จริง (`EmployeeTable`): ส่ง `className="min-h-0 flex-1"` +
+ * `containerClassName="min-h-0 flex-1 max-h-none"` ลงในกล่องที่สูงคงที่
+ *
+ * 🔴 เป็นเคสที่พังง่ายที่สุดตอนย้ายแถบแบ่งหน้าออกนอกการ์ด — ถ้าการ์ดไม่ยืด/หด
+ * ตามพ่อ ตารางจะดันทะลุออกนอกกล่องแทนที่จะเลื่อนในตัวเอง
+ */
+export const FillsParentHeight: Story = {
+  render: () => (
+    <div className="flex h-[420px] flex-col rounded-lg bg-bg-subtle p-4">
+      <DataTable
+        columns={columns}
+        data={allUsers}
+        stickyHeader
+        className="min-h-0 flex-1"
+        containerClassName="min-h-0 flex-1 max-h-none"
+        pagination={{
+          pageIndex: 0,
+          pageSize: 10,
+          rowCount: allUsers.length,
+          onPageChange: () => {},
+          onPageSizeChange: () => {},
+        }}
+      />
+    </div>
+  ),
+};
+
 /** โหลดไม่สำเร็จ + ปุ่มลองใหม่\n *\n * `isLoading` ชนะ `error` เสมอ ⇒ refetch เบื้องหลังจะไม่วาบ error เก่าให้เห็น\n */
 export const ErrorState: Story = {
   parameters: {
