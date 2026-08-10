@@ -462,11 +462,16 @@ function DataTable<TData>({
   const frozen = useFrozenOffsets(tableRef, frozenLeft, frozenRight);
 
   return (
-    /* 🔴 แถบแบ่งหน้าอยู่ **นอก**การ์ดที่มีขอบ — วัดจาก `ActionTabel` ของ Portal:
-     * กล่องนอกเป็น `flex flex-col gap-4` ไม่มีขอบ · การ์ดตารางอยู่ข้างใน ·
-     * แถบแบ่งหน้าเป็นพี่น้องของการ์ด ไม่ใช่ลูก ⇒ ไม่มีเส้นคั่นบนแถบ
-     * ของเดิมที่นี่เอาแถบไปไว้ในการ์ดแล้วขีดเส้น `border-t` คั่น ซึ่งไม่ตรงกับที่ไหน */
-    <div className={cn("flex min-h-0 flex-col gap-4", className)}>
+    /* 🔴 แถบแบ่งหน้าอยู่ **นอก**การ์ดที่มีขอบ — โครงตาม `ActionTabel` ของ Portal:
+     * กล่องนอกไม่มีขอบ · การ์ดตารางอยู่ข้างใน · แถบแบ่งหน้าเป็นพี่น้องของการ์ด
+     * ไม่ใช่ลูก ⇒ ไม่มีเส้นคั่นบนแถบ
+     * ของเดิมที่นี่เอาแถบไปไว้ในการ์ดแล้วขีดเส้น `border-t` คั่น ซึ่งไม่ตรงกับที่ไหน
+     *
+     * ⚠️ ระยะห่างเป็น `gap-1` (4) **ไม่ใช่ `gap-4` (16) ของ Portal** — ตั้งใจต่างเอง
+     * เพราะแถบมี `py-4` ของตัวเองอยู่แล้ว ⇒ ของ Portal วัดจากขอบการ์ดถึงตัวหนังสือ
+     * ได้ 38 ซึ่งดูหลุดจากตาราง · ลดเหลือ 4 แล้วได้ 26 แถบยังไม่ติดขอบการ์ด
+     * เพราะ padding ของตัวมันเองกันไว้ */
+    <div className={cn("flex min-h-0 flex-col gap-1", className)}>
       <div
         className={cn(
           /* วัดจาก Portal จริง: radius 12 · เส้นขอบ #919eab33 · เงาบาง 2 ชั้น
@@ -833,7 +838,7 @@ function SelectedCountBar<TData>({
      * pad เท่ากับแถบแบ่งหน้า เพราะสองอันนี้สลับที่กัน ต้องไม่ขยับตำแหน่ง */
     <div
       data-slot="selected-count"
-      className="px-2 py-4 text-body-sm font-medium text-text-black"
+      className="px-2 pt-4 text-body-sm font-medium text-text-black"
     >
       {labels?.selected ? labels.selected(count) : `${count} selected`}
     </div>
@@ -873,14 +878,15 @@ function PaginationFooter<TData>({
     "rounded-md p-1 text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-30";
 
   return (
-    /* 📐 วัดจาก `ActionTabel` ของ Portal: pad **8/16** · 14px/500 · ไม่มีเส้นคั่น
-     * และไม่มีพื้นหลัง — เพราะแถบนี้ลอยอยู่นอกการ์ด ระยะห่างมาจาก `gap-4` ของกล่องนอก */
+    /* 📐 วัดจาก `ActionTabel` ของ Portal: 14px/500 · ไม่มีเส้นคั่น ไม่มีพื้นหลัง
+     * pad **8 ข้าง · 16 บน · ล่าง 0** — ไม่มี pad ล่างเพราะแถบเป็นของสุดท้ายในกล่อง
+     * ระยะก้นจึงเป็นของหน้าที่เอาไปวาง ไม่ใช่ของ component */
     /* `data-slot` เป็นที่เกาะที่มั่นคงกว่าการไล่ `closest("div")` — เทสรอบแรก
      * ไล่ขึ้นไปเจอ div ชั้นในแล้วยืนยันว่า "ไม่มี border-t" ซึ่งจริงเสมอ
      * โดยไม่ได้พิสูจน์อะไรเลย · ผู้เรียกก็เกาะ selector นี้จัดสไตล์เพิ่มได้ */
     <div
       data-slot="pagination"
-      className="flex flex-wrap items-center gap-x-8 gap-y-3 px-2 py-4 text-body-sm font-medium"
+      className="flex flex-wrap items-center gap-x-8 gap-y-3 px-2 pt-4 text-body-sm font-medium"
     >
       {pagination.onPageSizeChange && (
         <div className="flex items-center gap-3">
