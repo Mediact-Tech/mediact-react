@@ -674,15 +674,19 @@ describe("ข้อความทั้งหมดแทนที่ได้�
  * ข้อมูลในตารางคือ "ข้อมูล" ไม่ใช่องค์ประกอบของแบรนด์ — ต้องอ่านง่ายเท่ากันทุกแอป
  *
  * ⚠️ happy-dom ไม่คำนวณสี ⇒ เทสนี้ล็อกได้แค่ชื่อ token ที่เขียนไว้
- * ค่าจริงพิสูจน์ใน Storybook (หลังแก้: ทั้ง 4 ธีมได้ rgb(25, 25, 25) เท่ากันหมด)
+ * ค่าจริงพิสูจน์ใน Storybook (ทั้ง 4 ธีมต้องได้ค่าเดียวกัน)
+ *
+ * 🔄 token เปลี่ยนจาก `text-text-black` (#191919) เป็น `text-text-body` (#535a61)
+ * ตามตัวแปรที่ไฟล์ดีไซน์อ้างถึงตรง ๆ (`--color/text/body`) — เงื่อนไขที่เทสนี้คุ้มครอง
+ * ไม่เปลี่ยน เพราะ `--color-text-body` ประกาศครั้งเดียวที่ `:root` ไม่มีธีมไหน override
  * ──────────────────────────────────────────────────────────────────────────── */
 describe("สีตัวอักษรในตารางไม่เปลี่ยนตามแอป", () => {
   const BRAND_TINTED = "text-text-primary";
 
-  it("เซลล์ข้อมูลใช้ token ดำคงที่ ไม่ใช่ token ที่ผูกกับแบรนด์", () => {
+  it("เซลล์ข้อมูลใช้ token ที่คงที่ ไม่ใช่ token ที่ผูกกับแบรนด์", () => {
     render(<DataTable columns={columns} data={rows} getRowId={getRowId} />);
     const cell = document.querySelector("tbody td")!;
-    expect(cell.className).toContain("text-text-black");
+    expect(cell.className).toContain("text-text-body");
     expect(cell.className).not.toContain(BRAND_TINTED);
   });
 
@@ -708,5 +712,31 @@ describe("สีตัวอักษรในตารางไม่เปล�
     );
     const bar = screen.getByText(/1 selected/);
     expect(bar.className).not.toContain(BRAND_TINTED);
+  });
+});
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * น้ำหนักตัวอักษรในตาราง — หัวคอลัมน์ 500 · เซลล์ข้อมูล 400
+ *
+ * 🔴 เดิมเซลล์ข้อมูลเป็น **600** ซึ่งย้อนรอยมาจากตารางของ Portal ไม่ใช่สเปกของ DS
+ * ไฟล์ดีไซน์ประกาศ style ในตารางไว้แค่ 2 ตัว — `Body/Small Medium` (หัว · 500)
+ * กับ `Body/Small Regular` (เซลล์ · 400) · ผลของค่าเดิมคือแอปที่อยากได้เนื้อความ
+ * ปกติต้องห่อทุกเซลล์ด้วย `<Text>` เพื่อล้มค่าตั้งต้นของ DS เอง
+ *
+ * เทสนี้จึงล็อก "หัวหนากว่าเซลล์" ไว้ ไม่ให้ใครเผลอกลับไปเป็น 600 อีก
+ * ──────────────────────────────────────────────────────────────────────────── */
+describe("น้ำหนักตัวอักษรในตารางตรงกับ type style ของดีไซน์", () => {
+  it("เซลล์ข้อมูลเป็น 400 ไม่ใช่ 600", () => {
+    render(<DataTable columns={columns} data={rows} getRowId={getRowId} />);
+    const td = document.querySelector("tbody td")!;
+    expect(td.className).toContain("font-normal");
+    expect(td.className).not.toContain("font-semibold");
+  });
+
+  it("หัวคอลัมน์หนากว่าเซลล์ข้อมูล", () => {
+    render(<DataTable columns={columns} data={rows} getRowId={getRowId} />);
+    expect(document.querySelector("thead th")!.className).toContain(
+      "font-medium",
+    );
   });
 });

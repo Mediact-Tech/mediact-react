@@ -338,6 +338,16 @@ export type ConfirmDialogProps = {
   /** `false` = โหมดแจ้งเตือนปุ่มเดียว ไม่มีปุ่มยกเลิก · ค่าปกติ `true` */
   showCancel?: boolean;
   /**
+   * ปิดปุ่มยืนยันไว้ก่อน ขณะที่ปุ่มยกเลิกยังกดได้
+   *
+   * 🔴 ใช้กับกล่องที่ **ยืนยันไม่ได้จนกว่าจะรู้ผล** — เช่นจอถอดคนออกจากหน่วยงานที่ต้อง
+   * โหลด preview ผลกระทบมาก่อน (ถ้า preview พัง กล่องยืนยันที่ยังกดได้แย่กว่าไม่มีกล่อง
+   * เพราะมันชวนให้กดโดยเข้าใจว่าระบบตรวจให้แล้ว)
+   *
+   * ⚠️ ต่างจาก `loading` — อันนั้นคือ "กำลังทำอยู่" และปิดปุ่มยกเลิกด้วย
+   */
+  confirmDisabled?: boolean;
+  /**
    * เนื้อหาเพิ่มเติม **ใต้คำอธิบาย เหนือปุ่ม** — ใส่อะไรก็ได้
    *
    * ใช้ตอนที่ข้อความอย่างเดียวไม่พอ เช่น รายการที่จะถูกลบ · ตารางสรุป · ช่องกรอก
@@ -369,6 +379,7 @@ function ConfirmDialog({
   align = "center",
   errorMessage,
   showCancel = true,
+  confirmDisabled,
   children,
 }: ConfirmDialogProps) {
   const [internalLoading, setInternalLoading] = React.useState(false);
@@ -440,6 +451,7 @@ function ConfirmDialog({
           onCancel={handleCancel}
           loading={loading}
           showCancel={showCancel}
+          confirmDisabled={confirmDisabled}
         />
       </DialogContent>
     </Dialog>

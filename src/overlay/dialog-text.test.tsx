@@ -78,6 +78,44 @@ describe("ข้อความใน dialog ต้องไม่ตามส�
   });
 });
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * ปิดปุ่มยืนยันได้ โดยที่ปุ่มยกเลิกยังกดได้
+ *
+ * 🔴 `ConfirmDialogActions` รับ `confirmDisabled` มาตั้งแต่แรก แต่ `ConfirmDialog`
+ * **ไม่ได้ส่งต่อให้** ⇒ กล่องที่ "ยืนยันไม่ได้จนกว่าจะรู้ผล" (เช่นจอถอดคนที่ต้องรอ
+ * preview ผลกระทบ) เขียนด้วย `ConfirmDialog` ไม่ได้เลย ต้องไปประกอบเองจากชิ้นส่วน
+ *
+ * ต้องไม่เผลอไปปิดปุ่มยกเลิกด้วย — ผู้ใช้ที่ยืนยันไม่ได้ต้องออกจากกล่องได้เสมอ
+ * ──────────────────────────────────────────────────────────────────────────── */
+describe("confirmDisabled", () => {
+  it("ปิดเฉพาะปุ่มยืนยัน ปุ่มยกเลิกยังกดได้", () => {
+    render(
+      <ConfirmDialog
+        open
+        onOpenChange={() => {}}
+        title="ยืนยัน"
+        confirmLabel="ถอดออก"
+        cancelLabel="ยกเลิก"
+        confirmDisabled
+      />,
+    );
+    expect(screen.getByRole("button", { name: "ถอดออก" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "ยกเลิก" })).toBeEnabled();
+  });
+
+  it("ไม่ส่งมา = ปุ่มยืนยันกดได้", () => {
+    render(
+      <ConfirmDialog
+        open
+        onOpenChange={() => {}}
+        title="ยืนยัน"
+        confirmLabel="ถอดออก"
+      />,
+    );
+    expect(screen.getByRole("button", { name: "ถอดออก" })).toBeEnabled();
+  });
+});
+
 describe("ทรงต้องตรงกับ ConfirmModal ของ Portal", () => {
   /* ⚠️ `DialogContent` render ผ่าน portal ไปที่ `document.body`
    * ⇒ `container` ของ RTL **ไม่มีเนื้อหา dialog อยู่เลย** ถ้าค้นจาก container

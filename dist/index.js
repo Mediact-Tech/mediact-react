@@ -2969,6 +2969,7 @@ var DepthContext = React24.createContext(0);
 var Sidebar = React24.forwardRef(function Sidebar2({
   className,
   header,
+  brand,
   footer,
   activeItemId,
   onItemClick,
@@ -3045,7 +3046,7 @@ var Sidebar = React24.forwardRef(function Sidebar2({
         ),
         ...props,
         children: [
-          header && /* วัดจาก Portal: สูง 88 · pad 24 · เว้นบนอีก 16 · กางแล้วชิดซ้าย ยุบแล้วกึ่งกลาง */
+          (header || brand) && /* วัดจาก Portal: สูง 88 · pad 24 · เว้นบนอีก 16 · กางแล้วชิดซ้าย ยุบแล้วกึ่งกลาง */
           /* @__PURE__ */ jsx29(
             "div",
             {
@@ -3053,7 +3054,13 @@ var Sidebar = React24.forwardRef(function Sidebar2({
                 "mt-4 flex items-center transition-all duration-300 ease-in-out",
                 showExpanded ? "min-h-[88px] justify-between p-6" : "justify-center p-4"
               ),
-              children: header
+              children: header ?? /* @__PURE__ */ jsxs23(Fragment7, { children: [
+                /* @__PURE__ */ jsxs23("span", { className: "flex min-w-0 flex-1 items-center justify-center gap-3", children: [
+                  /* @__PURE__ */ jsx29("span", { className: "flex shrink-0 items-center", children: brand.symbol }),
+                  showExpanded && brand.name && /* @__PURE__ */ jsx29("span", { className: "truncate text-title-md font-bold tracking-wide", children: brand.name })
+                ] }),
+                showExpanded && brand.action
+              ] })
             }
           ),
           /* @__PURE__ */ jsx29("nav", { className: "flex-1 space-y-1 overflow-y-auto px-4", children }),
@@ -4859,9 +4866,10 @@ var TableHead = React31.forwardRef(function TableHead2({ className, ...props }, 
     {
       ref,
       className: cn(
-        /* วัดจาก Portal: สูง 48 · pad 12/16 · 14px/500 · #191919 · ไม่ตัดบรรทัด
-         * ⚠️ ของเดิมเป็น 12px/600 ตัวพิมพ์ใหญ่ สีจาง (#9b9b9b) — ไม่มีแอปไหนทำแบบนั้น */
-        "h-12 px-4 py-3 text-left align-middle text-body-sm font-medium whitespace-nowrap text-text-black",
+        /* หัวคอลัมน์ = type style **`Body/Small Medium`** ของไฟล์ดีไซน์ (14px · 500 · #535a61)
+         * ⚠️ ของเดิมเป็น 12px/600 ตัวพิมพ์ใหญ่ สีจาง (#9b9b9b) — ไม่มีแอปไหนทำแบบนั้น
+         * สีมาจาก `text-text-body` ไม่ใช่ `text-text-black` — เหตุผลอยู่ที่ `TableCell` */
+        "h-12 px-4 py-3 text-left align-middle text-body-sm font-medium whitespace-nowrap text-text-body",
         "[&:has([role=checkbox])]:pr-0",
         className
       ),
@@ -4875,17 +4883,24 @@ var TableCell = React31.forwardRef(function TableCell2({ className, ...props }, 
     {
       ref,
       className: cn(
-        /* วัดจาก Portal: สูง 64.5 · pad 12/16 · 14px/**600**
-         * น้ำหนัก 600 ในเซลล์ข้อมูลเป็นของจริง ไม่ใช่ความผิดพลาด — ตารางของ Portal
-         * ใช้ตัวหนาทั้งตารางเพื่อให้อ่านข้ามคอลัมน์ได้เร็ว
+        /* เซลล์ข้อมูล = type style **`Body/Small Regular`** ของไฟล์ดีไซน์ (14px · 400 · #535a61)
          *
-         * 🔴 สีต้องเป็นดำคงที่ **ห้ามเปลี่ยนตามแอป** — เดิมใช้ `text-text-primary`
-         * ซึ่งใน `theme.css` ถูก alias ไปที่ `--color-brand` ⇒ ตัวเลขในตารางเปลี่ยนสี
-         * ตามแบรนด์ทุกแอป (วัดแล้ว: Mediwork `rgb(38,209,179)` เขียวมิ้นต์สด ·
-         * MediHR `rgb(6,17,172)` น้ำเงินเข้ม · Medimatch `rgb(4,129,168)`)
-         * — ข้อมูลในตารางคือ "ข้อมูล" ไม่ใช่องค์ประกอบของแบรนด์ ต้องอ่านง่ายเท่ากันทุกแอป
-         * และต้องเป็นสีเดียวกับหัวตารางซึ่งใช้ `text-text-black` อยู่แล้ว */
-        "h-16 px-4 py-3 align-middle text-body-sm font-semibold text-text-black",
+         * 🔴 **400 ไม่ใช่ 600** — ค่าเดิมคือ 600/#191919 ซึ่ง**ย้อนรอยมาจากตารางของ Portal**
+         * ไม่ใช่สเปกของ DS · ผลคือทุกแอปที่อยากได้เนื้อความปกติต้องห่อทุกเซลล์ด้วย `<Text>`
+         * เพื่อ**ล้มค่าตั้งต้นของตัวเอง** (MediHR ทำอยู่ 3 จอ) และเซลล์ที่ลืมห่อจะหนากว่า
+         * ชื่อคนซึ่งเป็นของหลักในแถว — กลับหัวลำดับความสำคัญ
+         * หลักฐาน: Figma ประกาศ style ในตารางไว้แค่ 2 ตัว — หัวคอลัมน์ `Body/Small Medium`
+         * (500) · เซลล์ `Body/Small Regular` (400) · ตรงกันทั้งจอวันหยุด (544:15745)
+         * และจอบุคลากร (544:22556) · ที่โผล่เป็น Montserrat Medium ในบางคอลัมน์คือ text
+         * ที่ยังไม่ได้ผูก style ไม่ใช่เจตนา
+         *
+         * 🔴 สีต้อง **ไม่ผูกกับแบรนด์** — เดิมเคยใช้ `text-text-primary` ซึ่งใน `theme.css`
+         * ถูก alias ไปที่ `--color-brand` ⇒ ตัวเลขในตารางเปลี่ยนสีตามแอป (วัดแล้ว:
+         * Mediwork `rgb(38,209,179)` เขียวมิ้นต์สด · MediHR `rgb(6,17,172)` · Medimatch
+         * `rgb(4,129,168)`) · `text-text-body` (#535a61) ประกาศครั้งเดียวที่ `:root`
+         * ไม่มีธีมไหน override ⇒ คงที่ทุกแอปเหมือนที่ `text-text-black` เคยให้ และตรงกับ
+         * ตัวแปรที่ดีไซน์อ้างถึงตรง ๆ (`--color/text/body`) · ต้องเป็นสีเดียวกับหัวตารางเสมอ */
+        "h-16 px-4 py-3 align-middle text-body-sm font-normal text-text-body",
         "[&:has([role=checkbox])]:pr-0",
         className
       ),
@@ -5329,6 +5344,8 @@ function DataTable({
     Boolean(enableSelection)
   );
   const frozen = useFrozenOffsets(tableRef, frozenLeft, frozenRight);
+  const hasFrozen = frozenLeft.size > 0 || frozenRight.size > 0;
+  const showFiller = hasFrozen && !isLoading && !error && table.getRowModel().rows.length > 0;
   return (
     /* 🔴 แถบแบ่งหน้าอยู่ **นอก**การ์ดที่มีขอบ — โครงตาม `ActionTabel` ของ Portal:
      * กล่องนอกไม่มีขอบ · การ์ดตารางอยู่ข้างใน · แถบแบ่งหน้าเป็นพี่น้องของการ์ด
@@ -5372,12 +5389,18 @@ function DataTable({
                    * หัวตารางจึงค้างแนวตั้ง และคอลัมน์ที่แช่ไว้ยังค้างแนวนอนเหมือนเดิม */
                   "[&>div]:overflow-visible"
                 ],
+                /* 🔴 กล่องชั้นในที่ `Table` ห่อตัวเองไว้ต้องสูงเต็มด้วย ไม่งั้น `h-full` ของ `<table>`
+                 * ไป resolve กับกล่องที่สูงตามเนื้อหา ⇒ ได้ auto = ไม่ยืด แล้วแถวเติมช่องว่าง
+                 * (`FrozenFillerRow`) ก็ไม่มีที่ให้ยืดตาม เส้นแบ่งเลยยังลากไม่ถึงก้นเหมือนเดิม
+                 * (วัดสด: ก้นตาราง 586 · ก้นกล่อง 692 — ห่าง 106px ที่ไม่มีเส้น) */
+                hasFrozen && "[&>div]:h-full",
                 containerClassName
               ),
               children: /* @__PURE__ */ jsxs32(
                 Table,
                 {
                   ref: tableRef,
+                  className: hasFrozen ? "h-full" : void 0,
                   style: minTableWidth != null ? { minWidth: minTableWidth } : void 0,
                   children: [
                     /* @__PURE__ */ jsx39(
@@ -5442,66 +5465,75 @@ function DataTable({
                         }) }, hg.id))
                       }
                     ),
-                    /* @__PURE__ */ jsx39(TableBody, { children: isLoading ? /* @__PURE__ */ jsx39(
-                      SkeletonRows,
+                    /* @__PURE__ */ jsxs32(
+                      TableBody,
                       {
-                        columnCount: finalColumns.length,
-                        rowCount: skeletonRowCount ?? Math.min(pagination?.pageSize ?? 5, 10)
+                        className: showFiller ? "[&_tr:nth-last-child(2)]:border-b-0" : void 0,
+                        children: [
+                          isLoading ? /* @__PURE__ */ jsx39(
+                            SkeletonRows,
+                            {
+                              columnCount: finalColumns.length,
+                              rowCount: skeletonRowCount ?? Math.min(pagination?.pageSize ?? 5, 10)
+                            }
+                          ) : error ? /* @__PURE__ */ jsx39(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx39(TableCell, { colSpan: finalColumns.length, className: "p-0", children: renderError ? renderError({ error, retry: onRetry }) : errorSlot ?? /* ใช้ `ErrorState` ตัวเดียวกับที่แอปใช้ ไม่ประกอบเองในตาราง —
+                           * ไม่งั้นสถานะผิดพลาดในตารางจะหน้าตาต่างจากที่อื่นในจอเดียวกัน */
+                          /* @__PURE__ */ jsx39(
+                            ErrorState,
+                            {
+                              error,
+                              icon: errorIcon,
+                              title: labels?.error?.title ?? "Something went wrong",
+                              description: labels?.error?.description ?? "We couldn't load this data.",
+                              onRetry,
+                              retryLabel: labels?.retry ?? "Retry"
+                            }
+                          ) }) }) : table.getRowModel().rows.length === 0 ? /* @__PURE__ */ jsx39(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx39(
+                            TableCell,
+                            {
+                              colSpan: finalColumns.length,
+                              className: "p-0",
+                              children: renderEmpty ? renderEmpty({ isFiltered: Boolean(isFiltered) }) : empty ?? /* 🔴 ต้องมีไอคอนด้วย ไม่ใช่ข้อความเปล่า — ตารางเคยส่งแค่
+                               * `title`/`description` ⇒ `EmptyState` ไม่ render ป้ายเลย
+                               * แล้วสถานะว่างในตารางหน้าตาไม่เหมือน `EmptyState` ที่อื่นในจอเดียวกัน
+                               * ทั้งที่เรียก component ตัวเดียวกันอยู่ · ผู้เรียกเปลี่ยนไอคอน
+                               * ให้ตรงกับสิ่งที่ตารางนี้แสดงได้ผ่าน `emptyIcon` */
+                              /* @__PURE__ */ jsx39(
+                                EmptyState,
+                                {
+                                  icon: emptyIcon ?? /* @__PURE__ */ jsx39(Inbox, {}),
+                                  title: labels?.empty?.title ?? "No data",
+                                  description: labels?.empty?.description ?? "There's nothing to show here yet."
+                                }
+                              )
+                            }
+                          ) }) : groupBy ? /* @__PURE__ */ jsx39(
+                            GroupedRows,
+                            {
+                              table,
+                              groupBy,
+                              groupOrder,
+                              groupLabel,
+                              collapsibleGroups,
+                              collapsedKeys,
+                              onToggleGroup: toggleGroup,
+                              toggleGroupLabel: labels?.toggleGroup ?? "Toggle group",
+                              onRowClick,
+                              frozen
+                            }
+                          ) : table.getRowModel().rows.map((row, idx) => /* @__PURE__ */ jsx39(
+                            DataRow,
+                            {
+                              row,
+                              frozen,
+                              onClick: onRowClick ? () => onRowClick(row.original, idx) : void 0
+                            },
+                            row.id
+                          )),
+                          showFiller && /* @__PURE__ */ jsx39(FrozenFillerRow, { columns: finalColumns, frozen })
+                        ]
                       }
-                    ) : error ? /* @__PURE__ */ jsx39(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx39(TableCell, { colSpan: finalColumns.length, className: "p-0", children: renderError ? renderError({ error, retry: onRetry }) : errorSlot ?? /* ใช้ `ErrorState` ตัวเดียวกับที่แอปใช้ ไม่ประกอบเองในตาราง —
-                     * ไม่งั้นสถานะผิดพลาดในตารางจะหน้าตาต่างจากที่อื่นในจอเดียวกัน */
-                    /* @__PURE__ */ jsx39(
-                      ErrorState,
-                      {
-                        error,
-                        icon: errorIcon,
-                        title: labels?.error?.title ?? "Something went wrong",
-                        description: labels?.error?.description ?? "We couldn't load this data.",
-                        onRetry,
-                        retryLabel: labels?.retry ?? "Retry"
-                      }
-                    ) }) }) : table.getRowModel().rows.length === 0 ? /* @__PURE__ */ jsx39(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx39(
-                      TableCell,
-                      {
-                        colSpan: finalColumns.length,
-                        className: "p-0",
-                        children: renderEmpty ? renderEmpty({ isFiltered: Boolean(isFiltered) }) : empty ?? /* 🔴 ต้องมีไอคอนด้วย ไม่ใช่ข้อความเปล่า — ตารางเคยส่งแค่
-                         * `title`/`description` ⇒ `EmptyState` ไม่ render ป้ายเลย
-                         * แล้วสถานะว่างในตารางหน้าตาไม่เหมือน `EmptyState` ที่อื่นในจอเดียวกัน
-                         * ทั้งที่เรียก component ตัวเดียวกันอยู่ · ผู้เรียกเปลี่ยนไอคอน
-                         * ให้ตรงกับสิ่งที่ตารางนี้แสดงได้ผ่าน `emptyIcon` */
-                        /* @__PURE__ */ jsx39(
-                          EmptyState,
-                          {
-                            icon: emptyIcon ?? /* @__PURE__ */ jsx39(Inbox, {}),
-                            title: labels?.empty?.title ?? "No data",
-                            description: labels?.empty?.description ?? "There's nothing to show here yet."
-                          }
-                        )
-                      }
-                    ) }) : groupBy ? /* @__PURE__ */ jsx39(
-                      GroupedRows,
-                      {
-                        table,
-                        groupBy,
-                        groupOrder,
-                        groupLabel,
-                        collapsibleGroups,
-                        collapsedKeys,
-                        onToggleGroup: toggleGroup,
-                        toggleGroupLabel: labels?.toggleGroup ?? "Toggle group",
-                        onRowClick,
-                        frozen
-                      }
-                    ) : table.getRowModel().rows.map((row, idx) => /* @__PURE__ */ jsx39(
-                      DataRow,
-                      {
-                        row,
-                        frozen,
-                        onClick: onRowClick ? () => onRowClick(row.original, idx) : void 0
-                      },
-                      row.id
-                    )) })
+                    )
                   ]
                 }
               )
@@ -5526,6 +5558,25 @@ function DataTable({
       )
     ] })
   );
+}
+function FrozenFillerRow({
+  columns,
+  frozen
+}) {
+  return /* @__PURE__ */ jsx39(TableRow, { "aria-hidden": true, className: "h-full border-b-0 hover:bg-transparent", children: columns.map((column, index) => {
+    const id = column.id ?? column.accessorKey ?? String(index);
+    const pin = frozenCellProps(frozen[id], "cell");
+    return /* @__PURE__ */ jsx39(
+      TableCell,
+      {
+        "data-col-id": id,
+        "aria-hidden": true,
+        className: cn("h-auto p-0", pin.className),
+        style: pin.style
+      },
+      id
+    );
+  }) });
 }
 function DataRow({
   row,
@@ -6380,6 +6431,7 @@ function ConfirmDialog({
   align = "center",
   errorMessage,
   showCancel = true,
+  confirmDisabled,
   children
 }) {
   const [internalLoading, setInternalLoading] = React38.useState(false);
@@ -6443,7 +6495,8 @@ function ConfirmDialog({
             onConfirm: handleConfirm,
             onCancel: handleCancel,
             loading,
-            showCancel
+            showCancel,
+            confirmDisabled
           }
         )
       ]
@@ -6451,9 +6504,110 @@ function ConfirmDialog({
   ) });
 }
 
+// src/overlay/ContactSupportDialog.tsx
+import { MessageCircle, Phone } from "lucide-react";
+import { jsx as jsx47, jsxs as jsxs37 } from "react/jsx-runtime";
+var MEDIACT_LINE_URL = "https://line.me/R/ti/p/@019bdeqs";
+var MEDIACT_LINE_HANDLE = "@mediact";
+var MEDIACT_SUPPORT_PHONE = "+66 94 124 9291";
+var LineIcon = () => /* @__PURE__ */ jsx47(
+  "svg",
+  {
+    className: "size-4 shrink-0",
+    viewBox: "0 0 24 24",
+    fill: "currentColor",
+    "aria-hidden": "true",
+    children: /* @__PURE__ */ jsx47("path", { d: "M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61V9.863h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.105.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" })
+  }
+);
+var SupportCard = ({
+  icon,
+  title,
+  description,
+  action
+}) => /* @__PURE__ */ jsxs37("div", { className: "flex flex-col items-center gap-3 rounded-3xl border border-border-default p-6 text-center", children: [
+  /* @__PURE__ */ jsx47("span", { className: "flex size-14 items-center justify-center rounded-full bg-info-blue-50 text-info-blue-primary", children: icon }),
+  /* @__PURE__ */ jsx47(Text, { variant: "body-md", weight: "bold", tone: "body", children: title }),
+  /* @__PURE__ */ jsx47(Text, { variant: "body-sm", tone: "muted", className: "leading-relaxed text-balance", children: description }),
+  /* @__PURE__ */ jsx47("div", { className: "mt-auto pt-1", children: action })
+] });
+function ContactSupportDialog({
+  open,
+  onOpenChange,
+  labels,
+  logo,
+  lineUrl = MEDIACT_LINE_URL,
+  lineHandle = MEDIACT_LINE_HANDLE,
+  phoneNumber = MEDIACT_SUPPORT_PHONE,
+  className
+}) {
+  return /* @__PURE__ */ jsx47(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs37(
+    DialogContent,
+    {
+      onOpenAutoFocus: (event) => event.preventDefault(),
+      className: cn("max-w-[640px] rounded-2xl p-8", className),
+      children: [
+        /* @__PURE__ */ jsxs37("div", { className: "mb-6 flex flex-col items-center gap-3", children: [
+          logo,
+          /* @__PURE__ */ jsx47(DialogTitle, { className: "text-title-sm font-bold", children: labels.title }),
+          /* @__PURE__ */ jsx47(DialogDescription, { className: "sr-only", children: labels.title })
+        ] }),
+        /* @__PURE__ */ jsxs37("div", { className: "grid grid-cols-1 gap-4 sm:grid-cols-2", children: [
+          /* @__PURE__ */ jsx47(
+            SupportCard,
+            {
+              icon: /* @__PURE__ */ jsx47(MessageCircle, { className: "size-7" }),
+              title: labels.lineTitle,
+              description: labels.lineDescription,
+              action: (
+                /* 🔴 `#06C755` เป็นสีแบรนด์ของ LINE ไม่ใช่สีของระบบเรา — เป็น hex ตรง ๆ
+                 * โดยตั้งใจ token แทนไม่ได้ และห้ามเพี้ยนตามธีมของแอป */
+                /* @__PURE__ */ jsxs37(
+                  "a",
+                  {
+                    href: lineUrl,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    className: "inline-flex items-center gap-2 rounded-lg bg-[#06C755] px-4 py-2 text-body-sm font-medium text-text-inverse transition-colors hover:bg-[#05b34e]",
+                    children: [
+                      /* @__PURE__ */ jsx47(LineIcon, {}),
+                      lineHandle
+                    ]
+                  }
+                )
+              )
+            }
+          ),
+          /* @__PURE__ */ jsx47(
+            SupportCard,
+            {
+              icon: /* @__PURE__ */ jsx47(Phone, { className: "size-7" }),
+              title: labels.phoneTitle,
+              description: labels.phoneDescription,
+              action: (
+                /* 🔴 เขียวน้ำทะเลของ **โลโก้ MediAct** ไม่ใช่สีแบรนด์ของแอป — ทั้งกล่องนี้
+                 * พูดในนามบริษัท ถ้าให้ตามธีม เบอร์จะเป็นครามใน MediHR แต่เขียวมิ้นต์ใน
+                 * Mediwork ทั้งที่เป็นเบอร์เดียวกัน */
+                /* @__PURE__ */ jsx47(
+                  "a",
+                  {
+                    href: `tel:${phoneNumber.replace(/\s/g, "")}`,
+                    className: "text-body-lg font-semibold text-teal-500 transition-colors hover:text-teal-600",
+                    children: phoneNumber
+                  }
+                )
+              )
+            }
+          )
+        ] })
+      ]
+    }
+  ) });
+}
+
 // src/overlay/Filter.tsx
 import { ListFilter } from "lucide-react";
-import { jsx as jsx47, jsxs as jsxs37 } from "react/jsx-runtime";
+import { jsx as jsx48, jsxs as jsxs38 } from "react/jsx-runtime";
 function Filter({
   children,
   triggerLabel = "Filter",
@@ -6467,17 +6621,17 @@ function Filter({
   sideOffset = 8,
   contentClassName
 }) {
-  return /* @__PURE__ */ jsxs37(Popover, { open, defaultOpen, onOpenChange, children: [
-    /* @__PURE__ */ jsx47(PopoverTrigger, { asChild: true, children: trigger ?? /* @__PURE__ */ jsx47(
+  return /* @__PURE__ */ jsxs38(Popover, { open, defaultOpen, onOpenChange, children: [
+    /* @__PURE__ */ jsx48(PopoverTrigger, { asChild: true, children: trigger ?? /* @__PURE__ */ jsx48(
       Button,
       {
         variant: "secondary",
-        leftIcon: /* @__PURE__ */ jsx47(ListFilter, {}),
+        leftIcon: /* @__PURE__ */ jsx48(ListFilter, {}),
         ...triggerProps,
         children: triggerLabel
       }
     ) }),
-    /* @__PURE__ */ jsx47(
+    /* @__PURE__ */ jsx48(
       PopoverContent,
       {
         align,
@@ -6493,14 +6647,14 @@ function Filter({
 // src/overlay/Tooltip.tsx
 import * as React39 from "react";
 import * as RadixTooltip from "@radix-ui/react-tooltip";
-import { jsx as jsx48, jsxs as jsxs38 } from "react/jsx-runtime";
+import { jsx as jsx49, jsxs as jsxs39 } from "react/jsx-runtime";
 var TooltipProvider = RadixTooltip.Provider;
 var TooltipRoot = RadixTooltip.Root;
 var TooltipTrigger = RadixTooltip.Trigger;
 var TooltipPortal = RadixTooltip.Portal;
 var TooltipContent = React39.forwardRef(
   function TooltipContent2({ className, sideOffset = 8, arrow = true, children, ...props }, ref) {
-    return /* @__PURE__ */ jsx48(TooltipPortal, { children: /* @__PURE__ */ jsxs38(
+    return /* @__PURE__ */ jsx49(TooltipPortal, { children: /* @__PURE__ */ jsxs39(
       RadixTooltip.Content,
       {
         ref,
@@ -6522,7 +6676,7 @@ var TooltipContent = React39.forwardRef(
         ...props,
         children: [
           children,
-          arrow && /* @__PURE__ */ jsx48(
+          arrow && /* @__PURE__ */ jsx49(
             RadixTooltip.Arrow,
             {
               width: 14,
@@ -6548,15 +6702,15 @@ function Tooltip({
   arrow = true,
   contentClassName
 }) {
-  return /* @__PURE__ */ jsx48(TooltipProvider, { delayDuration, children: /* @__PURE__ */ jsxs38(
+  return /* @__PURE__ */ jsx49(TooltipProvider, { delayDuration, children: /* @__PURE__ */ jsxs39(
     TooltipRoot,
     {
       open,
       defaultOpen,
       onOpenChange,
       children: [
-        /* @__PURE__ */ jsx48(TooltipTrigger, { asChild, children }),
-        /* @__PURE__ */ jsx48(
+        /* @__PURE__ */ jsx49(TooltipTrigger, { asChild, children }),
+        /* @__PURE__ */ jsx49(
           TooltipContent,
           {
             side,
@@ -6575,7 +6729,7 @@ TooltipContent.displayName = "TooltipContent";
 // src/ui/StatusBadge.tsx
 import * as React40 from "react";
 import { cva as cva13 } from "class-variance-authority";
-import { jsx as jsx49, jsxs as jsxs39 } from "react/jsx-runtime";
+import { jsx as jsx50, jsxs as jsxs40 } from "react/jsx-runtime";
 var statusBadgeVariants = cva13(
   "inline-flex items-center gap-1.5 rounded-full font-medium",
   {
@@ -6597,14 +6751,14 @@ var statusBadgeVariants = cva13(
 );
 var StatusBadge = React40.forwardRef(
   function StatusBadge2({ className, tone, size, hideDot, children, ...props }, ref) {
-    return /* @__PURE__ */ jsxs39(
+    return /* @__PURE__ */ jsxs40(
       "span",
       {
         ref,
         className: cn(statusBadgeVariants({ tone, size }), className),
         ...props,
         children: [
-          !hideDot && /* @__PURE__ */ jsx49(
+          !hideDot && /* @__PURE__ */ jsx50(
             "span",
             {
               "aria-hidden": "true",
@@ -6623,7 +6777,7 @@ StatusBadge.displayName = "StatusBadge";
 import * as React41 from "react";
 import { ChevronLeft as ChevronLeft3, ChevronRight as ChevronRight4 } from "lucide-react";
 import { cva as cva14 } from "class-variance-authority";
-import { jsx as jsx50, jsxs as jsxs40 } from "react/jsx-runtime";
+import { jsx as jsx51, jsxs as jsxs41 } from "react/jsx-runtime";
 var dateNavigatorVariants = cva14(
   "inline-flex items-stretch overflow-hidden rounded-lg border border-border-default bg-bg-default",
   {
@@ -6726,7 +6880,7 @@ var DateNavigator = React41.forwardRef(
     const arrowClass = "flex w-6 shrink-0 cursor-pointer items-center justify-center text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40 [&_svg]:size-5";
     const ruleClass = "w-px shrink-0 self-stretch bg-border-default";
     const centreClass = "flex min-w-0 flex-1 items-center justify-center px-3 text-center text-body-sm font-semibold text-text-black";
-    const centre = calendar ? /* @__PURE__ */ jsx50(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx50(
+    const centre = calendar ? /* @__PURE__ */ jsx51(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx51(
       "button",
       {
         type: "button",
@@ -6737,10 +6891,10 @@ var DateNavigator = React41.forwardRef(
           centreClass,
           "min-w-28 cursor-pointer transition-colors hover:bg-overlay-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40"
         ),
-        children: /* @__PURE__ */ jsx50("span", { className: "truncate", children: displayLabel })
+        children: /* @__PURE__ */ jsx51("span", { className: "truncate", children: displayLabel })
       }
-    ) }) : /* @__PURE__ */ jsx50("span", { className: cn(centreClass, "min-w-28"), children: displayLabel });
-    const shell = /* @__PURE__ */ jsxs40(
+    ) }) : /* @__PURE__ */ jsx51("span", { className: cn(centreClass, "min-w-28"), children: displayLabel });
+    const shell = /* @__PURE__ */ jsxs41(
       "div",
       {
         ref,
@@ -6750,7 +6904,7 @@ var DateNavigator = React41.forwardRef(
         ),
         ...props,
         children: [
-          /* @__PURE__ */ jsx50(
+          /* @__PURE__ */ jsx51(
             "button",
             {
               type: "button",
@@ -6758,13 +6912,13 @@ var DateNavigator = React41.forwardRef(
               disabled: isPrevDisabled,
               onClick: () => step(-1),
               className: arrowClass,
-              children: /* @__PURE__ */ jsx50(ChevronLeft3, {})
+              children: /* @__PURE__ */ jsx51(ChevronLeft3, {})
             }
           ),
-          /* @__PURE__ */ jsx50("span", { "aria-hidden": true, className: ruleClass }),
+          /* @__PURE__ */ jsx51("span", { "aria-hidden": true, className: ruleClass }),
           centre,
-          /* @__PURE__ */ jsx50("span", { "aria-hidden": true, className: ruleClass }),
-          /* @__PURE__ */ jsx50(
+          /* @__PURE__ */ jsx51("span", { "aria-hidden": true, className: ruleClass }),
+          /* @__PURE__ */ jsx51(
             "button",
             {
               type: "button",
@@ -6772,24 +6926,24 @@ var DateNavigator = React41.forwardRef(
               disabled: isNextDisabled,
               onClick: () => step(1),
               className: arrowClass,
-              children: /* @__PURE__ */ jsx50(ChevronRight4, {})
+              children: /* @__PURE__ */ jsx51(ChevronRight4, {})
             }
           )
         ]
       }
     );
     if (!calendar) return shell;
-    return /* @__PURE__ */ jsxs40(Popover, { open, onOpenChange: setOpen, children: [
+    return /* @__PURE__ */ jsxs41(Popover, { open, onOpenChange: setOpen, children: [
       shell,
-      /* @__PURE__ */ jsxs40(
+      /* @__PURE__ */ jsxs41(
         PopoverContent,
         {
           align: "center",
           sideOffset: 8,
           className: "w-auto rounded-2xl p-0",
           children: [
-            calendarTitle != null && /* @__PURE__ */ jsx50("p", { className: "px-4 pt-4 text-body-sm font-semibold text-text-black", children: calendarTitle }),
-            /* @__PURE__ */ jsx50(
+            calendarTitle != null && /* @__PURE__ */ jsx51("p", { className: "px-4 pt-4 text-body-sm font-semibold text-text-black", children: calendarTitle }),
+            /* @__PURE__ */ jsx51(
               Calendar,
               {
                 ...calendarProps,
@@ -6806,9 +6960,9 @@ var DateNavigator = React41.forwardRef(
             ),
             (children != null || isDraft) && /* กว้างเท่าปฏิทินเป๊ะ — ปล่อยให้ hug จะโดนแถวปุ่มที่ผู้เรียกวางมา
              * ดันจนลิ้นชักกว้างกว่าปฏิทิน แล้วปฏิทินจะลอยไม่เต็มกล่อง */
-            /* @__PURE__ */ jsxs40("div", { className: "w-[340px] px-4 pb-4 pt-3", children: [
+            /* @__PURE__ */ jsxs41("div", { className: "w-[340px] px-4 pb-4 pt-3", children: [
               children,
-              isDraft && /* @__PURE__ */ jsx50(
+              isDraft && /* @__PURE__ */ jsx51(
                 Button,
                 {
                   variant: "primary",
@@ -6850,6 +7004,7 @@ export {
   ComboBox,
   ConfirmCancelActions,
   ConfirmDialog,
+  ContactSupportDialog,
   DataTable,
   DataTableGroupRow,
   DateNavigator,
@@ -6892,6 +7047,9 @@ export {
   Input,
   LanguageSwitcher,
   LoadingScreen,
+  MEDIACT_LINE_HANDLE,
+  MEDIACT_LINE_URL,
+  MEDIACT_SUPPORT_PHONE,
   NotificationBell,
   NumberStepper,
   OutlineButton,

@@ -460,6 +460,11 @@ function DataTable<TData>({
     Boolean(enableSelection),
   );
   const frozen = useFrozenOffsets(tableRef, frozenLeft, frozenRight);
+  const hasFrozen = frozenLeft.size > 0 || frozenRight.size > 0;
+  /* แถวเติมช่องว่างขึ้นเฉพาะตอน "มีคอลัมน์แช่ + มีแถวจริง" — สถานะโหลด/พัง/ว่าง
+   * กินพื้นที่เต็มด้วยตัวเองอยู่แล้ว และไม่มีเส้นแบ่งให้ลากต่อ */
+  const showFiller =
+    hasFrozen && !isLoading && !error && table.getRowModel().rows.length > 0;
 
   return (
     /* 🔴 แถบแบ่งหน้าอยู่ **นอก**การ์ดที่มีขอบ — โครงตาม `ActionTabel` ของ Portal:
@@ -503,11 +508,20 @@ function DataTable<TData>({
                * หัวตารางจึงค้างแนวตั้ง และคอลัมน์ที่แช่ไว้ยังค้างแนวนอนเหมือนเดิม */
               "[&>div]:overflow-visible",
             ],
+            /* 🔴 กล่องชั้นในที่ `Table` ห่อตัวเองไว้ต้องสูงเต็มด้วย ไม่งั้น `h-full` ของ `<table>`
+             * ไป resolve กับกล่องที่สูงตามเนื้อหา ⇒ ได้ auto = ไม่ยืด แล้วแถวเติมช่องว่าง
+             * (`FrozenFillerRow`) ก็ไม่มีที่ให้ยืดตาม เส้นแบ่งเลยยังลากไม่ถึงก้นเหมือนเดิม
+             * (วัดสด: ก้นตาราง 586 · ก้นกล่อง 692 — ห่าง 106px ที่ไม่มีเส้น) */
+            hasFrozen && "[&>div]:h-full",
             containerClassName,
           )}
         >
         <Table
           ref={tableRef}
+          /* 🔴 `h-full` เฉพาะตอนมีคอลัมน์แช่ — แถวเติมช่องว่างด้านล่าง (ดู `FrozenFillerRow`)
+           * จะยืดได้ก็ต่อเมื่อ **ตัวตารางเอง**มีความสูงให้แบ่ง · ตารางในกล่องที่สูงตามเนื้อหา
+           * `h-full` จะ resolve เป็น auto ⇒ ไม่มีผล ปลอดภัยทั้งสองแบบ */
+          className={hasFrozen ? "h-full" : undefined}
           style={minTableWidth != null ? { minWidth: minTableWidth } : undefined}
         >
           <TableHeader
@@ -591,7 +605,12 @@ function DataTable<TData>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody
+            /* แถวสุดท้ายของ**ข้อมูล** ต้องไม่มีเส้นใต้เหมือนเดิม — พอมีแถวเติมช่องว่างต่อท้าย
+             * แถวข้อมูลตัวสุดท้ายจะไม่ใช่ `:last-child` อีกต่อไป กฎเดิมของ `TableBody`
+             * เลยไปตกที่แถวเติมแทน · `nth-last-child(2)` = ตัวรองสุดท้าย = แถวข้อมูลตัวสุดท้าย */
+            className={showFiller ? "[&_tr:nth-last-child(2)]:border-b-0" : undefined}
+          >
             {isLoading ? (
               <SkeletonRows
                 columnCount={finalColumns.length}
@@ -671,6 +690,8 @@ function DataTable<TData>({
                 />
               ))
             )}
+
+            {showFiller && <FrozenFillerRow columns={finalColumns} frozen={frozen} />}
           </TableBody>
         </Table>
         </div>
@@ -691,6 +712,51 @@ function DataTable<TData>({
         <SelectedCountBar table={table} labels={labels} />
       )}
     </div>
+  );
+}
+
+/**
+ * แถวเติมช่องว่างท้ายตาราง — **มีไว้เพื่อลากเส้นแบ่งคอลัมน์ที่แช่ลงไปจนสุดกล่อง**
+ *
+ * 🔴 เส้นแบ่งของคอลัมน์ที่แช่เป็น `box-shadow` ที่อยู่บน**เซลล์** (ดู `frozenCellProps`)
+ * ⇒ มันยาวได้แค่เท่าที่มีเซลล์ · ตารางที่แถวไม่เต็มกล่อง (กรองแล้วเหลือ 2 แถว
+ * ในกล่องสูงเต็มจอ) เส้นจะหยุดกลางอากาศแล้วเหลือพื้นที่ว่างข้างล่างที่ไม่มีเส้น
+ * อ่านเหมือนตารางถูกตัดครึ่ง
+ *
+ * ทำไมไม่วาดเส้นเป็น overlay ทับกล่องแทน: เซลล์ที่แช่เป็น `position: sticky` ⇒ ตำแหน่ง
+ * แนวนอนของมันเปลี่ยนตามการเลื่อน · overlay ที่วางด้วย `absolute` จะเลื่อนตามเนื้อหา
+ * ไม่ตรงกับเส้นบนเซลล์ ส่วน `sticky` ในกล่องที่เลื่อนสองแกนก็คุมยาก
+ * ⇒ ให้เซลล์เป็นคนวาดเหมือนเดิม แล้ว "ต่อเซลล์" ลงไปแทน — กลไกเดียว ไม่มีทางเพี้ยนกัน
+ *
+ * ⚠️ `aria-hidden` + ไม่มี `data-state`/`onClick` — แถวนี้ไม่ใช่ข้อมูล โปรแกรมอ่านหน้าจอ
+ * ต้องไม่นับเป็นแถวที่ 3 ของตารางที่มี 2 แถว
+ */
+function FrozenFillerRow<TData>({
+  columns,
+  frozen,
+}: {
+  columns: ColumnDef<TData, unknown>[];
+  frozen: FrozenOffsets;
+}) {
+  return (
+    <TableRow aria-hidden className="h-full border-b-0 hover:bg-transparent">
+      {columns.map((column, index) => {
+        const id = (column.id ?? (column as { accessorKey?: string }).accessorKey ?? String(index)) as string;
+        const pin = frozenCellProps(frozen[id], "cell");
+        /* `p-0` + `h-auto` — เซลล์นี้ไม่มีเนื้อหา ความสูงมาจากแถวที่ยืดเต็มที่เหลือ
+         * ถ้าปล่อยให้ `TableCell` ใส่ `h-16` ตามค่าตั้งต้น แถวจะสูงอย่างน้อย 64
+         * แม้ในตารางที่แถวเต็มพอดี ⇒ ได้ช่องว่างงอกมาเปล่า ๆ */
+        return (
+          <TableCell
+            key={id}
+            data-col-id={id}
+            aria-hidden
+            className={cn("h-auto p-0", pin.className)}
+            style={pin.style}
+          />
+        );
+      })}
+    </TableRow>
   );
 }
 

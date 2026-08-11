@@ -252,6 +252,14 @@ export {
   type ConfirmDialogProps,
   type ConfirmTone,
 } from "./overlay/ConfirmDialog";
+export {
+  ContactSupportDialog,
+  MEDIACT_LINE_URL,
+  MEDIACT_LINE_HANDLE,
+  MEDIACT_SUPPORT_PHONE,
+  type ContactSupportDialogProps,
+  type ContactSupportLabels,
+} from "./overlay/ContactSupportDialog";
 export { Filter, type FilterProps } from "./overlay/Filter";
 export {
   Tooltip,

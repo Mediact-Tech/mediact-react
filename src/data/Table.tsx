@@ -91,9 +91,10 @@ const TableHead = React.forwardRef<
     <th
       ref={ref}
       className={cn(
-        /* วัดจาก Portal: สูง 48 · pad 12/16 · 14px/500 · #191919 · ไม่ตัดบรรทัด
-         * ⚠️ ของเดิมเป็น 12px/600 ตัวพิมพ์ใหญ่ สีจาง (#9b9b9b) — ไม่มีแอปไหนทำแบบนั้น */
-        "h-12 px-4 py-3 text-left align-middle text-body-sm font-medium whitespace-nowrap text-text-black",
+        /* หัวคอลัมน์ = type style **`Body/Small Medium`** ของไฟล์ดีไซน์ (14px · 500 · #535a61)
+         * ⚠️ ของเดิมเป็น 12px/600 ตัวพิมพ์ใหญ่ สีจาง (#9b9b9b) — ไม่มีแอปไหนทำแบบนั้น
+         * สีมาจาก `text-text-body` ไม่ใช่ `text-text-black` — เหตุผลอยู่ที่ `TableCell` */
+        "h-12 px-4 py-3 text-left align-middle text-body-sm font-medium whitespace-nowrap text-text-body",
         "[&:has([role=checkbox])]:pr-0",
         className,
       )}
@@ -110,17 +111,24 @@ const TableCell = React.forwardRef<
     <td
       ref={ref}
       className={cn(
-        /* วัดจาก Portal: สูง 64.5 · pad 12/16 · 14px/**600**
-         * น้ำหนัก 600 ในเซลล์ข้อมูลเป็นของจริง ไม่ใช่ความผิดพลาด — ตารางของ Portal
-         * ใช้ตัวหนาทั้งตารางเพื่อให้อ่านข้ามคอลัมน์ได้เร็ว
+        /* เซลล์ข้อมูล = type style **`Body/Small Regular`** ของไฟล์ดีไซน์ (14px · 400 · #535a61)
          *
-         * 🔴 สีต้องเป็นดำคงที่ **ห้ามเปลี่ยนตามแอป** — เดิมใช้ `text-text-primary`
-         * ซึ่งใน `theme.css` ถูก alias ไปที่ `--color-brand` ⇒ ตัวเลขในตารางเปลี่ยนสี
-         * ตามแบรนด์ทุกแอป (วัดแล้ว: Mediwork `rgb(38,209,179)` เขียวมิ้นต์สด ·
-         * MediHR `rgb(6,17,172)` น้ำเงินเข้ม · Medimatch `rgb(4,129,168)`)
-         * — ข้อมูลในตารางคือ "ข้อมูล" ไม่ใช่องค์ประกอบของแบรนด์ ต้องอ่านง่ายเท่ากันทุกแอป
-         * และต้องเป็นสีเดียวกับหัวตารางซึ่งใช้ `text-text-black` อยู่แล้ว */
-        "h-16 px-4 py-3 align-middle text-body-sm font-semibold text-text-black",
+         * 🔴 **400 ไม่ใช่ 600** — ค่าเดิมคือ 600/#191919 ซึ่ง**ย้อนรอยมาจากตารางของ Portal**
+         * ไม่ใช่สเปกของ DS · ผลคือทุกแอปที่อยากได้เนื้อความปกติต้องห่อทุกเซลล์ด้วย `<Text>`
+         * เพื่อ**ล้มค่าตั้งต้นของตัวเอง** (MediHR ทำอยู่ 3 จอ) และเซลล์ที่ลืมห่อจะหนากว่า
+         * ชื่อคนซึ่งเป็นของหลักในแถว — กลับหัวลำดับความสำคัญ
+         * หลักฐาน: Figma ประกาศ style ในตารางไว้แค่ 2 ตัว — หัวคอลัมน์ `Body/Small Medium`
+         * (500) · เซลล์ `Body/Small Regular` (400) · ตรงกันทั้งจอวันหยุด (544:15745)
+         * และจอบุคลากร (544:22556) · ที่โผล่เป็น Montserrat Medium ในบางคอลัมน์คือ text
+         * ที่ยังไม่ได้ผูก style ไม่ใช่เจตนา
+         *
+         * 🔴 สีต้อง **ไม่ผูกกับแบรนด์** — เดิมเคยใช้ `text-text-primary` ซึ่งใน `theme.css`
+         * ถูก alias ไปที่ `--color-brand` ⇒ ตัวเลขในตารางเปลี่ยนสีตามแอป (วัดแล้ว:
+         * Mediwork `rgb(38,209,179)` เขียวมิ้นต์สด · MediHR `rgb(6,17,172)` · Medimatch
+         * `rgb(4,129,168)`) · `text-text-body` (#535a61) ประกาศครั้งเดียวที่ `:root`
+         * ไม่มีธีมไหน override ⇒ คงที่ทุกแอปเหมือนที่ `text-text-black` เคยให้ และตรงกับ
+         * ตัวแปรที่ดีไซน์อ้างถึงตรง ๆ (`--color/text/body`) · ต้องเป็นสีเดียวกับหัวตารางเสมอ */
+        "h-16 px-4 py-3 align-middle text-body-sm font-normal text-text-body",
         "[&:has([role=checkbox])]:pr-0",
         className,
       )}

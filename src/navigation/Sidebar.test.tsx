@@ -169,4 +169,52 @@ describe("Escape ปิดลิ้นชัก", () => {
     await user.keyboard("{Escape}");
     expect(onMobileOpenChange).not.toHaveBeenCalled();
   });
+
+describe("brand — โลโก้แบบแยกชิ้น", () => {
+  const brandTree = (collapsed: boolean) =>
+    render(
+      <Sidebar
+        collapsed={collapsed}
+        expandOnHover={false}
+        brand={{
+          symbol: <img src="/mark.svg" alt="" data-testid="symbol" />,
+          name: "MEDI ACT",
+          action: <button data-testid="close">x</button>,
+        }}
+      >
+        <SidebarItem id="a" label="A" />
+      </Sidebar>,
+    );
+
+  it("กางอยู่ — เห็นทั้งเครื่องหมายและชื่อ", () => {
+    brandTree(false);
+    expect(screen.getByTestId("symbol")).toBeInTheDocument();
+    expect(screen.getByText("MEDI ACT")).toBeInTheDocument();
+  });
+
+  /* 🔴 หัวใจของ prop นี้ — แอปไม่ต้องรู้ว่าตอนยุบต้องสลับไปไฟล์โลโก้ตัวไหน
+   * เดิมทุกแอปเขียน `isCollapsed ? mark : full` เองซ้ำกัน และต้องมีโลโก้ 2 ไฟล์ */
+  it("ยุบอยู่ — เหลือเครื่องหมาย ชื่อกับปุ่มหาย", () => {
+    brandTree(true);
+    expect(screen.getByTestId("symbol")).toBeInTheDocument();
+    expect(screen.queryByText("MEDI ACT")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("close")).not.toBeInTheDocument();
+  });
+
+  /* ผู้เรียกเดิม 2 แอปยังส่ง `header` อยู่ — ห้ามพังและต้องชนะเมื่อส่งมาทั้งคู่ */
+  it("ส่ง header มาด้วย — header ชนะ", () => {
+    render(
+      <Sidebar
+        collapsed={false}
+        expandOnHover={false}
+        header={<span data-testid="legacy">legacy</span>}
+        brand={{ symbol: <img src="/mark.svg" alt="" data-testid="symbol" />, name: "MEDI ACT" }}
+      >
+        <SidebarItem id="a" label="A" />
+      </Sidebar>,
+    );
+    expect(screen.getByTestId("legacy")).toBeInTheDocument();
+    expect(screen.queryByTestId("symbol")).not.toBeInTheDocument();
+  });
+});
 });

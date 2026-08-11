@@ -896,7 +896,32 @@ declare function useSidebarState(): {
     isCollapsed: boolean;
 };
 type SidebarProps = React.ComponentProps<"aside"> & {
-    /** Logo / brand block rendered at the top. */
+    /**
+     * โลโก้แอปแบบ **แยกชิ้น** — DS ตัดสินเองว่าตอนยุบเหลืออะไร
+     *
+     * มีไว้แทน `header` ที่ให้แอปประกอบเอง ซึ่งบังคับให้ทุกแอปเขียน `isCollapsed ? mark : full`
+     * ซ้ำกันทุกที่และต้องมี **ไฟล์โลโก้ 2 ไฟล์ต่อแอป** · ผลคือขนาดหลุดจากกันเงียบ ๆ — วัดจริง:
+     * โลโก้เต็มของ MediHR สัดส่วน 3.84:1 ส่วนของ Portal 4.32:1 ⇒ ความสูงเท่ากันแต่กว้างต่างกัน 12%
+     *
+     * ⚠️ `name` รับได้ทั้ง **ตัวหนังสือและรูป** โดยตั้งใจ — wordmark ของทั้ง Portal และ MediHR
+     * วันนี้เป็น **path ที่วาดไว้ ไม่ใช่ฟอนต์** (ไม่มี `<text>` ไม่มี `font-family` ในไฟล์เลย)
+     * ⇒ ส่งเป็นสตริงจะได้ตัวอักษรของฟอนต์แอป ซึ่ง **ไม่ใช่ letterform ของแบรนด์**
+     * แอปที่ยังต้องคงลายมือแบรนด์ให้ส่ง `<img>` เฉพาะส่วน wordmark เข้ามา
+     */
+    brand?: {
+        /** เครื่องหมายของแอป — เห็นทั้งตอนกางและตอนยุบ */
+        symbol: React.ReactNode;
+        /** ชื่อแอป — เห็นเฉพาะตอนกาง (ตัวหนังสือ หรือ `<img>` ของ wordmark) */
+        name?: React.ReactNode;
+        /** ของที่ต้องอยู่ขวาสุดของหัวราง เช่นปุ่มปิดลิ้นชักบนมือถือ — เห็นเฉพาะตอนกาง */
+        action?: React.ReactNode;
+    };
+    /**
+     * Logo / brand block rendered at the top.
+     *
+     * @deprecated ใช้ `brand` แทน — ตัวนี้ให้แอปประกอบหัวรางเองทั้งก้อน ซึ่งเป็นที่มาของ
+     * โค้ดสลับโลโก้ที่ซ้ำกันทุกแอป · ยังรองรับอยู่และ**ชนะ** `brand` เมื่อส่งมาทั้งคู่
+     */
     header?: React.ReactNode;
     /** Footer block rendered at the bottom (e.g. version label). */
     footer?: React.ReactNode;
@@ -2070,6 +2095,16 @@ type ConfirmDialogProps = {
     /** `false` = โหมดแจ้งเตือนปุ่มเดียว ไม่มีปุ่มยกเลิก · ค่าปกติ `true` */
     showCancel?: boolean;
     /**
+     * ปิดปุ่มยืนยันไว้ก่อน ขณะที่ปุ่มยกเลิกยังกดได้
+     *
+     * 🔴 ใช้กับกล่องที่ **ยืนยันไม่ได้จนกว่าจะรู้ผล** — เช่นจอถอดคนออกจากหน่วยงานที่ต้อง
+     * โหลด preview ผลกระทบมาก่อน (ถ้า preview พัง กล่องยืนยันที่ยังกดได้แย่กว่าไม่มีกล่อง
+     * เพราะมันชวนให้กดโดยเข้าใจว่าระบบตรวจให้แล้ว)
+     *
+     * ⚠️ ต่างจาก `loading` — อันนั้นคือ "กำลังทำอยู่" และปิดปุ่มยกเลิกด้วย
+     */
+    confirmDisabled?: boolean;
+    /**
      * เนื้อหาเพิ่มเติม **ใต้คำอธิบาย เหนือปุ่ม** — ใส่อะไรก็ได้
      *
      * ใช้ตอนที่ข้อความอย่างเดียวไม่พอ เช่น รายการที่จะถูกลบ · ตารางสรุป · ช่องกรอก
@@ -2081,7 +2116,56 @@ type ConfirmDialogProps = {
      */
     children?: React.ReactNode;
 };
-declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, loading: loadingProp, dismissible, align, errorMessage, showCancel, children, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
+declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, loading: loadingProp, dismissible, align, errorMessage, showCancel, confirmDisabled, children, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
+
+/**
+ * ช่องทางติดต่อของ MediAct — **ค่าเดียวกันทั้ง 4 แอป**
+ *
+ * 🔴 นี่คือเหตุผลหลักที่กล่องนี้ย้ายมาอยู่ใน DS: ก่อนหน้านี้ทั้ง 4 แอปคัดลอกเลข 2 ตัวนี้
+ * ไว้คนละไฟล์ ⇒ วันที่เบอร์เปลี่ยน ต้องไล่แก้ 4 ที่ และถ้าลืมที่ใดที่หนึ่ง ผู้ใช้คนเดียวกัน
+ * จะเห็นเบอร์ไม่ตรงกันระหว่างแอป แล้วไม่รู้ว่าอันไหนของจริง
+ *
+ * ผู้เรียกทับได้ผ่าน prop (เผื่อสภาพแวดล้อมทดสอบ) แต่ **ปกติไม่ต้องส่ง**
+ */
+declare const MEDIACT_LINE_URL = "https://line.me/R/ti/p/@019bdeqs";
+declare const MEDIACT_LINE_HANDLE = "@mediact";
+declare const MEDIACT_SUPPORT_PHONE = "+66 94 124 9291";
+type ContactSupportLabels = {
+    /** ชื่อเรื่องของกล่อง เช่น "ติดต่อฝ่ายสนับสนุน" */
+    title: string;
+    lineTitle: string;
+    lineDescription: string;
+    phoneTitle: string;
+    phoneDescription: string;
+};
+type ContactSupportDialogProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    /**
+     * ข้อความทั้งหมด — **DS ไม่ถือคำแปล** เพราะแต่ละแอปมี i18n ของตัวเองและคีย์คนละชุด
+     * สิ่งที่ DS ถือคือ *ทรง* กับ *ช่องทางติดต่อ* ซึ่งเป็นส่วนที่ต้องตรงกันจริง ๆ
+     */
+    labels: ContactSupportLabels;
+    /**
+     * โลโก้บริษัทกลางหัวกล่อง (ไม่บังคับ)
+     *
+     * ⚠️ เป็น prop ไม่ใช่ของที่ฝังมาใน DS — DS ไม่มีสายพานสำหรับไฟล์ภาพ ผู้เรียกจึงส่ง
+     * `<img src="/icons/mediact-logo.svg" alt="MediAct" className="h-10 w-auto" />` เข้ามาเอง
+     */
+    logo?: React.ReactNode;
+    lineUrl?: string;
+    lineHandle?: string;
+    phoneNumber?: string;
+    className?: string;
+};
+/**
+ * กล่อง "ติดต่อฝ่ายสนับสนุน" — ใช้เหมือนกันทั้ง 4 แอป
+ *
+ * ⚠️ **หัวกล่องจัดกึ่งกลางและไม่มีเส้นคั่น** ต่างจากหน้าต่างฟอร์มทั่วไปที่หัวชิดซ้าย
+ * มีป้ายไอคอนและเส้นคั่น — จงใจ เพราะกล่องนี้พูดในนามบริษัท ไม่ใช่ส่วนหนึ่งของงานในจอ
+ * และผู้ใช้คนเดียวกันเปิดหลายแอป จึงต้องจำหน้าตา "ที่ขอความช่วยเหลือ" ได้ทันที
+ */
+declare function ContactSupportDialog({ open, onOpenChange, labels, logo, lineUrl, lineHandle, phoneNumber, className, }: ContactSupportDialogProps): react_jsx_runtime.JSX.Element;
 
 type PopoverContentProps = React.ComponentProps<typeof RadixPopover.Content>;
 type FilterProps = {
@@ -2256,4 +2340,4 @@ declare const DateNavigator: React.ForwardRefExoticComponent<Omit<DateNavigatorP
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };

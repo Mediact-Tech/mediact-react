@@ -46,7 +46,32 @@ const DepthContext = React.createContext(0);
 /* ─────────────────────────────────────────────────────────────────── */
 
 export type SidebarProps = React.ComponentProps<"aside"> & {
-  /** Logo / brand block rendered at the top. */
+  /**
+   * โลโก้แอปแบบ **แยกชิ้น** — DS ตัดสินเองว่าตอนยุบเหลืออะไร
+   *
+   * มีไว้แทน `header` ที่ให้แอปประกอบเอง ซึ่งบังคับให้ทุกแอปเขียน `isCollapsed ? mark : full`
+   * ซ้ำกันทุกที่และต้องมี **ไฟล์โลโก้ 2 ไฟล์ต่อแอป** · ผลคือขนาดหลุดจากกันเงียบ ๆ — วัดจริง:
+   * โลโก้เต็มของ MediHR สัดส่วน 3.84:1 ส่วนของ Portal 4.32:1 ⇒ ความสูงเท่ากันแต่กว้างต่างกัน 12%
+   *
+   * ⚠️ `name` รับได้ทั้ง **ตัวหนังสือและรูป** โดยตั้งใจ — wordmark ของทั้ง Portal และ MediHR
+   * วันนี้เป็น **path ที่วาดไว้ ไม่ใช่ฟอนต์** (ไม่มี `<text>` ไม่มี `font-family` ในไฟล์เลย)
+   * ⇒ ส่งเป็นสตริงจะได้ตัวอักษรของฟอนต์แอป ซึ่ง **ไม่ใช่ letterform ของแบรนด์**
+   * แอปที่ยังต้องคงลายมือแบรนด์ให้ส่ง `<img>` เฉพาะส่วน wordmark เข้ามา
+   */
+  brand?: {
+    /** เครื่องหมายของแอป — เห็นทั้งตอนกางและตอนยุบ */
+    symbol: React.ReactNode;
+    /** ชื่อแอป — เห็นเฉพาะตอนกาง (ตัวหนังสือ หรือ `<img>` ของ wordmark) */
+    name?: React.ReactNode;
+    /** ของที่ต้องอยู่ขวาสุดของหัวราง เช่นปุ่มปิดลิ้นชักบนมือถือ — เห็นเฉพาะตอนกาง */
+    action?: React.ReactNode;
+  };
+  /**
+   * Logo / brand block rendered at the top.
+   *
+   * @deprecated ใช้ `brand` แทน — ตัวนี้ให้แอปประกอบหัวรางเองทั้งก้อน ซึ่งเป็นที่มาของ
+   * โค้ดสลับโลโก้ที่ซ้ำกันทุกแอป · ยังรองรับอยู่และ**ชนะ** `brand` เมื่อส่งมาทั้งคู่
+   */
   header?: React.ReactNode;
   /** Footer block rendered at the bottom (e.g. version label). */
   footer?: React.ReactNode;
@@ -101,6 +126,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(function Sidebar(
   {
     className,
     header,
+    brand,
     footer,
     activeItemId,
     onItemClick,
@@ -189,7 +215,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(function Sidebar(
         )}
         {...props}
       >
-        {header && (
+        {(header || brand) && (
           /* วัดจาก Portal: สูง 88 · pad 24 · เว้นบนอีก 16 · กางแล้วชิดซ้าย ยุบแล้วกึ่งกลาง */
           <div
             className={cn(
@@ -199,7 +225,23 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(function Sidebar(
                 : "justify-center p-4",
             )}
           >
-            {header}
+            {header ?? (
+              <>
+                {/* เครื่องหมายอยู่ตลอด · ชื่อกับปุ่มโผล่เฉพาะตอนกาง — ตรงนี้คือเหตุผลทั้งหมด
+                    ที่ prop นี้มี: แอปไม่ต้องรู้ว่าตอนยุบต้องสลับไฟล์ไหน */}
+                {/* `flex-1 justify-center` — กล่องหัวรางเป็น `justify-between` เพราะต้องดันปุ่ม
+                    ปิดลิ้นชักไปขวาสุด ⇒ ก้อนโลโก้ต้องยืดเองถึงจะอยู่กึ่งกลางจริง */}
+                <span className="flex min-w-0 flex-1 items-center justify-center gap-3">
+                  <span className="flex shrink-0 items-center">{brand!.symbol}</span>
+                  {showExpanded && brand!.name && (
+                    <span className="truncate text-title-md font-bold tracking-wide">
+                      {brand!.name}
+                    </span>
+                  )}
+                </span>
+                {showExpanded && brand!.action}
+              </>
+            )}
           </div>
         )}
 
