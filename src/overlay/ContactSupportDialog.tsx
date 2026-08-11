@@ -23,6 +23,31 @@ export const MEDIACT_LINE_URL = "https://line.me/R/ti/p/@019bdeqs";
 export const MEDIACT_LINE_HANDLE = "@mediact";
 export const MEDIACT_SUPPORT_PHONE = "+66 94 124 9291";
 
+/**
+ * สีของ **บริษัทอื่น** — อยู่ตรงนี้คู่กับเบอร์/ลิงก์ เพราะมันเป็น *ข้อมูลของช่องทางติดต่อ*
+ * ไม่ใช่การตัดสินใจด้านดีไซน์ของเรา
+ *
+ * 🔴 **จงใจไม่ทำเป็น token** — §7 ของ CLAUDE.md: 3 ใน 4 แอปไม่ได้ import token ของ DS
+ * (portal/medimatch ประกาศ palette เอง · mediwork กิน `style.css` ตัวเก่า) ⇒ token ใหม่
+ * จะ resolve ไม่ได้ในแอปเหล่านั้น แล้วปุ่ม LINE กลายเป็น**พื้นโปร่ง** · เป็นกับดักตัวเดียว
+ * กับที่ `tokens.guard` เขียนไว้ตอนไม่ยอมเปลี่ยน `Tooltip` เป็น `bg-bg-inverse`
+ *
+ * 🔴 และ**ไม่ควร**ทำเป็น token ด้วยเหตุผลเชิงความหมาย — token คือของที่ธีมของแอปมีสิทธิ์
+ * override · สีแบรนด์ LINE กับเขียวโลโก้ MediAct ต้องเหมือนกันทั้ง 4 แอปเสมอ ธีมไม่มีสิทธิ์
+ * แตะ ถ้าอยู่ในชั้น token ก็เท่ากับเปิดช่องให้แตะได้
+ *
+ * ⚠️ ส่งเข้า CSS ผ่าน custom property แล้วอ้างด้วย `bg-[var(--…)]` — ไม่ใช่คลาสที่ฝัง hex ตรง ๆ
+ * ซึ่ง `scripts/lint-colors.mjs` ห้าม · **ไม่ใช่การเลี่ยงกฎ**: กฎนั้นมีไว้กันสีที่*ควรเป็น token*
+ * หลุดมาเป็น hex ในคลาส ส่วนสองค่านี้เป็นค่าคงที่ของบริษัทอื่นที่ไม่มีวันตามธีม
+ * (ถ้าอยากให้กฎเข้มขึ้นจริง ให้จับ hex ทุกรูปแบบในไฟล์ แล้วเพิ่ม escape hatch ที่บังคับเขียนเหตุผล
+ *  — เป็นการตัดสินใจของเจ้าของ guard ไม่ใช่ของ component นี้)
+ */
+const LINE_BRAND_GREEN = "#06C755";
+const LINE_BRAND_GREEN_HOVER = "#05b34e";
+/** เขียวน้ำทะเลของโลโก้ MediAct — เท่ากับ `text-teal-500` ที่อีก 3 แอปใช้อยู่ */
+const MEDIACT_LOGO_TEAL = "#14b8a6";
+const MEDIACT_LOGO_TEAL_HOVER = "#0d9488";
+
 /** โลโก้ LINE — ไม่มีใน lucide และเป็นเครื่องหมายการค้า จึงฝัง path ไว้ตรง ๆ */
 const LineIcon = () => (
   <svg
@@ -141,7 +166,13 @@ function ContactSupportDialog({
                 href={lineUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#06C755] px-4 py-2 text-body-sm font-medium text-text-inverse transition-colors hover:bg-[#05b34e]"
+                style={
+                  {
+                    "--line-brand": LINE_BRAND_GREEN,
+                    "--line-brand-hover": LINE_BRAND_GREEN_HOVER,
+                  } as React.CSSProperties
+                }
+                className="inline-flex items-center gap-2 rounded-lg bg-[var(--line-brand)] px-4 py-2 text-body-sm font-medium text-text-inverse transition-colors hover:bg-[var(--line-brand-hover)]"
               >
                 <LineIcon />
                 {lineHandle}
@@ -159,7 +190,13 @@ function ContactSupportDialog({
                * Mediwork ทั้งที่เป็นเบอร์เดียวกัน */
               <a
                 href={`tel:${phoneNumber.replace(/\s/g, "")}`}
-                className="text-body-lg font-semibold text-teal-500 transition-colors hover:text-teal-600"
+                style={
+                  {
+                    "--logo-teal": MEDIACT_LOGO_TEAL,
+                    "--logo-teal-hover": MEDIACT_LOGO_TEAL_HOVER,
+                  } as React.CSSProperties
+                }
+                className="text-body-lg font-semibold text-[var(--logo-teal)] transition-colors hover:text-[var(--logo-teal-hover)]"
               >
                 {phoneNumber}
               </a>

@@ -6510,6 +6510,10 @@ import { jsx as jsx47, jsxs as jsxs37 } from "react/jsx-runtime";
 var MEDIACT_LINE_URL = "https://line.me/R/ti/p/@019bdeqs";
 var MEDIACT_LINE_HANDLE = "@mediact";
 var MEDIACT_SUPPORT_PHONE = "+66 94 124 9291";
+var LINE_BRAND_GREEN = "#06C755";
+var LINE_BRAND_GREEN_HOVER = "#05b34e";
+var MEDIACT_LOGO_TEAL = "#14b8a6";
+var MEDIACT_LOGO_TEAL_HOVER = "#0d9488";
 var LineIcon = () => /* @__PURE__ */ jsx47(
   "svg",
   {
@@ -6568,7 +6572,11 @@ function ContactSupportDialog({
                     href: lineUrl,
                     target: "_blank",
                     rel: "noopener noreferrer",
-                    className: "inline-flex items-center gap-2 rounded-lg bg-[#06C755] px-4 py-2 text-body-sm font-medium text-text-inverse transition-colors hover:bg-[#05b34e]",
+                    style: {
+                      "--line-brand": LINE_BRAND_GREEN,
+                      "--line-brand-hover": LINE_BRAND_GREEN_HOVER
+                    },
+                    className: "inline-flex items-center gap-2 rounded-lg bg-[var(--line-brand)] px-4 py-2 text-body-sm font-medium text-text-inverse transition-colors hover:bg-[var(--line-brand-hover)]",
                     children: [
                       /* @__PURE__ */ jsx47(LineIcon, {}),
                       lineHandle
@@ -6592,7 +6600,11 @@ function ContactSupportDialog({
                   "a",
                   {
                     href: `tel:${phoneNumber.replace(/\s/g, "")}`,
-                    className: "text-body-lg font-semibold text-teal-500 transition-colors hover:text-teal-600",
+                    style: {
+                      "--logo-teal": MEDIACT_LOGO_TEAL,
+                      "--logo-teal-hover": MEDIACT_LOGO_TEAL_HOVER
+                    },
+                    className: "text-body-lg font-semibold text-[var(--logo-teal)] transition-colors hover:text-[var(--logo-teal-hover)]",
                     children: phoneNumber
                   }
                 )
