@@ -1941,6 +1941,24 @@ var avatarVariants = cva5(
     defaultVariants: { size: "md" }
   }
 );
+var avatarTones = [
+  "bg-avatar-1-bg text-avatar-1-fg",
+  "bg-avatar-2-bg text-avatar-2-fg",
+  "bg-avatar-3-bg text-avatar-3-fg",
+  "bg-avatar-4-bg text-avatar-4-fg",
+  "bg-avatar-5-bg text-avatar-5-fg",
+  "bg-avatar-6-bg text-avatar-6-fg"
+];
+function avatarToneIndex(key) {
+  if (typeof key === "number") {
+    return Number.isFinite(key) ? Math.abs(Math.trunc(key)) % avatarTones.length : 0;
+  }
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = hash * 33 + key.charCodeAt(i) | 0;
+  }
+  return Math.abs(hash) % avatarTones.length;
+}
 var TITLE_PREFIXES = /* @__PURE__ */ new Set([
   // Thai medical / academic / honorific
   "\u0E19\u0E1E",
@@ -1977,7 +1995,7 @@ function initials(name) {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
-var Avatar = React16.forwardRef(function Avatar2({ className, size, src, name, fallback, isLoading, ...props }, ref) {
+var Avatar = React16.forwardRef(function Avatar2({ className, size, src, name, fallback, colorKey, isLoading, ...props }, ref) {
   if (isLoading) {
     return /* @__PURE__ */ jsx20(
       SkeletonBox,
@@ -1990,7 +2008,14 @@ var Avatar = React16.forwardRef(function Avatar2({ className, size, src, name, f
     RadixAvatar.Root,
     {
       ref,
-      className: cn(avatarVariants({ size }), className),
+      className: cn(
+        avatarVariants({ size }),
+        /* หลัง variant เพื่อให้ทับคู่สีเทาตั้งต้นใน `avatarVariants` ได้
+           แต่ยังก่อน `className` — ผู้เรียกยังบังคับสีเองได้อยู่
+           (เขียนชื่อคลาสเทาตรง ๆ ไม่ได้ — ด่านกันสีดิบสแกนคอมเมนต์ด้วย) */
+        colorKey !== void 0 && avatarTones[avatarToneIndex(colorKey)],
+        className
+      ),
       ...props,
       children: [
         src && /* @__PURE__ */ jsx20(

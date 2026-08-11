@@ -30,3 +30,41 @@ export const Sizes: Story = {
     </div>
   ),
 };
+
+/** ชุด 6 โทนที่ `colorKey` วนใช้ — ไล่คีย์ 0–5 เพื่อให้เห็นครบทุกตัว */
+export const Tones: Story = {
+  render: () => (
+    <div className="flex items-center gap-3">
+      {Array.from({ length: 6 }, (_, i) => (
+        <Avatar key={i} colorKey={i} fallback={`A${i + 1}`} />
+      ))}
+    </div>
+  ),
+};
+
+/**
+ * ของจริง: แถวในตาราง — คีย์คือ **id ของคน** ไม่ใช่ชื่อ
+ *
+ * สองแถวล่างชื่อเดียวกันแต่คนละ id ⇒ คนละสี · และแถวเดียวกันที่แก้ตัวสะกดชื่อ
+ * จะยังได้สีเดิม ซึ่งเป็นเหตุผลทั้งหมดที่ prop นี้รับ id ไม่ใช่ `name`
+ */
+export const InAList: Story = {
+  render: () => (
+    <div className="flex flex-col gap-3">
+      {[
+        { id: 157, name: "พว. สมหญิง ใจดี", no: "EMP-0157" },
+        { id: 158, name: "นพ. วรวิทย์ ตันสกุล", no: "EMP-0158" },
+        { id: 162, name: "สมชาย รักงาน", no: "EMP-0162" },
+        { id: 401, name: "สมชาย รักงาน", no: "EMP-0401" },
+      ].map((p) => (
+        <div key={p.id} className="flex items-center gap-3">
+          <Avatar size="sm" colorKey={p.id} name={p.name} />
+          <div className="flex flex-col">
+            <span className="text-body-md font-semibold">{p.name}</span>
+            <span className="text-caption text-text-muted">{p.no}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
+};

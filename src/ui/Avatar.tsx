@@ -20,6 +20,44 @@ const avatarVariants = cva(
   },
 );
 
+/**
+ * วงสีตกแต่ง 6 คู่ — ค่าอยู่ที่ `--color-avatar-*` (semantic layer) เหมือนกันทุกธีม
+ *
+ * 🔴 **ลำดับคือส่วนหนึ่งของสัญญา** — โทนของแต่ละคนคือ `key % 6` ⇒ สลับลำดับหรือ
+ * แทรกกลาง = ทุกคนในทุกแอปเปลี่ยนสีพร้อมกัน คนที่จำเพื่อนร่วมงานจากสีวงกลมจะ
+ * เจอว่า "คนละคน" ทั้งตาราง · เพิ่มต่อท้ายก็เปลี่ยนตัวหาร ผลเหมือนกัน
+ */
+const avatarTones = [
+  "bg-avatar-1-bg text-avatar-1-fg",
+  "bg-avatar-2-bg text-avatar-2-fg",
+  "bg-avatar-3-bg text-avatar-3-fg",
+  "bg-avatar-4-bg text-avatar-4-fg",
+  "bg-avatar-5-bg text-avatar-5-fg",
+  "bg-avatar-6-bg text-avatar-6-fg",
+] as const;
+
+/**
+ * เลือกโทนจากคีย์แบบคงที่ — คีย์เดิมได้สีเดิมเสมอ ทุกเครื่อง ทุกครั้งที่ render
+ *
+ * ตัวเลข → `|key| % 6` ตรง ๆ · สตริง → djb2 ก่อน (ไม่ใช่ผลรวมของ charCode ซึ่ง
+ * ให้ค่าเท่ากันทุก anagram — "AB" กับ "BA" จะได้สีเดียวกัน)
+ *
+ * ⚠️ ไม่เชื่อว่าเลขมาถูกเสมอ: `NaN % 6` = `NaN` ⇒ index หลุด แล้ววงกลมกลายเป็น
+ * เทาไม่มีสไตล์แบบเงียบ ๆ ⇒ ค่าที่ไม่ใช่จำนวนจำกัดตกลงโทนแรก
+ */
+export function avatarToneIndex(key: string | number): number {
+  if (typeof key === "number") {
+    return Number.isFinite(key)
+      ? Math.abs(Math.trunc(key)) % avatarTones.length
+      : 0;
+  }
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 33 + key.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % avatarTones.length;
+}
+
 export type AvatarProps = Omit<
   React.ComponentProps<typeof RadixAvatar.Root>,
   "asChild"
@@ -31,6 +69,16 @@ export type AvatarProps = Omit<
     name?: string;
     /** Custom fallback content (overrides initials). */
     fallback?: React.ReactNode;
+    /**
+     * ให้วงกลมมีสีประจำตัว — วนจากชุด 6 โทน โดยคีย์เดิมได้สีเดิมเสมอ
+     *
+     * 🔴 ส่ง **id ที่ไม่มีวันเปลี่ยน** ไม่ใช่ชื่อ — ชื่อแก้ได้ (แต่งงาน · แก้ตัวสะกด ·
+     * เติมคำนำหน้า) ถ้าผูกสีกับชื่อ วงกลมของคนเดิมจะเปลี่ยนสีวันที่ฝ่ายบุคคลแก้ตัวสะกด
+     * ซึ่งในตารางที่คนจำกันด้วยสี อ่านได้ว่า "นี่คนละคน"
+     *
+     * ไม่ส่ง = เทาเหมือนเดิม (สีคือของเพิ่ม ไม่ใช่ค่าตั้งต้น — จอที่มีอยู่ไม่ขยับ)
+     */
+    colorKey?: string | number;
     /** ข้อมูลยังมาไม่ถึง — แทนด้วยวงกลมเทาขนาดเท่ากัน */
     isLoading?: boolean;
   };
@@ -64,7 +112,7 @@ function initials(name?: string) {
 }
 
 const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
-  { className, size, src, name, fallback, isLoading, ...props },
+  { className, size, src, name, fallback, colorKey, isLoading, ...props },
   ref,
 ) {
   if (isLoading) {
@@ -77,7 +125,14 @@ const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   return (
     <RadixAvatar.Root
       ref={ref}
-      className={cn(avatarVariants({ size }), className)}
+      className={cn(
+        avatarVariants({ size }),
+        /* หลัง variant เพื่อให้ทับคู่สีเทาตั้งต้นใน `avatarVariants` ได้
+           แต่ยังก่อน `className` — ผู้เรียกยังบังคับสีเองได้อยู่
+           (เขียนชื่อคลาสเทาตรง ๆ ไม่ได้ — ด่านกันสีดิบสแกนคอมเมนต์ด้วย) */
+        colorKey !== undefined && avatarTones[avatarToneIndex(colorKey)],
+        className,
+      )}
       {...props}
     >
       {src && (
