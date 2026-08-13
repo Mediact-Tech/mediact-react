@@ -1063,13 +1063,18 @@ declare function FormField({ label, hint, error, required, htmlFor, hideLabel, r
 /** 🔴 ห้ามใช้ `toISOString()` ทำ key — มันแปลงเป็น UTC ก่อน ⇒ ไทย (UTC+7)
  * ได้วันที่ย้อนไป 1 วันทุกครั้งที่เวลาต่ำกว่า 07:00 */
 declare const dayKey: (d: Date) => string;
-type CalendarView = "day" | "month";
+type CalendarView = "day" | "month" | "year";
 type CalendarLabels = {
     prevMonth: string;
     nextMonth: string;
     prevYear: string;
     nextYear: string;
     chooseMonth: string;
+    /** ปุ่มหัวปฏิทินตอนอยู่มุมมอง 12 เดือน — กดแล้วไปตารางปี */
+    chooseYear: string;
+    /** ลูกศรในมุมมองปี — เลื่อนทีละ 12 ปี ไม่ใช่ทีละปี */
+    prevYears: string;
+    nextYears: string;
 };
 type CalendarProps = {
     /** เดือนที่กำลังแสดง — ผู้เรียกถือ state เอง เพื่อให้อยู่รอดตอน popover re-render */
@@ -1096,6 +1101,21 @@ type CalendarProps = {
      * ไม่ใช่วัน — ถ้าไม่มีอันนี้ผู้ใช้ต้องกดเดือนแล้วกดวันอีกทีทั้งที่วันไม่มีความหมาย
      */
     selectMonth?: boolean;
+    /**
+     * วันที่ถือว่าเป็น "วันนี้" — วาดเป็น **วงแหวน ไม่ใช่วงกลมทึบ**
+     *
+     * 🔴 เป็นแค่ *ป้ายบอกตำแหน่ง* ไม่ใช่ค่าที่ถูกเลือก — ปฏิทินที่ไม่มีจุดอ้างอิงนี้
+     * พอเลื่อนไปสองสามเดือนแล้วผู้ใช้ไม่รู้ว่าตัวเองอยู่ตรงไหนเทียบกับปัจจุบัน
+     * ⇒ ทรงต้องต่างจากวันที่เลือกชัดเจน (ทึบ = ที่คุณเลือก · วงแหวน = วันนี้)
+     * และถ้าวันนี้ถูกเลือกอยู่ด้วย **ทึบชนะ** ไม่ซ้อนสองสถานะบนช่องเดียว
+     *
+     * ⚠️ ส่ง `null` เพื่อปิด — จำเป็นกับ story/ภาพเทียบ visual ที่ต้องนิ่ง เพราะค่า
+     * เริ่มต้นคือ `new Date()` ซึ่งขยับทุกวัน (กับดักเดียวกับที่ `DatePicker.stories`
+     * เขียนเตือนไว้ว่า story ที่ผูกกับ `new Date()` จะให้ภาพต่างทุกเดือน)
+     *
+     * @default วันนี้ตามเครื่องผู้ใช้
+     */
+    today?: Date | null;
     /** BCP-47 · ค่าเริ่มต้น `th-TH` = ปี พ.ศ. อัตโนมัติ */
     locale?: string;
     /** วันแรกของสัปดาห์ · ค่าเริ่มต้น 0 = อาทิตย์ (ตรงกับของจริงในแอป) */
@@ -1138,6 +1158,27 @@ type DatePickerProps = {
     disabledDate?: (date: Date) => boolean;
     minDate?: Date;
     maxDate?: Date;
+    /**
+     * ให้ล้างค่าได้จากในช่อง — **X สลับที่กับไอคอนปฏิทิน ไม่ได้โผล่มาอยู่ข้างกัน**
+     *
+     * ไอคอนสองตัวซ้อนช่องเดียวกัน เห็นทีละตัว: ปกติเป็นปฏิทิน · เอาเมาส์วางบนช่อง
+     * (หรือแท็บเข้ามา) แล้วมีค่าอยู่ ⇒ กลายเป็น X · ทรงอยู่ที่ `form/field-icon-slot.tsx`
+     * ตัวเดียวกับที่ `DateRangePicker` ใช้ เพื่อไม่ให้สองตัวเพี้ยนออกจากกัน
+     *
+     * 🔴 **นี่คือทางเดียวที่จะล้างค่าของ `DatePicker`** — ต่างจาก `DateRangePicker`
+     * ที่มีปุ่ม "ล้าง" ในฟุตเตอร์ของ popover อยู่แล้ว · ตัวนี้คลิกเดียวจบและปิดทันที
+     * จึงไม่มีฟุตเตอร์ให้วางปุ่ม ⇒ ถ้าจอไหนต้อง "ไม่ระบุวัน" ได้ ต้องเปิด prop นี้
+     *
+     * ⚠️ **บนทัชไม่มี hover** ⇒ X กดไม่ได้ (จงใจ — ไม่งั้นแตะตรงไอคอนแล้วโดนล้างค่า
+     * ทั้งที่ตั้งใจเปิดปฏิทิน) ⇒ จอที่ต้องล้างได้บนมือถือยังต้องมีทางอื่นให้ผู้ใช้
+     *
+     * ⚠️ เปิดแล้ว **กดตรงไอคอนเพื่อ _เปิด_ ปฏิทินไม่ได้อีก** เพราะต้องเอาเมาส์ไปวางก่อน
+     * แล้วมันก็กลายเป็น X ไปแล้ว — เปิดปฏิทินใช้กดที่ตัวช่อง ซึ่งกดได้ทั้งแถบ (antd เหมือนกัน)
+     * @default false
+     */
+    showClearInField?: boolean;
+    /** ข้อความ a11y ของปุ่มล้าง — แอปส่งคำแปลมาเอง @default "Clear" */
+    clearLabel?: string;
     disabled?: boolean;
     size?: FieldSize;
     /** BCP-47 locale ของปฏิทิน · `th-TH` = ปี พ.ศ. อัตโนมัติ @default "th-TH" */
@@ -1149,7 +1190,119 @@ type DatePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): React.JSX.Element;
+declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, clearLabel, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): React.JSX.Element;
+
+type FieldIconSlotProps = {
+    /** ไอคอนประจำช่อง (ปฏิทิน · นาฬิกา · ฯลฯ) — โชว์เป็นค่าปกติ */
+    icon: React.ReactNode;
+    /**
+     * โชว์ปุ่มล้างซ้อนทับไอคอน — ผู้เรียกคำนวณมาแล้วว่า "เปิดใช้ ∧ มีค่า ∧ ไม่ถูกปิด"
+     * ส่ง `false` แล้วช่องนี้เหลือไอคอนตัวเดียว ไม่มี DOM ของปุ่มเลย
+     */
+    showClear?: boolean;
+    /** ข้อความ a11y ของปุ่มล้าง — แอปส่งคำแปลมาเอง (กฎ copy injection ของ DS) */
+    clearLabel: string;
+    onClear: () => void;
+};
+declare function FieldIconSlot({ icon, showClear, clearLabel, onClear, }: FieldIconSlotProps): React.JSX.Element;
+
+/** @doc ../ui/Calendar.md */
+
+/** A closed range. `to` is only ever `null` while a selection is half-made. */
+type DateRangeValue = {
+    from: Date | null;
+    to: Date | null;
+};
+type DateRangePickerLabels = {
+    /** Confirm button in the popover footer — commits the draft range. */
+    confirm: string;
+    /** Clear button in the popover footer, and the field's clear-icon `aria-label`. */
+    clear: string;
+};
+type DateRangePickerProps = {
+    id?: string;
+    label?: React.ReactNode;
+    hint?: React.ReactNode;
+    error?: React.ReactNode;
+    required?: boolean;
+    hideLabel?: boolean;
+    alwaysFloatLabel?: boolean;
+    /** Placeholder shown at both ends of the dash when nothing is picked. */
+    placeholder?: string;
+    value?: DateRangeValue;
+    defaultValue?: DateRangeValue;
+    /** Fired once, when the user confirms or clears — never mid-selection. */
+    onChange?: (value: DateRangeValue) => void;
+    /**
+     * date-fns format string per endpoint — an **override**.
+     *
+     * 🔴 Left unset, the field formats through `Intl` with `calendarLocale`, so the
+     * text and the calendar always name the same year. Passing a date-fns format
+     * opts out of that: date-fns has no Buddhist era, so `"PP"` under
+     * `calendarLocale="th-TH"` prints **2026 in the field beside 2569 in the
+     * calendar** — the two-calendars bug `Calendar.md` exists to prevent. Only pass
+     * this when the field is deliberately not in the calendar's locale (a fixed
+     * `"yyyy-MM-dd"` for an export screen, say).
+     */
+    displayFormat?: string;
+    disabledDate?: (date: Date) => boolean;
+    minDate?: Date;
+    maxDate?: Date;
+    /**
+     * ให้ล้างค่าได้จากในช่อง — **X สลับที่กับไอคอนปฏิทิน ไม่ได้โผล่มาอยู่ข้างกัน**
+     *
+     * ไอคอนสองตัวซ้อนอยู่ช่องเดียวกัน เห็นทีละตัว: ปกติเป็นปฏิทิน · เอาเมาส์วางบนช่อง
+     * (หรือโฟกัสเข้ามา) แล้วมีค่าอยู่ ⇒ กลายเป็น X
+     *
+     * 📐 ทรงนี้ยึดตาม **antd** ซึ่งใช้อยู่ใน `mediact-web-admin`
+     * (`antd/lib/date-picker/style/index.js:190-217` — `-clear` เป็น `absolute`
+     * `insetInlineEnd:0` `opacity:0` แล้วตอน `:hover` สลับ `-clear→1` `-suffix→0`)
+     * ⇒ ไม่มี layout shift · ระยะเว้นขวาคงที่ `pr-9` ไม่ต้องสลับตามสถานะ
+     *
+     * 🔴 **ต่างจาก antd ตรงที่เพิ่ม `focus-within`** — antd ใช้ `:hover` อย่างเดียว
+     * ซึ่งคนใช้คีย์บอร์ดไม่มีวันเห็นปุ่มนั้นเลย · ที่นี่แท็บเข้ามาก็เห็น
+     *
+     * ⚠️ **บนทัชไม่มี hover** ⇒ ยังเห็นปฏิทินตามเดิมและ X กดไม่ได้ (`pointer-events-none`
+     * จนกว่าจะถูกเผย — จงใจ ไม่งั้นแตะตรงไอคอนแล้วโดนล้างทั้งที่ตั้งใจเปิดปฏิทิน)
+     * การล้างบนทัชจึงไปทางปุ่ม "ล้าง" ในฟุตเตอร์ ซึ่งมีอยู่เสมอทุกโหมด
+     *
+     * ค่าเริ่มต้น **ปิด** เพราะไม่มี field ตัวไหนใน DS ให้ล้างจากในช่อง —
+     * `ComboBox` · `EntityAutocomplete` · `DatePicker` · `TimePicker` ย้ายการล้าง
+     * ไปไว้ในสิ่งที่เปิดออกมาทั้งหมด · `DateRangeField` ของ Mediwork มี X ในช่อง
+     * **ย้ายจอนั้นมาต้องส่ง prop นี้** ไม่งั้นผู้ใช้เดิมเสียปุ่มที่เคยมี
+     * @default false
+     */
+    showClearInField?: boolean;
+    disabled?: boolean;
+    size?: FieldSize;
+    /** BCP-47 locale of the calendar · `th-TH` = Buddhist-era years automatically · @default "th-TH" */
+    calendarLocale?: string;
+    /** First day of the week in the calendar @default 0 (Sunday) */
+    weekStartsOn?: 0 | 1;
+    calendarLabels?: Partial<CalendarLabels>;
+    /** Copy for the popover's footer buttons and the clear icon — the app sends its own translations. */
+    labels?: Partial<DateRangePickerLabels>;
+    className?: string;
+    containerClassName?: string;
+};
+/**
+ * A from–to date range in one field, with one calendar.
+ *
+ * `Calendar` already draws a range band (`rangeEnd` / `hoverEnd`) — this is the
+ * thin wrapper that was still missing: the draft/confirm state machine, the
+ * two-date field, and the footer. Grounded on Mediwork's hand-rolled
+ * `DateRangeField` (`mediact-web-backoffice/src/components-v2/shared/DateRangeField.tsx`),
+ * which exists because `@mui/x-date-pickers` has no range picker outside the
+ * Pro licence — the same gap this package has no reason to leave open either.
+ *
+ * **The selection is a draft until "OK".** A range is half-nonsense while it
+ * is being made (one date picked means "from here to nowhere"), so this does
+ * not fire `onChange` on every click — a filter wired straight to it would
+ * spend a request on a question nobody asked yet. The second click is always
+ * the end; clicking before the start begins a new range rather than silently
+ * swapping the pair.
+ */
+declare function DateRangePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, disabled, size, calendarLocale, weekStartsOn, calendarLabels, labels, className, containerClassName, }: DateRangePickerProps): React.JSX.Element;
 
 /** "HH:mm" string in 24-hour format. */
 type TimeValue = string;
@@ -2359,4 +2512,4 @@ declare const DateNavigator: React.ForwardRefExoticComponent<Omit<DateNavigatorP
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, Select, SelectItem, type SelectOption, type SelectProps, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
