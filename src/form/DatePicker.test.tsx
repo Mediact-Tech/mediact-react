@@ -82,6 +82,58 @@ describe("DatePicker", () => {
     expect(screen.queryByRole("grid")).toBeNull();
   });
 
+  /* ตัวนี้ไม่มีฟุตเตอร์ให้วางปุ่มล้าง (คลิกเดียวจบแล้วปิด) ⇒ X ในช่องคือทางเดียว
+   * ที่จะกลับไปเป็น "ยังไม่ระบุวัน" */
+  it("has no clear icon by default, even with a value", () => {
+    render(<DatePicker label="Date" defaultValue={new Date(2026, 4, 9)} />);
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+  });
+
+  it("showClearInField clears back to undefined", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DatePicker
+        label="Date"
+        showClearInField
+        defaultValue={new Date(2026, 4, 9)}
+        onChange={onChange}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    expect(onChange).toHaveBeenCalledWith(undefined);
+    expect(screen.getByLabelText("Date")).toHaveTextContent("");
+    // clearing must not pop the calendar open
+    expect(screen.queryByRole("grid")).toBeNull();
+  });
+
+  it("hides the clear icon when disabled", () => {
+    render(
+      <DatePicker label="Date" showClearInField disabled defaultValue={new Date(2026, 4, 9)} />,
+    );
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+  });
+
+  /* ⚠️ ต้อง render ใหม่ ไม่ใช่ `rerender` — ตัวนี้เป็น uncontrolled, `defaultValue`
+   * แค่หว่านค่าตั้งต้นให้ state ⇒ `rerender` โดยไม่ส่ง `defaultValue` **ไม่ได้ล้างค่า**
+   * (เทสรุ่นแรกเขียนแบบนั้นแล้วตก ซึ่งถูกของมัน — ปุ่มควรโผล่เพราะยังมีค่าอยู่จริง) */
+  it("hides the clear icon when there is no value", () => {
+    render(<DatePicker label="Date" showClearInField />);
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+  });
+
+  it("takes its clear label from the app", () => {
+    render(
+      <DatePicker
+        label="Date"
+        showClearInField
+        clearLabel="ล้าง"
+        defaultValue={new Date(2026, 4, 9)}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "ล้าง" })).toBeInTheDocument();
+  });
+
   it("supports controlled value updates", async () => {
     const may9 = new Date(2026, 4, 9);
     const may20 = new Date(2026, 4, 20);

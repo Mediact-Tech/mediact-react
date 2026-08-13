@@ -40,7 +40,7 @@ const buildGrid = (month: Date, weekStartsOn: 0 | 1) => {
 
 /* ─────────────────────────────────────────────────────────────────── */
 
-export type CalendarView = "day" | "month";
+export type CalendarView = "day" | "month" | "year";
 
 export type CalendarLabels = {
   prevMonth: string;
@@ -48,6 +48,11 @@ export type CalendarLabels = {
   prevYear: string;
   nextYear: string;
   chooseMonth: string;
+  /** ปุ่มหัวปฏิทินตอนอยู่มุมมอง 12 เดือน — กดแล้วไปตารางปี */
+  chooseYear: string;
+  /** ลูกศรในมุมมองปี — เลื่อนทีละ 12 ปี ไม่ใช่ทีละปี */
+  prevYears: string;
+  nextYears: string;
 };
 
 const DEFAULT_LABELS: CalendarLabels = {
@@ -56,7 +61,25 @@ const DEFAULT_LABELS: CalendarLabels = {
   prevYear: "Previous year",
   nextYear: "Next year",
   chooseMonth: "Choose month",
+  chooseYear: "Choose year",
+  prevYears: "Previous years",
+  nextYears: "Next years",
 };
+
+/** จำนวนปีต่อหน้าในมุมมองปี
+ *
+ * 12 ไม่ใช่เลขสุ่ม — เท่ากับจำนวนช่องของตาราง 12 เดือนพอดี ⇒ ตารางปีใช้ทรงเดียวกัน
+ * (3 คอลัมน์ × 4 แถว) **ความสูงของ popover จึงไม่กระโดดตอนสลับมุมมอง** */
+const YEARS_PER_PAGE = 12;
+
+/** ทรงของช่องในตาราง 12 ช่อง — เดือนกับปีใช้ร่วมกัน
+ *
+ * 🔴 แยกออกมาเพราะสองตารางนี้ต้องเท่ากันเสมอ ถ้าต่างคนต่างถือ class มันจะเพี้ยน
+ * ออกจากกันแบบเงียบ ๆ (บทเรียนเดียวกับ checkbox/radio ที่ `ui/toggle-parts.tsx` แก้) */
+const GRID_CELL_BASE =
+  "h-11 cursor-pointer rounded-[10px] text-body-sm transition-colors";
+const GRID_CELL_SELECTED = "bg-brand font-bold text-brand-foreground";
+const GRID_CELL_IDLE = "bg-overlay-hover text-text-black hover:bg-overlay-press";
 
 export type CalendarProps = {
   /** เดือนที่กำลังแสดง — ผู้เรียกถือ state เอง เพื่อให้อยู่รอดตอน popover re-render */
@@ -83,6 +106,21 @@ export type CalendarProps = {
    * ไม่ใช่วัน — ถ้าไม่มีอันนี้ผู้ใช้ต้องกดเดือนแล้วกดวันอีกทีทั้งที่วันไม่มีความหมาย
    */
   selectMonth?: boolean;
+  /**
+   * วันที่ถือว่าเป็น "วันนี้" — วาดเป็น **วงแหวน ไม่ใช่วงกลมทึบ**
+   *
+   * 🔴 เป็นแค่ *ป้ายบอกตำแหน่ง* ไม่ใช่ค่าที่ถูกเลือก — ปฏิทินที่ไม่มีจุดอ้างอิงนี้
+   * พอเลื่อนไปสองสามเดือนแล้วผู้ใช้ไม่รู้ว่าตัวเองอยู่ตรงไหนเทียบกับปัจจุบัน
+   * ⇒ ทรงต้องต่างจากวันที่เลือกชัดเจน (ทึบ = ที่คุณเลือก · วงแหวน = วันนี้)
+   * และถ้าวันนี้ถูกเลือกอยู่ด้วย **ทึบชนะ** ไม่ซ้อนสองสถานะบนช่องเดียว
+   *
+   * ⚠️ ส่ง `null` เพื่อปิด — จำเป็นกับ story/ภาพเทียบ visual ที่ต้องนิ่ง เพราะค่า
+   * เริ่มต้นคือ `new Date()` ซึ่งขยับทุกวัน (กับดักเดียวกับที่ `DatePicker.stories`
+   * เขียนเตือนไว้ว่า story ที่ผูกกับ `new Date()` จะให้ภาพต่างทุกเดือน)
+   *
+   * @default วันนี้ตามเครื่องผู้ใช้
+   */
+  today?: Date | null;
   /** BCP-47 · ค่าเริ่มต้น `th-TH` = ปี พ.ศ. อัตโนมัติ */
   locale?: string;
   /** วันแรกของสัปดาห์ · ค่าเริ่มต้น 0 = อาทิตย์ (ตรงกับของจริงในแอป) */
@@ -119,6 +157,7 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
       onDayHover,
       defaultView = "day",
       selectMonth,
+      today,
       locale = "th-TH",
       weekStartsOn = 0,
       labels,
@@ -128,6 +167,17 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
   ) {
     const L = { ...DEFAULT_LABELS, ...labels };
     const [view, setView] = React.useState<CalendarView>(defaultView);
+
+    /* `undefined` = ยังไม่ระบุ ⇒ ใช้วันนี้จริง · `null` = สั่งปิดป้ายวันนี้
+     * แยกสองความหมายนี้ออกจากกันโดยตั้งใจ ไม่งั้นปิดไม่ได้เลย
+     *
+     * อ่านครั้งเดียวตอน mount — ปฏิทินที่เปิดค้างข้ามเที่ยงคืนแล้ววงแหวนกระโดดเอง
+     * เป็นเรื่องที่ไม่มีใครขอ และการ re-render ทุกครั้งด้วย `new Date()` สด ๆ
+     * ทำให้ผลลัพธ์ขึ้นกับจังหวะ render ซึ่งเทสจับไม่ได้ */
+    const [todayValue] = React.useState(() =>
+      today === undefined ? new Date() : today,
+    );
+    const todayDate = today === undefined ? todayValue : today;
 
     const fmt = React.useMemo(
       () => ({
@@ -209,9 +259,67 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
       }
     };
 
-    /* มุมมองเดือน: ลูกศรเลื่อนทีละปี — หน่วยที่ผู้ใช้กำลังมองอยู่ */
+    /* ลูกศรเลื่อน "ทีละหนึ่งหน้าของสิ่งที่กำลังมองอยู่" เสมอ —
+     * วัน→เดือน · เดือน→ปี · ปี→ช่วง 12 ปี */
     const stepMonth = (dir: -1 | 1) =>
-      onMonthChange(addMonths(month, view === "day" ? dir : dir * 12));
+      onMonthChange(
+        addMonths(
+          month,
+          view === "day"
+            ? dir
+            : view === "month"
+              ? dir * 12
+              : dir * 12 * YEARS_PER_PAGE,
+        ),
+      );
+
+    /* หน้าปีจัดเป็นบล็อกตายตัวตามปีจริง (…, 2556–2567, 2568–2579, …)
+     * ไม่ใช่ "12 ปีนับจากปีที่เลือก" — ไม่งั้นกดลูกศรไป-กลับแล้วได้คนละช่วงทุกครั้ง */
+    const yearPageStart =
+      Math.floor(month.getFullYear() / YEARS_PER_PAGE) * YEARS_PER_PAGE;
+
+    /* ตัวเลขปีล้วน — ไม่เอาคำนำหน้า "พ.ศ." ซ้ำอีก 12 ครั้งในตาราง (หัวปฏิทินบอกช่วงอยู่แล้ว)
+     *
+     * 🔴 ต้องดึงผ่าน `formatToParts` ไม่ใช่ `getFullYear()` — ปีที่ต้องแสดงคือปีของ
+     * **ปฏิทินตาม locale** (th-TH = 2569) ส่วน `getFullYear()` คืนปี ค.ศ. เสมอ (2026)
+     * ⇒ ใช้ตรง ๆ จะได้ตารางปี ค.ศ. อยู่ใต้หัวข้อ พ.ศ. ซึ่งเป็นบั๊ก "นับปีคนละอย่าง"
+     * ตัวเดียวกับที่ทั้งไฟล์นี้มีไว้เพื่อกำจัด */
+    const yearCellLabel = (d: Date) =>
+      fmt.year.formatToParts(d).find((p) => p.type === "year")?.value ??
+      String(d.getFullYear());
+
+    const yearRangeLabel = () => {
+      const first = new Date(yearPageStart, 0, 1);
+      const last = new Date(yearPageStart + YEARS_PER_PAGE - 1, 0, 1);
+      /* `formatRange` ยุบคำนำหน้าซ้ำให้เอง ("พ.ศ. 2556–2567" ไม่ใช่
+       * "พ.ศ. 2556 – พ.ศ. 2567") · ไม่ใช่ทุก runtime ที่มี (happy-dom ในเทสไม่มี)
+       * ⇒ มี fallback ที่อ่านออกเหมือนกัน แค่ยาวกว่า */
+      try {
+        return fmt.year.formatRange(first, last);
+      } catch {
+        return `${fmt.year.format(first)} – ${fmt.year.format(last)}`;
+      }
+    };
+
+    const headerLabel =
+      view === "day"
+        ? fmt.month.format(month)
+        : view === "month"
+          ? fmt.year.format(month)
+          : yearRangeLabel();
+
+    /* หัวปฏิทินพาขึ้นไปทีละชั้น: วัน → 12 เดือน → 12 ปี
+     * แล้ว **ถอยกลับทีละชั้น** ไม่ใช่วนรวดไปมุมมองวัน
+     *
+     * 🔴 เคยเขียนให้ปีวนกลับไปวันเลย แล้วป้าย a11y ของปุ่มหัวโกหกทันที — มันบอกว่า
+     * "Choose month" ทั้งที่กดแล้วเด้งไปตารางวัน · ป้ายที่ตรงกับสิ่งที่จะเกิดขึ้นจริง
+     * สำคัญกว่าการประหยัดคลิก และการลงจากปีไปเดือนก็คือเส้นทางที่ผู้ใช้เพิ่งเดินขึ้นมา
+     * (ลงถึงวันได้ด้วยการกดเดือน ซึ่งเป็นขั้นที่ต้องเลือกอยู่แล้ว) */
+    const nextView: Record<CalendarView, CalendarView> = {
+      day: "month",
+      month: "year",
+      year: "month",
+    };
 
     /* ⚠️ ของจริงใช้ `#F1F5F9` ซึ่ง DS ไม่มี token ตรง — ใช้ `overlay/hover`
      * (ดำ 5% ≈ `#f2f2f2` บนพื้นขาว) แทน เป็น token ที่ตั้งใจไว้ให้ใช้กับพื้นแบบนี้
@@ -225,7 +333,13 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
         <div className="mb-3 flex items-center justify-between">
           <button
             type="button"
-            aria-label={view === "day" ? L.prevMonth : L.prevYear}
+            aria-label={
+              view === "day"
+                ? L.prevMonth
+                : view === "month"
+                  ? L.prevYear
+                  : L.prevYears
+            }
             onClick={() => stepMonth(-1)}
             className={navClass}
           >
@@ -234,17 +348,23 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
 
           <button
             type="button"
-            aria-label={L.chooseMonth}
-            aria-expanded={view === "month"}
-            onClick={() => setView(view === "day" ? "month" : "day")}
+            aria-label={view === "month" ? L.chooseYear : L.chooseMonth}
+            aria-expanded={view !== "day"}
+            onClick={() => setView(nextView[view])}
             className="cursor-pointer rounded-lg px-2 py-1 text-[15px] font-bold text-text-black transition-colors hover:bg-overlay-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
-            {view === "day" ? fmt.month.format(month) : fmt.year.format(month)}
+            {headerLabel}
           </button>
 
           <button
             type="button"
-            aria-label={view === "day" ? L.nextMonth : L.nextYear}
+            aria-label={
+              view === "day"
+                ? L.nextMonth
+                : view === "month"
+                  ? L.nextYear
+                  : L.nextYears
+            }
             onClick={() => stepMonth(1)}
             className={navClass}
           >
@@ -252,7 +372,35 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
           </button>
         </div>
 
-        {view === "month" ? (
+        {view === "year" ? (
+          /* ตารางปี — ทรงเดียวกับตารางเดือนเป๊ะ (3 คอลัมน์ × 4 แถว) ⇒ สลับมุมมอง
+           * แล้วกล่องไม่กระโดด · เลือกปีแล้วลงไปมุมมองเดือนต่อ ไม่ใช่จบเลย เพราะ
+           * หน่วยที่ผู้ใช้กำลังหาคือ "วัน" ปีเป็นแค่ทางผ่าน */
+          <div className="grid grid-cols-3 gap-2 pb-2">
+            {Array.from({ length: YEARS_PER_PAGE }, (_, i) => {
+              const year = yearPageStart + i;
+              const cell = new Date(year, month.getMonth(), 1);
+              const isCurrent = month.getFullYear() === year;
+              return (
+                <button
+                  key={year}
+                  type="button"
+                  aria-pressed={isCurrent}
+                  onClick={() => {
+                    onMonthChange(cell);
+                    setView("month");
+                  }}
+                  className={cn(
+                    GRID_CELL_BASE,
+                    isCurrent ? GRID_CELL_SELECTED : GRID_CELL_IDLE,
+                  )}
+                >
+                  {yearCellLabel(cell)}
+                </button>
+              );
+            })}
+          </div>
+        ) : view === "month" ? (
           <div className="grid grid-cols-3 gap-2 pb-2">
             {Array.from({ length: 12 }, (_, i) => {
               const cell = new Date(month.getFullYear(), i, 1);
@@ -268,10 +416,8 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
                     else setView("day");
                   }}
                   className={cn(
-                    "h-11 cursor-pointer rounded-[10px] text-body-sm transition-colors",
-                    isCurrent
-                      ? "bg-brand font-bold text-brand-foreground"
-                      : "bg-overlay-hover text-text-black hover:bg-overlay-press",
+                    GRID_CELL_BASE,
+                    isCurrent ? GRID_CELL_SELECTED : GRID_CELL_IDLE,
                   )}
                 >
                   {fmt.monthCell.format(cell)}
@@ -325,6 +471,9 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
                       startOfDay(day) > startOfDay(selected) &&
                       startOfDay(day) < startOfDay(end);
                     const isFocus = isSameDay(day, focusDay);
+                    /* วันของเดือนข้างเคียงไม่ต้องติดป้าย — มันจางและกดไม่ได้อยู่แล้ว
+                     * วงแหวนบนช่องที่กดไม่ได้อ่านเป็น "กดได้แต่ยังไม่ได้เลือก" */
+                    const isToday = !outside && isSameDay(day, todayDate);
 
                     return (
                       <td
@@ -346,6 +495,9 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
                           ref={isFocus ? focusRef : undefined}
                           tabIndex={isFocus ? 0 : -1}
                           disabled={disabled}
+                          /* โปรแกรมอ่านหน้าจอประกาศ "วันปัจจุบัน" ให้เอง —
+                             วงแหวนอย่างเดียวสื่อได้แค่กับคนที่มองเห็น */
+                          aria-current={isToday ? "date" : undefined}
                           aria-label={fmt.full.format(day)}
                           onClick={() => {
                             setFocusDay(day);
@@ -362,6 +514,10 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
                               : disabled
                                 ? "cursor-default text-text-disabled"
                                 : "cursor-pointer text-text-black hover:bg-overlay-hover",
+                            /* วันนี้ = วงแหวน · ที่เลือก = ทึบ · ถ้าเป็นวันเดียวกัน
+                             * ทึบชนะ (ไม่ซ้อนสองสถานะบนช่องเดียวจนอ่านไม่ออกว่าอันไหนคืออะไร)
+                             * `ring-inset` เพื่อไม่ให้วงแหวนล้นออกไปทับช่องข้าง ๆ ในแถบช่วงวัน */
+                            isToday && !edge && "ring-1 ring-inset ring-brand font-bold",
                           )}
                         >
                           {day.getDate()}

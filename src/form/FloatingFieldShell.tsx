@@ -169,7 +169,19 @@ export function FloatingFieldShell({
         {children}
 
         {rightAdornment && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-text-tertiary [&_svg:not([class*='size-'])]:size-4">
+          /* 🔴 `pointer-events-none` — ตัวห่อนี้ทับปุ่ม/ช่องที่อยู่ข้างล่างเสมอ
+           * (`absolute right-3`) ถ้าไม่ปล่อยให้คลิกทะลุ **การกดตรงไอคอนจะไม่ทำอะไรเลย**
+           * บนช่องที่ทั้งช่องมีหน้าที่ "กดแล้วเปิด" (`DatePicker` · `DateRangePicker` ·
+           * `Select`/`ComboBox`) — ผู้ใช้กดตรงไอคอนเป็นเรื่องปกติที่สุด และของเดิม
+           * เงียบสนิท ไม่มี error ให้เห็น (ยืนยันด้วย `elementFromPoint` ที่กลางไอคอน
+           * ปฏิทินของ `DatePicker`: คืน `<span>` ตัวนี้ ไม่ใช่ปุ่ม trigger)
+           *
+           * ตรงกับ `leftAdornment` ที่เป็น `pointer-events-none` มาแต่แรก
+           *
+           * ⚠️ adornment ที่ **เป็นปุ่มจริง** ต้องเปิด `pointer-events-auto` ที่ตัวมันเอง
+           * — `TimePicker` ทำแบบนั้นอยู่ก่อนแล้ว (เจอปัญหานี้มาก่อนแต่แก้เฉพาะจุด)
+           * และปุ่มล้างของ `DateRangePicker` เปิดกลับมาเฉพาะตอนถูกเผย */
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-text-tertiary [&_svg:not([class*='size-'])]:size-4">
             {rightAdornment}
           </span>
         )}

@@ -66,6 +66,102 @@ describe("โครงตาราง", () => {
   });
 });
 
+/* 🔴 ก่อนมีมุมมองปี การย้อนกลับไป 10 ปีคือกดลูกศร 10 ครั้ง — เหตุผลเดียวกับที่
+ * มุมมอง 12 เดือนมีอยู่ (ไม่งั้นย้อน 1 ปี = กด 12 ครั้ง) แค่ขยับขึ้นอีกชั้น */
+describe("มุมมองปี", () => {
+  const header = () => screen.getByRole("button", { expanded: false });
+
+  it("กดหัวปฏิทินขึ้นทีละชั้น แล้วถอยกลับทีละชั้น (ไม่วนรวดไปมุมมองวัน)", async () => {
+    const user = userEvent.setup();
+    setup();
+    expect(screen.getByRole("grid")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Choose month" }));
+    expect(screen.queryByRole("grid")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Choose year" }));
+    // ปี: 12 ช่อง เท่าตารางเดือน (ความสูงกล่องจะได้ไม่กระโดด) — 1 ช่องคือปีปัจจุบัน
+    expect(screen.getAllByRole("button", { pressed: false })).toHaveLength(11);
+    expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(1);
+    /* 🔴 ถอยจากปีต้องไปที่ "เดือน" ไม่ใช่ "วัน" — ไม่งั้นป้าย a11y ของปุ่มหัวโกหก
+     * (มันเขียนว่า Choose month แต่พาไปตารางวัน) */
+    await user.click(screen.getByRole("button", { name: "Choose month" }));
+    expect(screen.queryByRole("grid")).toBeNull();
+    expect(screen.getByRole("button", { name: "Choose year" })).toBeInTheDocument();
+  });
+
+  it("ช่องปีแสดงปีตาม locale ไม่ใช่ ค.ศ. เสมอ", async () => {
+    const user = userEvent.setup();
+    setup(); // th-TH ตามค่าเริ่มต้น
+    await user.click(screen.getByRole("button", { name: "Choose month" }));
+    await user.click(screen.getByRole("button", { name: "Choose year" }));
+    // พ.ค. 2026 → พ.ศ. 2569 · บล็อกปีคือ 2016–2027 ⇒ พ.ศ. 2559–2570
+    expect(screen.getByText("2569")).toBeInTheDocument();
+    expect(screen.queryByText("2026")).toBeNull();
+  });
+
+  it("เลือกปีแล้วลงไปมุมมองเดือน ไม่ใช่จบเลย", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    setup({ onMonthChange });
+    await user.click(screen.getByRole("button", { name: "Choose month" }));
+    await user.click(screen.getByRole("button", { name: "Choose year" }));
+    await user.click(screen.getByText("2569"));
+    expect(onMonthChange).toHaveBeenCalled();
+    // ลงมาที่มุมมองเดือน ⇒ ยังไม่ใช่ตารางวัน (ปียังไม่ใช่คำตอบสุดท้าย)
+    expect(screen.queryByRole("grid")).toBeNull();
+    expect(screen.getByRole("button", { name: "Choose year" })).toBeInTheDocument();
+  });
+
+  it("ลูกศรในมุมมองปีเลื่อนทีละ 12 ปี ไม่ใช่ทีละปี", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    setup({ onMonthChange });
+    await user.click(screen.getByRole("button", { name: "Choose month" }));
+    await user.click(screen.getByRole("button", { name: "Choose year" }));
+    await user.click(screen.getByRole("button", { name: "Next years" }));
+    const next = onMonthChange.mock.calls[0]![0] as Date;
+    expect(next.getFullYear()).toBe(may2026.getFullYear() + 12);
+  });
+});
+
+/* 🔴 "วันนี้" เป็น *ป้ายบอกตำแหน่ง* ไม่ใช่ค่าที่ถูกเลือก — ปฏิทินต้องไม่กรอกค่าที่
+ * ผู้ใช้ไม่ได้เลือกให้เอง (ดูเหตุผลเต็มใน `Calendar.md`) */
+describe("ป้ายวันนี้", () => {
+  const may15 = new Date(2026, 4, 15);
+
+  it("ติดวงแหวน + aria-current ให้วันนี้ แต่ไม่เลือกให้", () => {
+    setup({ today: may15 });
+    const btn = buttonIn("2026-05-15");
+    expect(btn).toHaveAttribute("aria-current", "date");
+    /* ⚠️ ต้องยึด `ring-inset` ไม่ใช่ `ring-brand` — ปุ่มมี `focus-visible:ring-brand/40`
+     * ติดมาด้วยเสมอ การเช็คสตริง `ring-brand` จึงผ่านตลอดไม่ว่าโค้ดจะถูกหรือผิด
+     * (assertion รุ่นแรกเขียนแบบนั้นแล้วเทสตกตอนเคสถัดไป ซึ่งเป็นเรื่องดี) */
+    expect(btn.className).toContain("ring-inset");
+    // ไม่ใช่การเลือก ⇒ ช่องต้องไม่ถูกทำเครื่องหมายว่าเลือกอยู่
+    expect(cellFor("2026-05-15")).not.toHaveAttribute("aria-selected");
+    expect(btn.className).not.toContain("bg-brand");
+  });
+
+  it("วันที่ถูกเลือกจริงชนะป้ายวันนี้ ไม่ซ้อนสองสถานะ", () => {
+    setup({ today: may15, selected: may15 });
+    const btn = buttonIn("2026-05-15");
+    expect(btn.className).toContain("bg-brand");
+    expect(btn.className).not.toContain("ring-inset");
+  });
+
+  it("ปิดได้ด้วย today={null} — จำเป็นกับภาพเทียบที่ต้องนิ่ง", () => {
+    setup({ today: null });
+    expect(
+      screen.getAllByRole("gridcell").filter((c) => c.querySelector("[aria-current]")),
+    ).toHaveLength(0);
+  });
+
+  it("ไม่ติดป้ายให้วันของเดือนข้างเคียง", () => {
+    // 1 พ.ค. 2026 = ศุกร์ ⇒ ช่องแรกคือ 26 เม.ย. ซึ่งกดไม่ได้
+    setup({ today: new Date(2026, 3, 26) });
+    expect(buttonIn("2026-04-26")).not.toHaveAttribute("aria-current");
+  });
+});
+
 describe("ขอบเขตวันที่", () => {
   it("minDate / maxDate ปิดวันนอกช่วง", () => {
     setup({ minDate: new Date(2026, 4, 10), maxDate: new Date(2026, 4, 20) });

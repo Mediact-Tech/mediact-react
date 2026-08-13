@@ -124,6 +124,18 @@ export {
   type FloatingFieldShellProps,
 } from "./form/FloatingFieldShell";
 export { DatePicker, type DatePickerProps } from "./form/DatePicker";
+/* ทรงของช่องไอคอนขวา (ไอคอนประจำช่อง ⇄ ปุ่มล้าง) — ใช้ร่วมกันโดย `DatePicker`
+ * และ `DateRangePicker` · เปิดออกมาให้แอปประกอบช่องของตัวเองที่หน้าตาตรงกันได้ */
+export {
+  FieldIconSlot,
+  type FieldIconSlotProps,
+} from "./form/field-icon-slot";
+export {
+  DateRangePicker,
+  type DateRangePickerProps,
+  type DateRangeValue,
+  type DateRangePickerLabels,
+} from "./form/DateRangePicker";
 export {
   TimePicker,
   type TimePickerProps,

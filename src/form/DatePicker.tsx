@@ -9,6 +9,7 @@ import {
   fieldShapeClasses,
   type FieldSize,
 } from "./FloatingFieldShell";
+import { FieldIconSlot } from "./field-icon-slot";
 import { Popover, PopoverContent, PopoverTrigger } from "../overlay/Popover";
 
 export type DatePickerProps = {
@@ -29,6 +30,27 @@ export type DatePickerProps = {
   disabledDate?: (date: Date) => boolean;
   minDate?: Date;
   maxDate?: Date;
+  /**
+   * ให้ล้างค่าได้จากในช่อง — **X สลับที่กับไอคอนปฏิทิน ไม่ได้โผล่มาอยู่ข้างกัน**
+   *
+   * ไอคอนสองตัวซ้อนช่องเดียวกัน เห็นทีละตัว: ปกติเป็นปฏิทิน · เอาเมาส์วางบนช่อง
+   * (หรือแท็บเข้ามา) แล้วมีค่าอยู่ ⇒ กลายเป็น X · ทรงอยู่ที่ `form/field-icon-slot.tsx`
+   * ตัวเดียวกับที่ `DateRangePicker` ใช้ เพื่อไม่ให้สองตัวเพี้ยนออกจากกัน
+   *
+   * 🔴 **นี่คือทางเดียวที่จะล้างค่าของ `DatePicker`** — ต่างจาก `DateRangePicker`
+   * ที่มีปุ่ม "ล้าง" ในฟุตเตอร์ของ popover อยู่แล้ว · ตัวนี้คลิกเดียวจบและปิดทันที
+   * จึงไม่มีฟุตเตอร์ให้วางปุ่ม ⇒ ถ้าจอไหนต้อง "ไม่ระบุวัน" ได้ ต้องเปิด prop นี้
+   *
+   * ⚠️ **บนทัชไม่มี hover** ⇒ X กดไม่ได้ (จงใจ — ไม่งั้นแตะตรงไอคอนแล้วโดนล้างค่า
+   * ทั้งที่ตั้งใจเปิดปฏิทิน) ⇒ จอที่ต้องล้างได้บนมือถือยังต้องมีทางอื่นให้ผู้ใช้
+   *
+   * ⚠️ เปิดแล้ว **กดตรงไอคอนเพื่อ _เปิด_ ปฏิทินไม่ได้อีก** เพราะต้องเอาเมาส์ไปวางก่อน
+   * แล้วมันก็กลายเป็น X ไปแล้ว — เปิดปฏิทินใช้กดที่ตัวช่อง ซึ่งกดได้ทั้งแถบ (antd เหมือนกัน)
+   * @default false
+   */
+  showClearInField?: boolean;
+  /** ข้อความ a11y ของปุ่มล้าง — แอปส่งคำแปลมาเอง @default "Clear" */
+  clearLabel?: string;
   disabled?: boolean;
   size?: FieldSize;
   /** BCP-47 locale ของปฏิทิน · `th-TH` = ปี พ.ศ. อัตโนมัติ @default "th-TH" */
@@ -57,6 +79,8 @@ function DatePicker({
   disabledDate,
   minDate,
   maxDate,
+  showClearInField = false,
+  clearLabel = "Clear",
   disabled,
   size = "md",
   calendarLocale = "th-TH",
@@ -86,6 +110,13 @@ function DatePicker({
     setOpen(false);
   };
 
+  /* `undefined` = ยังไม่เลือก ซึ่งเป็นค่าเดียวกับที่ `onChange` ใช้อยู่แล้ว
+   * (ลายเซ็นเดิม `(date: Date | undefined) => void` — ไม่ต้องเปลี่ยนสัญญา) */
+  const handleClear = () => {
+    if (!isControlled) setInternal(undefined);
+    onChange?.(undefined);
+  };
+
   const display =
     selected && isValid(selected) ? format(selected, displayFormat) : "";
 
@@ -111,8 +142,16 @@ function DatePicker({
       floating={floating}
       focused={open}
       hasError={hasError}
-      containerClassName={containerClassName}
-      rightAdornment={<CalendarIcon />}
+      /* `group` — X ต้องเผยตอนเอาเมาส์วางบน **ทั้งช่อง** ไม่ใช่เฉพาะบนไอคอน */
+      containerClassName={cn("group", containerClassName)}
+      rightAdornment={
+        <FieldIconSlot
+          icon={<CalendarIcon />}
+          showClear={showClearInField && hasValue && !disabled}
+          clearLabel={clearLabel}
+          onClear={handleClear}
+        />
+      }
     >
       <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
