@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { FloatingFieldShell, FieldSkeleton } from "./FloatingFieldShell";
+import { FloatingFieldShell, FieldSkeleton, fieldShapeClasses } from "./FloatingFieldShell";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Textarea } from "../ui/Textarea";
@@ -126,4 +126,34 @@ describe("isLoading ของช่องกรอกทุกชนิด", () 
       });
     });
   }
+});
+
+/**
+ * รูปทรงของช่อง — สองอย่างที่เพิ่มเข้ามา 2026-08-14 หลังเอา DS ไปวางข้างจอเดิมของ Mediwork
+ *
+ * ทั้งคู่พิสูจน์ด้วยการทำให้พังจริงก่อนแล้ว (ถอด `enabled:hover:border-brand` ออก และ
+ * เปลี่ยนมุมโค้งกลับเป็น `rounded-sm` แล้วเทสตกทั้งสองข้อ) ไม่ได้ยืนยันด้วยการอ่านโค้ด
+ */
+describe("fieldShapeClasses", () => {
+  it("มี hover เส้นขอบเป็นสีแบรนด์ และไม่ทำงานตอนช่องถูกปิด", () => {
+    const shape = fieldShapeClasses({ hasError: false, size: "md" });
+
+    /* `enabled:` เป็นส่วนสำคัญของสัญญา ไม่ใช่รายละเอียด — ช่องที่ปิดอยู่ต้องไม่ตอบสนอง
+     * การ hover ไม่งั้นมันสัญญาสิ่งที่ทำไม่ได้ (ช่อง "หน่วยงาน" ที่ปิดไว้จนกว่าจะเลือกแผนก) */
+    expect(shape).toContain("enabled:hover:border-brand");
+  });
+
+  it("สถานะผิดพลาดไม่มี hover — เส้นแดงคือข้อความ ไม่ใช่ของตกแต่ง", () => {
+    expect(fieldShapeClasses({ hasError: true, size: "md" })).not.toContain(
+      "hover:border-brand",
+    );
+  });
+
+  it("มุมโค้งอ่านจาก `--radius-field` โดยค่าสำรองเท่าของเดิม 4px", () => {
+    /* ค่าสำรองคือสิ่งที่กันไม่ให้แอปที่ไม่ได้ตั้งอะไรเปลี่ยนหน้าตา — ถ้าหลุดไป
+     * ทั้ง 4 แอปจะได้มุมโค้ง 0 พร้อมกันโดยไม่มีใครสั่ง */
+    expect(fieldShapeClasses({ hasError: false, size: "md" })).toContain(
+      "rounded-[var(--radius-field,0.25rem)]",
+    );
+  });
 });

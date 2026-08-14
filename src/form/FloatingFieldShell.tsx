@@ -279,7 +279,32 @@ export function fieldShapeClasses({
     lg: "h-12 text-body-md",
   };
   return [
-    "w-full rounded-sm border bg-bg-default px-3 font-medium transition-colors",
+    /* 🔴 มุมโค้งอ่านจาก `--radius-field` โดยมีค่าสำรองเป็นของเดิม (4px) ⇒ **แอปที่ไม่ตั้งอะไร
+     * ไม่เปลี่ยนเลยสักพิกเซล** · มีไว้เพราะของจริงในแอปไม่ตรงกัน: จอตั้งขอบเขต (แผนก/หน่วยงาน)
+     * ของ Mediwork ทั้ง 3 จอใช้ **8px** มาตลอด (`components-v2/shared/selectionFieldSx.ts`)
+     * ส่วน DS ใช้ 4px ⇒ ช่องของ DS ที่วางข้างของเดิมจะมุมคมกว่าอย่างเห็นได้
+     *
+     * ⚠️ ที่ **ไม่** เปลี่ยนค่าตั้งต้นเป็น 8px ให้ทุกแอค เพราะกฎข้อ 1 ของ repo นี้: ค่าที่ใช้
+     * ร่วมกัน 4 แอปต้องวัดจากจอจริงของทั้ง 4 ก่อน · ตอนนี้มีตัวเลขจาก Mediwork แอปเดียว
+     * ⇒ เปิดทางให้แต่ละแอปตั้งเองไปก่อน แล้วค่อยยุบเป็นค่าเดียวเมื่อวัดครบ */
+    /* 🔴 `border-[1px]` ไม่ใช่ `border` เปล่า ๆ — **ชื่อคลาสชนกับ utility เก่าของ Mediwork**
+     *
+     * `styles/globals.css:226` ของแอปนั้นประกาศไว้ว่า
+     *     .border { border: 1px solid #edeff5 !important; }
+     * เป็น unlayered + `!important` ⇒ ชนะ utility ของ Tailwind ทุกกรณี และเพราะเป็น
+     * **shorthand** มันกินทั้ง width/style/**color** ⇒ ทุก field ของ DS ในแอปนั้นได้เส้น
+     * `#edeff5` ตายตัว และ `hover:border-brand` / `focus:border-brand` **ไม่มีทางทำงานเลย**
+     * (วัดจากจอจริง 2026-08-14: ได้ `rgb(237,239,245)` ตรงกับค่าที่ hardcode ไว้เป๊ะ)
+     *
+     * อาการเงียบสนิท — ไม่มี error และช่องยังดูเหมือนช่องปกติ ต่างแค่สีเส้นกับการไม่ตอบ hover
+     *
+     * `border-[1px]` ให้ผลเท่ากันทุกประการในแอปที่ไม่มีคลาสชนกัน แต่ชื่อคลาสไม่ตรงกับ
+     * ของเก่า ⇒ หลุดจากกฎ `!important` นั้น · ส่วน `border-style` ยังมาจาก reset
+     * (preflight หรือที่แอปกู้เอง ซึ่งตั้ง `border: 0 solid` ให้ form element อยู่แล้ว)
+     *
+     * ⚠️ แอปนั้นมี utility ชื่อชนอีกหลายตัว (`.pl-*` `.pr-*` `.ml-*` …) ทุกตัวเป็น
+     * `!important` — ถ้า DS ใช้คลาสพวกนี้ที่ไหนอีกจะเจออาการเดียวกัน */
+    "w-full rounded-[var(--radius-field,0.25rem)] border-[1px] bg-bg-default px-3 font-medium transition-colors",
     "focus:outline-none focus:ring-1",
     /* 🔴 `bg-bg-surface` (#f3f4f6) ไม่ใช่ `bg-bg-subtle` (#fbfbfd) — ของเดิมต่างจากพื้นขาว
      * ของช่องปกติแค่ **1.5%** ⇒ ช่องที่แก้ไม่ได้ดูเหมือนช่องที่แก้ได้ทุกประการ ผู้ใช้จะรู้
@@ -288,8 +313,19 @@ export function fieldShapeClasses({
      * — ห่างจาก token นี้ 3 หน่วย มองด้วยตาไม่ออก) */
     "disabled:cursor-not-allowed disabled:bg-bg-surface",
     heights[size],
+    /* 🔴 **hover เส้นขอบเป็นสีแบรนด์ — ของที่ field ของ DS ไม่เคยมีเลย**
+     *
+     * ทุก field มีแต่สถานะ `focus` ⇒ เอาเมาส์ไปวางแล้วไม่มีอะไรตอบสนอง ซึ่งเป็นวิธีที่
+     * ทั้งหน้าเว็บใช้เขียนคำว่า *กดไม่ได้* · ของจริงที่ผู้ใช้ใช้อยู่ทุกวันมี — จอตั้งขอบเขต
+     * ทั้ง 3 จอของ Mediwork ตั้ง `'&:hover fieldset': {borderColor: var(--primaryColor)}`
+     * ไว้ตรง ๆ (`selectionFieldSx.ts:27`) ⇒ ช่องของ DS ที่วางข้างกันดูตายกว่าอย่างชัดเจน
+     *
+     * `enabled:` สำคัญ — ช่องที่ปิดอยู่ต้องไม่ตอบสนองการ hover ไม่งั้นจะสัญญาสิ่งที่ทำไม่ได้
+     * (ช่อง "หน่วยงาน" ถูกปิดไว้จนกว่าจะเลือกแผนก เป็นเคสที่เจอจริงบนจอ)
+     * ⚠️ สถานะผิดพลาดไม่มี hover โดยตั้งใจ — เส้นแดงคือข้อความ ไม่ใช่ของตกแต่ง
+     * ถ้าให้มันเปลี่ยนเป็นสีแบรนด์ตอนเอาเมาส์ไปวาง เท่ากับลบข้อความนั้นทิ้งชั่วคราว */
     hasError
       ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40"
-      : "border-border-strong focus:border-brand focus:ring-brand/30",
+      : "border-border-strong enabled:hover:border-brand focus:border-brand focus:ring-brand/30",
   ].join(" ");
 }
