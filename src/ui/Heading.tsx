@@ -3,7 +3,10 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 import { SkeletonBox } from "../feedback/Skeleton";
 
-const headingVariants = cva("text-balance", {
+/* `m-0` — `Heading` เรนเดอร์ `h1`–`h6` จริง ซึ่ง UA stylesheet ให้ margin ตามระดับ
+ * (`h2` = `0.83em` บนล่าง) · component ต้องไม่ขึ้นกับว่าแอปเปิด preflight หรือไม่
+ * เหตุผลเต็มอยู่ที่ `Text.tsx` */
+const headingVariants = cva("m-0 text-balance", {
   variants: {
     size: {
       "title-sm": "text-title-sm",

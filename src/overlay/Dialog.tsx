@@ -101,7 +101,14 @@ const DialogTitle = React.forwardRef<
       /* 🔴 ดำคงที่ ไม่ตามแบรนด์ — `text-text-primary` ถูก alias ไป `--color-brand`
        * ใน `theme.css` ถ้าปล่อยไว้ หัวข้อ dialog ธรรมดาจะเป็นคนละสีกับหัวข้อของ
        * `ConfirmDialog` ที่แก้แล้ว ทั้งที่เป็นหัวข้อเหมือนกันบนจอเดียวกัน */
-      className={cn("text-body-lg font-semibold text-text-black", className)}
+      /* `m-0` — Radix `Title` เรนเดอร์ `<h2>` ซึ่งได้ `margin: 0.83em 0` จาก UA
+       * stylesheet · dialog ถูก Portal ไปไว้ที่ `body` เสมอ ⇒ กฎกู้ preflight ที่แอป
+       * เขียนคุมเฉพาะ subtree ของจอจะจับไม่ถึง (วัดที่ Mediwork ได้ 16.6px จริง)
+       * ⇒ component ต้องล้างเอง เหตุผลเต็มอยู่ที่ `ui/Text.tsx` */
+      className={cn(
+        "m-0 text-body-lg font-semibold text-text-black",
+        className,
+      )}
       {...props}
     />
   );
@@ -114,7 +121,8 @@ const DialogDescription = React.forwardRef<
   return (
     <RadixDialog.Description
       ref={ref}
-      className={cn("text-body-sm text-text-body", className)}
+      /* `m-0` — Radix `Description` เรนเดอร์ `<p>` (UA ให้ `margin: 1em 0`) */
+      className={cn("m-0 text-body-sm text-text-body", className)}
       {...props}
     />
   );

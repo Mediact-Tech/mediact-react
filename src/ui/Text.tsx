@@ -9,7 +9,17 @@ import { SkeletonBox } from "../feedback/Skeleton";
  * ใช้ weight 400 เป็นค่าปกติ ส่วน `title-*` พบเฉพาะ 600/700 ในทั้ง 3 แอป
  * ถ้ารวมเป็น component เดียวจะต้องแบก union ของทุก prop โดยไม่มีอะไรกันการผสมมั่ว
  */
-const textVariants = cva("", {
+/* 🔴 `m-0` เป็นส่วนหนึ่งของ component ไม่ใช่หน้าที่ของแอป
+ *
+ * `Text` เรนเดอร์ `<p>` เป็นค่าเริ่มต้น ซึ่ง UA stylesheet ให้ `margin: 1em 0` มาฟรี
+ * เดิมพึ่ง preflight ของ Tailwind ล้างให้ — แต่ **นั่นคือการพึ่งสิ่งที่ผู้ใช้อาจไม่มี**
+ * Mediwork ตัด preflight ทิ้งทั้งก้อนเพื่อไม่ให้ชน MUI ⇒ ทุก `<Text>` ที่นั่นได้ระยะ
+ * ที่ไม่มีใครสั่ง และมันโผล่หนักที่สุดในกล่องที่ผ่าน Portal (dialog/popover) เพราะ DOM
+ * ถูกย้ายไปแขวนที่ `body` จนหลุดขอบเขตของกฎที่แอปเขียนกู้ไว้เอง
+ *
+ * วางไว้ที่ base ⇒ ผู้เรียกยังส่ง `className="mb-2"` ทับได้ตามปกติ (tailwind-merge)
+ * `Heading` · `DialogTitle` · `DialogDescription` ทำแบบเดียวกันด้วยเหตุผลเดียวกัน */
+const textVariants = cva("m-0", {
   variants: {
     variant: {
       caption: "text-caption",
