@@ -27,6 +27,16 @@ type EntityAutocompleteCommonProps<T> = {
   error?: React.ReactNode;
   required?: boolean;
   hideLabel?: boolean;
+  /**
+   * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+   *
+   * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อช่องนี้อยู่ในแถวที่ไม่มี validation
+   * หรือต้องเรียงความสูงให้ตรงกับช่องอื่นที่ปิดที่ว่างนั้นไว้
+   *
+   * 🔴 เดิมไม่รับ prop นี้ ทั้งที่ `ComboBox` ซึ่งเป็นพี่น้องที่ใกล้ที่สุดรับได้ — สองตัวนี้
+   * ถูกสลับกันใช้บ่อย การที่ prop ไม่เท่ากันทำให้สลับแล้วความสูงเปลี่ยนโดยไม่มีใครคาด
+   */
+  reserveMessageSpace?: boolean;
   alwaysFloatLabel?: boolean;
   placeholder?: string;
   searchPlaceholder?: string;
@@ -157,6 +167,7 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
     error,
     required,
     hideLabel,
+    reserveMessageSpace,
     alwaysFloatLabel,
     placeholder,
     searchPlaceholder = "Search...",
@@ -365,6 +376,7 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
       error={error}
       required={required}
       hideLabel={hideLabel}
+      reserveMessageSpace={reserveMessageSpace}
       htmlFor={triggerId}
       size={size}
       floating={floating}

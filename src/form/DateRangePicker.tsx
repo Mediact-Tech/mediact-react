@@ -84,6 +84,17 @@ export type DateRangePickerProps = {
    * @default false
    */
   showClearInField?: boolean;
+  /**
+   * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+   *
+   * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อช่องนี้อยู่ในแถบตัวกรองที่ไม่มี
+   * validation หรือต้องเรียงความสูงให้ตรงกับช่องอื่นที่ปิดที่ว่างนั้นไว้
+   *
+   * 🔴 เดิมช่องวันที่รับ prop นี้ไม่ได้ ทั้งที่ `Select`/`Input` รับได้ ⇒ แถบตัวกรองที่มี
+   * แผนก + หน่วยงาน + ช่วงวันที่ เรียงกัน ปิดที่ว่างได้แค่สองช่องแรก แล้วความสูงจะ
+   * ไม่เท่ากัน 20px ในแถวเดียวกัน — ต้องยอมเปิดทิ้งไว้ทั้งแถวเพื่อให้เรียงตรง
+   */
+  reserveMessageSpace?: boolean;
   disabled?: boolean;
   size?: FieldSize;
   /** BCP-47 locale of the calendar · `th-TH` = Buddhist-era years automatically · @default "th-TH" */
@@ -131,6 +142,7 @@ function DateRangePicker({
   minDate,
   maxDate,
   showClearInField = false,
+  reserveMessageSpace,
   disabled,
   size = "md",
   calendarLocale = "th-TH",
@@ -243,6 +255,7 @@ function DateRangePicker({
       error={error}
       required={required}
       hideLabel={hideLabel}
+      reserveMessageSpace={reserveMessageSpace}
       htmlFor={triggerId}
       size={size}
       floating={floating}

@@ -393,8 +393,12 @@ function SidebarItem({
    * 🔴 ตัวหนังสือบนแถบขาวเป็น **ดำคงที่** ไม่ใช่ `text-brand` แบบเดิม
    * ของจริง Portal ใช้ `text-text-primary` ซึ่ง alias ไป `--color-brand`
    * ⇒ บน Mediwork จะเป็นเขียวมิ้นต์บนขาว วัดได้ 1.93:1 อ่านไม่ออก */
+  /* `cursor-pointer` — เมนูที่มี `href` render เป็น `<a>` ซึ่งได้ pointer จากเบราว์เซอร์ฟรี
+   * **อาการจึงถูกบังไว้** · แต่เมนูที่ใช้ `onClick` (ไม่มี href) render เป็น `<button>`
+   * ซึ่ง default เป็น `cursor: default` และ preflight ของ Tailwind v4 ไม่ตั้งให้แล้ว
+   * ⇒ เมนูสองแบบในรางเดียวกันมีพฤติกรรมเคอร์เซอร์ไม่เหมือนกันโดยไม่มีใครสังเกต */
   const baseClass = cn(
-    "flex w-full items-center gap-3 rounded-[10px] transition-colors",
+    "flex w-full cursor-pointer items-center gap-3 rounded-[10px] transition-colors",
     isCollapsed
       ? "justify-center py-3"
       : isNested
@@ -487,8 +491,10 @@ function SidebarGroup({
   /* 📐 หัวกลุ่มใช้ทรงเดียวกับเมนูระดับบน (วัดจาก Portal: มุม 10 · pad 11/12 · 16/600)
    * ⚠️ ตอนยุบ ถ้ามีเมนูลูกที่กำลังเปิดอยู่ Portal จะไฮไลต์หัวกลุ่มแทน
    * เพราะเมนูลูกถูกซ่อน — ถ้าไม่ทำ จะไม่มีอะไรบนจอบอกว่าผู้ใช้อยู่หน้าไหน */
+  /* หัวกลุ่มเป็น `<button>` เสมอ (กดเพื่อกาง/พับ) จึงไม่มีทางได้ pointer มาฟรีแบบเมนูที่เป็น
+   * `<a>` — เป็นจุดที่อาการโผล่ให้เห็นชัดที่สุดในราง */
   const headerClass = cn(
-    "flex w-full items-center gap-3 rounded-[10px] font-semibold transition-colors",
+    "flex w-full cursor-pointer items-center gap-3 rounded-[10px] font-semibold transition-colors",
     isCollapsed
       ? "justify-center py-3"
       : isNested

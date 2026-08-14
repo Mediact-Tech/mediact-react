@@ -220,6 +220,18 @@ export type DataTableProps<TData> = {
   skeletonRowCount?: number;
   /** class ของกล่องที่เลื่อนได้ — ทางเดียวที่จะปลด `max-h` ตั้งต้นออกได้ */
   containerClassName?: string;
+  /**
+   * class ของ **การ์ดที่ครอบตาราง** (เส้นขอบ · มุมโค้ง · เงา · พื้น)
+   *
+   * 🔴 ต่างจาก `containerClassName` ซึ่งลงที่กล่อง scroll ข้างใน และต่างจาก `className`
+   * ซึ่งลงที่กล่องนอกสุดที่ครอบทั้งตารางและแถบแบ่งหน้า — **ก่อนมี prop นี้ไม่มีทางแตะ
+   * การ์ดใบนี้ได้เลย** เพราะ class ของมันเป็นสตริงตายตัว
+   *
+   * ทรงตั้งต้นยึดจาก Portal ที่ตารางเป็นการ์ดเดี่ยว ๆ บนพื้นหน้า · แต่จอที่วางตารางไว้
+   * **ในการ์ดใบใหญ่ที่มีหัวข้อและแท็บอยู่ด้วย** จะได้กรอบซ้อนกันสองชั้น
+   * ⇒ ส่ง `"border-0 shadow-none rounded-none"` เพื่อให้ตารางกลืนไปกับการ์ดที่ครอบอยู่
+   */
+  cardClassName?: string;
   /** Custom empty state. Rendered when there's no error and 0 rows. */
   empty?: React.ReactNode;
   /**
@@ -302,6 +314,7 @@ function DataTable<TData>({
   stickyHeader,
   skeletonRowCount,
   containerClassName,
+  cardClassName,
   empty,
   emptyIcon,
   errorIcon,
@@ -376,6 +389,16 @@ function DataTable<TData>({
     const selectColumn: ColumnDef<TData, any> = {
       id: "__select",
       size: 40,
+      /* 🔴 `size` เป็น**ค่าต่ำสุด** ไม่ใช่ความกว้างตายตัว — ถ้าตารางมีที่เหลือ คอลัมน์นี้จะยืด
+       * ตามไปด้วย (วัดใน Storybook ได้ 121px สำหรับ checkbox กว้าง 20) แล้ว checkbox
+       * จะลอยชิดซ้ายในช่องกว้าง ๆ · `meta.width` เป็นเพดานจริง จึงต้องใส่คู่กัน
+       *
+       * ⚠️ ล็อกความกว้างอย่างเดียวไม่พอ ต้องจัดกึ่งกลางด้วย ไม่งั้นพอคอลัมน์ยังกว้างกว่า
+       * เนื้อหา (เช่นตารางที่ตั้ง `minTableWidth` ไว้กว้าง) ก็จะเยื้องซ้ายอยู่ดี
+       *
+       * 🔴 จัดกึ่งกลางด้วย **flex ไม่ใช่ `text-center`** — `Checkbox` เป็น `display:flex`
+       * จึงเป็นกล่องระดับบล็อก ซึ่ง `text-align` ไม่มีผลกับมัน (ลองแล้วเหลือเยื้อง 2px) */
+      meta: { width: 48 },
       header: ({ table }) => {
         /* นับจากแถวที่ **ติ๊กได้จริง** เท่านั้น — ไม่งั้นหน้าที่มีแถวติ๊กไม่ได้ปนอยู่
          * จะไม่มีทางขึ้นเป็น "เลือกครบ" เลย ค้างเป็นขีดกลางตลอด */
@@ -383,6 +406,7 @@ function DataTable<TData>({
         const selectable = rows.filter((r) => r.getCanSelect());
         const picked = selectable.filter((r) => r.getIsSelected()).length;
         return (
+          <div className="flex justify-center">
           <Checkbox
             checked={
               selectable.length > 0 && picked === selectable.length
@@ -406,10 +430,11 @@ function DataTable<TData>({
             }
             aria-label={labels?.selectAllAriaLabel ?? "Select all"}
           />
+          </div>
         );
       },
       cell: ({ row }) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
           <Checkbox
             checked={row.getIsSelected()}
             disabled={!row.getCanSelect()}
@@ -488,6 +513,9 @@ function DataTable<TData>({
            * ซึ่งเป็นเคสที่ผู้เรียกส่ง `className="min-h-0 flex-1"` มาเพื่อให้ตาราง
            * เลื่อนในตัวเอง (hr-web EmployeeTable ทำแบบนั้น) */
           "flex min-h-0 flex-auto flex-col overflow-hidden rounded-xl border border-divider-gray bg-bg-default shadow-sm",
+          /* ผู้เรียกทับได้ — จอที่วางตารางไว้ในการ์ดใบใหญ่ต้องลบกรอบชั้นนี้ทิ้ง
+             ไม่งั้นได้กรอบซ้อนกันสองชั้น (ดู `cardClassName` ใน props) */
+          cardClassName,
         )}
       >
         {/* `Table` ห่อตัวเองด้วย `overflow-auto` อยู่แล้ว ⇒ การเลื่อนแนวนอนได้มาฟรี

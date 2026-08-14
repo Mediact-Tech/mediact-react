@@ -51,6 +51,17 @@ export type DatePickerProps = {
   showClearInField?: boolean;
   /** ข้อความ a11y ของปุ่มล้าง — แอปส่งคำแปลมาเอง @default "Clear" */
   clearLabel?: string;
+  /**
+   * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+   *
+   * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อช่องนี้อยู่ในแถวที่ไม่มี validation
+   * (แถบตัวกรอง) หรือต้องเรียงความสูงให้ตรงกับของอื่นที่ไม่มีที่ว่างนั้น
+   *
+   * 🔴 ก่อนหน้านี้ `DatePicker` ไม่รับ prop นี้ ทั้งที่ `Input`/`Select`/`Textarea`/
+   * `ComboBox`/`TimePicker` รับกันหมด ⇒ แถวที่มีช่องวันที่ปนอยู่จะปิดที่ว่างพร้อมกัน
+   * ทั้งแถวไม่ได้ ต้องยอมเปิดทิ้งไว้ทุกช่องเพื่อให้ความสูงเท่ากัน
+   */
+  reserveMessageSpace?: boolean;
   disabled?: boolean;
   size?: FieldSize;
   /** BCP-47 locale ของปฏิทิน · `th-TH` = ปี พ.ศ. อัตโนมัติ @default "th-TH" */
@@ -81,6 +92,7 @@ function DatePicker({
   maxDate,
   showClearInField = false,
   clearLabel = "Clear",
+  reserveMessageSpace,
   disabled,
   size = "md",
   calendarLocale = "th-TH",
@@ -137,6 +149,7 @@ function DatePicker({
       error={error}
       required={required}
       hideLabel={hideLabel}
+      reserveMessageSpace={reserveMessageSpace}
       htmlFor={triggerId}
       size={size}
       floating={floating}

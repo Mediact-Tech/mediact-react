@@ -289,6 +289,7 @@ hover, keyboard ไม่เคยเห็น และต้องเลือ
 | 2026-08-10 | ใช้ `bg-overlay-hover`/`press` แทน `#F1F5F9` | สีต่างจากแอปเล็กน้อย แลกกับไม่มีสีดิบเลยสักตัวในไฟล์ |
 | 2026-08-13 | สร้าง `DateRangePicker` จาก `Calendar`+`Button`+`FloatingFieldShell` ที่มีอยู่แล้ว | ระยะฟุตเตอร์เป็นค่าประมาณ ยังไม่ ground กับ `DateRangeField` จริง — ต้องวัดก่อนแทนที่ของเดิม |
 | 2026-08-13 | ช่องของ `DateRangePicker` format ด้วย `Intl`+`calendarLocale` ไม่ใช่ date-fns | ต่างจาก `DatePicker` ที่ยัง default เป็น `"PPP"` ⇒ พี่น้องสองตัวมี default คนละแบบจนกว่าจะเคาะเรื่อง `DatePicker` |
+| 2026-08-13 | `DatePicker` · `DateRangePicker` รับ **`reserveMessageSpace`** แล้ว | เดิมรับไม่ได้ ทั้งที่ `Input`/`Select`/`Textarea`/`ComboBox`/`TimePicker` รับกันหมด ⇒ **แถวที่มีช่องวันที่ปนอยู่ปิดที่ว่างทั้งแถวไม่ได้** ต้องยอมเปิดทิ้งไว้ทุกช่องเพื่อให้ความสูงเท่ากัน (เจอจริงที่จอ "รายการอนุมัติ" ของ Mediwork: แผนก + หน่วยงาน + ช่วงวันที่ เรียงแถวเดียว) · ไม่ breaking เพราะค่าตั้งต้นของ shell เป็น `true` อยู่แล้ว — เป็นการส่งต่อค่าลง shell ตรง ๆ ไม่มี logic ใหม่ |
 
 ---
 

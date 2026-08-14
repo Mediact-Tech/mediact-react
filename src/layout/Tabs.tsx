@@ -17,7 +17,12 @@ const tabsListVariants = cva("inline-flex items-center", {
 });
 
 const tabsTriggerVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-body-sm font-medium transition-all outline-none disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand/40",
+  /* `cursor-pointer` — `<button>` ของเบราว์เซอร์เป็น `cursor: default` และ preflight ของ
+   * Tailwind v4 **ไม่ได้ตั้ง pointer ให้ปุ่มอีกแล้ว** (ต่างจาก v3) ⇒ ต้องระบุเอง
+   * พี่น้องใน DS ระบุกันหมดแล้ว (`Button` · `IconButton` · วันในปฏิทิน · หัวตารางที่เรียงได้ ·
+   * ปุ่มติดต่อฝ่ายสนับสนุนของ `Sidebar`) มีแต่แท็บที่ตกหล่น — วัดใน Storybook เองก็เป็น
+   * `default` จึงไม่ใช่ปัญหาของแอปปลายทาง */
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap text-body-sm font-medium transition-all outline-none disabled:pointer-events-none disabled:cursor-default disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand/40",
   {
     variants: {
       variant: {
