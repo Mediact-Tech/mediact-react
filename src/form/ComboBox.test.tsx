@@ -133,3 +133,51 @@ describe("ComboBox", () => {
   });
 
 });
+
+/**
+ * โหมด `typeahead` — พิมพ์ค้นในตัวช่องเอง
+ *
+ * เพิ่ม 2026-08-14 เพราะจอตั้งขอบเขตของ Mediwork ทั้ง 3 จอทำแบบนี้มาตลอด (MUI
+ * `Autocomplete`) ขณะที่ **ไม่มี field ตัวไหนใน DS ทำได้เลย** — ทั้ง `ComboBox` และ
+ * `EntityAutocomplete` วางช่องค้นหาไว้ในแผงที่เปิดออกมา
+ *
+ * ข้อที่สำคัญที่สุดคือข้อสุดท้าย: **ผู้เรียกที่ไม่ส่ง prop นี้ต้องไม่เปลี่ยนอะไรเลย**
+ */
+describe("ComboBox typeahead", () => {
+  it("trigger เป็น input จริง ไม่ใช่ปุ่ม", () => {
+    render(<ComboBox label="Country" options={countries} typeahead placeholder="Pick" />);
+
+    expect(screen.getByRole("combobox").tagName).toBe("INPUT");
+  });
+
+  it("พิมพ์ในช่องแล้วกรองรายการ", async () => {
+    const user = userEvent.setup();
+    render(<ComboBox label="Country" options={countries} typeahead />);
+
+    await user.click(screen.getByRole("combobox"));
+    await user.keyboard("Thai");
+
+    expect(screen.getByText("Thailand")).toBeInTheDocument();
+    expect(screen.queryByText("Singapore")).toBeNull();
+  });
+
+  it("ปิดแล้วช่องกลับไปโชว์ป้ายของตัวที่เลือก ไม่ค้างคำที่พิมพ์", async () => {
+    const user = userEvent.setup();
+    render(<ComboBox label="Country" options={countries} typeahead />);
+
+    await user.click(screen.getByRole("combobox"));
+    await user.keyboard("Sing");
+    await user.click(screen.getByText("Singapore"));
+
+    expect((screen.getByRole("combobox") as HTMLInputElement).value).toBe("Singapore");
+  });
+
+  /* 🔴 ด่านสำคัญที่สุดของงานนี้ — เพิ่มโหมดใหม่ต้องไม่แตะพฤติกรรมเดิม
+   * ผู้เรียกจริงทั้ง 4 แอปมี 2 จุด และไม่มีจุดไหนส่ง `typeahead` มา */
+  it("ไม่ส่ง prop = ยังเป็นปุ่มเหมือนเดิม", () => {
+    render(<ComboBox label="Country" options={countries} placeholder="Pick" />);
+
+    expect(screen.getByRole("button").tagName).toBe("BUTTON");
+    expect(screen.queryByRole("combobox")).toBeNull();
+  });
+});

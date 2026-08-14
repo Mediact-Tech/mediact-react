@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Command as CmdkRoot } from "cmdk";
-import { Check, ChevronsUpDown, Lock, X } from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown, Lock, X } from "lucide-react";
 import { cn } from "../lib/cn";
 import {
   FloatingFieldShell,
@@ -16,7 +16,12 @@ import {
   type OptionGroup,
 } from "./group-options";
 import type { OptionRowState, ChipState } from "./option-row";
-import { Popover, PopoverContent, PopoverTrigger } from "../overlay/Popover";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverTrigger,
+} from "../overlay/Popover";
 import { Chip } from "../ui/Chip";
 import { Spinner } from "../feedback/Spinner";
 
@@ -101,6 +106,26 @@ type ComboBoxCommonProps<V extends string = string> = {
     state: OptionRowState,
   ) => React.ReactNode;
   disabled?: boolean;
+  /**
+   * พิมพ์ค้น **ในตัวช่องเอง** แทนที่จะเปิดแผงแล้วเจอช่องค้นหาอีกช่อง
+   *
+   * 🔴 **ปิดเป็นค่าเริ่มต้น** — เปิดแล้วโครงของ trigger เปลี่ยนจาก `<button>` เป็น
+   * `<input>` ซึ่งเปลี่ยนทั้งการโฟกัส การอ่านของ screen reader และการเลือกข้อความ
+   * ⇒ ไม่ควรเปลี่ยนให้ผู้เรียกเดิมโดยไม่มีใครสั่ง
+   *
+   * ที่มา: จอตั้งขอบเขตของ Mediwork ทั้ง 3 จอ (ตารางเวรพยาบาล · ตารางเวรแพทย์ ·
+   * ภาพรวมอัตรากำลัง) ใช้ MUI `Autocomplete` ซึ่งพิมพ์ในช่องได้ — ผู้ใช้กลุ่มเดียวกัน
+   * เจอทรงนี้ทุกวัน · ก่อนหน้านี้ **ไม่มี field ตัวไหนใน DS ทำได้เลย** ทั้ง `ComboBox`
+   * และ `EntityAutocomplete` วางช่องค้นหาไว้ในแผงเหมือนกัน
+   *
+   * ⚠️ ใช้ได้เฉพาะโหมดเลือกอันเดียว — โหมดหลายอันเป็นกล่อง chip ที่สูงตามจำนวนแถว
+   * การยัด input เข้าไปด้วยเป็นคนละโจทย์ (ยังไม่ทำ)
+   *
+   * 📌 ยังใช้ cmdk ตัวเดิม แต่ย้าย `Command` ออกมาครอบทั้งช่องและแผง เพื่อให้
+   * `Command.Input` ที่กลายเป็นตัวช่องยังคุมลูกศรขึ้น/ลงและ Enter ของลิสต์ได้เหมือนเดิม
+   * — ถ้าแยก context กัน คีย์บอร์ดจะใช้ไม่ได้ทั้งชุด
+   */
+  typeahead?: boolean;
   size?: FieldSize;
   /**
    * จองบรรทัดข้อความใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
@@ -182,6 +207,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
     loadingText = "Loading...",
     renderOption,
     disabled,
+    typeahead,
     size = "md",
     className,
     containerClassName,
@@ -200,6 +226,9 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
   const triggerId = id ?? reactId;
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
+  /* ตัวช่องของโหมด `typeahead` — ต้องอ้างถึงได้จากตัวจัดการ "คลิกข้างนอก" ของแผง
+   * (ดูเหตุผลเต็มที่ `onPointerDownOutside` ข้างล่าง) */
+  const typeaheadInputRef = React.useRef<HTMLInputElement>(null);
 
   /* เก็บสถานะเป็นอาร์เรย์เสมอ แล้วค่อยแปลงตอนส่งออก
    * ⇒ ตรรกะข้างในมีเส้นเดียว ไม่ใช่สองเส้นที่ต้องคอยดูแลให้ตรงกัน */
@@ -303,6 +332,174 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
   }
 
   const selectedLabel = optionByValue(selected[0] as V)?.label;
+
+  /* ลิสต์ตัวเลือก — ดึงออกมาเป็นตัวแปรเพราะสองโหมดใช้ก้อนเดียวกันเป๊ะ
+   * ต่างกันแค่ว่า `Command.Input` ไปอยู่ที่ไหน (ในแผง หรือกลายเป็นตัวช่องเอง)
+   * ถ้าเขียนซ้ำสองที่ มันจะเพี้ยนออกจากกันแน่นอน — บทเรียนเดิมของ repo นี้ */
+  const optionList = (
+    <CmdkRoot.List className="max-h-64 overflow-auto p-1">
+      {optionsLoading ? (
+        <CmdkRoot.Loading className="flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary">
+          <Spinner size="sm" />
+          {loadingText}
+        </CmdkRoot.Loading>
+      ) : (
+        <>
+          <CmdkRoot.Empty className="px-3 py-6 text-center text-body-sm text-text-tertiary">
+            {emptyText}
+          </CmdkRoot.Empty>
+          {renderGroups.map((g) => {
+            const rows = g.items.map((opt) => (
+              <ComboBoxItem
+                key={opt.value}
+                opt={opt}
+                selected={selected}
+                locked={isLocked(opt)}
+                maxItems={isMultiple ? maxItems : undefined}
+                renderOption={renderOption}
+                onPick={pick}
+              />
+            ));
+            /* ก้อนที่ไม่มีหัวข้อไม่ห่อ CmdkRoot.Group — cmdk จะเว้นที่ให้
+             * หัวข้อว่างไว้ ทำให้มีช่องว่างลอย ๆ บนสุดของลิสต์ */
+            return g.heading == null ? (
+              <React.Fragment key="__ungrouped">{rows}</React.Fragment>
+            ) : (
+              <CmdkRoot.Group
+                key={g.heading}
+                heading={g.heading}
+                className={GROUP_HEADING_CLASS}
+              >
+                {rows}
+              </CmdkRoot.Group>
+            );
+          })}
+        </>
+      )}
+    </CmdkRoot.List>
+  );
+
+  const multiFooter = isMultiple && selected.length > 0 && (
+    <div className="flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption">
+      <span className="text-text-tertiary">
+        {selected.length} selected
+        {maxItems != null && ` / ${maxItems}`}
+      </span>
+      <button
+        type="button"
+        onClick={clearAll}
+        className="flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-cherry-red-600 hover:bg-cherry-red-50"
+      >
+        <X className="size-3" />
+        Clear
+      </button>
+    </div>
+  );
+
+  /* ── โหมดพิมพ์ค้นในช่อง ────────────────────────────────────────────────────
+   *
+   * `Command` ย้ายออกมาครอบ **ทั้งช่องและแผง** ⇒ `Command.Input` ที่กลายเป็นตัวช่อง
+   * ยังอยู่ context เดียวกับลิสต์ ลูกศรขึ้น/ลงและ Enter จึงทำงานเหมือนเดิมทุกอย่าง
+   * (ถ้าปล่อยให้อยู่คนละ context คีย์บอร์ดจะใช้ไม่ได้ทั้งชุด)
+   *
+   * ใช้ `PopoverAnchor` แทน `PopoverTrigger` — trigger จะกลืนการพิมพ์ไปเปิด/ปิดแผง
+   * ส่วน anchor ทำหน้าที่แค่บอกตำแหน่ง ปล่อยให้ input เป็น input ตามปกติ */
+  if (typeahead && !isMultiple) {
+    return (
+      /* 🔴 `contents` ไม่ใช่ `w-full` — `Command` ของ cmdk เรนเดอร์เป็น `<div>` จริง
+       * ถ้าปล่อยให้มันมีกล่องของตัวเอง จะกลายเป็น **ชั้นบล็อกที่แทรกระหว่างผู้เรียกกับตัวช่อง**
+       * ⇒ `containerClassName` ที่ผู้เรียกส่งมา (ความกว้าง/flex) ไปลงที่ชั้นในแทน
+       * และตัวที่เป็น flex item จริงกลายเป็น div กว้าง 100% ⇒ ทุกช่องกินเต็มแถวแล้วตกบรรทัด
+       * (วัดจากจอจริง 2026-08-14: สามช่องอยู่ `left` เดียวกันหมด `top` ห่างกัน 49px)
+       *
+       * `display: contents` ทำให้ element นี้ไม่สร้างกล่อง ลูกของมันขึ้นไปเป็น flex item
+       * ของผู้เรียกตรง ๆ ⇒ โครงเลย์เอาต์เหมือนโหมดปกติทุกประการ · event กับ context
+       * ของ cmdk ยังทำงานครบเพราะ element ยังอยู่ใน DOM */
+      <CmdkRoot shouldFilter={!onSearch} className="contents">
+        <Popover
+          open={open}
+          onOpenChange={(next) => {
+            if (disabled) return;
+            setOpen(next);
+            // ปิดแล้วต้องกลับไปโชว์ป้ายของตัวที่เลือก ไม่ใช่ค้างคำที่พิมพ์ทิ้งไว้
+            if (!next) setQuery("");
+          }}
+        >
+          <FloatingFieldShell
+            label={label}
+            hint={hint}
+            error={error}
+            required={required}
+            hideLabel={hideLabel}
+            htmlFor={triggerId}
+            size={size}
+            floating={floating}
+            focused={open}
+            hasError={hasError}
+            reserveMessageSpace={reserveMessageSpace}
+            containerClassName={containerClassName}
+            rightAdornment={
+              <ChevronDown
+                className={cn("transition-transform", open && "rotate-180")}
+              />
+            }
+          >
+            <PopoverAnchor asChild>
+              <CmdkRoot.Input
+                ref={typeaheadInputRef}
+                id={triggerId}
+                disabled={disabled}
+                placeholder={floating ? placeholder : undefined}
+                aria-invalid={hasError || undefined}
+                /* ปิดอยู่ = โชว์ป้ายของตัวที่เลือก · เปิดอยู่ = โชว์สิ่งที่พิมพ์
+                 * ⇒ คนที่เลือกไว้แล้วเปิดมาใหม่จะเห็นรายการทั้งหมด ไม่ใช่ถูกกรอง
+                 * ด้วยชื่อตัวเดิมจนเหลือรายการเดียว */
+                value={open ? query : (selectedLabel ?? "")}
+                onValueChange={(v) => {
+                  setQuery(v);
+                  onSearch?.(v);
+                  if (!open) setOpen(true);
+                }}
+                onFocus={() => !disabled && setOpen(true)}
+                onMouseDown={() => !disabled && setOpen(true)}
+                className={cn(
+                  fieldShapeClasses({ hasError, size }),
+                  "pr-9",
+                  className,
+                )}
+              />
+            </PopoverAnchor>
+          </FloatingFieldShell>
+
+          <PopoverContent
+            className="w-[var(--radix-popover-trigger-width)] p-0"
+            align="start"
+            /* โฟกัสต้องอยู่ที่ช่องต่อไป ไม่งั้นพิมพ์ตัวที่สองไม่ได้ */
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            /* 🔴 **ตัวช่องอยู่นอกแผงในสายตาของ Radix** — เพราะเป็น `PopoverAnchor`
+             * ไม่ใช่ `PopoverTrigger` (trigger จะกลืนการพิมพ์ไปสลับเปิด/ปิดแทน)
+             * ⇒ การกดที่ช่องถูกนับเป็น "คลิกข้างนอก" แล้วปิดแผงทันทีที่เพิ่งเปิด
+             * อาการที่วัดได้จริง: กดแล้วแผงไม่ขึ้นเลย และตัวอักษรที่พิมพ์ไปต่อท้ายค่าเดิม
+             * กลายเป็น "สูตินรีเวชกรรมศัลย" เพราะช่องยังอยู่โหมดปิด
+             *
+             * ปล่อยผ่านเฉพาะเหตุการณ์ที่เกิดบนตัวช่องเอง — ที่อื่นยังปิดตามปกติ */
+            onPointerDownOutside={(e) => {
+              if (typeaheadInputRef.current?.contains(e.target as Node)) {
+                e.preventDefault();
+              }
+            }}
+            onFocusOutside={(e) => {
+              if (typeaheadInputRef.current?.contains(e.target as Node)) {
+                e.preventDefault();
+              }
+            }}
+          >
+            {optionList}
+          </PopoverContent>
+        </Popover>
+      </CmdkRoot>
+    );
+  }
 
   return (
     <FloatingFieldShell
@@ -443,62 +640,8 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
               placeholder={searchPlaceholder}
               className="border-b border-border-default px-3 py-2 text-body-sm outline-none placeholder:text-text-tertiary"
             />
-            <CmdkRoot.List className="max-h-64 overflow-auto p-1">
-              {optionsLoading ? (
-                <CmdkRoot.Loading className="flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary">
-                  <Spinner size="sm" />
-                  {loadingText}
-                </CmdkRoot.Loading>
-              ) : (
-                <>
-                  <CmdkRoot.Empty className="px-3 py-6 text-center text-body-sm text-text-tertiary">
-                    {emptyText}
-                  </CmdkRoot.Empty>
-                  {renderGroups.map((g) => {
-                    const rows = g.items.map((opt) => (
-                      <ComboBoxItem
-                        key={opt.value}
-                        opt={opt}
-                        selected={selected}
-                        locked={isLocked(opt)}
-                        maxItems={isMultiple ? maxItems : undefined}
-                        renderOption={renderOption}
-                        onPick={pick}
-                      />
-                    ));
-                    /* ก้อนที่ไม่มีหัวข้อไม่ห่อ CmdkRoot.Group — cmdk จะเว้นที่ให้
-                     * หัวข้อว่างไว้ ทำให้มีช่องว่างลอย ๆ บนสุดของลิสต์ */
-                    return g.heading == null ? (
-                      <React.Fragment key="__ungrouped">{rows}</React.Fragment>
-                    ) : (
-                      <CmdkRoot.Group
-                        key={g.heading}
-                        heading={g.heading}
-                        className={GROUP_HEADING_CLASS}
-                      >
-                        {rows}
-                      </CmdkRoot.Group>
-                    );
-                  })}
-                </>
-              )}
-            </CmdkRoot.List>
-            {isMultiple && selected.length > 0 && (
-              <div className="flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption">
-                <span className="text-text-tertiary">
-                  {selected.length} selected
-                  {maxItems != null && ` / ${maxItems}`}
-                </span>
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  className="flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-cherry-red-600 hover:bg-cherry-red-50"
-                >
-                  <X className="size-3" />
-                  Clear
-                </button>
-              </div>
-            )}
+            {optionList}
+            {multiFooter}
           </CmdkRoot>
         </PopoverContent>
       </Popover>
