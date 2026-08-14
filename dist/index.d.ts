@@ -1179,6 +1179,17 @@ type DatePickerProps = {
     showClearInField?: boolean;
     /** ข้อความ a11y ของปุ่มล้าง — แอปส่งคำแปลมาเอง @default "Clear" */
     clearLabel?: string;
+    /**
+     * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+     *
+     * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อช่องนี้อยู่ในแถวที่ไม่มี validation
+     * (แถบตัวกรอง) หรือต้องเรียงความสูงให้ตรงกับของอื่นที่ไม่มีที่ว่างนั้น
+     *
+     * 🔴 ก่อนหน้านี้ `DatePicker` ไม่รับ prop นี้ ทั้งที่ `Input`/`Select`/`Textarea`/
+     * `ComboBox`/`TimePicker` รับกันหมด ⇒ แถวที่มีช่องวันที่ปนอยู่จะปิดที่ว่างพร้อมกัน
+     * ทั้งแถวไม่ได้ ต้องยอมเปิดทิ้งไว้ทุกช่องเพื่อให้ความสูงเท่ากัน
+     */
+    reserveMessageSpace?: boolean;
     disabled?: boolean;
     size?: FieldSize;
     /** BCP-47 locale ของปฏิทิน · `th-TH` = ปี พ.ศ. อัตโนมัติ @default "th-TH" */
@@ -1190,7 +1201,7 @@ type DatePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, clearLabel, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): React.JSX.Element;
+declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, clearLabel, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): React.JSX.Element;
 
 type FieldIconSlotProps = {
     /** ไอคอนประจำช่อง (ปฏิทิน · นาฬิกา · ฯลฯ) — โชว์เป็นค่าปกติ */
@@ -1273,6 +1284,17 @@ type DateRangePickerProps = {
      * @default false
      */
     showClearInField?: boolean;
+    /**
+     * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+     *
+     * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อช่องนี้อยู่ในแถบตัวกรองที่ไม่มี
+     * validation หรือต้องเรียงความสูงให้ตรงกับช่องอื่นที่ปิดที่ว่างนั้นไว้
+     *
+     * 🔴 เดิมช่องวันที่รับ prop นี้ไม่ได้ ทั้งที่ `Select`/`Input` รับได้ ⇒ แถบตัวกรองที่มี
+     * แผนก + หน่วยงาน + ช่วงวันที่ เรียงกัน ปิดที่ว่างได้แค่สองช่องแรก แล้วความสูงจะ
+     * ไม่เท่ากัน 20px ในแถวเดียวกัน — ต้องยอมเปิดทิ้งไว้ทั้งแถวเพื่อให้เรียงตรง
+     */
+    reserveMessageSpace?: boolean;
     disabled?: boolean;
     size?: FieldSize;
     /** BCP-47 locale of the calendar · `th-TH` = Buddhist-era years automatically · @default "th-TH" */
@@ -1302,7 +1324,7 @@ type DateRangePickerProps = {
  * the end; clicking before the start begins a new range rather than silently
  * swapping the pair.
  */
-declare function DateRangePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, disabled, size, calendarLocale, weekStartsOn, calendarLabels, labels, className, containerClassName, }: DateRangePickerProps): React.JSX.Element;
+declare function DateRangePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, labels, className, containerClassName, }: DateRangePickerProps): React.JSX.Element;
 
 /** "HH:mm" string in 24-hour format. */
 type TimeValue = string;
@@ -1490,6 +1512,26 @@ type ComboBoxCommonProps<V extends string = string> = {
     /** วาดแถวตัวเลือกเอง — ได้ `{ selected, locked, disabled }` ครบ */
     renderOption?: (option: ComboBoxOption<V>, state: OptionRowState) => React.ReactNode;
     disabled?: boolean;
+    /**
+     * พิมพ์ค้น **ในตัวช่องเอง** แทนที่จะเปิดแผงแล้วเจอช่องค้นหาอีกช่อง
+     *
+     * 🔴 **ปิดเป็นค่าเริ่มต้น** — เปิดแล้วโครงของ trigger เปลี่ยนจาก `<button>` เป็น
+     * `<input>` ซึ่งเปลี่ยนทั้งการโฟกัส การอ่านของ screen reader และการเลือกข้อความ
+     * ⇒ ไม่ควรเปลี่ยนให้ผู้เรียกเดิมโดยไม่มีใครสั่ง
+     *
+     * ที่มา: จอตั้งขอบเขตของ Mediwork ทั้ง 3 จอ (ตารางเวรพยาบาล · ตารางเวรแพทย์ ·
+     * ภาพรวมอัตรากำลัง) ใช้ MUI `Autocomplete` ซึ่งพิมพ์ในช่องได้ — ผู้ใช้กลุ่มเดียวกัน
+     * เจอทรงนี้ทุกวัน · ก่อนหน้านี้ **ไม่มี field ตัวไหนใน DS ทำได้เลย** ทั้ง `ComboBox`
+     * และ `EntityAutocomplete` วางช่องค้นหาไว้ในแผงเหมือนกัน
+     *
+     * ⚠️ ใช้ได้เฉพาะโหมดเลือกอันเดียว — โหมดหลายอันเป็นกล่อง chip ที่สูงตามจำนวนแถว
+     * การยัด input เข้าไปด้วยเป็นคนละโจทย์ (ยังไม่ทำ)
+     *
+     * 📌 ยังใช้ cmdk ตัวเดิม แต่ย้าย `Command` ออกมาครอบทั้งช่องและแผง เพื่อให้
+     * `Command.Input` ที่กลายเป็นตัวช่องยังคุมลูกศรขึ้น/ลงและ Enter ของลิสต์ได้เหมือนเดิม
+     * — ถ้าแยก context กัน คีย์บอร์ดจะใช้ไม่ได้ทั้งชุด
+     */
+    typeahead?: boolean;
     size?: FieldSize;
     /**
      * จองบรรทัดข้อความใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
@@ -1541,6 +1583,16 @@ type EntityAutocompleteCommonProps<T> = {
     error?: React.ReactNode;
     required?: boolean;
     hideLabel?: boolean;
+    /**
+     * จองที่หนึ่งบรรทัดใต้ช่องไว้เสมอ กันเลย์เอาต์กระตุกตอนข้อความผิดโผล่/หาย
+     *
+     * ค่าตั้งต้นของ shell คือ `true` — ส่ง `false` เมื่อช่องนี้อยู่ในแถวที่ไม่มี validation
+     * หรือต้องเรียงความสูงให้ตรงกับช่องอื่นที่ปิดที่ว่างนั้นไว้
+     *
+     * 🔴 เดิมไม่รับ prop นี้ ทั้งที่ `ComboBox` ซึ่งเป็นพี่น้องที่ใกล้ที่สุดรับได้ — สองตัวนี้
+     * ถูกสลับกันใช้บ่อย การที่ prop ไม่เท่ากันทำให้สลับแล้วความสูงเปลี่ยนโดยไม่มีใครคาด
+     */
+    reserveMessageSpace?: boolean;
     alwaysFloatLabel?: boolean;
     placeholder?: string;
     searchPlaceholder?: string;
@@ -1919,6 +1971,18 @@ type DataTableProps<TData> = {
     skeletonRowCount?: number;
     /** class ของกล่องที่เลื่อนได้ — ทางเดียวที่จะปลด `max-h` ตั้งต้นออกได้ */
     containerClassName?: string;
+    /**
+     * class ของ **การ์ดที่ครอบตาราง** (เส้นขอบ · มุมโค้ง · เงา · พื้น)
+     *
+     * 🔴 ต่างจาก `containerClassName` ซึ่งลงที่กล่อง scroll ข้างใน และต่างจาก `className`
+     * ซึ่งลงที่กล่องนอกสุดที่ครอบทั้งตารางและแถบแบ่งหน้า — **ก่อนมี prop นี้ไม่มีทางแตะ
+     * การ์ดใบนี้ได้เลย** เพราะ class ของมันเป็นสตริงตายตัว
+     *
+     * ทรงตั้งต้นยึดจาก Portal ที่ตารางเป็นการ์ดเดี่ยว ๆ บนพื้นหน้า · แต่จอที่วางตารางไว้
+     * **ในการ์ดใบใหญ่ที่มีหัวข้อและแท็บอยู่ด้วย** จะได้กรอบซ้อนกันสองชั้น
+     * ⇒ ส่ง `"border-0 shadow-none rounded-none"` เพื่อให้ตารางกลืนไปกับการ์ดที่ครอบอยู่
+     */
+    cardClassName?: string;
     /** Custom empty state. Rendered when there's no error and 0 rows. */
     empty?: React.ReactNode;
     /**
@@ -1981,7 +2045,7 @@ type DataTableProps<TData> = {
     /** Override any built-in copy — see `DataTableLabels`. All English by default. */
     labels?: DataTableLabels;
 } & DataTableGroupingProps<TData>;
-declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, skeletonRowCount, containerClassName, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): React.JSX.Element;
+declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, skeletonRowCount, containerClassName, cardClassName, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): React.JSX.Element;
 
 declare const cardVariants: (props?: ({
     variant?: "flat" | "elevated" | "outlined" | null | undefined;

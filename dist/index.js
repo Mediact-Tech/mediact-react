@@ -463,7 +463,32 @@ function fieldShapeClasses({
     lg: "h-12 text-body-md"
   };
   return [
-    "w-full rounded-sm border bg-bg-default px-3 font-medium transition-colors",
+    /* 🔴 มุมโค้งอ่านจาก `--radius-field` โดยมีค่าสำรองเป็นของเดิม (4px) ⇒ **แอปที่ไม่ตั้งอะไร
+     * ไม่เปลี่ยนเลยสักพิกเซล** · มีไว้เพราะของจริงในแอปไม่ตรงกัน: จอตั้งขอบเขต (แผนก/หน่วยงาน)
+     * ของ Mediwork ทั้ง 3 จอใช้ **8px** มาตลอด (`components-v2/shared/selectionFieldSx.ts`)
+     * ส่วน DS ใช้ 4px ⇒ ช่องของ DS ที่วางข้างของเดิมจะมุมคมกว่าอย่างเห็นได้
+     *
+     * ⚠️ ที่ **ไม่** เปลี่ยนค่าตั้งต้นเป็น 8px ให้ทุกแอค เพราะกฎข้อ 1 ของ repo นี้: ค่าที่ใช้
+     * ร่วมกัน 4 แอปต้องวัดจากจอจริงของทั้ง 4 ก่อน · ตอนนี้มีตัวเลขจาก Mediwork แอปเดียว
+     * ⇒ เปิดทางให้แต่ละแอปตั้งเองไปก่อน แล้วค่อยยุบเป็นค่าเดียวเมื่อวัดครบ */
+    /* 🔴 `border-[1px]` ไม่ใช่ `border` เปล่า ๆ — **ชื่อคลาสชนกับ utility เก่าของ Mediwork**
+     *
+     * `styles/globals.css:226` ของแอปนั้นประกาศไว้ว่า
+     *     .border { border: 1px solid #edeff5 !important; }
+     * เป็น unlayered + `!important` ⇒ ชนะ utility ของ Tailwind ทุกกรณี และเพราะเป็น
+     * **shorthand** มันกินทั้ง width/style/**color** ⇒ ทุก field ของ DS ในแอปนั้นได้เส้น
+     * `#edeff5` ตายตัว และ `hover:border-brand` / `focus:border-brand` **ไม่มีทางทำงานเลย**
+     * (วัดจากจอจริง 2026-08-14: ได้ `rgb(237,239,245)` ตรงกับค่าที่ hardcode ไว้เป๊ะ)
+     *
+     * อาการเงียบสนิท — ไม่มี error และช่องยังดูเหมือนช่องปกติ ต่างแค่สีเส้นกับการไม่ตอบ hover
+     *
+     * `border-[1px]` ให้ผลเท่ากันทุกประการในแอปที่ไม่มีคลาสชนกัน แต่ชื่อคลาสไม่ตรงกับ
+     * ของเก่า ⇒ หลุดจากกฎ `!important` นั้น · ส่วน `border-style` ยังมาจาก reset
+     * (preflight หรือที่แอปกู้เอง ซึ่งตั้ง `border: 0 solid` ให้ form element อยู่แล้ว)
+     *
+     * ⚠️ แอปนั้นมี utility ชื่อชนอีกหลายตัว (`.pl-*` `.pr-*` `.ml-*` …) ทุกตัวเป็น
+     * `!important` — ถ้า DS ใช้คลาสพวกนี้ที่ไหนอีกจะเจออาการเดียวกัน */
+    "w-full rounded-[var(--radius-field,0.25rem)] border-[1px] bg-bg-default px-3 font-medium transition-colors",
     "focus:outline-none focus:ring-1",
     /* 🔴 `bg-bg-surface` (#f3f4f6) ไม่ใช่ `bg-bg-subtle` (#fbfbfd) — ของเดิมต่างจากพื้นขาว
      * ของช่องปกติแค่ **1.5%** ⇒ ช่องที่แก้ไม่ได้ดูเหมือนช่องที่แก้ได้ทุกประการ ผู้ใช้จะรู้
@@ -472,7 +497,18 @@ function fieldShapeClasses({
      * — ห่างจาก token นี้ 3 หน่วย มองด้วยตาไม่ออก) */
     "disabled:cursor-not-allowed disabled:bg-bg-surface",
     heights2[size],
-    hasError ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40" : "border-border-strong focus:border-brand focus:ring-brand/30"
+    /* 🔴 **hover เส้นขอบเป็นสีแบรนด์ — ของที่ field ของ DS ไม่เคยมีเลย**
+     *
+     * ทุก field มีแต่สถานะ `focus` ⇒ เอาเมาส์ไปวางแล้วไม่มีอะไรตอบสนอง ซึ่งเป็นวิธีที่
+     * ทั้งหน้าเว็บใช้เขียนคำว่า *กดไม่ได้* · ของจริงที่ผู้ใช้ใช้อยู่ทุกวันมี — จอตั้งขอบเขต
+     * ทั้ง 3 จอของ Mediwork ตั้ง `'&:hover fieldset': {borderColor: var(--primaryColor)}`
+     * ไว้ตรง ๆ (`selectionFieldSx.ts:27`) ⇒ ช่องของ DS ที่วางข้างกันดูตายกว่าอย่างชัดเจน
+     *
+     * `enabled:` สำคัญ — ช่องที่ปิดอยู่ต้องไม่ตอบสนองการ hover ไม่งั้นจะสัญญาสิ่งที่ทำไม่ได้
+     * (ช่อง "หน่วยงาน" ถูกปิดไว้จนกว่าจะเลือกแผนก เป็นเคสที่เจอจริงบนจอ)
+     * ⚠️ สถานะผิดพลาดไม่มี hover โดยตั้งใจ — เส้นแดงคือข้อความ ไม่ใช่ของตกแต่ง
+     * ถ้าให้มันเปลี่ยนเป็นสีแบรนด์ตอนเอาเมาส์ไปวาง เท่ากับลบข้อความนั้นทิ้งชั่วคราว */
+    hasError ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40" : "border-border-strong enabled:hover:border-brand focus:border-brand focus:ring-brand/30"
   ].join(" ");
 }
 
@@ -2216,7 +2252,7 @@ ConfirmCancelActions.displayName = "ConfirmCancelActions";
 import * as React19 from "react";
 import { cva as cva8 } from "class-variance-authority";
 import { jsx as jsx23 } from "react/jsx-runtime";
-var textVariants = cva8("", {
+var textVariants = cva8("m-0", {
   variants: {
     variant: {
       caption: "text-caption",
@@ -2313,7 +2349,7 @@ Text.displayName = "Text";
 import * as React20 from "react";
 import { cva as cva9 } from "class-variance-authority";
 import { jsx as jsx24 } from "react/jsx-runtime";
-var headingVariants = cva9("text-balance", {
+var headingVariants = cva9("m-0 text-balance", {
   variants: {
     size: {
       "title-sm": "text-title-sm",
@@ -3183,7 +3219,7 @@ function SidebarItem({
     ] })
   ] });
   const baseClass = cn(
-    "flex w-full items-center gap-3 rounded-[10px] transition-colors",
+    "flex w-full cursor-pointer items-center gap-3 rounded-[10px] transition-colors",
     isCollapsed ? "justify-center py-3" : isNested ? "px-3 py-[9px]" : "px-3 py-[11px] text-[16px] font-semibold",
     isActive ? isNested ? "bg-white text-text-black" : "bg-white/20 text-white" : "text-white/80 hover:bg-white/10 hover:text-white",
     className
@@ -3235,7 +3271,7 @@ function SidebarGroup({
     onExpandedChange?.(!isExpanded);
   };
   const headerClass = cn(
-    "flex w-full items-center gap-3 rounded-[10px] font-semibold transition-colors",
+    "flex w-full cursor-pointer items-center gap-3 rounded-[10px] font-semibold transition-colors",
     isCollapsed ? "justify-center py-3" : isNested ? "px-3 py-[9px] text-body-sm" : "px-3 py-[11px] text-[16px]",
     isCollapsed && hasActiveChild ? "bg-white/20 text-white" : "text-white/90 hover:bg-white/10 hover:text-white",
     className
@@ -3667,6 +3703,7 @@ function DatePicker({
   maxDate,
   showClearInField = false,
   clearLabel = "Clear",
+  reserveMessageSpace,
   disabled,
   size = "md",
   calendarLocale = "th-TH",
@@ -3710,6 +3747,7 @@ function DatePicker({
       error,
       required,
       hideLabel,
+      reserveMessageSpace,
       htmlFor: triggerId,
       size,
       floating,
@@ -3799,6 +3837,7 @@ function DateRangePicker({
   minDate,
   maxDate,
   showClearInField = false,
+  reserveMessageSpace,
   disabled,
   size = "md",
   calendarLocale = "th-TH",
@@ -3874,6 +3913,7 @@ function DateRangePicker({
       error,
       required,
       hideLabel,
+      reserveMessageSpace,
       htmlFor: triggerId,
       size,
       floating,
@@ -4438,7 +4478,7 @@ var NumberStepper = React29.forwardRef(
 // src/form/ComboBox.tsx
 import * as React30 from "react";
 import { Command as CmdkRoot } from "cmdk";
-import { Check as Check5, ChevronsUpDown, Lock, X as X5 } from "lucide-react";
+import { Check as Check5, ChevronDown as ChevronDown4, ChevronsUpDown, Lock, X as X5 } from "lucide-react";
 
 // src/form/group-options.ts
 function groupItems(items, groupBy, groupOrder) {
@@ -4500,6 +4540,7 @@ function ComboBox(props) {
     loadingText = "Loading...",
     renderOption,
     disabled,
+    typeahead,
     size = "md",
     className,
     containerClassName,
@@ -4514,6 +4555,7 @@ function ComboBox(props) {
   const triggerId = id ?? reactId;
   const [open, setOpen] = React30.useState(false);
   const [query, setQuery] = React30.useState("");
+  const typeaheadInputRef = React30.useRef(null);
   const [internal, setInternal] = React30.useState(() => {
     if (isMultiple) return defaultValue ?? [];
     return defaultValue !== void 0 ? [defaultValue] : [];
@@ -4590,6 +4632,145 @@ function ComboBox(props) {
     );
   }
   const selectedLabel = optionByValue(selected[0])?.label;
+  const optionList = /* @__PURE__ */ jsx36(CmdkRoot.List, { className: "max-h-64 overflow-auto p-1", children: optionsLoading ? /* @__PURE__ */ jsxs30(CmdkRoot.Loading, { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
+    /* @__PURE__ */ jsx36(Spinner2, { size: "sm" }),
+    loadingText
+  ] }) : /* @__PURE__ */ jsxs30(Fragment9, { children: [
+    /* @__PURE__ */ jsx36(CmdkRoot.Empty, { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: emptyText }),
+    renderGroups.map((g) => {
+      const rows = g.items.map((opt) => /* @__PURE__ */ jsx36(
+        ComboBoxItem,
+        {
+          opt,
+          selected,
+          locked: isLocked(opt),
+          maxItems: isMultiple ? maxItems : void 0,
+          renderOption,
+          onPick: pick
+        },
+        opt.value
+      ));
+      return g.heading == null ? /* @__PURE__ */ jsx36(React30.Fragment, { children: rows }, "__ungrouped") : /* @__PURE__ */ jsx36(
+        CmdkRoot.Group,
+        {
+          heading: g.heading,
+          className: GROUP_HEADING_CLASS,
+          children: rows
+        },
+        g.heading
+      );
+    })
+  ] }) });
+  const multiFooter = isMultiple && selected.length > 0 && /* @__PURE__ */ jsxs30("div", { className: "flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption", children: [
+    /* @__PURE__ */ jsxs30("span", { className: "text-text-tertiary", children: [
+      selected.length,
+      " selected",
+      maxItems != null && ` / ${maxItems}`
+    ] }),
+    /* @__PURE__ */ jsxs30(
+      "button",
+      {
+        type: "button",
+        onClick: clearAll,
+        className: "flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-cherry-red-600 hover:bg-cherry-red-50",
+        children: [
+          /* @__PURE__ */ jsx36(X5, { className: "size-3" }),
+          "Clear"
+        ]
+      }
+    )
+  ] });
+  if (typeahead && !isMultiple) {
+    return (
+      /* 🔴 `contents` ไม่ใช่ `w-full` — `Command` ของ cmdk เรนเดอร์เป็น `<div>` จริง
+       * ถ้าปล่อยให้มันมีกล่องของตัวเอง จะกลายเป็น **ชั้นบล็อกที่แทรกระหว่างผู้เรียกกับตัวช่อง**
+       * ⇒ `containerClassName` ที่ผู้เรียกส่งมา (ความกว้าง/flex) ไปลงที่ชั้นในแทน
+       * และตัวที่เป็น flex item จริงกลายเป็น div กว้าง 100% ⇒ ทุกช่องกินเต็มแถวแล้วตกบรรทัด
+       * (วัดจากจอจริง 2026-08-14: สามช่องอยู่ `left` เดียวกันหมด `top` ห่างกัน 49px)
+       *
+       * `display: contents` ทำให้ element นี้ไม่สร้างกล่อง ลูกของมันขึ้นไปเป็น flex item
+       * ของผู้เรียกตรง ๆ ⇒ โครงเลย์เอาต์เหมือนโหมดปกติทุกประการ · event กับ context
+       * ของ cmdk ยังทำงานครบเพราะ element ยังอยู่ใน DOM */
+      /* @__PURE__ */ jsx36(CmdkRoot, { shouldFilter: !onSearch, className: "contents", children: /* @__PURE__ */ jsxs30(
+        Popover,
+        {
+          open,
+          onOpenChange: (next) => {
+            if (disabled) return;
+            setOpen(next);
+            if (!next) setQuery("");
+          },
+          children: [
+            /* @__PURE__ */ jsx36(
+              FloatingFieldShell,
+              {
+                label,
+                hint,
+                error,
+                required,
+                hideLabel,
+                htmlFor: triggerId,
+                size,
+                floating,
+                focused: open,
+                hasError,
+                reserveMessageSpace,
+                containerClassName,
+                rightAdornment: /* @__PURE__ */ jsx36(
+                  ChevronDown4,
+                  {
+                    className: cn("transition-transform", open && "rotate-180")
+                  }
+                ),
+                children: /* @__PURE__ */ jsx36(PopoverAnchor, { asChild: true, children: /* @__PURE__ */ jsx36(
+                  CmdkRoot.Input,
+                  {
+                    ref: typeaheadInputRef,
+                    id: triggerId,
+                    disabled,
+                    placeholder: floating ? placeholder : void 0,
+                    "aria-invalid": hasError || void 0,
+                    value: open ? query : selectedLabel ?? "",
+                    onValueChange: (v) => {
+                      setQuery(v);
+                      onSearch?.(v);
+                      if (!open) setOpen(true);
+                    },
+                    onFocus: () => !disabled && setOpen(true),
+                    onMouseDown: () => !disabled && setOpen(true),
+                    className: cn(
+                      fieldShapeClasses({ hasError, size }),
+                      "pr-9",
+                      className
+                    )
+                  }
+                ) })
+              }
+            ),
+            /* @__PURE__ */ jsx36(
+              PopoverContent,
+              {
+                className: "w-[var(--radix-popover-trigger-width)] p-0",
+                align: "start",
+                onOpenAutoFocus: (e) => e.preventDefault(),
+                onPointerDownOutside: (e) => {
+                  if (typeaheadInputRef.current?.contains(e.target)) {
+                    e.preventDefault();
+                  }
+                },
+                onFocusOutside: (e) => {
+                  if (typeaheadInputRef.current?.contains(e.target)) {
+                    e.preventDefault();
+                  }
+                },
+                children: optionList
+              }
+            )
+          ]
+        }
+      ) })
+    );
+  }
   return /* @__PURE__ */ jsx36(
     FloatingFieldShell,
     {
@@ -4716,54 +4897,8 @@ function ComboBox(props) {
                       className: "border-b border-border-default px-3 py-2 text-body-sm outline-none placeholder:text-text-tertiary"
                     }
                   ),
-                  /* @__PURE__ */ jsx36(CmdkRoot.List, { className: "max-h-64 overflow-auto p-1", children: optionsLoading ? /* @__PURE__ */ jsxs30(CmdkRoot.Loading, { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
-                    /* @__PURE__ */ jsx36(Spinner2, { size: "sm" }),
-                    loadingText
-                  ] }) : /* @__PURE__ */ jsxs30(Fragment9, { children: [
-                    /* @__PURE__ */ jsx36(CmdkRoot.Empty, { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: emptyText }),
-                    renderGroups.map((g) => {
-                      const rows = g.items.map((opt) => /* @__PURE__ */ jsx36(
-                        ComboBoxItem,
-                        {
-                          opt,
-                          selected,
-                          locked: isLocked(opt),
-                          maxItems: isMultiple ? maxItems : void 0,
-                          renderOption,
-                          onPick: pick
-                        },
-                        opt.value
-                      ));
-                      return g.heading == null ? /* @__PURE__ */ jsx36(React30.Fragment, { children: rows }, "__ungrouped") : /* @__PURE__ */ jsx36(
-                        CmdkRoot.Group,
-                        {
-                          heading: g.heading,
-                          className: GROUP_HEADING_CLASS,
-                          children: rows
-                        },
-                        g.heading
-                      );
-                    })
-                  ] }) }),
-                  isMultiple && selected.length > 0 && /* @__PURE__ */ jsxs30("div", { className: "flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption", children: [
-                    /* @__PURE__ */ jsxs30("span", { className: "text-text-tertiary", children: [
-                      selected.length,
-                      " selected",
-                      maxItems != null && ` / ${maxItems}`
-                    ] }),
-                    /* @__PURE__ */ jsxs30(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: clearAll,
-                        className: "flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-cherry-red-600 hover:bg-cherry-red-50",
-                        children: [
-                          /* @__PURE__ */ jsx36(X5, { className: "size-3" }),
-                          "Clear"
-                        ]
-                      }
-                    )
-                  ] })
+                  optionList,
+                  multiFooter
                 ] })
               }
             )
@@ -4829,6 +4964,7 @@ function EntityAutocomplete(props) {
     error,
     required,
     hideLabel,
+    reserveMessageSpace,
     alwaysFloatLabel,
     placeholder,
     searchPlaceholder = "Search...",
@@ -4986,6 +5122,7 @@ function EntityAutocomplete(props) {
       error,
       required,
       hideLabel,
+      reserveMessageSpace,
       htmlFor: triggerId,
       size,
       floating,
@@ -5209,7 +5346,16 @@ var TableHead = React32.forwardRef(function TableHead2({ className, ...props }, 
          * ⚠️ ของเดิมเป็น 12px/600 ตัวพิมพ์ใหญ่ สีจาง (#9b9b9b) — ไม่มีแอปไหนทำแบบนั้น
          * สีมาจาก `text-text-body` ไม่ใช่ `text-text-black` — เหตุผลอยู่ที่ `TableCell` */
         "h-12 px-4 py-3 text-left align-middle text-body-sm font-medium whitespace-nowrap text-text-body",
-        "[&:has([role=checkbox])]:pr-0",
+        /* 🔴 ช่องที่มีแต่ checkbox ต้องเว้นซ้าย-ขวาเท่ากัน ไม่งั้น checkbox ไม่อยู่กึ่งกลาง
+         *
+         * ของเดิมเป็น `pr-0` (สืบมาจากตาราง shadcn) ⇒ ซ้าย 16 ขวา 0 ⇒ **เนื้อหาเยื้องขวา
+         * ครึ่งหนึ่งของ padding ที่หายไป** วัดได้จริงทั้งสองที่: ในแอปคอลัมน์กว้าง 36
+         * เยื้อง +8px · ใน Storybook ของ DS เองคอลัมน์กว้าง 100 เยื้อง −24px
+         * (ทิศต่างกันเพราะความกว้างคอลัมน์ต่างกัน แต่ต้นเหตุเดียวกันคือ padding ไม่สมมาตร)
+         *
+         * `px-3` ให้ทั้งสองข้างเท่ากันและแคบกว่า `px-4` เดิมเล็กน้อย — คอลัมน์เลือกไม่ควร
+         * กินที่เท่าคอลัมน์เนื้อหา แต่ต้องสมมาตรเพื่อให้กึ่งกลางเป็นกึ่งกลางจริง */
+        "[&:has([role=checkbox])]:px-3",
         className
       ),
       ...props
@@ -5240,7 +5386,16 @@ var TableCell = React32.forwardRef(function TableCell2({ className, ...props }, 
          * ไม่มีธีมไหน override ⇒ คงที่ทุกแอปเหมือนที่ `text-text-black` เคยให้ และตรงกับ
          * ตัวแปรที่ดีไซน์อ้างถึงตรง ๆ (`--color/text/body`) · ต้องเป็นสีเดียวกับหัวตารางเสมอ */
         "h-16 px-4 py-3 align-middle text-body-sm font-normal text-text-body",
-        "[&:has([role=checkbox])]:pr-0",
+        /* 🔴 ช่องที่มีแต่ checkbox ต้องเว้นซ้าย-ขวาเท่ากัน ไม่งั้น checkbox ไม่อยู่กึ่งกลาง
+         *
+         * ของเดิมเป็น `pr-0` (สืบมาจากตาราง shadcn) ⇒ ซ้าย 16 ขวา 0 ⇒ **เนื้อหาเยื้องขวา
+         * ครึ่งหนึ่งของ padding ที่หายไป** วัดได้จริงทั้งสองที่: ในแอปคอลัมน์กว้าง 36
+         * เยื้อง +8px · ใน Storybook ของ DS เองคอลัมน์กว้าง 100 เยื้อง −24px
+         * (ทิศต่างกันเพราะความกว้างคอลัมน์ต่างกัน แต่ต้นเหตุเดียวกันคือ padding ไม่สมมาตร)
+         *
+         * `px-3` ให้ทั้งสองข้างเท่ากันและแคบกว่า `px-4` เดิมเล็กน้อย — คอลัมน์เลือกไม่ควร
+         * กินที่เท่าคอลัมน์เนื้อหา แต่ต้องสมมาตรเพื่อให้กึ่งกลางเป็นกึ่งกลางจริง */
+        "[&:has([role=checkbox])]:px-3",
         className
       ),
       ...props
@@ -5401,7 +5556,7 @@ function RetryButton({
 }
 
 // src/data/table-groups.tsx
-import { ChevronDown as ChevronDown4 } from "lucide-react";
+import { ChevronDown as ChevronDown5 } from "lucide-react";
 import { jsx as jsx40, jsxs as jsxs33 } from "react/jsx-runtime";
 function resolveGroups(rows, groupBy, groupOrder, collapsedKeys) {
   const collapsed = new Set(collapsedKeys);
@@ -5441,7 +5596,7 @@ function DataTableGroupRow({
           className: "-mx-1 flex items-center gap-1.5 rounded-sm px-1 py-0.5 hover:bg-overlay-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-brand",
           children: [
             /* @__PURE__ */ jsx40(
-              ChevronDown4,
+              ChevronDown5,
               {
                 "aria-hidden": true,
                 className: cn(
@@ -5563,6 +5718,7 @@ function DataTable({
   stickyHeader,
   skeletonRowCount,
   containerClassName,
+  cardClassName,
   empty,
   emptyIcon,
   errorIcon,
@@ -5620,11 +5776,21 @@ function DataTable({
     const selectColumn = {
       id: "__select",
       size: 40,
+      /* 🔴 `size` เป็น**ค่าต่ำสุด** ไม่ใช่ความกว้างตายตัว — ถ้าตารางมีที่เหลือ คอลัมน์นี้จะยืด
+       * ตามไปด้วย (วัดใน Storybook ได้ 121px สำหรับ checkbox กว้าง 20) แล้ว checkbox
+       * จะลอยชิดซ้ายในช่องกว้าง ๆ · `meta.width` เป็นเพดานจริง จึงต้องใส่คู่กัน
+       *
+       * ⚠️ ล็อกความกว้างอย่างเดียวไม่พอ ต้องจัดกึ่งกลางด้วย ไม่งั้นพอคอลัมน์ยังกว้างกว่า
+       * เนื้อหา (เช่นตารางที่ตั้ง `minTableWidth` ไว้กว้าง) ก็จะเยื้องซ้ายอยู่ดี
+       *
+       * 🔴 จัดกึ่งกลางด้วย **flex ไม่ใช่ `text-center`** — `Checkbox` เป็น `display:flex`
+       * จึงเป็นกล่องระดับบล็อก ซึ่ง `text-align` ไม่มีผลกับมัน (ลองแล้วเหลือเยื้อง 2px) */
+      meta: { width: 48 },
       header: ({ table: table2 }) => {
         const rows = table2.getRowModel().rows;
         const selectable = rows.filter((r) => r.getCanSelect());
         const picked = selectable.filter((r) => r.getIsSelected()).length;
-        return /* @__PURE__ */ jsx41(
+        return /* @__PURE__ */ jsx41("div", { className: "flex justify-center", children: /* @__PURE__ */ jsx41(
           Checkbox,
           {
             checked: selectable.length > 0 && picked === selectable.length ? true : picked > 0 ? "indeterminate" : false,
@@ -5639,9 +5805,9 @@ function DataTable({
             }),
             "aria-label": labels?.selectAllAriaLabel ?? "Select all"
           }
-        );
+        ) });
       },
-      cell: ({ row }) => /* @__PURE__ */ jsx41("div", { onClick: (e) => e.stopPropagation(), children: /* @__PURE__ */ jsx41(
+      cell: ({ row }) => /* @__PURE__ */ jsx41("div", { className: "flex justify-center", onClick: (e) => e.stopPropagation(), children: /* @__PURE__ */ jsx41(
         Checkbox,
         {
           checked: row.getIsSelected(),
@@ -5708,7 +5874,10 @@ function DataTable({
              * (basis auto) สูงตามเนื้อหาเป็นปกติ แต่ยังยืด/หดได้เมื่อพ่อจำกัดความสูง
              * ซึ่งเป็นเคสที่ผู้เรียกส่ง `className="min-h-0 flex-1"` มาเพื่อให้ตาราง
              * เลื่อนในตัวเอง (hr-web EmployeeTable ทำแบบนั้น) */
-            "flex min-h-0 flex-auto flex-col overflow-hidden rounded-xl border border-divider-gray bg-bg-default shadow-sm"
+            "flex min-h-0 flex-auto flex-col overflow-hidden rounded-xl border border-divider-gray bg-bg-default shadow-sm",
+            /* ผู้เรียกทับได้ — จอที่วางตารางไว้ในการ์ดใบใหญ่ต้องลบกรอบชั้นนี้ทิ้ง
+               ไม่งั้นได้กรอบซ้อนกันสองชั้น (ดู `cardClassName` ใน props) */
+            cardClassName
           ),
           children: /* @__PURE__ */ jsx41(
             "div",
@@ -6190,7 +6359,12 @@ var tabsListVariants = cva12("inline-flex items-center", {
   defaultVariants: { variant: "underline" }
 });
 var tabsTriggerVariants = cva12(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-body-sm font-medium transition-all outline-none disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand/40",
+  /* `cursor-pointer` — `<button>` ของเบราว์เซอร์เป็น `cursor: default` และ preflight ของ
+   * Tailwind v4 **ไม่ได้ตั้ง pointer ให้ปุ่มอีกแล้ว** (ต่างจาก v3) ⇒ ต้องระบุเอง
+   * พี่น้องใน DS ระบุกันหมดแล้ว (`Button` · `IconButton` · วันในปฏิทิน · หัวตารางที่เรียงได้ ·
+   * ปุ่มติดต่อฝ่ายสนับสนุนของ `Sidebar`) มีแต่แท็บที่ตกหล่น — วัดใน Storybook เองก็เป็น
+   * `default` จึงไม่ใช่ปัญหาของแอปปลายทาง */
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap text-body-sm font-medium transition-all outline-none disabled:pointer-events-none disabled:cursor-default disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand/40",
   {
     variants: {
       variant: {
@@ -6592,7 +6766,10 @@ var DialogTitle = React38.forwardRef(function DialogTitle2({ className, ...props
     RadixDialog.Title,
     {
       ref,
-      className: cn("text-body-lg font-semibold text-text-black", className),
+      className: cn(
+        "m-0 text-body-lg font-semibold text-text-black",
+        className
+      ),
       ...props
     }
   );
@@ -6602,7 +6779,7 @@ var DialogDescription = React38.forwardRef(function DialogDescription2({ classNa
     RadixDialog.Description,
     {
       ref,
-      className: cn("text-body-sm text-text-body", className),
+      className: cn("m-0 text-body-sm text-text-body", className),
       ...props
     }
   );
