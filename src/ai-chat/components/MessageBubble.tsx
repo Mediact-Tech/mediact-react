@@ -24,7 +24,7 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
     return (
       <div className="my-2 flex items-center gap-2" data-slot="ai-chat-divider">
         <span className="h-px flex-1 bg-border-subtle" />
-        <span className="text-[11px] text-gray-400">{message.content}</span>
+        <span className="text-[11px] text-text-tertiary">{message.content}</span>
         <span className="h-px flex-1 bg-border-subtle" />
       </div>
     );
@@ -38,18 +38,37 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
       data-role={message.role}
       className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}
     >
-      <div className={cn("max-w-[85%]", isUser && "flex flex-col items-end")}>
+      {/* 🔴 ความกว้างไม่เท่ากันสองฝั่ง **โดยตั้งใจ** — คนถามสั้น ผู้ช่วยตอบยาว
+        * ลิ้นชักกว้าง 26rem หัก padding เหลือ 384px · ของเดิมจำกัด 85% ทั้งคู่ ⇒ คำตอบเหลือ 354px
+        * ทั้งที่เนื้อหาคือมาร์กดาวน์ ตาราง และการ์ดวิดเจ็ต · แบ่งเท่ากันเป็นความสมมาตรที่ไม่มีใครได้ประโยชน์ */}
+      <div className={cn(isUser ? "flex max-w-[85%] flex-col items-end" : "w-full min-w-0")}>
+        {/* ป้ายผู้พูด — สีกับด้านที่ชิดอย่างเดียวบอกไม่ได้ว่าใครพูด สำหรับคนที่แยกสีไม่ออก
+          * หรืออ่านผ่านโปรแกรมอ่านหน้าจอ (คู่มือ chat UI ทุกเล่มลงตรงกันข้อนี้) */}
+        <span
+          className={cn(
+            "mb-1 block text-[11px] font-semibold tracking-wide",
+            isUser ? "text-text-tertiary" : "text-brand-hover",
+          )}
+        >
+          {isUser ? labels.you : labels.assistant}
+        </span>
+
         {!isUser && message.tools && <ToolTrail tools={message.tools} />}
 
         {(message.content || !isUser) && (
           <div
             className={cn(
-              "rounded-lg px-3 py-2 text-body-sm break-words",
+              "text-body-sm break-words",
               isUser
-                ? "bg-brand text-brand-foreground whitespace-pre-wrap"
+                ? /* พื้นแบรนด์เต็มใบเหมือนเดิม แต่ตัวอักษรเป็น `text-text-black` ไม่ใช่ `brand-foreground`
+                   * — ขาวบนมิ้นต์ของ Mediwork วัดได้ **1.93:1** (ตกเกณฑ์ 4.5:1 ทุกกรณี) ส่วนดำหมึกได้ **9.09:1**
+                   * มุมล่างฝั่งที่ชิดขอบเหลือ 4 ⇒ ฟองชี้กลับไปหาคนพูด อ่านออกแม้เป็นขาวดำ */
+                  "whitespace-pre-wrap rounded-xl rounded-br-sm bg-brand px-3.5 py-2.5 text-text-black"
                 : message.failed
-                  ? "border border-error-red-100 bg-error-red-50 text-error-red-800"
-                  : "border border-border-subtle bg-white text-black",
+                  ? "rounded-xl rounded-bl-sm border border-error-red-100 bg-error-red-50 px-3.5 py-2.5 text-error-red-800"
+                  : /* ผู้ช่วยไม่มีกล่อง — พูดบนพื้นแผงตรง ๆ · ของเดิมเป็นการ์ดขาวมีขอบ `#0000000f`
+                     * วางบนพื้น `#fbfbfd` ซึ่งเป็นขาวบนเกือบขาว: ขอบเขตอ่านไม่ออก แต่กินที่ทั้งสองข้าง */
+                    "text-text-black",
             )}
           >
             {/* The user's own text is shown verbatim; only the assistant speaks markdown. */}
@@ -101,7 +120,7 @@ function OutcomeBadge({
         "mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
         outcome.committed
           ? "bg-success-green-background-50 text-success-green-800"
-          : "bg-gray-100 text-gray-600",
+          : "bg-overlay-hover text-text-body",
       )}
     >
       {outcome.committed ? <CircleCheck className="size-3" /> : <CircleSlash className="size-3" />}
@@ -112,7 +131,7 @@ function OutcomeBadge({
 
 function TypingDots({ label }: { label: string }) {
   return (
-    <span className="flex items-center gap-1 text-gray-400" aria-label={label}>
+    <span className="flex items-center gap-1 text-text-tertiary" aria-label={label}>
       <Dot delay="0ms" />
       <Dot delay="150ms" />
       <Dot delay="300ms" />

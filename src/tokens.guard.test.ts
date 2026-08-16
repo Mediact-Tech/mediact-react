@@ -119,8 +119,26 @@ describe("ด่านกันสีดิบ", () => {
      * ทำไมไม่แก้ให้จบตรงนี้: ทางแก้ที่ถูกคือเพิ่ม `--color-bg-inverse` เข้า semantic layer
      * แล้วใช้ `bg-bg-inverse text-text-inverse` — แต่ **3 ใน 4 แอปยังไม่ import token ของ DS**
      * ⇒ tooltip จะกลายเป็นพื้นโปร่งทันทีในวันที่เปลี่ยน · ทำได้เมื่อแอปย้ายมากิน
-     * `@mediact/react/tokens.css` แล้ว และตอนนั้นให้ลดเลขนี้กลับเป็น 161 */
-    expect(total).toBeLessThanOrEqual(164);
+     * `@mediact/react/tokens.css` แล้ว และตอนนั้นให้ลดเลขนี้กลับเป็น 161
+     *
+     * +2 = `bg-white/20` (ฉากหลัง) กับ `bg-white` (พื้นหน้าต่าง) ใน `overlay/AppShowcaseDialog.tsx`
+     * · **ตัวอักษรบนปุ่มแบรนด์ใช้ `text-text-inverse` แล้ว** ตามแบบแผนของ `ContactSupportDialog`
+     *   จึงไม่ได้เพิ่มอีก 2 ตัวอย่างที่เขียนครั้งแรก
+     * · สองตัวที่เหลือติดกับดักเดียวกับ tooltip เป๊ะ — ฉากหลังของแบบนี้เป็น **ขาว 20% + เบลอ**
+     *   (Figma `Rectangle 23`) ไม่ใช่ฉากมืด และ `Dialog.tsx` เองก็ใช้ `bg-white` อยู่แล้ว
+     *   ⇒ เปลี่ยนเป็น token วันนี้ = หน้าต่างพื้นโปร่งใน 3 แอปที่ยังไม่กิน token
+     *   ลดกลับพร้อมกับ tooltip ในวันที่ทุกแอปย้ายมากิน `@mediact/react/tokens.css`
+     *
+     * **−35 = 131 (2026-08-16)** — รอบปรับหน้าตาแชท: ไฟล์ที่แตะทั้ง 5 ตัวของ `ai-chat/components`
+     * (`MessageBubble` · `MessageList` · `Composer` · `ConversationPicker` · `ChatDrawer`)
+     * เหลือสีดิบ **0** แล้ว · ทั้งหมดเป็นการแทนด้วย token ที่ค่าเท่ากันหรือถูกความหมายกว่า ไม่ใช่การเปลี่ยนดีไซน์:
+     *   `bg-white` → `bg-bg-default` (#ffffff เท่ากัน) · `bg-gray-50` → `bg-bg-subtle` (#fbfbfd เท่ากัน)
+     *   `text-black` → `text-text-black` (#191919 เท่ากัน) · `bg-gray-100/200` → `bg-overlay-hover/press`
+     *   `text-gray-400` → `text-text-tertiary` (#9597bd → #9b9b9b — DS ทับ `gray-400` เป็นม่วงอมเทาไว้
+     *      ซึ่งเป็นสีที่ "ถูกโดยบังเอิญ" ตามที่หัวไฟล์นี้อธิบาย · tertiary คือสีที่ตั้งใจ)
+     *   `text-gray-500/600/700` → `text-text-body` (#535a61)
+     * ⇒ ตอนนี้ `ai-chat/components` เป็นโฟลเดอร์ที่สองต่อจากตระกูลปฏิทินที่สะอาดทั้งโฟลเดอร์ */
+    expect(total).toBeLessThanOrEqual(131);
   });
 
   /* ไฟล์ที่ทำความสะอาดแล้ว ห้ามถอยกลับ */

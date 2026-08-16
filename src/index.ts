@@ -272,6 +272,15 @@ export {
   type ContactSupportDialogProps,
   type ContactSupportLabels,
 } from "./overlay/ContactSupportDialog";
+export {
+  AppShowcaseDialog,
+  SHOWCASE_COPY,
+  SHOWCASE_LAYOUT,
+  type AppShowcaseDialogProps,
+  type ShowcaseAppKey,
+  type ShowcaseAssets,
+  type ShowcaseLocale,
+} from "./overlay/AppShowcaseDialog";
 export { Filter, type FilterProps } from "./overlay/Filter";
 export {
   Tooltip,

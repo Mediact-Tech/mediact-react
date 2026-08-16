@@ -7,18 +7,42 @@
 | โค้ด | `packages/react/src/navigation/TopNav.tsx` |
 | Storybook | `Navigation/TopNav` |
 | Figma | ไฟล์ **Mediact Design System** → หน้า `Navigation` |
-| สถานะ sync | ✅ ตรงกัน — 2026-08-10 |
+| สถานะ sync | 🟡 โค้ดมี 6 แอป (2026-08-16) · **Figma `App tile` ยังมีแค่ 3** — ต้องเพิ่ม On cloud / Refer / Pay |
 
 | component | node | หมายเหตุ |
 |---|---|---|
 | `Top nav` | `168:56` | บาร์ทั้งแถบ · prop `Org name` (TEXT) · `Toggle` (BOOLEAN) |
 | `Top nav toggle` | `165:37` | `Collapsed` = False / True |
 | `Notification bell` | `165:53` | `Badge` = None / Dot / Count · prop `Count` (TEXT) |
-| `App tile` | `166:59` | `App` = Medi Work / Medi Match / Medi HR · `Active` (BOOLEAN) |
+| `App tile` | `166:59` | `App` = Medi Work / Medi Match / Medi HR · `Active` (BOOLEAN) · ⚠️ **โค้ดมี 6 แอปแล้ว Figma ยังไม่ตาม** |
 | `App launcher` | `167:29` | ลิ้นชักทั้งใบ |
 | `User menu` | `170:64` | เมนูโปรไฟล์ |
 
 ---
+
+
+## 2026-08-16 — แอปกลับมาครบ 6 ตัว + หน้าต่างตัวอย่างผลิตภัณฑ์
+
+`AppLauncher` เดิมมี 3 แอป (`mediwork` · `medimatch` · `medihr`) หลังจากตัด `medipay`/`medistock`/
+`medicare`/`medirefer` ออกเมื่อ 2026-08-09 ด้วยเหตุผลว่า **ช่องที่เขียนว่า "เร็ว ๆ นี้" เป็นสัญญาที่ไม่มีใครถือ**
+
+เหตุผลนั้นหมดไปแล้ว: Portal ทำ **หน้าต่างตัวอย่างผลิตภัณฑ์ + ช่องทางติดต่อ** ไว้บน staging
+(`feat/app-launcher-coming-soon` · `6c221ea`) ⇒ การ์ดของแอปที่ยังไม่เปิดกดได้จริง และผู้ใช้ได้เห็นว่า
+แอปทำอะไรพร้อมกดคุยกับทีมได้ทันที ไม่ใช่ป้ายตาย
+
+| เปลี่ยน | รายละเอียด |
+|---|---|
+| `MediactAppKey` | +`medioncloud` +`medirefer` +`medipay` (รวม 6) · ลำดับตาม Figma = Work · Match · HR / On cloud · Refer · Pay ⇒ กริด 3 คอลัมน์ลงตัว 2 แถว |
+| ไอคอน | ยกไฟล์จริงจาก Portal (`public/icons/medi*-icon.svg` · `medipay-icon.png`) เป็น data URL — `data.ts` 5.7 KB → **22 KB** |
+| `MediactAppConfig.showcase` | ใหม่ · `true` = กดได้แต่เปิด `AppShowcaseDialog` แทนการพาออกไป — **ต่างจาก `comingSoon` ที่เป็นป้ายตายกดไม่ได้** |
+| `showcaseLocale` / `showcaseAssetBaseUrl` / `showcaseAssets` | ใหม่ · คำโปรยอยู่ใน DS ทั้ง th/en ⇒ **แอปส่งแค่ภาษา ไม่ต้องมีคีย์ i18n ของกล่องนี้** |
+| การ์ดที่เปิด showcase | ห่อ `PopoverClose` เหมือนการ์ดอื่น — ไม่งั้นลิ้นชักลอยทับหน้าต่างที่เพิ่งเปิด · `onAppClick` ยังยิงก่อนเสมอ |
+
+🔴 **`medistock` / `medicare` ยังไม่กลับมา** — ยังไม่มีทั้งแบบและคำโปรยจาก Figma ⇒ เติมตอนนี้จะกลายเป็น
+ป้ายตายแบบเดิมอีกรอบ ซึ่งเป็นสิ่งที่การตัด 2026-08-09 มีไว้แก้
+
+รายละเอียดของกล่อง (ตัวเลข Figma · เหตุผลที่คำแปลอยู่ใน DS · ราคาที่ยอมรับ) →
+[`overlay/AppShowcaseDialog.md`](../overlay/AppShowcaseDialog.md)
 
 ## บาร์ — วัดจาก Portal ตรง 13/14
 

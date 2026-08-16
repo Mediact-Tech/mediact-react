@@ -9,11 +9,19 @@ export type {
   AiChatAuthConfig,
   AiChatConfig,
   AiChatLabels,
+  AiChatLocale,
   ChatMessage,
   SessionStatus,
   ToolCallEntry,
 } from "./types";
-export { defaultLabels, resolveLabels, buildScheduleGreeting } from "./labels";
+export {
+  defaultLabels,
+  thLabels,
+  enLabels,
+  labelsByLocale,
+  resolveLabels,
+  buildScheduleGreeting,
+} from "./labels";
 
 // Building blocks — for a host that wants its own shell around the chat surface
 export { ChatDrawer, type ChatDrawerProps } from "./components/ChatDrawer";

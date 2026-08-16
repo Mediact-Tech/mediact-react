@@ -13,9 +13,18 @@ import {
   sidebarShowDataUrl,
   medi_hrDataUrl,
   medi_matchDataUrl,
+  medi_oncloudDataUrl,
+  medi_payDataUrl,
+  medi_referDataUrl,
   medi_workDataUrl,
   mediactLogoDataUrl,
 } from "./_app-icons/data";
+import {
+  AppShowcaseDialog,
+  type ShowcaseAppKey,
+  type ShowcaseAssets,
+  type ShowcaseLocale,
+} from "../overlay/AppShowcaseDialog";
 
 /* ─────────────────────────────────────────────────────────────────── */
 /* Root                                                                 */
@@ -169,18 +178,36 @@ const iconButtonClass =
 /* ─────────────────────────────────────────────────────────────────── */
 
 /** Canonical app keys across the Mediact ecosystem. */
-/** แอปในระบบนิเวศ Mediact ที่ **ปล่อยจริงแล้ว**
+/** แอปในระบบนิเวศ Mediact
  *
- * เดิมมี `medipay` · `medistock` · `medicare` · `medirefer` เป็น Coming Soon
- * ตัดออก 2026-08-09 — ไม่มีแอปไหน import `AppLauncher` เลย (ตรวจครบ 6 checkout)
- * และช่องที่ขึ้นว่า "เร็ว ๆ นี้" ค้างมานานกลายเป็นสัญญาที่ไม่มีใครถือ */
-export type MediactAppKey = "mediwork" | "medimatch" | "medihr";
+ * 🔄 **กลับมาครบ 6 ตัว 2026-08-16** — รอบก่อนตัด `medipay`/`medirefer` ฯลฯ ออก (2026-08-09)
+ * เพราะช่องที่เขียนว่า "เร็ว ๆ นี้" เป็นสัญญาที่ไม่มีใครถือ · ตอนนี้กลับมาได้เพราะ **ไม่ใช่ป้ายตาย
+ * อีกแล้ว** — Portal ทำหน้าต่างตัวอย่างผลิตภัณฑ์ + ช่องทางติดต่อไว้บน staging แล้ว
+ * (`feat/app-launcher-coming-soon`) ⇒ กดแล้วผู้ใช้ได้เห็นว่าแอปทำอะไรและติดต่อใครต่อได้ทันที
+ *
+ * ⚠️ `medistock`/`medicare` **ยังไม่กลับมา** — ยังไม่มีทั้งแบบและคำโปรยจาก Figma
+ * ⇒ ถ้าเติมโดยไม่มีเนื้อหา จะกลายเป็นป้ายตายแบบเดิมอีกรอบ */
+export type MediactAppKey =
+  | "mediwork"
+  | "medimatch"
+  | "medihr"
+  | "medioncloud"
+  | "medirefer"
+  | "medipay";
 
 export type MediactAppConfig = {
   /** Where this app lives. Falsy → tile is rendered as not-clickable. */
   baseUrl?: string;
   /** Show "Coming Soon" subtitle and disable the tile. */
   comingSoon?: boolean;
+  /**
+   * แอปนี้ยังไม่เปิดใช้งานบนโรงพยาบาลนี้ ⇒ **กดได้** แต่เปิดหน้าต่างตัวอย่างผลิตภัณฑ์
+   * (`AppShowcaseDialog`) แทนการพาออกไป — ต่างจาก `comingSoon` ที่เป็นป้ายตายกดไม่ได้
+   *
+   * ⚠️ มีเนื้อหาเฉพาะ 4 ตัวที่ Figma ทำแบบไว้ (`ShowcaseAppKey`) ⇒ ตั้งกับ `mediwork`/`medimatch`
+   *    จะไม่มีผล เพราะไม่มีคำโปรย/ภาพให้แสดง
+   */
+  showcase?: boolean;
   /** Disable the tile (greyed out, not clickable) — e.g. tenant has no purchase. */
   disabled?: boolean;
   /** Highlight current app. */
@@ -202,6 +229,15 @@ export type AppLauncherProps = {
   /** Subtitle shown beneath disabled / coming-soon tiles. */
   comingSoonText?: string;
   /**
+   * ภาษาของ **หน้าต่างตัวอย่างผลิตภัณฑ์** — คำโปรยอยู่ใน DS ทั้ง th/en (ดู `AppShowcaseDialog`)
+   * ⇒ แอปไม่ต้องมีคีย์ i18n ของกล่องนี้ ส่งแค่ภาษาที่ผู้ใช้เลือกอยู่
+   */
+  showcaseLocale?: ShowcaseLocale;
+  /** โฟลเดอร์ภาพของหน้าต่างตัวอย่าง ถ้าไม่ได้วางที่ `/images/app-showcase` */
+  showcaseAssetBaseUrl?: string;
+  /** ทับที่อยู่ภาพรายผลิตภัณฑ์ */
+  showcaseAssets?: Partial<Record<ShowcaseAppKey, ShowcaseAssets>>;
+  /**
    * ปุ่มก้นลิ้นชักที่พาไปหน้าตั้งค่าของ Portal — ของจริงมีทุกแอป
    *
    * ข้อความส่งมาจากแอปเสมอ (DS ไม่มี i18n)
@@ -214,16 +250,65 @@ export type AppLauncherProps = {
   className?: string;
 };
 
+/**
+ * ไอคอนของแต่ละแอป + **สัดส่วนกล่องที่ต้องย่อลงเพื่อให้ "หมึก" เท่ากันทุกใบ**
+ *
+ * 🔴 กล่องเท่ากันไม่ได้แปลว่าโลโก้ดูเท่ากัน — สิ่งที่ตาเทียบคือ *หมึก* (พื้นที่ที่ไม่โปร่งใส)
+ * ไม่ใช่ viewBox · วัดจริงด้วยการ rasterise ทุกใบลงกล่อง 128px เดียวกันแล้วอ่านกรอบหมึก:
+ *
+ * | แอป | viewBox | หมึก (สูง/128) |
+ * |---|---|---|
+ * | mediwork · medimatch | 515×515 | **80** = 0.625 |
+ * | medihr | 150×150 | **80** = 0.625 |
+ * | medioncloud | 23×32 | 128 = 1.00 |
+ * | medirefer | 28×26 | 120 = 0.9375 |
+ * | medipay | 91×105 (PNG) | 128 = 1.00 |
+ *
+ * สามใบแรกมีขอบเปล่าในไฟล์อยู่แล้ว (หมึกกิน 62.5% ของกรอบ) · สามใบหลังหมึกชนขอบ
+ * ⇒ วางในกล่องเท่ากันแล้ว **ใหญ่กว่าเพื่อน ~60%**
+ *
+ * `inkScale` = ตัวคูณกล่องเพื่อดึงหมึกกลับมาที่ 0.625 (`0.625 ÷ สัดส่วนหมึกเดิม`)
+ * ⛔ **ไม่แก้ตัวอาร์ตเวิร์ก** ตามกฎของ repo (`CLAUDE.md` §8 "Never rescale the artwork itself")
+ * — และเป็นทางเดียวที่ใช้ได้กับ `medipay` ซึ่งเป็น PNG ไม่มี viewBox ให้เติมขอบ
+ *
+ * ⚠️ เปลี่ยนไฟล์ไอคอนเมื่อไหร่ **ต้องวัดใหม่** ตัวเลขพวกนี้ผูกกับไฟล์ ไม่ใช่กับชื่อแอป
+ */
 const DEFAULT_APP_DEFS: Record<
   MediactAppKey,
-  { label: string; src: string }
+  { label: string; src: string; inkScale?: number }
 > = {
   mediwork: { label: "Medi Work", src: medi_workDataUrl },
   medimatch: { label: "Medi Match", src: medi_matchDataUrl },
   medihr: { label: "Medi HR", src: medi_hrDataUrl },
+  medioncloud: {
+    label: "Medi On cloud",
+    src: medi_oncloudDataUrl,
+    inkScale: 0.625,
+  },
+  medirefer: { label: "Medi Refer", src: medi_referDataUrl, inkScale: 0.667 },
+  medipay: { label: "Medi Pay", src: medi_payDataUrl, inkScale: 0.625 },
 };
 
-const DEFAULT_APP_ORDER: MediactAppKey[] = ["mediwork", "medimatch", "medihr"];
+/** ลำดับตาม Figma: Work · Match · HR / On cloud · Refer · Pay (กริด 3 คอลัมน์ = 2 แถวพอดี) */
+const DEFAULT_APP_ORDER: MediactAppKey[] = [
+  "mediwork",
+  "medimatch",
+  "medihr",
+  "medioncloud",
+  "medirefer",
+  "medipay",
+];
+
+/** แอปที่มีแบบหน้าต่างตัวอย่างจาก Figma — ตัวอื่นตั้ง `showcase` ไปก็ไม่มีอะไรให้แสดง */
+const SHOWCASE_KEYS = new Set<string>([
+  "medihr",
+  "medioncloud",
+  "medirefer",
+  "medipay",
+]);
+
+const isShowcaseKey = (key: MediactAppKey): key is ShowcaseAppKey =>
+  SHOWCASE_KEYS.has(key);
 
 /** ปุ่มไปหน้าตั้งค่า (Portal) — วัดจากของจริง: เว้นบน 24 · เต็มความกว้าง · py 12
  * · มุม 16 · พื้น `#EAF4FF` ตัวอักษร `#1E78F2` · 15px/500
@@ -259,10 +344,20 @@ function AppLauncher({
   onAppClick,
   label = "Apps",
   comingSoonText = "Coming Soon",
+  showcaseLocale = "th",
+  showcaseAssetBaseUrl,
+  showcaseAssets,
   settingsAction,
   className,
 }: AppLauncherProps) {
   const visible = order.filter((key) => apps[key] != null);
+
+  /**
+   * 🔴 **ลิ้นชักถือหน้าต่างตัวอย่างไว้เอง ไม่ยกให้ผู้เรียก** — ถ้าให้แต่ละแอปต่อเอง จะได้
+   * "กดการ์ดแล้วไม่เกิดอะไร" ในแอปที่ลืมต่อ ซึ่งเป็นอาการเดียวกับป้าย "เร็ว ๆ นี้" ที่เพิ่งเลิกไป
+   * · ผู้เรียกที่อยากคุมเองยังทำได้ผ่าน `onAppClick` (ยิงก่อนเสมอ)
+   */
+  const [showcase, setShowcase] = React.useState<ShowcaseAppKey | null>(null);
 
   return (
     <Popover>
@@ -305,12 +400,33 @@ function AppLauncher({
                     <img
                       src={def.src}
                       alt={def.label}
-                      className="size-full object-contain"
+                      /* 🔴 `min-h-0` ไม่ใช่ของประดับ — `<img>` เป็น flex item และ
+                       * `min-height: auto` ของ flex ยอมให้มัน **โตเกินกล่องตามอัตราส่วนของไฟล์**
+                       * แม้จะสั่ง `h-full` ไว้แล้ว · วัดบนจอจริง: medioncloud ได้กล่อง
+                       * **32×45.55** ในช่อง 32×32 (medipay 32×36.9 · medirefer 32×29.7)
+                       * ⇒ โลโก้ทะลุกรอบมนของการ์ด · ใส่ `min-h-0` แล้วกลับเป็น 32×32 ทุกใบ
+                       * (ไอคอนสามใบแรกไม่เคยแสดงอาการ เพราะไฟล์เป็นสี่เหลี่ยมจัตุรัสพอดี) */
+                      className="size-full min-h-0 object-contain"
+                      /* ย่อกล่องเฉพาะไฟล์ที่หมึกชนขอบ — เหตุผลและตัวเลขที่วัดได้อยู่ที่
+                       * `DEFAULT_APP_DEFS` · ไม่ส่ง = ใช้เต็มกล่องเหมือนเดิม */
+                      style={
+                        def.inkScale
+                          ? {
+                              width: `${def.inkScale * 100}%`,
+                              height: `${def.inkScale * 100}%`,
+                            }
+                          : undefined
+                      }
                     />
                   )
                 }
                 comingSoonText={comingSoonText}
                 onClick={onAppClick}
+                onShowcase={
+                  config.showcase && isShowcaseKey(key)
+                    ? () => setShowcase(key)
+                    : undefined
+                }
               />
             );
           })}
@@ -344,6 +460,15 @@ function AppLauncher({
           </PopoverClose>
         )}
       </PopoverContent>
+
+      {/* หน้าต่างตัวอย่างผลิตภัณฑ์ — คำโปรย th/en อยู่ใน DS แอปไม่ต้องส่งข้อความมา */}
+      <AppShowcaseDialog
+        app={showcase}
+        onClose={() => setShowcase(null)}
+        locale={showcaseLocale}
+        assetBaseUrl={showcaseAssetBaseUrl}
+        assets={showcaseAssets}
+      />
     </Popover>
   );
 }
@@ -355,6 +480,7 @@ function AppLauncherTile({
   icon,
   comingSoonText,
   onClick,
+  onShowcase,
 }: {
   appKey: MediactAppKey;
   config: MediactAppConfig;
@@ -362,10 +488,14 @@ function AppLauncherTile({
   icon: React.ReactNode;
   comingSoonText: string;
   onClick?: (key: MediactAppKey, app: MediactAppConfig) => void;
+  /** มีค่า = การ์ดนี้เปิดหน้าต่างตัวอย่างแทนการพาออกไป */
+  onShowcase?: () => void;
 }) {
   const isComingSoon = !!config.comingSoon;
   const disabled =
-    config.disabled || isComingSoon || (!config.baseUrl && !onClick);
+    config.disabled ||
+    isComingSoon ||
+    (!config.baseUrl && !onClick && !onShowcase);
 
   const tileClass = cn(
     "group flex flex-col items-center justify-start text-center",
@@ -413,6 +543,25 @@ function AppLauncherTile({
   /* 🔴 เลือกแอปแล้วลิ้นชักต้องปิด — Radix Popover ปิดให้เฉพาะตอนคลิก**นอก** เนื้อหา
    * คลิกการ์ดข้างในจึงค้างเปิดอยู่ ทับหน้าที่เพิ่งเปิดไป (โดยเฉพาะเคส `onAppClick`
    * ที่เปิดแท็บใหม่ — กลับมาแท็บเดิมแล้วเจอลิ้นชักค้าง) */
+  /* 🔴 การ์ดที่เปิดหน้าต่างตัวอย่าง **ต้องปิดลิ้นชักด้วย** — ไม่งั้นลิ้นชักลอยทับหน้าต่างที่เพิ่งเปิด
+   * · `onAppClick` ยังถูกยิงก่อนเสมอ เผื่อแอปอยากเก็บสถิติ/คุมเอง */
+  if (onShowcase) {
+    return (
+      <PopoverClose asChild>
+        <button
+          type="button"
+          onClick={() => {
+            onClick?.(appKey, config);
+            onShowcase();
+          }}
+          className={tileClass}
+        >
+          {iconBox}
+          {labelEl}
+        </button>
+      </PopoverClose>
+    );
+  }
   if (onClick) {
     return (
       <PopoverClose asChild>

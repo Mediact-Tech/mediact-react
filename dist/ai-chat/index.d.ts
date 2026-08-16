@@ -1,3 +1,4 @@
+import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as React from 'react';
 import { ClassValue } from 'clsx';
 
@@ -267,6 +268,14 @@ interface ChatMessage {
     failed?: boolean;
 }
 type SessionStatus = "idle" | "starting" | "ready" | "sending" | "streaming" | "error";
+/**
+ * Locales the widget ships copy for.
+ *
+ * Deliberately a closed set of two: the apps run Thai and English, and a third would need a whole
+ * label set written by someone who speaks it. A host with another language injects `labels` instead —
+ * that path stays open and needs no change here.
+ */
+type AiChatLocale = "th" | "en";
 /** Labels the host can override — Thai defaults, since every consuming app runs Thai-first. */
 interface AiChatLabels {
     launcher: string;
@@ -299,10 +308,52 @@ interface AiChatLabels {
     thinking: string;
     scheduleMode: string;
     assistantMode: string;
+    /**
+     * ป้ายกำกับผู้พูดเหนือทุกเทิร์น
+     *
+     * 🔴 มีเพราะสีอย่างเดียวบอกไม่ได้ว่าใครพูด — คนที่แยกสีเขียว/เทาไม่ออก หรืออ่านผ่านโปรแกรม
+     * อ่านหน้าจอ จะเหลือแค่ "ข้อความชิดซ้าย/ชิดขวา" ซึ่งไม่ใช่ข้อมูล
+     */
+    you: string;
+    assistant: string;
+    /** หัวของหน้าประวัติ — คนละคำกับ `history` ที่เป็น tooltip ของปุ่ม */
+    historyTitle: string;
+    historySearch: string;
+    historyBack: string;
+    historyClose: string;
+    /** หัวกลุ่มของรายการ — จัดตาม **วันที่เริ่ม** บทสนทนา ไม่ใช่วันที่คุยล่าสุด (ดู `ConversationPicker`) */
+    historyToday: string;
+    historyEarlier: string;
+    /** ไม่พบผลลัพธ์จากคำค้น — ต่างจาก `emptyHint` ที่แปลว่ายังไม่เคยมีบทสนทนาเลย */
+    historyNoMatch: string;
+    /**
+     * บอกเมื่อรายการชนเพดานที่หลังบ้านคืนมา (`listSummaries` cap 100)
+     *
+     * ⚠️ ไม่มี API ค้นหา — การค้นเป็นการกรองรายการที่โหลดมาแล้วเท่านั้น ⇒ ถ้าไม่บอก ผู้ใช้ที่มีบทสนทนา
+     * เกินเพดานจะคิดว่า "ค้นแล้วไม่มี" ทั้งที่แปลว่า "ค้นไม่ถึง"
+     */
+    historyCapped: string;
+    /** ใช้เมื่อบทสนทนาไม่มีทั้ง `title` และ `preview` — ทั้งคู่ nullable ในสัญญาของ service */
+    historyUntitled: string;
+    /** เวลาสัมพัทธ์บนรายการประวัติ — `{count}` คือจำนวนเต็มที่ปัดลงแล้ว */
+    timeJustNow: string;
+    timeMinutesAgo: string;
+    timeHoursAgo: string;
+    /**
+     * BCP-47 tag ที่ `toLocaleDateString` ใช้กับรายการที่เก่ากว่าหนึ่งวัน
+     *
+     * 🔴 อยู่ใน `labels` ทั้งที่ไม่ใช่ "คำ" เพราะมันคือสิ่งที่ผู้ใช้อ่านเหมือนกัน และต้องเปลี่ยน
+     * **พร้อมกัน**กับคำอื่น — แยกไปเป็น prop ต่างหากเมื่อไหร่ ก็มีวันที่จอพูดอังกฤษแต่วันที่เป็น
+     * พ.ศ. ⚠️ `th-TH` ให้ปีพุทธศักราช ส่วน `en-GB` ให้ ค.ศ. แบบวัน-เดือน (ไม่ใช่ `en-US`
+     * ที่สลับเป็นเดือน-วัน)
+     */
+    dateLocale: string;
     /** Onboarding shown right after entering scheduling mode. `{context}` = the scoped/unscoped line. */
     scheduleGreeting: string;
     /** `{department}` + `{period}` — used when the hand-off already resolved the scope. */
     scheduleGreetingScoped: string;
+    /** The `{period}` fragment itself — `{month}` / `{year}`. Empty when the hand-off carried no month. */
+    scheduleGreetingPeriod: string;
     /** Used when nothing is resolved yet, to ask for department + month. */
     scheduleGreetingUnscoped: string;
     /** Context meter tooltip. `{used}` / `{limit}` are token counts, already grouped with commas. */
@@ -362,6 +413,14 @@ interface AiChatConfig {
     suggestions?: string[];
     /** Which corner the launcher sits in. Default `bottom-right`. */
     position?: "bottom-right" | "bottom-left";
+    /**
+     * Which shipped copy set to start from. Default `th`.
+     *
+     * 🔴 The host must pass its **current** language, not the one it booted with — the widget is mounted
+     * once at the root and never remounts, so a value read once at mount freezes the chat in whatever
+     * language the user happened to start in.
+     */
+    locale?: AiChatLocale;
     labels?: Partial<AiChatLabels>;
     /** Surfaced for host-side logging/monitoring — the widget renders its own error state regardless. */
     onError?: (error: Error) => void;
@@ -386,7 +445,7 @@ interface AiChatWidgetProps extends AiChatConfig {
  * the host arrives as props (`baseUrl`, `getToken`, `scope`), so it stays free of any app's
  * auth wiring, HTTP client or router.
  */
-declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): React.JSX.Element;
+declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): react_jsx_runtime.JSX.Element;
 
 /**
  * Host → widget bridge. The drawer is mounted ONCE at the app root, but the moments that want to
@@ -408,9 +467,34 @@ interface AiChatOpenDetail {
  */
 declare function openAiChat(detail?: AiChatOpenDetail): boolean;
 
-/** Thai-first defaults — every consuming app runs Thai as its primary locale. */
+/**
+ * Thai copy — the widget's primary locale, and the fallback for every key an override omits.
+ *
+ * 🔴 Kept exported as `defaultLabels` under its original name: three apps import it and one test
+ * asserts on it. Adding `en` must not force any of them to change a line.
+ */
+declare const thLabels: AiChatLabels;
+/**
+ * English copy.
+ *
+ * ⚠️ This covers the widget's own chrome only. Everything the **service** sends back — tool-trail
+ * labels, confirm cards, error explanations — arrives on `*_th` fields in the wire contract, with no
+ * English counterpart, so those stay Thai whatever this is set to. See `labels.md`.
+ */
+declare const enLabels: AiChatLabels;
+/** Every locale the widget ships copy for. A host that needs another one injects `labels` instead. */
+declare const labelsByLocale: Record<AiChatLocale, AiChatLabels>;
+/** @deprecated in name only — kept because three apps and one test import it. Same object as `thLabels`. */
 declare const defaultLabels: AiChatLabels;
-declare function resolveLabels(overrides?: Partial<AiChatLabels>): AiChatLabels;
+/**
+ * Base copy for `locale`, with the host's own `labels` layered on top.
+ *
+ * 🔴 The merge is one level deep and **partial by design**: an app that only wants to rename the
+ * launcher passes one key and keeps the rest of that locale. Falling back to Thai for a missing key
+ * would be worse than useless in an English UI, which is why the base is picked *before* the merge,
+ * not after.
+ */
+declare function resolveLabels(overrides?: Partial<AiChatLabels>, locale?: AiChatLocale): AiChatLabels;
 /**
  * Onboarding message rendered right after entering scheduling mode. Without it the user lands in a
  * mode with no idea what it can do — the dead-end the playground client calls out explicitly.
@@ -505,13 +589,21 @@ interface ChatDrawerProps {
  * kept alive): the assistant answers questions about the page behind it, so covering that
  * page — or stealing its scroll and focus — would defeat the point.
  */
-declare function ChatDrawer(props: ChatDrawerProps): React.JSX.Element;
+declare function ChatDrawer(props: ChatDrawerProps): react_jsx_runtime.JSX.Element;
 
 interface FloatingButtonProps {
     open: boolean;
     onClick: () => void;
+    /** ชื่อของปุ่ม — ไปอยู่ที่ `aria-label` และ `title` เพราะปุ่มไม่มีคำบนตัวมันเอง */
     label: string;
+    /** ฝั่งที่ปุ่ม **เด้งกลับไปเกาะ** ทุกครั้งที่ปล่อย */
     position?: "bottom-right" | "bottom-left";
+    /**
+     * ลากไปไหนก็ได้ · ปล่อยแล้วเด้งกลับไปชิดฝั่ง · ค่าเริ่มต้น `true`
+     *
+     * ปิดเมื่อโฮสต์มีเหตุผลให้ปุ่มอยู่กับที่ (เช่นจอที่สอนผู้ใช้ว่าปุ่มอยู่ตรงไหน)
+     */
+    draggable?: boolean;
     className?: string;
 }
 /**
@@ -519,12 +611,27 @@ interface FloatingButtonProps {
  * carries the widget's z-index var — a host that needs it lower overrides
  * `--mediact-ai-chat-z` rather than patching the component.
  *
- * It says what it is, in words. A bare chat bubble in the corner of a hospital admin app reads as
- * "support chat" — the thing you press when something is broken — and nobody presses that to ask who is on
- * the night shift. So the closed state is a labelled pill (sparkle + "ผู้ช่วย AI"): the sparkle carries the
- * AI convention for people who know it, the label carries it for everyone else. It collapses to a circle
- * only where the text genuinely does not fit (narrow screens) and while the drawer is open, where the
- * button's job changes to "close" and the panel beside it is already titled.
+ * ── 🔄 วงกลมไอคอนล้วน + ลากได้อิสระ แล้วเด้งกลับไปชิดฝั่ง 2026-08-16 ────────────
+ *
+ * เดิมสถานะปิดเป็น **แคปซูลที่มีคำว่า "ผู้ช่วย AI"** โดยตั้งใจ — เหตุผลเดิมคือฟองแชทเปล่า ๆ
+ * มุมจอในระบบโรงพยาบาลอ่านว่า "แชทฝ่ายสนับสนุน" ซึ่งไม่มีใครกดเพื่อถามว่าคืนนี้ใครขึ้นเวร
+ *
+ * 🔑 **กลับคำเพราะเหตุผลที่หนักกว่า: แคปซูลบังจอ** — มันกว้างพอจะทับปุ่ม/ตารางที่มุมล่างของ
+ * จอที่ผู้ใช้กำลังทำงานอยู่ · สิ่งที่แลกมาคือ "ปุ่มนี้คืออะไร" ต้องมาจากทางอื่นแทน:
+ * - `aria-label` + `title` ยังเป็นคำเต็ม ⇒ hover ก็เห็น · โปรแกรมอ่านหน้าจอก็ได้ยิน
+ * - `Sparkles` ยังอยู่ ⇒ คนที่รู้ convention ของ AI อ่านออกทันที
+ * ⚠️ **คนที่ไม่รู้ทั้งสองทางจะไม่รู้ว่าปุ่มนี้ทำอะไรจนกว่าจะกด** — เป็นราคาที่รับไว้
+ *
+ * 🔴 **ลากได้ทุกทิศ แต่ปล่อยแล้วเด้งกลับไปชิดฝั่งเสมอ · จำไว้แค่ความสูง**
+ * ระหว่างลากปุ่มตามนิ้วอิสระเพราะนั่นคือสิ่งที่มือคาดหวัง — แต่จุดจอดต้องอยู่ที่ขอบ:
+ * 1. `ChatDrawer` กางออกจาก**ฝั่งเดียวกับปุ่ม** ⇒ ปุ่มที่จอดกลางจอไม่มีความสัมพันธ์กับแผงที่มันเปิด
+ *    และตอนเปิดอยู่มันคือปุ่ม "พับ" ซึ่งชี้ไปทางขอบ
+ * 2. ปุ่มที่จอดกลางเนื้อหาบังหนักกว่าเดิม — ตรงข้ามกับเหตุผลที่ย่อมันลงเป็นวงกลม
+ * 3. จุดจอดที่เดาได้ = ผู้ใช้หาปุ่มเจอทุกครั้งโดยไม่ต้องกวาดสายตาทั้งจอ
+ *
+ * 🔴 **ลากแล้วต้องไม่นับเป็นการกด** — `click` ยิงหลัง `pointerup` เสมอ ⇒ ถ้าไม่กันไว้
+ * ผู้ใช้จะย้ายปุ่มทีไรแชทเด้งเปิดทุกที · กันด้วยระยะขั้นต่ำ 4px ไม่ใช่ "ขยับหรือยัง"
+ * เพราะนิ้ว/เมาส์สั่น 1–2px ระหว่างกดปกติเป็นเรื่องธรรมดา
  */
 declare const FloatingButton: React.ForwardRefExoticComponent<FloatingButtonProps & React.RefAttributes<HTMLButtonElement>>;
 
@@ -536,7 +643,7 @@ interface MessageListProps {
     /** Example questions shown on the empty state — tapping one sends it. */
     suggestions?: string[];
 }
-declare function MessageList({ messages, labels, onWidgetAction, busy, suggestions, }: MessageListProps): React.JSX.Element;
+declare function MessageList({ messages, labels, onWidgetAction, busy, suggestions, }: MessageListProps): react_jsx_runtime.JSX.Element;
 
 interface MessageBubbleProps {
     message: ChatMessage;
@@ -549,7 +656,7 @@ interface MessageBubbleProps {
      */
     widgetsDisabled?: boolean;
 }
-declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): React.JSX.Element;
+declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): react_jsx_runtime.JSX.Element;
 
 interface ComposerProps {
     onSend: (text: string) => void;
@@ -561,7 +668,7 @@ interface ComposerProps {
     /** Overrides the default hint (scheduling mode accepts different input). */
     placeholder?: string;
 }
-declare function Composer({ onSend, onCancel, busy, disabled, labels, placeholder, }: ComposerProps): React.JSX.Element;
+declare function Composer({ onSend, onCancel, busy, disabled, labels, placeholder, }: ComposerProps): react_jsx_runtime.JSX.Element;
 
 interface ConversationPickerProps {
     load: () => Promise<ConversationListItem[]>;
@@ -569,8 +676,16 @@ interface ConversationPickerProps {
     activeId: string | null;
     labels: AiChatLabels;
 }
-/** Resume picker — loads on open, so a closed drawer never costs a request. */
-declare function ConversationPicker({ load, onPick, activeId, labels }: ConversationPickerProps): React.JSX.Element;
+/**
+ * จอประวัติ — **เต็มแผง ไม่ใช่แผ่นซ้อน**
+ *
+ * ลิ้นชักกว้าง 26rem (416px) · ของเดิมเป็นรายการสูง `max-h-64` แทรกอยู่ใต้แถบหัวโดยที่บทสนทนายังอยู่ข้างล่าง
+ * ⇒ เห็นได้ทีละ ~4 แถว หัวข้อถูกตัดกลางคำ และ "ตอนนี้ฉันอยู่โหมดไหน" ตอบได้ไม่ชัด
+ * การกินพื้นที่ทั้งใบทำให้รายการได้ความกว้างเต็ม มีที่พอสำหรับข้อความตัวอย่างบรรทัดที่สอง และมีช่องค้นหาได้
+ *
+ * โหลดตอนเปิดเท่านั้น — ลิ้นชักที่ปิดอยู่จึงไม่กินคำขอสักครั้ง
+ */
+declare function ConversationPicker({ load, onPick, activeId, labels }: ConversationPickerProps): react_jsx_runtime.JSX.Element;
 
 /**
  * Renders the frozen §3 widget payloads. The service owns the shapes; how they look is ours.
@@ -585,7 +700,7 @@ interface WidgetRendererProps {
     onAction: (reply: string) => void;
     disabled?: boolean;
 }
-declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererProps): React.JSX.Element;
+declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererProps): react_jsx_runtime.JSX.Element;
 
 /**
  * RR-A.6 transparency trail — what the agent actually did this turn, in the service's own
@@ -593,19 +708,19 @@ declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererPr
  */
 declare function ToolTrail({ tools }: {
     tools: ToolCallEntry[];
-}): React.JSX.Element | null;
+}): react_jsx_runtime.JSX.Element | null;
 
 interface ContextMeterProps {
     usage: ContextUsage | null;
     labels: AiChatLabels;
     className?: string;
 }
-declare function ContextMeter({ usage, labels, className }: ContextMeterProps): React.JSX.Element | null;
+declare function ContextMeter({ usage, labels, className }: ContextMeterProps): react_jsx_runtime.JSX.Element | null;
 
 declare function Markdown({ text, className }: {
     text: string;
     className?: string;
-}): React.JSX.Element;
+}): react_jsx_runtime.JSX.Element;
 
 /** Scope resolved at hand-off, so scheduling mode doesn't have to re-ask which department/month. */
 type ScheduleSeed = Pick<ChatScope, "departmentId" | "departmentName" | "month" | "year">;
@@ -713,4 +828,4 @@ declare function resolveTokenProvider(auth: AiChatAuthConfig | undefined, hostGe
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type UserTurnPayload, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, extractEnterMode, extractRedirect, hasExitMode, openAiChat, resolveLabels, resolveTokenProvider, stripSentinels, useAiChatSession };
+export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatLocale, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type UserTurnPayload, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, enLabels, extractEnterMode, extractRedirect, hasExitMode, labelsByLocale, openAiChat, resolveLabels, resolveTokenProvider, stripSentinels, thLabels, useAiChatSession };

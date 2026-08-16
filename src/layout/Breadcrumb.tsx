@@ -46,7 +46,7 @@ function Breadcrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className={cn("flex items-center text-body-md", className)}
+      className={cn("flex items-center text-body-sm", className)}
       {...props}
     >
       <ol className="flex flex-wrap items-center gap-3">
@@ -125,7 +125,7 @@ function Breadcrumb({
 const BreadcrumbRoot = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
     aria-label="Breadcrumb"
-    className={cn("flex items-center text-body-md", className)}
+    className={cn("flex items-center text-body-sm", className)}
     {...props}
   />
 );

@@ -32,8 +32,8 @@ export function MessageList({
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
         <Sparkles className="size-8 text-brand-active" />
-        <p className="text-body-sm font-semibold text-black">{labels.emptyTitle}</p>
-        <p className="text-caption text-gray-500">{labels.emptyHint}</p>
+        <p className="text-body-sm font-semibold text-text-black">{labels.emptyTitle}</p>
+        <p className="text-caption text-text-body">{labels.emptyHint}</p>
 
         {/* A blank box is the hardest prompt to answer — offer real starting questions. */}
         {suggestions && suggestions.length > 0 && (
@@ -45,7 +45,7 @@ export function MessageList({
                 disabled={busy}
                 onClick={() => onWidgetAction(suggestion)}
                 className={cn(
-                  "rounded-lg border border-border-default bg-white px-3 py-2 text-left text-body-sm text-black",
+                  "rounded-lg border border-border-default bg-bg-default px-3 py-2 text-left text-body-sm text-text-black",
                   "transition-colors hover:border-brand-active hover:bg-brand-subtle cursor-pointer",
                   "disabled:pointer-events-none disabled:opacity-40",
                 )}
@@ -62,7 +62,9 @@ export function MessageList({
   return (
     <div
       data-slot="ai-chat-messages"
-      className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
+      /* ระยะระหว่างเทิร์น 14 (`gap-3.5`) ไม่ใช่ 12 — คำตอบของผู้ช่วยเลิกมีกล่องแล้ว (ดู `MessageBubble`)
+         ⇒ ช่องไฟกลายเป็นสิ่งเดียวที่บอกว่าเทิร์นจบตรงไหน · แน่นกว่านี้แล้วบทสนทนาอ่านเป็นก้อนเดียว */
+      className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-4"
     >
       {messages.map((message, index) => (
         <MessageBubble

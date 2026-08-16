@@ -1,6 +1,15 @@
 import * as React from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
-import { CalendarDays, ChevronsLeft, ChevronsRight, History, MessageCircle, Plus } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
+  History,
+  MessageCircle,
+  Plus,
+  X,
+} from "lucide-react";
 import type { ChatMode, ContextUsage, ConversationListItem } from "../api/types";
 import type { AiChatLabels, ChatMessage, SessionStatus } from "../types";
 import type { TransportStatus } from "../realtime/chatTransport";
@@ -79,7 +88,9 @@ export function ChatDrawer(props: ChatDrawerProps) {
           onPointerDownOutside={(event) => event.preventDefault()}
           style={{ zIndex: "var(--mediact-ai-chat-z, 1310)" }}
           className={cn(
-            "fixed inset-y-0 flex w-full flex-col bg-gray-50 shadow-2xl outline-none",
+            /* พื้นแผงเป็น **ขาว** ไม่ใช่ `bg-bg-subtle` — คำตอบของผู้ช่วยเลิกอยู่ในการ์ดแล้ว (`MessageBubble`)
+               ถ้าพื้นยังเป็นเทา ข้อความจะลอยอยู่บนเทาโดยไม่มีอะไรรองรับ · ที่เคยต้องเป็นเทาเพราะมีการ์ดขาววางทับ */
+            "fixed inset-y-0 flex w-full flex-col bg-bg-default shadow-2xl outline-none",
             "sm:w-[var(--mediact-ai-chat-drawer-width,26rem)]",
             position === "bottom-left"
               ? "left-0 border-r border-border-default"
@@ -90,45 +101,73 @@ export function ChatDrawer(props: ChatDrawerProps) {
               : "data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right",
           )}
         >
-          <header className="flex items-center gap-2 border-b border-border-subtle bg-white px-4 py-3">
+          <header className="flex items-center gap-2 border-b border-border-subtle bg-bg-default px-4 py-3">
+            {/* ปุ่มย้อนกลับโผล่เฉพาะตอนอยู่ในประวัติ — ประวัติกินพื้นที่ทั้งแผง ทางออกจึงต้องอยู่ที่แถบหัว
+                ไม่ใช่ให้กดปุ่มเดิมซ้ำแบบสวิตช์ (ผู้ใช้ที่เพิ่งเข้ามาไม่รู้ว่าปุ่มไหนพาตัวเองกลับ) */}
+            {historyOpen && (
+              <IconButton label={labels.historyBack} onClick={() => setHistoryOpen(false)}>
+                <ChevronLeft className="size-4" />
+              </IconButton>
+            )}
+
             <div className="min-w-0 flex-1">
-              <RadixDialog.Title className="truncate text-body-sm font-semibold text-black">
-                {labels.title}
+              <RadixDialog.Title className="truncate text-body-sm font-semibold text-text-black">
+                {historyOpen ? labels.historyTitle : labels.title}
               </RadixDialog.Title>
-              <p className="truncate text-caption text-gray-500">{labels.subtitle}</p>
+              {/* คำบรรยายมีเฉพาะหน้าแชท — ในหน้าประวัติ หัวข้อบอกตัวเองครบแล้ว
+                  และแถวรายการต้องการความสูงมากกว่าคำอธิบายซ้ำ */}
+              {!historyOpen && (
+                <p className="truncate text-caption text-text-body">{labels.subtitle}</p>
+              )}
             </div>
 
             {/* Sits beside the actions rather than in the log: it describes the CONVERSATION, and it
                 has to stay readable while the transcript scrolls. */}
-            <ContextMeter usage={contextUsage ?? null} labels={labels} className="mr-1" />
+            {!historyOpen && (
+              <ContextMeter usage={contextUsage ?? null} labels={labels} className="mr-1" />
+            )}
 
-            <IconButton label={labels.history} onClick={() => setHistoryOpen((v) => !v)} active={historyOpen}>
-              <History className="size-4" />
-            </IconButton>
+            {!historyOpen && (
+              <IconButton label={labels.history} onClick={() => setHistoryOpen(true)}>
+                <History className="size-4" />
+              </IconButton>
+            )}
             <IconButton label={labels.newChat} onClick={onNewChat}>
               <Plus className="size-4" />
             </IconButton>
+
+            {/* ปิดประวัติ — ทางออกที่สองโดยตั้งใจ: ปุ่มย้อนซ้ายบนกับกากบาทขวาบนเป็นความคุ้นเคยคนละแบบ
+                ทั้งคู่พากลับบทสนทนาเดิม ไม่ได้ปิดแผงและไม่ได้ล้างบทสนทนา */}
+            {historyOpen && (
+              <IconButton label={labels.historyClose} onClick={() => setHistoryOpen(false)}>
+                <X className="size-4" />
+              </IconButton>
+            )}
             {/* A collapse chevron, not an ✕. Putting the panel away keeps the thread — `start()` resumes
                 the remembered conversation, so reopening lands back in the same transcript — but an ✕ in
                 the top-right corner is the universal "close this / discard it" affordance, and users read
                 it as ending the chat and starting over. The chevron points at the edge the drawer came
                 from, which is what actually happens to it. "New chat" is the button beside it, deliberately
-                distinct. */}
-            <RadixDialog.Close asChild>
-              <IconButton label={labels.minimize}>
-                {position === "bottom-left" ? (
-                  <ChevronsLeft className="size-4" />
-                ) : (
-                  <ChevronsRight className="size-4" />
-                )}
-              </IconButton>
-            </RadixDialog.Close>
+                distinct.
+                🔴 ซ่อนตอนอยู่ในประวัติ — ไม่งั้นมุมขวาบนมีทั้ง ✕ (ปิดประวัติ) และ » (ย่อแผง) ติดกัน
+                ซึ่งหน้าตาเหมือน "ปิด" ทั้งคู่แต่ผลต่างกันคนละเรื่อง */}
+            {!historyOpen && (
+              <RadixDialog.Close asChild>
+                <IconButton label={labels.minimize}>
+                  {position === "bottom-left" ? (
+                    <ChevronsLeft className="size-4" />
+                  ) : (
+                    <ChevronsRight className="size-4" />
+                  )}
+                </IconButton>
+              </RadixDialog.Close>
+            )}
           </header>
 
           {/* Shown when the host enables the toggle OR the agent handed the turn into scheduling
               mode on its own — the user must always be able to see (and leave) the mode they're in. */}
-          {(showModeToggle || mode === "schedule") && onModeChange && (
-            <div className="flex gap-1 border-b border-border-subtle bg-white px-4 py-2">
+          {!historyOpen && (showModeToggle || mode === "schedule") && onModeChange && (
+            <div className="flex gap-1 border-b border-border-subtle bg-bg-default px-4 py-2">
               <ModeChip
                 active={mode === "assistant"}
                 onClick={() => onModeChange("assistant")}
@@ -147,7 +186,11 @@ export function ChatDrawer(props: ChatDrawerProps) {
             </div>
           )}
 
-          {historyOpen && (
+          {/* 🔴 ประวัติ **แทนที่** บทสนทนา ไม่ได้แทรกทับ — ที่ 416px รายการแบบแทรกเห็นได้ทีละ ~4 แถว
+              และหัวข้อถูกตัดกลางคำ · การสลับทั้งใบยังทำให้ "ตอนนี้อยู่โหมดไหน" มีคำตอบเดียว
+              ⚠️ ทั้งสองฝั่งถูก unmount จริงเมื่ออีกฝั่งแสดง — `MessageList` เลื่อนหาข้อความล่าสุดตอน mount
+              อยู่แล้ว การกลับจากประวัติจึงลงที่ท้ายบทสนทนาเสมอ ไม่ต้องจำตำแหน่งเลื่อน */}
+          {historyOpen ? (
             <ConversationPicker
               load={loadConversations}
               activeId={activeConversationId}
@@ -157,32 +200,34 @@ export function ChatDrawer(props: ChatDrawerProps) {
                 onPickConversation(id);
               }}
             />
+          ) : (
+            <>
+              <StatusBar
+                status={status}
+                transportStatus={transportStatus}
+                error={error}
+                labels={labels}
+                onRetry={onRetry}
+              />
+
+              <MessageList
+                messages={messages}
+                labels={labels}
+                busy={busy}
+                suggestions={suggestions}
+                onWidgetAction={onSend}
+              />
+
+              <Composer
+                onSend={onSend}
+                onCancel={onCancel}
+                busy={busy}
+                disabled={starting || status === "error"}
+                labels={labels}
+                placeholder={mode === "schedule" ? labels.placeholderSchedule : labels.placeholder}
+              />
+            </>
           )}
-
-          <StatusBar
-            status={status}
-            transportStatus={transportStatus}
-            error={error}
-            labels={labels}
-            onRetry={onRetry}
-          />
-
-          <MessageList
-            messages={messages}
-            labels={labels}
-            busy={busy}
-            suggestions={suggestions}
-            onWidgetAction={onSend}
-          />
-
-          <Composer
-            onSend={onSend}
-            onCancel={onCancel}
-            busy={busy}
-            disabled={starting || status === "error"}
-            labels={labels}
-            placeholder={mode === "schedule" ? labels.placeholderSchedule : labels.placeholder}
-          />
         </RadixDialog.Content>
       </RadixDialog.Portal>
     </RadixDialog.Root>
@@ -230,7 +275,7 @@ function StatusBar({
 
   if (transportStatus === "disconnected") {
     return (
-      <div className="flex items-center gap-2 bg-gray-100 px-4 py-1.5 text-caption text-gray-600">
+      <div className="flex items-center gap-2 bg-overlay-hover px-4 py-1.5 text-caption text-text-body">
         <span className="min-w-0 flex-1 truncate">{labels.disconnected}</span>
         <button
           type="button"
@@ -258,9 +303,12 @@ const IconButton = React.forwardRef<
       aria-label={label}
       title={label}
       className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-md text-gray-500 transition-colors cursor-pointer",
-        "hover:bg-gray-100 hover:text-black",
-        active && "bg-brand-subtle text-brand",
+        /* มุม 10 (`rounded-[10px]`) ไม่ใช่ 6 — ปุ่มไอคอนสี่ตัวเรียงกันในแถบหัวที่กว้าง 416
+           มุมที่คมกว่ากล่องอื่นในแผงทำให้แถบนี้อ่านเป็นแถบเครื่องมือแยกจากเนื้อหา
+           hover เป็นพื้นจางของแบรนด์ ไม่ใช่เทา — ปุ่มพวกนี้เป็นทางลัดของผู้ช่วย ไม่ใช่ปุ่มกลางของระบบ */
+        "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-[10px] text-text-body transition-colors",
+        "hover:bg-brand-subtle hover:text-brand-hover",
+        active && "bg-brand-subtle text-brand-hover",
       )}
       {...props}
     >
@@ -289,7 +337,7 @@ function ModeChip({
         "flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-medium transition-colors cursor-pointer",
         active
           ? "bg-brand text-brand-foreground"
-          : "border border-border-default bg-white text-gray-600 hover:bg-gray-50",
+          : "border border-border-default bg-bg-default text-text-body hover:bg-bg-subtle",
       )}
     >
       {icon}

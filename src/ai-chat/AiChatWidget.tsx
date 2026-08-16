@@ -5,14 +5,26 @@ import { FloatingButton } from "./components/FloatingButton";
 import { resolveLabels } from "./labels";
 import { AI_CHAT_OPEN_EVENT, type AiChatOpenDetail } from "./lib/hostBridge";
 import { useAiChatSession } from "./state/useAiChatSession";
-import type { AiChatConfig } from "./types";
+import type { AiChatConfig, AiChatLocale } from "./types";
 
-/** Roster-flavoured openers — the assistant's most common real questions. */
-const DEFAULT_SUGGESTIONS = [
-  "วันที่ 6 ใครขึ้นเวรเช้าบ้าง",
-  "เดือนนี้มีเวรไหนคนไม่พอ",
-  "ตอนนี้แผนกเปิดกฎอะไรอยู่บ้าง",
-];
+/**
+ * Roster-flavoured openers — the assistant's most common real questions.
+ *
+ * 🔴 These are sent verbatim as the user's first message, so they follow the UI language rather than
+ * the model's: a chip the user reads in English then watches send Thai reads as a bug in the widget.
+ */
+const SUGGESTIONS_BY_LOCALE: Record<AiChatLocale, string[]> = {
+  th: [
+    "วันที่ 6 ใครขึ้นเวรเช้าบ้าง",
+    "เดือนนี้มีเวรไหนคนไม่พอ",
+    "ตอนนี้แผนกเปิดกฎอะไรอยู่บ้าง",
+  ],
+  en: [
+    "Who is on the morning shift on the 6th?",
+    "Which shifts are short-staffed this month?",
+    "Which rules is this department running?",
+  ],
+};
 
 export interface AiChatWidgetProps extends AiChatConfig {
   /** Controlled open state. Omit to let the widget own it. */
@@ -59,9 +71,10 @@ export function AiChatWidget({
     [config.auth, config.getToken, config.onError],
   );
   const session = useAiChatSession(React.useMemo(() => ({ ...config, getToken }), [config, getToken]));
-  const labels = React.useMemo(() => resolveLabels(config.labels), [config.labels]);
+  const locale = config.locale ?? "th";
+  const labels = React.useMemo(() => resolveLabels(config.labels, locale), [config.labels, locale]);
   const position = config.position ?? "bottom-right";
-  const suggestions = config.suggestions ?? DEFAULT_SUGGESTIONS;
+  const suggestions = config.suggestions ?? SUGGESTIONS_BY_LOCALE[locale] ?? SUGGESTIONS_BY_LOCALE.th;
 
   // Mode lives in the session, not here: the `start_scheduling` tool can flip it mid-turn.
   // The host's `mode` prop is the starting point, applied when it changes.

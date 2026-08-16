@@ -37,6 +37,15 @@ export type SessionStatus =
   | "streaming"
   | "error";
 
+/**
+ * Locales the widget ships copy for.
+ *
+ * Deliberately a closed set of two: the apps run Thai and English, and a third would need a whole
+ * label set written by someone who speaks it. A host with another language injects `labels` instead —
+ * that path stays open and needs no change here.
+ */
+export type AiChatLocale = "th" | "en";
+
 /** Labels the host can override — Thai defaults, since every consuming app runs Thai-first. */
 export interface AiChatLabels {
   launcher: string;
@@ -69,10 +78,52 @@ export interface AiChatLabels {
   thinking: string;
   scheduleMode: string;
   assistantMode: string;
+  /**
+   * ป้ายกำกับผู้พูดเหนือทุกเทิร์น
+   *
+   * 🔴 มีเพราะสีอย่างเดียวบอกไม่ได้ว่าใครพูด — คนที่แยกสีเขียว/เทาไม่ออก หรืออ่านผ่านโปรแกรม
+   * อ่านหน้าจอ จะเหลือแค่ "ข้อความชิดซ้าย/ชิดขวา" ซึ่งไม่ใช่ข้อมูล
+   */
+  you: string;
+  assistant: string;
+  /** หัวของหน้าประวัติ — คนละคำกับ `history` ที่เป็น tooltip ของปุ่ม */
+  historyTitle: string;
+  historySearch: string;
+  historyBack: string;
+  historyClose: string;
+  /** หัวกลุ่มของรายการ — จัดตาม **วันที่เริ่ม** บทสนทนา ไม่ใช่วันที่คุยล่าสุด (ดู `ConversationPicker`) */
+  historyToday: string;
+  historyEarlier: string;
+  /** ไม่พบผลลัพธ์จากคำค้น — ต่างจาก `emptyHint` ที่แปลว่ายังไม่เคยมีบทสนทนาเลย */
+  historyNoMatch: string;
+  /**
+   * บอกเมื่อรายการชนเพดานที่หลังบ้านคืนมา (`listSummaries` cap 100)
+   *
+   * ⚠️ ไม่มี API ค้นหา — การค้นเป็นการกรองรายการที่โหลดมาแล้วเท่านั้น ⇒ ถ้าไม่บอก ผู้ใช้ที่มีบทสนทนา
+   * เกินเพดานจะคิดว่า "ค้นแล้วไม่มี" ทั้งที่แปลว่า "ค้นไม่ถึง"
+   */
+  historyCapped: string;
+  /** ใช้เมื่อบทสนทนาไม่มีทั้ง `title` และ `preview` — ทั้งคู่ nullable ในสัญญาของ service */
+  historyUntitled: string;
+  /** เวลาสัมพัทธ์บนรายการประวัติ — `{count}` คือจำนวนเต็มที่ปัดลงแล้ว */
+  timeJustNow: string;
+  timeMinutesAgo: string;
+  timeHoursAgo: string;
+  /**
+   * BCP-47 tag ที่ `toLocaleDateString` ใช้กับรายการที่เก่ากว่าหนึ่งวัน
+   *
+   * 🔴 อยู่ใน `labels` ทั้งที่ไม่ใช่ "คำ" เพราะมันคือสิ่งที่ผู้ใช้อ่านเหมือนกัน และต้องเปลี่ยน
+   * **พร้อมกัน**กับคำอื่น — แยกไปเป็น prop ต่างหากเมื่อไหร่ ก็มีวันที่จอพูดอังกฤษแต่วันที่เป็น
+   * พ.ศ. ⚠️ `th-TH` ให้ปีพุทธศักราช ส่วน `en-GB` ให้ ค.ศ. แบบวัน-เดือน (ไม่ใช่ `en-US`
+   * ที่สลับเป็นเดือน-วัน)
+   */
+  dateLocale: string;
   /** Onboarding shown right after entering scheduling mode. `{context}` = the scoped/unscoped line. */
   scheduleGreeting: string;
   /** `{department}` + `{period}` — used when the hand-off already resolved the scope. */
   scheduleGreetingScoped: string;
+  /** The `{period}` fragment itself — `{month}` / `{year}`. Empty when the hand-off carried no month. */
+  scheduleGreetingPeriod: string;
   /** Used when nothing is resolved yet, to ask for department + month. */
   scheduleGreetingUnscoped: string;
   /** Context meter tooltip. `{used}` / `{limit}` are token counts, already grouped with commas. */
@@ -134,6 +185,14 @@ export interface AiChatConfig {
   suggestions?: string[];
   /** Which corner the launcher sits in. Default `bottom-right`. */
   position?: "bottom-right" | "bottom-left";
+  /**
+   * Which shipped copy set to start from. Default `th`.
+   *
+   * 🔴 The host must pass its **current** language, not the one it booted with — the widget is mounted
+   * once at the root and never remounts, so a value read once at mount freezes the chat in whatever
+   * language the user happened to start in.
+   */
+  locale?: AiChatLocale;
   labels?: Partial<AiChatLabels>;
   /** Surfaced for host-side logging/monitoring — the widget renders its own error state regardless. */
   onError?: (error: Error) => void;

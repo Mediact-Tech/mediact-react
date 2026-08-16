@@ -85,7 +85,16 @@ function resolveTokenProvider(auth, hostGetToken, onError) {
 // src/ai-chat/components/ChatDrawer.tsx
 import * as React6 from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
-import { CalendarDays, ChevronsLeft, ChevronsRight, History, MessageCircle, Plus } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
+  History,
+  MessageCircle,
+  Plus,
+  X
+} from "lucide-react";
 
 // src/ai-chat/lib/cn.ts
 import { clsx } from "clsx";
@@ -131,7 +140,7 @@ function Composer({
     "div",
     {
       "data-slot": "ai-chat-composer",
-      className: "flex items-end gap-2 border-t border-border-subtle bg-white px-3 py-3",
+      className: "flex items-end gap-2 border-t border-border-subtle bg-bg-default px-3.5 py-3",
       children: [
         /* @__PURE__ */ jsx(
           "textarea",
@@ -145,10 +154,14 @@ function Composer({
             placeholder,
             "aria-label": placeholder,
             className: cn(
-              "max-h-40 min-h-9 flex-1 resize-none rounded-md border border-border-input px-3 py-2 text-body-sm",
-              "outline-none placeholder:text-gray-400",
-              "focus-visible:border-brand-active focus-visible:ring-1 focus-visible:ring-brand-active",
-              "disabled:bg-gray-50 disabled:text-gray-400"
+              /* แคปซูล ไม่ใช่สี่เหลี่ยม — ช่องพิมพ์เป็นของชิ้นเดียวในแผงที่รับคำสั่งอิสระ ทรงต่างจากการ์ด
+               * และตารางรอบตัวจึงหาเจอเร็วกว่า · `rounded-3xl` แทน `rounded-full` เพราะช่องนี้ยืดได้ถึง 40
+               * เมื่อพิมพ์หลายบรรทัด — วงกลมเต็มจะบวมเป็นแคปซูลสูงที่มุมโค้งกินตัวหนังสือ
+               * พื้น `bg-bg-subtle` แทนขาว: แถบล่างเป็นพื้นขาวอยู่แล้ว ช่องขาวบนขาวต้องพึ่งเส้นขอบอย่างเดียว */
+              "max-h-40 min-h-9 flex-1 resize-none rounded-3xl border border-border-default bg-bg-subtle px-4 py-2 text-body-sm",
+              "outline-none placeholder:text-text-tertiary",
+              "focus-visible:border-brand-active focus-visible:bg-bg-default focus-visible:ring-1 focus-visible:ring-brand-active",
+              "disabled:bg-bg-subtle disabled:text-text-tertiary"
             )
           }
         ),
@@ -160,9 +173,14 @@ function Composer({
             disabled: disabled || !busy && !value.trim(),
             "aria-label": busy ? labels.cancel : labels.send,
             className: cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer",
+              "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors cursor-pointer",
               "disabled:pointer-events-none disabled:opacity-40",
-              busy ? "bg-gray-100 text-gray-700 hover:bg-gray-200" : "bg-brand text-brand-foreground hover:bg-brand-hover"
+              busy ? "bg-overlay-hover text-text-body hover:bg-overlay-press" : (
+                /* ไอคอนดำหมึกบนมิ้นต์ ไม่ใช่ขาว — เหตุผลเดียวกับฟองของผู้ใช้ (ขาวบนมิ้นต์ = 1.93:1)
+                 * ไอคอนไม่ใช่ข้อความก็จริง แต่เกณฑ์ 3:1 ของ non-text ก็ยังไม่ผ่านอยู่ดี
+                 * hover เป็น `brand-hover` ซึ่งเข้มพอให้กลับไปใช้ตัวขาวได้ */
+                "bg-brand text-text-black hover:bg-brand-hover hover:text-brand-foreground"
+              )
             ),
             children: busy ? /* @__PURE__ */ jsx(Square, { className: "size-4 fill-current" }) : /* @__PURE__ */ jsx(Send, { className: "size-4" })
           }
@@ -231,24 +249,32 @@ function fill(template, values) {
 
 // src/ai-chat/components/ConversationPicker.tsx
 import * as React2 from "react";
-import { Loader2, MessageSquare } from "lucide-react";
+import { Loader2, MessageSquare, Search } from "lucide-react";
 import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
-function relativeTime(iso) {
+var LIST_CAP = 100;
+function relativeTime(iso, labels) {
   const date = new Date(iso);
   const seconds = (Date.now() - date.getTime()) / 1e3;
-  if (seconds < 60) return "\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E2A\u0E31\u0E01\u0E04\u0E23\u0E39\u0E48";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} \u0E19\u0E32\u0E17\u0E35\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} \u0E0A\u0E21.\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27`;
-  return date.toLocaleDateString("th-TH", {
+  if (seconds < 60) return labels.timeJustNow;
+  if (seconds < 3600) return labels.timeMinutesAgo.replace("{count}", String(Math.floor(seconds / 60)));
+  if (seconds < 86400) return labels.timeHoursAgo.replace("{count}", String(Math.floor(seconds / 3600)));
+  return date.toLocaleDateString(labels.dateLocale, {
     day: "numeric",
     month: "short",
     hour: "2-digit",
     minute: "2-digit"
   });
 }
+function startedToday(iso) {
+  const date = new Date(iso);
+  const now = /* @__PURE__ */ new Date();
+  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+}
+var displayTitle = (item, labels) => item.title || item.preview || labels.historyUntitled;
 function ConversationPicker({ load, onPick, activeId, labels }) {
   const [items, setItems] = React2.useState(null);
   const [error, setError] = React2.useState(null);
+  const [query, setQuery] = React2.useState("");
   React2.useEffect(() => {
     let cancelled = false;
     load().then((result) => {
@@ -260,34 +286,91 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
       cancelled = true;
     };
   }, [load]);
-  if (error) {
-    return /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-error-red-600", children: error });
-  }
-  if (!items) {
-    return /* @__PURE__ */ jsx3("div", { className: "flex items-center justify-center py-6", children: /* @__PURE__ */ jsx3(Loader2, { className: "size-4 animate-spin text-gray-400" }) });
-  }
-  if (items.length === 0) {
-    return /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-gray-500", children: labels.emptyHint });
-  }
-  return /* @__PURE__ */ jsx3("ul", { "data-slot": "ai-chat-history", className: "max-h-64 overflow-y-auto border-b border-border-subtle", children: items.map((item) => /* @__PURE__ */ jsx3("li", { children: /* @__PURE__ */ jsxs3(
+  const matched = React2.useMemo(() => {
+    if (!items) return null;
+    const needle = query.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter(
+      (item) => `${item.title ?? ""} ${item.preview ?? ""}`.toLowerCase().includes(needle)
+    );
+  }, [items, query]);
+  const groups = React2.useMemo(() => {
+    if (!matched) return null;
+    return {
+      today: matched.filter((item) => startedToday(item.createdAt)),
+      earlier: matched.filter((item) => !startedToday(item.createdAt))
+    };
+  }, [matched]);
+  return /* @__PURE__ */ jsxs3("div", { "data-slot": "ai-chat-history", className: "flex min-h-0 flex-1 flex-col bg-bg-default", children: [
+    /* @__PURE__ */ jsx3("div", { className: "px-4 pt-3 pb-2", children: /* @__PURE__ */ jsxs3("label", { className: "flex items-center gap-2 rounded-xl border border-border-default bg-bg-subtle px-3 py-2 focus-within:border-brand-active focus-within:bg-bg-default", children: [
+      /* @__PURE__ */ jsx3(Search, { className: "size-4 shrink-0 text-text-tertiary", "aria-hidden": true }),
+      /* @__PURE__ */ jsx3(
+        "input",
+        {
+          type: "search",
+          value: query,
+          onChange: (event) => setQuery(event.target.value),
+          placeholder: labels.historySearch,
+          "aria-label": labels.historySearch,
+          className: "min-w-0 flex-1 bg-transparent text-body-sm outline-none placeholder:text-text-tertiary"
+        }
+      )
+    ] }) }),
+    error ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-error-red-600", children: error }) : !groups ? /* @__PURE__ */ jsx3("div", { className: "flex flex-1 items-center justify-center", children: /* @__PURE__ */ jsx3(Loader2, { className: "size-4 animate-spin text-text-tertiary" }) }) : items && items.length === 0 ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.emptyHint }) : groups.today.length + groups.earlier.length === 0 ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.historyNoMatch }) : /* @__PURE__ */ jsxs3("ul", { className: "min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2.5 pb-3", children: [
+      groups.today.length > 0 && /* @__PURE__ */ jsx3(GroupHeading, { children: labels.historyToday }),
+      groups.today.map((item) => /* @__PURE__ */ jsx3(Row, { item, activeId, labels, onPick }, item.id)),
+      groups.earlier.length > 0 && /* @__PURE__ */ jsx3(GroupHeading, { children: labels.historyEarlier }),
+      groups.earlier.map((item) => /* @__PURE__ */ jsx3(Row, { item, activeId, labels, onPick }, item.id))
+    ] }),
+    items && items.length >= LIST_CAP && /* @__PURE__ */ jsx3("p", { className: "border-t border-border-subtle px-4 py-2 text-[11px] text-text-tertiary", children: labels.historyCapped.replace("{count}", String(items.length)) })
+  ] });
+}
+function GroupHeading({ children }) {
+  return /* @__PURE__ */ jsx3(
+    "li",
+    {
+      role: "presentation",
+      className: "px-2 pt-3 pb-1.5 text-[11px] font-semibold tracking-wide text-text-tertiary uppercase",
+      children
+    }
+  );
+}
+function Row({
+  item,
+  activeId,
+  labels,
+  onPick
+}) {
+  const active = item.id === activeId;
+  return /* @__PURE__ */ jsx3("li", { children: /* @__PURE__ */ jsxs3(
     "button",
     {
       type: "button",
       onClick: () => onPick(item.id),
+      "aria-current": active ? "true" : void 0,
       className: cn(
-        "flex w-full items-start gap-2 px-4 py-2.5 text-left transition-colors cursor-pointer",
-        "hover:bg-brand-subtle",
-        item.id === activeId && "bg-brand-subtle"
+        "flex w-full cursor-pointer items-center gap-3 rounded-xl p-2.5 text-left transition-colors",
+        active ? "bg-brand-subtle" : "hover:bg-bg-subtle"
       ),
       children: [
-        /* @__PURE__ */ jsx3(MessageSquare, { className: "mt-0.5 size-3.5 shrink-0 text-gray-400" }),
+        /* @__PURE__ */ jsx3(
+          "span",
+          {
+            className: cn(
+              "flex size-9 shrink-0 items-center justify-center rounded-xl",
+              active ? "bg-brand text-text-black" : "bg-bg-subtle text-text-body"
+            ),
+            children: /* @__PURE__ */ jsx3(MessageSquare, { className: "size-4", "aria-hidden": true })
+          }
+        ),
         /* @__PURE__ */ jsxs3("span", { className: "min-w-0 flex-1", children: [
-          /* @__PURE__ */ jsx3("span", { className: "block truncate text-body-sm text-black", children: item.title || item.preview || "(\u0E44\u0E21\u0E48\u0E21\u0E35\u0E0A\u0E37\u0E48\u0E2D)" }),
-          /* @__PURE__ */ jsx3("span", { className: "block text-[11px] text-gray-400", children: relativeTime(item.createdAt) })
-        ] })
+          /* @__PURE__ */ jsx3("span", { className: "block truncate text-body-sm font-medium text-text-black", children: displayTitle(item, labels) }),
+          item.preview && item.title && /* @__PURE__ */ jsx3("span", { className: "block truncate text-[12px] text-text-tertiary", children: item.preview })
+        ] }),
+        /* @__PURE__ */ jsx3("span", { className: "shrink-0 text-[11px] text-text-tertiary", children: relativeTime(item.createdAt, labels) })
       ]
     }
-  ) }, item.id)) });
+  ) });
 }
 
 // src/ai-chat/components/MessageList.tsx
@@ -583,7 +666,7 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
   if (message.role === "system") {
     return /* @__PURE__ */ jsxs6("div", { className: "my-2 flex items-center gap-2", "data-slot": "ai-chat-divider", children: [
       /* @__PURE__ */ jsx7("span", { className: "h-px flex-1 bg-border-subtle" }),
-      /* @__PURE__ */ jsx7("span", { className: "text-[11px] text-gray-400", children: message.content }),
+      /* @__PURE__ */ jsx7("span", { className: "text-[11px] text-text-tertiary", children: message.content }),
       /* @__PURE__ */ jsx7("span", { className: "h-px flex-1 bg-border-subtle" })
     ] });
   }
@@ -594,14 +677,33 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
       "data-slot": "ai-chat-message",
       "data-role": message.role,
       className: cn("flex w-full", isUser ? "justify-end" : "justify-start"),
-      children: /* @__PURE__ */ jsxs6("div", { className: cn("max-w-[85%]", isUser && "flex flex-col items-end"), children: [
+      children: /* @__PURE__ */ jsxs6("div", { className: cn(isUser ? "flex max-w-[85%] flex-col items-end" : "w-full min-w-0"), children: [
+        /* @__PURE__ */ jsx7(
+          "span",
+          {
+            className: cn(
+              "mb-1 block text-[11px] font-semibold tracking-wide",
+              isUser ? "text-text-tertiary" : "text-brand-hover"
+            ),
+            children: isUser ? labels.you : labels.assistant
+          }
+        ),
         !isUser && message.tools && /* @__PURE__ */ jsx7(ToolTrail, { tools: message.tools }),
         (message.content || !isUser) && /* @__PURE__ */ jsx7(
           "div",
           {
             className: cn(
-              "rounded-lg px-3 py-2 text-body-sm break-words",
-              isUser ? "bg-brand text-brand-foreground whitespace-pre-wrap" : message.failed ? "border border-error-red-100 bg-error-red-50 text-error-red-800" : "border border-border-subtle bg-white text-black"
+              "text-body-sm break-words",
+              isUser ? (
+                /* พื้นแบรนด์เต็มใบเหมือนเดิม แต่ตัวอักษรเป็น `text-text-black` ไม่ใช่ `brand-foreground`
+                 * — ขาวบนมิ้นต์ของ Mediwork วัดได้ **1.93:1** (ตกเกณฑ์ 4.5:1 ทุกกรณี) ส่วนดำหมึกได้ **9.09:1**
+                 * มุมล่างฝั่งที่ชิดขอบเหลือ 4 ⇒ ฟองชี้กลับไปหาคนพูด อ่านออกแม้เป็นขาวดำ */
+                "whitespace-pre-wrap rounded-xl rounded-br-sm bg-brand px-3.5 py-2.5 text-text-black"
+              ) : message.failed ? "rounded-xl rounded-bl-sm border border-error-red-100 bg-error-red-50 px-3.5 py-2.5 text-error-red-800" : (
+                /* ผู้ช่วยไม่มีกล่อง — พูดบนพื้นแผงตรง ๆ · ของเดิมเป็นการ์ดขาวมีขอบ `#0000000f`
+                 * วางบนพื้น `#fbfbfd` ซึ่งเป็นขาวบนเกือบขาว: ขอบเขตอ่านไม่ออก แต่กินที่ทั้งสองข้าง */
+                "text-text-black"
+              )
             ),
             children: isUser ? message.content : message.content ? /* @__PURE__ */ jsx7(Markdown, { text: message.content }) : message.streaming ? /* @__PURE__ */ jsx7(TypingDots, { label: labels.thinking }) : null
           }
@@ -630,7 +732,7 @@ function OutcomeBadge({
     {
       className: cn(
         "mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-        outcome.committed ? "bg-success-green-background-50 text-success-green-800" : "bg-gray-100 text-gray-600"
+        outcome.committed ? "bg-success-green-background-50 text-success-green-800" : "bg-overlay-hover text-text-body"
       ),
       children: [
         outcome.committed ? /* @__PURE__ */ jsx7(CircleCheck, { className: "size-3" }) : /* @__PURE__ */ jsx7(CircleSlash, { className: "size-3" }),
@@ -640,7 +742,7 @@ function OutcomeBadge({
   );
 }
 function TypingDots({ label }) {
-  return /* @__PURE__ */ jsxs6("span", { className: "flex items-center gap-1 text-gray-400", "aria-label": label, children: [
+  return /* @__PURE__ */ jsxs6("span", { className: "flex items-center gap-1 text-text-tertiary", "aria-label": label, children: [
     /* @__PURE__ */ jsx7(Dot, { delay: "0ms" }),
     /* @__PURE__ */ jsx7(Dot, { delay: "150ms" }),
     /* @__PURE__ */ jsx7(Dot, { delay: "300ms" })
@@ -672,8 +774,8 @@ function MessageList({
   if (messages.length === 0) {
     return /* @__PURE__ */ jsxs7("div", { className: "flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center", children: [
       /* @__PURE__ */ jsx8(Sparkles, { className: "size-8 text-brand-active" }),
-      /* @__PURE__ */ jsx8("p", { className: "text-body-sm font-semibold text-black", children: labels.emptyTitle }),
-      /* @__PURE__ */ jsx8("p", { className: "text-caption text-gray-500", children: labels.emptyHint }),
+      /* @__PURE__ */ jsx8("p", { className: "text-body-sm font-semibold text-text-black", children: labels.emptyTitle }),
+      /* @__PURE__ */ jsx8("p", { className: "text-caption text-text-body", children: labels.emptyHint }),
       suggestions && suggestions.length > 0 && /* @__PURE__ */ jsx8("div", { className: "mt-4 flex w-full flex-col gap-2", children: suggestions.map((suggestion) => /* @__PURE__ */ jsx8(
         "button",
         {
@@ -681,7 +783,7 @@ function MessageList({
           disabled: busy,
           onClick: () => onWidgetAction(suggestion),
           className: cn(
-            "rounded-lg border border-border-default bg-white px-3 py-2 text-left text-body-sm text-black",
+            "rounded-lg border border-border-default bg-bg-default px-3 py-2 text-left text-body-sm text-text-black",
             "transition-colors hover:border-brand-active hover:bg-brand-subtle cursor-pointer",
             "disabled:pointer-events-none disabled:opacity-40"
           ),
@@ -695,7 +797,7 @@ function MessageList({
     "div",
     {
       "data-slot": "ai-chat-messages",
-      className: "flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4",
+      className: "flex flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-4",
       children: [
         messages.map((message, index) => /* @__PURE__ */ jsx8(
           MessageBubble,
@@ -714,7 +816,7 @@ function MessageList({
 }
 
 // src/ai-chat/components/ChatDrawer.tsx
-import { jsx as jsx9, jsxs as jsxs8 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx9, jsxs as jsxs8 } from "react/jsx-runtime";
 function ChatDrawer(props) {
   const {
     open,
@@ -750,24 +852,28 @@ function ChatDrawer(props) {
       onPointerDownOutside: (event) => event.preventDefault(),
       style: { zIndex: "var(--mediact-ai-chat-z, 1310)" },
       className: cn(
-        "fixed inset-y-0 flex w-full flex-col bg-gray-50 shadow-2xl outline-none",
+        /* พื้นแผงเป็น **ขาว** ไม่ใช่ `bg-bg-subtle` — คำตอบของผู้ช่วยเลิกอยู่ในการ์ดแล้ว (`MessageBubble`)
+           ถ้าพื้นยังเป็นเทา ข้อความจะลอยอยู่บนเทาโดยไม่มีอะไรรองรับ · ที่เคยต้องเป็นเทาเพราะมีการ์ดขาววางทับ */
+        "fixed inset-y-0 flex w-full flex-col bg-bg-default shadow-2xl outline-none",
         "sm:w-[var(--mediact-ai-chat-drawer-width,26rem)]",
         position === "bottom-left" ? "left-0 border-r border-border-default" : "right-0 border-l border-border-default",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         position === "bottom-left" ? "data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left" : "data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right"
       ),
       children: [
-        /* @__PURE__ */ jsxs8("header", { className: "flex items-center gap-2 border-b border-border-subtle bg-white px-4 py-3", children: [
+        /* @__PURE__ */ jsxs8("header", { className: "flex items-center gap-2 border-b border-border-subtle bg-bg-default px-4 py-3", children: [
+          historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.historyBack, onClick: () => setHistoryOpen(false), children: /* @__PURE__ */ jsx9(ChevronLeft, { className: "size-4" }) }),
           /* @__PURE__ */ jsxs8("div", { className: "min-w-0 flex-1", children: [
-            /* @__PURE__ */ jsx9(RadixDialog.Title, { className: "truncate text-body-sm font-semibold text-black", children: labels.title }),
-            /* @__PURE__ */ jsx9("p", { className: "truncate text-caption text-gray-500", children: labels.subtitle })
+            /* @__PURE__ */ jsx9(RadixDialog.Title, { className: "truncate text-body-sm font-semibold text-text-black", children: historyOpen ? labels.historyTitle : labels.title }),
+            !historyOpen && /* @__PURE__ */ jsx9("p", { className: "truncate text-caption text-text-body", children: labels.subtitle })
           ] }),
-          /* @__PURE__ */ jsx9(ContextMeter, { usage: contextUsage ?? null, labels, className: "mr-1" }),
-          /* @__PURE__ */ jsx9(IconButton, { label: labels.history, onClick: () => setHistoryOpen((v) => !v), active: historyOpen, children: /* @__PURE__ */ jsx9(History, { className: "size-4" }) }),
+          !historyOpen && /* @__PURE__ */ jsx9(ContextMeter, { usage: contextUsage ?? null, labels, className: "mr-1" }),
+          !historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.history, onClick: () => setHistoryOpen(true), children: /* @__PURE__ */ jsx9(History, { className: "size-4" }) }),
           /* @__PURE__ */ jsx9(IconButton, { label: labels.newChat, onClick: onNewChat, children: /* @__PURE__ */ jsx9(Plus, { className: "size-4" }) }),
-          /* @__PURE__ */ jsx9(RadixDialog.Close, { asChild: true, children: /* @__PURE__ */ jsx9(IconButton, { label: labels.minimize, children: position === "bottom-left" ? /* @__PURE__ */ jsx9(ChevronsLeft, { className: "size-4" }) : /* @__PURE__ */ jsx9(ChevronsRight, { className: "size-4" }) }) })
+          historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.historyClose, onClick: () => setHistoryOpen(false), children: /* @__PURE__ */ jsx9(X, { className: "size-4" }) }),
+          !historyOpen && /* @__PURE__ */ jsx9(RadixDialog.Close, { asChild: true, children: /* @__PURE__ */ jsx9(IconButton, { label: labels.minimize, children: position === "bottom-left" ? /* @__PURE__ */ jsx9(ChevronsLeft, { className: "size-4" }) : /* @__PURE__ */ jsx9(ChevronsRight, { className: "size-4" }) }) })
         ] }),
-        (showModeToggle || mode === "schedule") && onModeChange && /* @__PURE__ */ jsxs8("div", { className: "flex gap-1 border-b border-border-subtle bg-white px-4 py-2", children: [
+        !historyOpen && (showModeToggle || mode === "schedule") && onModeChange && /* @__PURE__ */ jsxs8("div", { className: "flex gap-1 border-b border-border-subtle bg-bg-default px-4 py-2", children: [
           /* @__PURE__ */ jsx9(
             ModeChip,
             {
@@ -787,7 +893,7 @@ function ChatDrawer(props) {
             }
           )
         ] }),
-        historyOpen && /* @__PURE__ */ jsx9(
+        historyOpen ? /* @__PURE__ */ jsx9(
           ConversationPicker,
           {
             load: loadConversations,
@@ -798,38 +904,39 @@ function ChatDrawer(props) {
               onPickConversation(id);
             }
           }
-        ),
-        /* @__PURE__ */ jsx9(
-          StatusBar,
-          {
-            status,
-            transportStatus,
-            error,
-            labels,
-            onRetry
-          }
-        ),
-        /* @__PURE__ */ jsx9(
-          MessageList,
-          {
-            messages,
-            labels,
-            busy,
-            suggestions,
-            onWidgetAction: onSend
-          }
-        ),
-        /* @__PURE__ */ jsx9(
-          Composer,
-          {
-            onSend,
-            onCancel,
-            busy,
-            disabled: starting || status === "error",
-            labels,
-            placeholder: mode === "schedule" ? labels.placeholderSchedule : labels.placeholder
-          }
-        )
+        ) : /* @__PURE__ */ jsxs8(Fragment2, { children: [
+          /* @__PURE__ */ jsx9(
+            StatusBar,
+            {
+              status,
+              transportStatus,
+              error,
+              labels,
+              onRetry
+            }
+          ),
+          /* @__PURE__ */ jsx9(
+            MessageList,
+            {
+              messages,
+              labels,
+              busy,
+              suggestions,
+              onWidgetAction: onSend
+            }
+          ),
+          /* @__PURE__ */ jsx9(
+            Composer,
+            {
+              onSend,
+              onCancel,
+              busy,
+              disabled: starting || status === "error",
+              labels,
+              placeholder: mode === "schedule" ? labels.placeholderSchedule : labels.placeholder
+            }
+          )
+        ] })
       ]
     }
   ) }) });
@@ -862,7 +969,7 @@ function StatusBar({
     return /* @__PURE__ */ jsx9("div", { className: "bg-brand-subtle px-4 py-1.5 text-caption text-brand", children: labels.connecting });
   }
   if (transportStatus === "disconnected") {
-    return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-gray-100 px-4 py-1.5 text-caption text-gray-600", children: [
+    return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-overlay-hover px-4 py-1.5 text-caption text-text-body", children: [
       /* @__PURE__ */ jsx9("span", { className: "min-w-0 flex-1 truncate", children: labels.disconnected }),
       /* @__PURE__ */ jsx9(
         "button",
@@ -887,9 +994,12 @@ var IconButton = React6.forwardRef(function IconButton2({ label, onClick, active
       "aria-label": label,
       title: label,
       className: cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-md text-gray-500 transition-colors cursor-pointer",
-        "hover:bg-gray-100 hover:text-black",
-        active && "bg-brand-subtle text-brand"
+        /* มุม 10 (`rounded-[10px]`) ไม่ใช่ 6 — ปุ่มไอคอนสี่ตัวเรียงกันในแถบหัวที่กว้าง 416
+           มุมที่คมกว่ากล่องอื่นในแผงทำให้แถบนี้อ่านเป็นแถบเครื่องมือแยกจากเนื้อหา
+           hover เป็นพื้นจางของแบรนด์ ไม่ใช่เทา — ปุ่มพวกนี้เป็นทางลัดของผู้ช่วย ไม่ใช่ปุ่มกลางของระบบ */
+        "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-[10px] text-text-body transition-colors",
+        "hover:bg-brand-subtle hover:text-brand-hover",
+        active && "bg-brand-subtle text-brand-hover"
       ),
       ...props,
       children
@@ -910,7 +1020,7 @@ function ModeChip({
       "aria-pressed": active,
       className: cn(
         "flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-medium transition-colors cursor-pointer",
-        active ? "bg-brand text-brand-foreground" : "border border-border-default bg-white text-gray-600 hover:bg-gray-50"
+        active ? "bg-brand text-brand-foreground" : "border border-border-default bg-bg-default text-text-body hover:bg-bg-subtle"
       ),
       children: [
         icon,
@@ -923,49 +1033,147 @@ function ModeChip({
 // src/ai-chat/components/FloatingButton.tsx
 import * as React7 from "react";
 import { ChevronsLeft as ChevronsLeft2, ChevronsRight as ChevronsRight2, Sparkles as Sparkles2 } from "lucide-react";
-import { Fragment as Fragment2, jsx as jsx10, jsxs as jsxs9 } from "react/jsx-runtime";
+import { jsx as jsx10 } from "react/jsx-runtime";
+var EDGE_MARGIN = 8;
+var BUTTON_SIZE = 56;
+var DRAG_THRESHOLD = 4;
+var FALLBACK_EDGE_GAP = 24;
+var STORAGE_KEY = "mediact-ai-chat-launcher-y";
+var clamp = (value, viewport) => Math.min(Math.max(value, EDGE_MARGIN), Math.max(viewport - BUTTON_SIZE - EDGE_MARGIN, EDGE_MARGIN));
+var readStoredY = () => {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw === null) return null;
+    const y = Number(raw);
+    return Number.isFinite(y) ? clamp(y, window.innerHeight) : null;
+  } catch {
+    return null;
+  }
+};
 var FloatingButton = React7.forwardRef(
-  function FloatingButton2({ open, onClick, label, position = "bottom-right", className }, ref) {
+  function FloatingButton2({ open, onClick, label, position = "bottom-right", draggable = true, className }, ref) {
+    const [top, setTop] = React7.useState(null);
+    const [dragPoint, setDragPoint] = React7.useState(null);
+    const [viewportWidth, setViewportWidth] = React7.useState(null);
+    const [edgeGap, setEdgeGap] = React7.useState(FALLBACK_EDGE_GAP);
+    const node = React7.useRef(null);
+    const grab = React7.useRef({ x: 0, y: 0 });
+    const moved = React7.useRef(false);
+    const attachRef = React7.useCallback(
+      (element) => {
+        node.current = element;
+        if (typeof ref === "function") ref(element);
+        else if (ref) ref.current = element;
+      },
+      [ref]
+    );
+    React7.useEffect(() => {
+      if (!draggable) return;
+      setViewportWidth(window.innerWidth);
+      const rect = node.current?.getBoundingClientRect();
+      if (rect) {
+        const gap = position === "bottom-left" ? rect.left : window.innerWidth - rect.right;
+        if (Number.isFinite(gap) && gap >= 0) setEdgeGap(gap);
+      }
+      setTop(readStoredY());
+    }, [draggable, position]);
+    React7.useEffect(() => {
+      if (!draggable) return;
+      const onResize = () => {
+        setViewportWidth(window.innerWidth);
+        setTop((current) => current === null ? current : clamp(current, window.innerHeight));
+      };
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }, [draggable]);
+    const handlePointerDown = (event) => {
+      if (!draggable || event.button !== 0) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      grab.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      moved.current = false;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    };
+    const handlePointerMove = (event) => {
+      if (!draggable || !event.currentTarget.hasPointerCapture(event.pointerId)) return;
+      const next = { x: event.clientX - grab.current.x, y: event.clientY - grab.current.y };
+      if (!moved.current) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (Math.abs(next.x - rect.left) < DRAG_THRESHOLD && Math.abs(next.y - rect.top) < DRAG_THRESHOLD)
+          return;
+        moved.current = true;
+      }
+      setDragPoint({ x: clamp(next.x, window.innerWidth), y: clamp(next.y, window.innerHeight) });
+    };
+    const handlePointerUp = (event) => {
+      if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+      const droppedY = dragPoint?.y ?? null;
+      setDragPoint(null);
+      if (!moved.current || droppedY === null) return;
+      setTop(droppedY);
+      try {
+        window.localStorage.setItem(STORAGE_KEY, String(droppedY));
+      } catch {
+      }
+    };
+    const restingLeft = viewportWidth === null ? null : clamp(position === "bottom-left" ? edgeGap : viewportWidth - BUTTON_SIZE - edgeGap, viewportWidth);
+    const offset = "var(--mediact-ai-chat-launcher-offset, 1.5rem)";
+    const placement = dragPoint ? { left: dragPoint.x, top: dragPoint.y } : top !== null && restingLeft !== null ? { left: restingLeft, top } : {
+      insetInlineEnd: position === "bottom-right" ? offset : void 0,
+      insetInlineStart: position === "bottom-left" ? offset : void 0,
+      insetBlockEnd: offset
+    };
     return /* @__PURE__ */ jsx10(
       "button",
       {
-        ref,
+        ref: attachRef,
         type: "button",
-        onClick,
+        onClick: () => {
+          if (moved.current) {
+            moved.current = false;
+            return;
+          }
+          onClick();
+        },
+        onPointerDown: handlePointerDown,
+        onPointerMove: handlePointerMove,
+        onPointerUp: handlePointerUp,
+        onPointerCancel: handlePointerUp,
         "aria-label": label,
+        title: label,
         "aria-expanded": open,
         "data-slot": "ai-chat-launcher",
         style: {
           zIndex: "var(--mediact-ai-chat-z, 1310)",
-          insetInlineEnd: position === "bottom-right" ? "var(--mediact-ai-chat-launcher-offset, 1.5rem)" : void 0,
-          insetInlineStart: position === "bottom-left" ? "var(--mediact-ai-chat-launcher-offset, 1.5rem)" : void 0,
-          insetBlockEnd: "var(--mediact-ai-chat-launcher-offset, 1.5rem)"
+          // กันเบราว์เซอร์แย่งไปเลื่อนหน้าจอตอนลากด้วยนิ้ว
+          touchAction: draggable ? "none" : void 0,
+          ...placement
         },
         className: cn(
-          "group fixed flex h-14 items-center justify-center gap-2 rounded-full",
-          // Circle while open (it is a close button then) or on a narrow screen; labelled pill otherwise.
-          open ? "w-14" : "w-14 sm:w-auto sm:px-5",
-          "bg-brand text-brand-foreground shadow-lg transition-all",
-          "hover:bg-brand-hover hover:shadow-xl active:scale-95",
+          "group fixed flex size-14 items-center justify-center rounded-full",
+          "bg-brand text-brand-foreground shadow-lg",
+          "hover:bg-brand-hover hover:shadow-xl",
           "outline-none focus-visible:ring-2 focus-visible:ring-brand-active focus-visible:ring-offset-2",
-          "cursor-pointer",
+          draggable && "touch-none select-none",
+          /* ⛔ ไม่มี `transition` ตอนลาก — ปุ่มจะไล่ตามนิ้วช้ากว่าความจริงทันที
+             และ `active:scale-95` ทำให้ปุ่มหดระหว่างลาก ซึ่งอ่านว่ากำลังกดอยู่
+             ตอนปล่อย: เส้นโค้งแบบ back-out เลยขอบไปนิดแล้วดีดกลับ = "เด้ง" ที่ตาเห็นจริง
+             ไม่ใช่แค่ไถลกลับ · 300ms — นานกว่านี้กลายเป็นการรอ */
+          dragPoint ? "scale-105 cursor-grabbing shadow-xl" : "cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)] active:scale-95",
           className
         ),
         children: open ? (
           // Matches the drawer's own header button: the same collapse chevron, pointing at the same edge.
           // Two different glyphs for one action taught two different meanings — and an ✕ taught the wrong one.
           position === "bottom-left" ? /* @__PURE__ */ jsx10(ChevronsLeft2, { className: "size-6" }) : /* @__PURE__ */ jsx10(ChevronsRight2, { className: "size-6" })
-        ) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
-          /* @__PURE__ */ jsx10(Sparkles2, { className: "size-6 shrink-0 transition-transform group-hover:scale-110" }),
-          /* @__PURE__ */ jsx10("span", { className: "hidden text-body-sm font-medium whitespace-nowrap sm:inline", children: label })
-        ] })
+        ) : /* @__PURE__ */ jsx10(Sparkles2, { className: "size-6 shrink-0 transition-transform group-hover:scale-110" })
       }
     );
   }
 );
 
 // src/ai-chat/labels.ts
-var defaultLabels = {
+var thLabels = {
   launcher: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22 AI",
   title: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22 AI",
   subtitle: "\u0E16\u0E32\u0E21\u0E40\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E15\u0E32\u0E23\u0E32\u0E07\u0E40\u0E27\u0E23 \u0E04\u0E33\u0E02\u0E2D \u0E41\u0E25\u0E30\u0E01\u0E32\u0E23\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22",
@@ -987,6 +1195,23 @@ var defaultLabels = {
   thinking: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E04\u0E34\u0E14\u2026",
   scheduleMode: "\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23",
   assistantMode: "\u0E42\u0E2B\u0E21\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22",
+  you: "\u0E04\u0E38\u0E13",
+  assistant: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22",
+  historyTitle: "\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u0E01\u0E32\u0E23\u0E2A\u0E19\u0E17\u0E19\u0E32",
+  historySearch: "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E43\u0E19\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34",
+  historyBack: "\u0E01\u0E25\u0E31\u0E1A\u0E44\u0E1B\u0E17\u0E35\u0E48\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32",
+  historyClose: "\u0E1B\u0E34\u0E14\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34",
+  /* "เริ่มวันนี้" ไม่ใช่ "วันนี้" — จัดกลุ่มด้วย `createdAt` ซึ่งคือตอนเริ่มบทสนทนา
+     บทที่กลับไปคุยต่อจะยังอยู่ในกลุ่มของวันที่เริ่ม ไม่ใช่วันที่พิมพ์ล่าสุด */
+  historyToday: "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E27\u0E31\u0E19\u0E19\u0E35\u0E49",
+  historyEarlier: "\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32\u0E19\u0E35\u0E49",
+  historyNoMatch: "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E17\u0E35\u0E48\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E04\u0E33\u0E04\u0E49\u0E19",
+  historyCapped: "\u0E41\u0E2A\u0E14\u0E07 {count} \u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14 \u2014 \u0E40\u0E01\u0E48\u0E32\u0E01\u0E27\u0E48\u0E32\u0E19\u0E35\u0E49\u0E04\u0E49\u0E19\u0E44\u0E21\u0E48\u0E40\u0E08\u0E2D",
+  historyUntitled: "(\u0E44\u0E21\u0E48\u0E21\u0E35\u0E0A\u0E37\u0E48\u0E2D)",
+  timeJustNow: "\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E2A\u0E31\u0E01\u0E04\u0E23\u0E39\u0E48",
+  timeMinutesAgo: "{count} \u0E19\u0E32\u0E17\u0E35\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27",
+  timeHoursAgo: "{count} \u0E0A\u0E21.\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27",
+  dateLocale: "th-TH",
   // `{context}` ถูกแทนด้วยแผนก/เดือนที่ hand-off ระบุมา (หรือคำชวนให้ระบุ เมื่อยังไม่รู้)
   scheduleGreeting: [
     "\u{1F5D3}\uFE0F **\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23\u0E41\u0E25\u0E49\u0E27\u0E04\u0E23\u0E31\u0E1A**",
@@ -1000,15 +1225,79 @@ var defaultLabels = {
     '\u0E1E\u0E34\u0E21\u0E1E\u0E4C *"\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01"* \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E42\u0E2B\u0E21\u0E14\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E04\u0E23\u0E31\u0E1A'
   ].join("\n"),
   scheduleGreetingScoped: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E15\u0E23\u0E35\u0E22\u0E21\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23 **\u0E41\u0E1C\u0E19\u0E01 {department}**{period}",
+  scheduleGreetingPeriod: " \u0E40\u0E14\u0E37\u0E2D\u0E19 {month}/{year}",
   scheduleGreetingUnscoped: '\u0E40\u0E23\u0E34\u0E48\u0E21\u0E44\u0E14\u0E49\u0E42\u0E14\u0E22\u0E1A\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E01\u0E41\u0E25\u0E30\u0E40\u0E14\u0E37\u0E2D\u0E19\u0E17\u0E35\u0E48\u0E08\u0E30\u0E08\u0E31\u0E14\u0E01\u0E48\u0E2D\u0E19 \u0E40\u0E0A\u0E48\u0E19 *"\u0E41\u0E1C\u0E19\u0E01 ICU \u0E40\u0E14\u0E37\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32"*',
   contextTooltip: "\u0E04\u0E27\u0E32\u0E21\u0E08\u0E33\u0E02\u0E2D\u0E07\u0E41\u0E0A\u0E17\u0E19\u0E35\u0E49 \u2014 \u0E43\u0E0A\u0E49\u0E44\u0E1B\u0E1B\u0E23\u0E30\u0E21\u0E32\u0E13 {used} \u0E08\u0E32\u0E01 {limit} \u0E42\u0E17\u0E40\u0E04\u0E19\n\u0E40\u0E01\u0E34\u0E19\u0E01\u0E27\u0E48\u0E32\u0E19\u0E35\u0E49 \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E40\u0E01\u0E48\u0E32\u0E2A\u0E38\u0E14\u0E08\u0E30\u0E16\u0E39\u0E01\u0E15\u0E31\u0E14\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2A\u0E34\u0E48\u0E07\u0E17\u0E35\u0E48 AI \u0E08\u0E33\u0E44\u0E14\u0E49",
   contextTrimmed: "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E15\u0E31\u0E14\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E40\u0E01\u0E48\u0E32\u0E1A\u0E32\u0E07\u0E2A\u0E48\u0E27\u0E19\u0E2D\u0E2D\u0E01\u0E44\u0E1B\u0E41\u0E25\u0E49\u0E27 \u2014 \u0E16\u0E49\u0E32\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E23\u0E34\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48\u0E43\u0E2B\u0E49\u0E01\u0E14 \u201C\u0E41\u0E0A\u0E17\u0E43\u0E2B\u0E21\u0E48\u201D"
 };
-function resolveLabels(overrides) {
-  return overrides ? { ...defaultLabels, ...overrides } : defaultLabels;
+var enLabels = {
+  launcher: "AI assistant",
+  title: "AI assistant",
+  subtitle: "Ask about rosters, requests and settings",
+  placeholder: "Ask about the roster \u2014 e.g. who is on the morning shift on the 6th\u2026",
+  placeholderSchedule: 'Scheduling mode \u2014 type "generate the roster", or name a department/month\u2026',
+  send: "Send",
+  cancel: "Cancel",
+  newChat: "New chat",
+  history: "Chat history",
+  emptyTitle: "Ask away",
+  emptyHint: "For example, \u201Cwho is still missing from night shifts this month?\u201D",
+  connecting: "Connecting\u2026",
+  disconnected: "Connection lost",
+  reconnecting: "Reconnecting automatically\u2026",
+  retry: "Try again",
+  minimize: "Minimise the chat (the conversation is kept)",
+  committed: "Saved",
+  notCommitted: "Not saved yet",
+  thinking: "Thinking\u2026",
+  scheduleMode: "Scheduling mode",
+  assistantMode: "Assistant mode",
+  you: "You",
+  assistant: "Assistant",
+  historyTitle: "Conversation history",
+  historySearch: "Search history",
+  historyBack: "Back to the conversation",
+  historyClose: "Close history",
+  /* "Started today", not "Today" — grouped by `createdAt`, i.e. when the thread began. Coming back to
+     yesterday's thread keeps it in "Earlier", so the heading has to say which date it means. */
+  historyToday: "Started today",
+  historyEarlier: "Earlier",
+  historyNoMatch: "No conversation matches that search",
+  historyCapped: "Showing the {count} most recent conversations \u2014 older ones are not searchable",
+  historyUntitled: "(untitled)",
+  timeJustNow: "just now",
+  timeMinutesAgo: "{count} min ago",
+  timeHoursAgo: "{count} hr ago",
+  dateLocale: "en-GB",
+  scheduleGreeting: [
+    "\u{1F5D3}\uFE0F **Scheduling mode is on.**",
+    "{context}",
+    "",
+    "Tell me what to do next, for example:",
+    '\u2022 **Generate the roster** \u2014 type *"generate the roster"* and I will fill the whole month',
+    "\u2022 **Set things up first** \u2014 add staff \xB7 shift types \xB7 operating hours \xB7 scheduling rules",
+    '\u2022 **Assign by hand** \u2014 e.g. *"put Somying on shift D on the 5th"*',
+    "",
+    'Type *"cancel"* to leave this mode at any time.'
+  ].join("\n"),
+  scheduleGreetingScoped: "Getting ready to schedule **{department}**{period}",
+  scheduleGreetingPeriod: " for {month}/{year}",
+  scheduleGreetingUnscoped: 'Start by naming the department and month \u2014 e.g. *"ICU next month"*',
+  contextTooltip: "This chat's memory \u2014 about {used} of {limit} tokens used\nPast that, the oldest messages drop out of what the AI remembers",
+  contextTrimmed: "Some older messages have been dropped \u2014 press \u201CNew chat\u201D to start clean"
+};
+var labelsByLocale = {
+  th: thLabels,
+  en: enLabels
+};
+var defaultLabels = thLabels;
+function resolveLabels(overrides, locale = "th") {
+  const base = labelsByLocale[locale] ?? thLabels;
+  return overrides ? { ...base, ...overrides } : base;
 }
 function buildScheduleGreeting(labels, seed) {
-  const context = seed?.departmentName ? labels.scheduleGreetingScoped.replace("{department}", seed.departmentName).replace("{period}", seed.month ? ` \u0E40\u0E14\u0E37\u0E2D\u0E19 ${seed.month}/${seed.year ?? ""}`.trimEnd() : "") : labels.scheduleGreetingUnscoped;
+  const period = seed?.month ? labels.scheduleGreetingPeriod.replace("{month}", String(seed.month)).replace("{year}", String(seed.year ?? "")).trimEnd() : "";
+  const context = seed?.departmentName ? labels.scheduleGreetingScoped.replace("{department}", seed.departmentName).replace("{period}", period) : labels.scheduleGreetingUnscoped;
   return labels.scheduleGreeting.replace("{context}", context);
 }
 
@@ -1811,12 +2100,19 @@ function writeStored(key, value) {
 }
 
 // src/ai-chat/AiChatWidget.tsx
-import { Fragment as Fragment3, jsx as jsx11, jsxs as jsxs10 } from "react/jsx-runtime";
-var DEFAULT_SUGGESTIONS = [
-  "\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48 6 \u0E43\u0E04\u0E23\u0E02\u0E36\u0E49\u0E19\u0E40\u0E27\u0E23\u0E40\u0E0A\u0E49\u0E32\u0E1A\u0E49\u0E32\u0E07",
-  "\u0E40\u0E14\u0E37\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E21\u0E35\u0E40\u0E27\u0E23\u0E44\u0E2B\u0E19\u0E04\u0E19\u0E44\u0E21\u0E48\u0E1E\u0E2D",
-  "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E41\u0E1C\u0E19\u0E01\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E0E\u0E2D\u0E30\u0E44\u0E23\u0E2D\u0E22\u0E39\u0E48\u0E1A\u0E49\u0E32\u0E07"
-];
+import { Fragment as Fragment3, jsx as jsx11, jsxs as jsxs9 } from "react/jsx-runtime";
+var SUGGESTIONS_BY_LOCALE = {
+  th: [
+    "\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48 6 \u0E43\u0E04\u0E23\u0E02\u0E36\u0E49\u0E19\u0E40\u0E27\u0E23\u0E40\u0E0A\u0E49\u0E32\u0E1A\u0E49\u0E32\u0E07",
+    "\u0E40\u0E14\u0E37\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E21\u0E35\u0E40\u0E27\u0E23\u0E44\u0E2B\u0E19\u0E04\u0E19\u0E44\u0E21\u0E48\u0E1E\u0E2D",
+    "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E41\u0E1C\u0E19\u0E01\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E0E\u0E2D\u0E30\u0E44\u0E23\u0E2D\u0E22\u0E39\u0E48\u0E1A\u0E49\u0E32\u0E07"
+  ],
+  en: [
+    "Who is on the morning shift on the 6th?",
+    "Which shifts are short-staffed this month?",
+    "Which rules is this department running?"
+  ]
+};
 function AiChatWidget({
   open: controlledOpen,
   defaultOpen = false,
@@ -1840,9 +2136,10 @@ function AiChatWidget({
     [config.auth, config.getToken, config.onError]
   );
   const session = useAiChatSession(React9.useMemo(() => ({ ...config, getToken }), [config, getToken]));
-  const labels = React9.useMemo(() => resolveLabels(config.labels), [config.labels]);
+  const locale = config.locale ?? "th";
+  const labels = React9.useMemo(() => resolveLabels(config.labels, locale), [config.labels, locale]);
   const position = config.position ?? "bottom-right";
-  const suggestions = config.suggestions ?? DEFAULT_SUGGESTIONS;
+  const suggestions = config.suggestions ?? SUGGESTIONS_BY_LOCALE[locale] ?? SUGGESTIONS_BY_LOCALE.th;
   const { setMode } = session;
   React9.useEffect(() => {
     if (config.mode) setMode(config.mode);
@@ -1902,7 +2199,7 @@ function AiChatWidget({
     session.newConversation();
     void session.start();
   }, [session.state.conversationId, session.newConversation, session.start]);
-  return /* @__PURE__ */ jsxs10(Fragment3, { children: [
+  return /* @__PURE__ */ jsxs9(Fragment3, { children: [
     !hideLauncher && /* @__PURE__ */ jsx11(
       FloatingButton,
       {
@@ -1960,13 +2257,16 @@ export {
   cn,
   createAiChatApi,
   defaultLabels,
+  enLabels,
   extractEnterMode,
   extractRedirect,
   hasExitMode,
+  labelsByLocale,
   openAiChat,
   resolveLabels,
   resolveTokenProvider,
   stripSentinels,
+  thLabels,
   useAiChatSession
 };
 //# sourceMappingURL=index.js.map
