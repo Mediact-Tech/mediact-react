@@ -1,5 +1,5 @@
 /* ../tokens/src/themes/portal.css */
-@theme { --color-brand: var(--mx-slate-500); --color-brand-hover: var(--mx-slate-700); --color-brand-active: var(--mx-slate-700); --color-brand-subtle: var(--mx-slate-50); --color-focus-ring: var(--mx-slate-500); }
+@theme { --color-brand: var(--mx-slate-500); --color-brand-hover: var(--mx-slate-700); --color-brand-active: var(--mx-slate-700); --color-brand-subtle: var(--mx-slate-50); --color-focus-ring: var(--mx-slate-500); --color-brand-foreground: var(--mx-neutral-0); }
 
 /* src/theme/portal.css */
 /*# sourceMappingURL=portal.css.map */

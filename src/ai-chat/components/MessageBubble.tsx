@@ -60,10 +60,20 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
             className={cn(
               "text-body-sm break-words",
               isUser
-                ? /* พื้นแบรนด์เต็มใบเหมือนเดิม แต่ตัวอักษรเป็น `text-text-black` ไม่ใช่ `brand-foreground`
-                   * — ขาวบนมิ้นต์ของ Mediwork วัดได้ **1.93:1** (ตกเกณฑ์ 4.5:1 ทุกกรณี) ส่วนดำหมึกได้ **9.09:1**
+                ? /* 🔴 `text-brand-foreground` ⛔ **ห้ามฮาร์ดโค้ดสีตายตัว** — พื้นเป็นสีแบรนด์ซึ่ง
+                   * ต่างกัน 4 แอป และไม่มีสีตัวอักษรสีไหนถูกทั้งสี่ (วัดแล้ว):
+                   *
+                   *   Mediwork  #26d1b3   ขาว 1.93 ❌   เข้ม 8.77 ✅
+                   *   Medimatch #0395d8   ขาว 3.34 ❌   เข้ม 5.09 ✅
+                   *   Portal    #43596e   ขาว 7.26 ✅   เข้ม 2.42 ❌
+                   *   MediHR    #0611ac   ขาว 12.47 ✅  เข้ม 1.41 ❌
+                   *
+                   * เคยฮาร์ดโค้ด `text-text-black` ไว้เพราะแก้เคสมิ้นต์ — ซึ่งทำให้ฟองบน MediHR
+                   * ได้ **1.41:1** อ่านแทบไม่ออก · ตอนนี้แต่ละธีมตั้ง `--color-brand-foreground`
+                   * ของตัวเองแล้ว ⇒ ที่นี่อ่าน token อย่างเดียว
+                   *
                    * มุมล่างฝั่งที่ชิดขอบเหลือ 4 ⇒ ฟองชี้กลับไปหาคนพูด อ่านออกแม้เป็นขาวดำ */
-                  "whitespace-pre-wrap rounded-xl rounded-br-sm bg-brand px-3.5 py-2.5 text-text-black"
+                  "whitespace-pre-wrap rounded-xl rounded-br-sm bg-brand px-3.5 py-2.5 text-brand-foreground"
                 : message.failed
                   ? "rounded-xl rounded-bl-sm border border-error-red-100 bg-error-red-50 px-3.5 py-2.5 text-error-red-800"
                   : /* ผู้ช่วยไม่มีกล่อง — พูดบนพื้นแผงตรง ๆ · ของเดิมเป็นการ์ดขาวมีขอบ `#0000000f`

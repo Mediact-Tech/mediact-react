@@ -1,5 +1,5 @@
 /* ../tokens/src/themes/medimatch.css */
-@theme { --color-brand: var(--mx-sky-500); --color-brand-hover: var(--mx-blue-500); --color-brand-active: var(--mx-blue-700); --color-brand-subtle: var(--mx-sky-50); --color-text-primary: var(--mx-blue-700); --color-bg-surface: var(--mx-sky-50); --color-info-default: var(--mx-blue-400); }
+@theme { --color-brand: var(--mx-sky-500); --color-brand-hover: var(--mx-blue-500); --color-brand-active: var(--mx-blue-700); --color-brand-subtle: var(--mx-sky-50); --color-text-primary: var(--mx-blue-700); --color-bg-surface: var(--mx-sky-50); --color-info-default: var(--mx-blue-400); --color-brand-foreground: var(--mx-neutral-900); }
 
 /* src/theme/medimatch.css */
 /*# sourceMappingURL=medimatch.css.map */
