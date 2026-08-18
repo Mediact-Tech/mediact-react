@@ -601,7 +601,7 @@ var Input = React6.forwardRef(function Input2({
                 target: { value: "" }
               });
             },
-            className: "rounded-full p-0.5 hover:bg-overlay-hover",
+            className: "pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-hover",
             children: /* @__PURE__ */ jsx7(X, {})
           }
         ),
@@ -612,7 +612,7 @@ var Input = React6.forwardRef(function Input2({
             "aria-label": showPassword ? "Hide password" : "Show password",
             tabIndex: -1,
             onClick: () => setShowPassword((s) => !s),
-            className: "rounded-full p-0.5 hover:bg-overlay-hover",
+            className: "pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-hover",
             children: showPassword ? /* @__PURE__ */ jsx7(Eye, {}) : /* @__PURE__ */ jsx7(EyeOff, {})
           }
         ),
@@ -1489,14 +1489,28 @@ function Select({
       reserveMessageSpace,
       containerClassName,
       rightAdornment: /* @__PURE__ */ jsxs13(Fragment5, { children: [
-        clearable && hasValue && !disabled && /* @__PURE__ */ jsx16(
+        clearable && hasValue && !disabled && /* 🔴🔴 **`pointer-events-auto` ที่นี่คือสิ่งที่ทำให้ปุ่มนี้กดได้จริง**
+         *
+         * `FloatingFieldShell` ห่อ `rightAdornment` ด้วย `pointer-events-none` โดยเจตนา (คลิก
+         * ตรงไอคอนต้องทะลุไปเปิดช่อง) และเขียนกำกับไว้เองว่า *"adornment ที่เป็นปุ่มจริงต้องเปิด
+         * `pointer-events-auto` ที่ตัวมันเอง"* — `TimePicker` กับปุ่มล้างของ `DateRangePicker`
+         * ทำแบบนั้นอยู่ก่อนแล้ว **แต่ตัวนี้ตกไป** ⇒ คลิกทะลุไปโดน trigger ⇒ **แผงเปิดขึ้นมา
+         * แทนที่จะล้างค่า** และ `stopPropagation` ใน `handleClear` ช่วยไม่ได้เพราะ event
+         * ไม่เคยถึงปุ่มเลย (ยืนยันจากจอจริงของ mediact-web-backoffice 2026-08-18)
+         *
+         * 🔑 **ปุ่มนี้อยู่นอก `RadixSelect.Trigger`** (shell วาง adornment เป็น sibling แบบ
+         * `absolute`) ⇒ ไม่ใช่ปุ่มซ้อนปุ่ม และเปิด pointer events ได้โดยไม่ทำให้ HTML ผิด
+         *
+         * 🔴 **ถอด `tabIndex={-1}` ออก** — เดิมคีย์บอร์ดเข้าไม่ถึงปุ่มล้างเลย ⇒ คนที่ใช้ Tab
+         * ล้างค่าไม่ได้ทั้งที่เห็นปุ่มอยู่ · ปุ่มอยู่หลัง trigger ในลำดับ DOM อยู่แล้ว
+         * ⇒ ลำดับ Tab ที่ได้คือ "ช่อง → ปุ่มล้าง" ซึ่งเป็นลำดับที่อ่านจากซ้ายไปขวาพอดี */
+        /* @__PURE__ */ jsx16(
           "button",
           {
             type: "button",
             "aria-label": "Clear",
-            tabIndex: -1,
             onClick: handleClear,
-            className: "rounded-full p-0.5 hover:bg-overlay-press",
+            className: "pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-press",
             children: /* @__PURE__ */ jsx16(X2, {})
           }
         ),
@@ -2517,7 +2531,12 @@ var DialogContent = React22.forwardRef(
           ref,
           className: cn(
             "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2",
-            "rounded-md border border-border-default bg-white p-6 shadow-xl outline-none",
+            /* `rounded-3xl` = **24px** ตามดีไซน์ของกล่องโต้ตอบ (เดิม `rounded-md` = 6px ซึ่งไม่ตรง
+             * กับ mockup ของทุกกล่องที่ออกแบบมา) — เปลี่ยนที่นี่เพราะเป็น *ค่าตั้งต้น* ที่ทุกกล่อง
+             * ควรได้เหมือนกัน ⛔ ไม่ใช่ให้แต่ละแอปส่ง `className` ทับเอง ซึ่งจะเพี้ยนกันไปคนละค่า
+             * ⚠️ กระทบ `Dialog` ทุกตัวในทุกแอปที่ใช้ DS โดยเจตนา · ทับเฉพาะจุดยังทำได้ผ่าน
+             * `className` เพราะ `cn` เป็น tailwind-merge (คลาส `rounded-*` ตัวหลังชนะ) */
+            "rounded-3xl border border-border-default bg-white p-6 shadow-xl outline-none",
             "data-[state=open]:animate-in data-[state=open]:zoom-in-95",
             "data-[state=closed]:animate-out data-[state=closed]:zoom-out-95",
             sizeClasses3[size],
@@ -3988,9 +4007,10 @@ var DEFAULT_LABELS = {
   nextYears: "Next years"
 };
 var YEARS_PER_PAGE = 12;
-var GRID_CELL_BASE = "h-11 cursor-pointer rounded-[10px] text-body-sm transition-colors";
-var GRID_CELL_SELECTED = "bg-brand font-bold text-brand-foreground";
-var GRID_CELL_IDLE = "bg-overlay-hover text-text-black hover:bg-overlay-press";
+var GRID_CELL_BASE = "h-11 rounded-[10px] text-body-sm transition-colors";
+var GRID_CELL_SELECTED = "cursor-pointer bg-brand font-bold text-white";
+var GRID_CELL_IDLE = "cursor-pointer bg-overlay-hover text-text-black hover:bg-overlay-press";
+var GRID_CELL_DISABLED = "cursor-not-allowed bg-overlay-hover/40 text-text-muted";
 var Calendar = React27.forwardRef(
   function Calendar2({
     month,
@@ -4001,6 +4021,7 @@ var Calendar = React27.forwardRef(
     minDate = null,
     maxDate = null,
     disabledDate,
+    disabledMonth,
     onSelect,
     onDayHover,
     defaultView = "day",
@@ -4031,6 +4052,39 @@ var Calendar = React27.forwardRef(
       [locale]
     );
     const outOfBounds = (d) => !!minDate && startOfDay(d) < startOfDay(minDate) || !!maxDate && startOfDay(d) > startOfDay(maxDate) || !!disabledDate?.(d);
+    const monthIndexOf2 = (d) => d.getFullYear() * 12 + d.getMonth();
+    const monthOutOfBounds = (d) => {
+      const i = monthIndexOf2(d);
+      return !!minDate && i < monthIndexOf2(minDate) || !!maxDate && i > monthIndexOf2(maxDate) || !!disabledMonth?.(startOfMonth(d));
+    };
+    const yearOutOfBounds = (d) => {
+      const year = d.getFullYear();
+      for (let m = 0; m < 12; m += 1) {
+        if (!monthOutOfBounds(new Date(year, m, 1))) return false;
+      }
+      return true;
+    };
+    const canStep = (dir) => {
+      const target = addMonths(
+        month,
+        dir * (view === "day" ? 1 : view === "month" ? 12 : 12 * YEARS_PER_PAGE)
+      );
+      let from;
+      let to;
+      if (view === "day") {
+        from = to = monthIndexOf2(target);
+      } else if (view === "month") {
+        from = monthIndexOf2(new Date(target.getFullYear(), 0, 1));
+        to = from + 11;
+      } else {
+        const pageStart = Math.floor(target.getFullYear() / YEARS_PER_PAGE) * YEARS_PER_PAGE;
+        from = monthIndexOf2(new Date(pageStart, 0, 1));
+        to = monthIndexOf2(new Date(pageStart + YEARS_PER_PAGE - 1, 11, 1));
+      }
+      if (minDate && to < monthIndexOf2(minDate)) return false;
+      if (maxDate && from > monthIndexOf2(maxDate)) return false;
+      return true;
+    };
     const end = rangeEnd ?? (selected && hoverEnd ? hoverEnd : null);
     const isSpan = !!(selected && end && !isSameDay(selected, end));
     const grid = React27.useMemo(
@@ -4107,7 +4161,7 @@ var Calendar = React27.forwardRef(
       month: "year",
       year: "month"
     };
-    const navClass = "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-overlay-hover text-text-body transition-colors hover:bg-overlay-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-[18px]";
+    const navClass = "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-overlay-hover text-text-body transition-colors hover:bg-overlay-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-overlay-hover [&_svg]:size-[18px]";
     return /* @__PURE__ */ jsxs27("div", { ref, className: cn("w-[340px] p-4 pb-0", className), children: [
       /* @__PURE__ */ jsxs27("div", { className: "mb-3 flex items-center justify-between", children: [
         /* @__PURE__ */ jsx33(
@@ -4115,6 +4169,7 @@ var Calendar = React27.forwardRef(
           {
             type: "button",
             "aria-label": view === "day" ? L.prevMonth : view === "month" ? L.prevYear : L.prevYears,
+            disabled: !canStep(-1),
             onClick: () => stepMonth(-1),
             className: navClass,
             children: /* @__PURE__ */ jsx33(ChevronLeft, {})
@@ -4136,6 +4191,7 @@ var Calendar = React27.forwardRef(
           {
             type: "button",
             "aria-label": view === "day" ? L.nextMonth : view === "month" ? L.nextYear : L.nextYears,
+            disabled: !canStep(1),
             onClick: () => stepMonth(1),
             className: navClass,
             children: /* @__PURE__ */ jsx33(ChevronRight2, {})
@@ -4150,18 +4206,20 @@ var Calendar = React27.forwardRef(
           const year = yearPageStart + i;
           const cell = new Date(year, month.getMonth(), 1);
           const isCurrent = month.getFullYear() === year;
+          const isDisabled = yearOutOfBounds(cell);
           return /* @__PURE__ */ jsx33(
             "button",
             {
               type: "button",
               "aria-pressed": isCurrent,
+              disabled: isDisabled,
               onClick: () => {
                 onMonthChange(cell);
                 setView("month");
               },
               className: cn(
                 GRID_CELL_BASE,
-                isCurrent ? GRID_CELL_SELECTED : GRID_CELL_IDLE
+                isDisabled ? GRID_CELL_DISABLED : isCurrent ? GRID_CELL_SELECTED : GRID_CELL_IDLE
               ),
               children: yearCellLabel(cell)
             },
@@ -4171,11 +4229,13 @@ var Calendar = React27.forwardRef(
       ) : view === "month" ? /* @__PURE__ */ jsx33("div", { className: "grid grid-cols-3 gap-2 pb-2", children: Array.from({ length: 12 }, (_, i) => {
         const cell = new Date(month.getFullYear(), i, 1);
         const isCurrent = month.getMonth() === i;
+        const isDisabled = monthOutOfBounds(cell);
         return /* @__PURE__ */ jsx33(
           "button",
           {
             type: "button",
             "aria-pressed": isCurrent,
+            disabled: isDisabled,
             onClick: () => {
               onMonthChange(cell);
               if (selectMonth) onSelect?.(cell);
@@ -4183,7 +4243,7 @@ var Calendar = React27.forwardRef(
             },
             className: cn(
               GRID_CELL_BASE,
-              isCurrent ? GRID_CELL_SELECTED : GRID_CELL_IDLE
+              isDisabled ? GRID_CELL_DISABLED : isCurrent ? GRID_CELL_SELECTED : GRID_CELL_IDLE
             ),
             children: fmt.monthCell.format(cell)
           },
@@ -5190,6 +5250,7 @@ function ComboBox(props) {
   } = props;
   const isMultiple = multiple === true;
   const { renderChip, maxVisibleChips = 3, maxItems } = isMultiple ? props : {};
+  const { clearable } = isMultiple ? {} : props;
   const reactId = React32.useId();
   const triggerId = id ?? reactId;
   const [open, setOpen] = React32.useState(false);
@@ -5214,6 +5275,22 @@ function ComboBox(props) {
       onChange?.(next[0] ?? null);
     }
   };
+  const clearButton = clearable && !isMultiple && selected.length > 0 && !disabled ? /* @__PURE__ */ jsx39(
+    "button",
+    {
+      type: "button",
+      "aria-label": "Clear",
+      onClick: (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setSelected([]);
+        setQuery("");
+      },
+      onPointerDown: (event) => event.stopPropagation(),
+      className: "pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-press",
+      children: /* @__PURE__ */ jsx39(X6, { className: "size-4" })
+    }
+  ) : null;
   const flatOptions = React32.useMemo(
     () => groups ? groups.flatMap((g) => g.options) : options,
     [groups, options]
@@ -5355,12 +5432,15 @@ function ComboBox(props) {
                 hasError,
                 reserveMessageSpace,
                 containerClassName,
-                rightAdornment: /* @__PURE__ */ jsx39(
-                  ChevronDown4,
-                  {
-                    className: cn("transition-transform", open && "rotate-180")
-                  }
-                ),
+                rightAdornment: /* @__PURE__ */ jsxs33(Fragment9, { children: [
+                  clearButton,
+                  /* @__PURE__ */ jsx39(
+                    ChevronDown4,
+                    {
+                      className: cn("transition-transform", open && "rotate-180")
+                    }
+                  )
+                ] }),
                 children: /* @__PURE__ */ jsx39(PopoverAnchor, { asChild: true, children: /* @__PURE__ */ jsx39(
                   CmdkRoot.Input,
                   {
@@ -5425,7 +5505,10 @@ function ComboBox(props) {
       hasError,
       reserveMessageSpace,
       containerClassName,
-      rightAdornment: /* @__PURE__ */ jsx39(ChevronsUpDown, {}),
+      rightAdornment: /* @__PURE__ */ jsxs33(Fragment9, { children: [
+        clearButton,
+        /* @__PURE__ */ jsx39(ChevronsUpDown, {})
+      ] }),
       children: /* @__PURE__ */ jsxs33(
         Popover,
         {
@@ -7927,6 +8010,142 @@ var DateNavigator = React43.forwardRef(
   }
 );
 DateNavigator.displayName = "DateNavigator";
+
+// src/ui/PeriodNavigator.tsx
+import * as React44 from "react";
+import { jsx as jsx55 } from "react/jsx-runtime";
+var DEFAULT_LABELS3 = {
+  prev: "Previous period",
+  next: "Next period",
+  empty: "No periods yet",
+  monthGrid: "Choose period by month",
+  footer: "{month} \xB7 {range}",
+  prevYear: "Previous year",
+  nextYear: "Next year",
+  chooseYear: "Choose year",
+  prevYears: "Previous years",
+  nextYears: "Next years"
+};
+var parseDateOnly = (value) => {
+  if (!value) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+var monthOfPeriod = (period) => {
+  const end = parseDateOnly(period.endDate);
+  return end ? new Date(end.getFullYear(), end.getMonth(), 1) : null;
+};
+var monthIndexOf = (d) => d.getFullYear() * 12 + d.getMonth();
+var PeriodNavigator = React44.forwardRef(
+  function PeriodNavigator2({
+    periods,
+    value,
+    onChange,
+    locale = "th-TH",
+    labels,
+    showFooter = true,
+    disabled,
+    calendarProps,
+    ...props
+  }, ref) {
+    const L = { ...DEFAULT_LABELS3, ...labels };
+    const fmt = React44.useMemo(
+      () => ({
+        full: new Intl.DateTimeFormat(locale, {
+          day: "numeric",
+          month: "short",
+          year: "numeric"
+        }),
+        noYear: new Intl.DateTimeFormat(locale, {
+          day: "numeric",
+          month: "short"
+        }),
+        monthCell: new Intl.DateTimeFormat(locale, { month: "short" })
+      }),
+      [locale]
+    );
+    const ordered = React44.useMemo(
+      () => periods.map((period) => ({ period, month: monthOfPeriod(period) })).filter(
+        (entry) => entry.month !== null
+      ).sort((a, b) => monthIndexOf(a.month) - monthIndexOf(b.month)),
+      [periods]
+    );
+    const bounds = ordered.length ? { min: ordered[0].month, max: ordered[ordered.length - 1].month } : null;
+    const idByMonth = React44.useMemo(() => {
+      const map = /* @__PURE__ */ new Map();
+      ordered.forEach(({ period, month }) => {
+        const key = monthIndexOf(month);
+        if (!map.has(key)) map.set(key, period.id);
+      });
+      return map;
+    }, [ordered]);
+    const selected = ordered.find((entry) => entry.period.id === value) ?? null;
+    const handleChange = (next) => {
+      const target = monthIndexOf(next);
+      const exact = idByMonth.get(target);
+      if (exact !== void 0) {
+        onChange(exact);
+        return;
+      }
+      if (!selected) return;
+      const from = monthIndexOf(selected.month);
+      if (target === from) return;
+      const found = target > from ? ordered.find((entry) => monthIndexOf(entry.month) > from) : [...ordered].reverse().find((entry) => monthIndexOf(entry.month) < from);
+      if (found) onChange(found.period.id);
+    };
+    const rangeLabel = (period) => {
+      const start = parseDateOnly(period.startDate);
+      const end = parseDateOnly(period.endDate);
+      if (!start || !end) return period.label ?? "";
+      try {
+        return fmt.full.formatRange(start, end);
+      } catch {
+        const head = start.getFullYear() === end.getFullYear() ? fmt.noYear.format(start) : fmt.full.format(start);
+        return `${head} \u2013 ${fmt.full.format(end)}`;
+      }
+    };
+    const hasPeriods = ordered.length > 0;
+    const centreLabel = selected ? [rangeLabel(selected.period), selected.period.suffix].filter(Boolean).join(" ") : L.empty;
+    return /* @__PURE__ */ jsx55(
+      DateNavigator,
+      {
+        ref,
+        unit: "month",
+        value: selected?.month,
+        onChange: handleChange,
+        minDate: bounds?.min,
+        maxDate: bounds?.max,
+        prevDisabled: hasPeriods && !disabled ? void 0 : true,
+        nextDisabled: hasPeriods && !disabled ? void 0 : true,
+        calendar: hasPeriods && !disabled,
+        label: /* @__PURE__ */ jsx55("span", { title: selected?.period.label, className: "truncate", children: centreLabel }),
+        prevLabel: L.prev,
+        nextLabel: L.next,
+        locale,
+        calendarProps: {
+          ...calendarProps,
+          defaultView: "month",
+          selectMonth: true,
+          /* เกณฑ์คือ "มีแถวงวดของเดือนนี้ไหม" ⛔ ไม่ใช่การเทียบวันที่เอง */
+          disabledMonth: (month) => !idByMonth.has(monthIndexOf(month)),
+          labels: {
+            ...calendarProps?.labels,
+            prevYear: L.prevYear,
+            nextYear: L.nextYear,
+            chooseYear: L.chooseYear,
+            prevYears: L.prevYears,
+            nextYears: L.nextYears
+          }
+        },
+        ...props,
+        children: showFooter && selected && /* @__PURE__ */ jsx55("div", { className: "mt-3 border-t border-divider-gray pt-3", children: /* @__PURE__ */ jsx55(Text, { as: "span", variant: "body-sm", tone: "muted", numeric: true, children: L.footer.replace("{month}", fmt.monthCell.format(selected.month)).replace("{range}", rangeLabel(selected.period)) }) })
+      }
+    );
+  }
+);
+PeriodNavigator.displayName = "PeriodNavigator";
 export {
   AddButton,
   AppLauncher,
@@ -8002,6 +8221,7 @@ export {
   NotificationBell,
   NumberStepper,
   OutlineButton,
+  PeriodNavigator,
   PillSwitch,
   Popover,
   PopoverAnchor,

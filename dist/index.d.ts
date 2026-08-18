@@ -1202,6 +1202,16 @@ type CalendarProps = {
     maxDate?: Date | null;
     /** ปิดวันเป็นราย ๆ นอกเหนือจากช่วง min/max (เช่นวันหยุด) */
     disabledDate?: (day: Date) => boolean;
+    /**
+     * ปิด **เดือน** เป็นราย ๆ ในตาราง 12 เดือน — คู่ขนานกับ `disabledDate` ของมุมมองวัน
+     *
+     * 🔑 มีไว้เพราะ `minDate`/`maxDate` ปิดได้แค่หัวท้าย ส่วนชุดเดือนที่เลือกได้จริง
+     * **ไม่จำเป็นต้องต่อเนื่อง** — ตัวเลื่อนงวดมีเดือนที่ไม่มีงวดคั่นกลางได้ และเดือนแบบนั้น
+     * ต้องกดไม่ได้ ไม่ใช่กดแล้วเงียบ
+     *
+     * รับ `Date` ที่เป็นวันที่ 1 ของเดือนเสมอ
+     */
+    disabledMonth?: (month: Date) => boolean;
     onSelect?: (day: Date) => void;
     onDayHover?: (day: Date | null) => void;
     /** มุมมองเริ่มต้น · `month` = เปิดมาที่ตาราง 12 เดือนเลย */
@@ -1678,6 +1688,18 @@ type ComboBoxSingleProps<V extends string = string> = ComboBoxCommonProps<V> & {
     defaultValue?: V;
     /** ไม่มีค่า = `null` (ตรงกับ `EntityAutocomplete`) */
     onChange?: (value: V | null) => void;
+    /**
+     * แสดงปุ่ม × ในช่องเมื่อมีค่าอยู่ กดแล้วคืนค่าเป็น `null`
+     *
+     * 🔴 **มีไว้เพราะโหมดเลือกอันเดียวเคยล้างค่าจาก UI ไม่ได้เลย** — โหมดหลายอันมีปุ่ม `Clear`
+     * ในแผงอยู่แล้ว แต่โหมดนี้ไม่มีทางกลับไปสถานะ "ไม่ได้เลือก" นอกจากรีโหลดหน้าหรือแก้ URL เอง
+     * (พบจาก mediact-web-backoffice 2026-08-18: ช่องแผนก/หน่วยงานบนแถบขอบเขต — ตัวกรองที่
+     * ล้างไม่ได้ทำให้ตัวเลือก "ดูทั้งหมด" เป็นไปไม่ได้ในทางปฏิบัติ)
+     *
+     * ทรงเดียวกับ `clearable` ของ `Select` โดยเจตนา — สองตัวนี้ถูกสลับกันใช้บ่อย
+     * ⛔ ไม่มีผลในโหมดหลายอัน (`multiple`) ซึ่งมีปุ่มล้างของตัวเองในแผง
+     */
+    clearable?: boolean;
 };
 type ComboBoxMultiProps<V extends string = string> = ComboBoxCommonProps<V> & ComboBoxMultiOnlyProps<V> & {
     multiple: true;
@@ -2686,6 +2708,84 @@ type DateNavigatorProps = Omit<React.ComponentProps<"div">, "children" | "onChan
  */
 declare const DateNavigator: React.ForwardRefExoticComponent<Omit<DateNavigatorProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
 
+/** @doc ./PeriodNavigator.md */
+
+/**
+ * งวดหนึ่งในรายการ — **แถวที่หลังบ้านให้มา** ⛔ ไม่ใช่เดือนปฏิทิน
+ *
+ * 🔴 วันที่เป็น `YYYY-MM-DD` = **วันตามปฏิทินที่คนเห็น ไม่ใช่จุดเวลา** ⇒ แปลงด้วย
+ * `parseDateOnly` เท่านั้น · `new Date("2026-08-18")` คิดบนสเกล UTC แล้วเลื่อนวัน
+ * ไป 1 วันในไทย (โรคเดียวกับ `toISOString()` ที่ `Calendar.dayKey` กันไว้)
+ */
+type PeriodNavigatorItem = {
+    id: string | number;
+    /** วันเริ่มงวด `YYYY-MM-DD` */
+    startDate: string;
+    /** วันตัดงวด `YYYY-MM-DD` — **เดือนของงวดอ่านจากค่านี้** */
+    endDate: string;
+    /**
+     * ชื่องวดจากหลังบ้าน (เช่น "งวดสิงหาคม 2569")
+     *
+     * ใช้เป็น `title` ของป้ายกลางเท่านั้น ⛔ ไม่ใช่ตัวป้าย — ป้ายคือ *ช่วงวัน* เพราะคนที่
+     * เปิดจอกำลังจะตอบว่า "ข้อมูลที่เห็นครอบวันไหนบ้าง" ซึ่งชื่อเดือนตอบไม่ได้เลยเมื่อ
+     * วันตัดงวดไม่ใช่สิ้นเดือน
+     */
+    label?: string;
+    /** ต่อท้ายป้ายกลาง เช่น "(ปิดแล้ว)" — ผู้เรียกแปลเอง */
+    suffix?: string;
+};
+type PeriodNavigatorLabels = {
+    /** aria ของ ‹ — "งวดก่อนหน้า" ⛔ ไม่ใช่ "เดือนก่อนหน้า" */
+    prev: string;
+    next: string;
+    /** ยังไม่มีงวดสักแถว ⇒ ป้ายกลางอ่านว่าอะไร */
+    empty: string;
+    /** ชื่อกลุ่มของตาราง 12 เดือน (โปรแกรมอ่านหน้าจอ) */
+    monthGrid: string;
+    /**
+     * บรรทัดสรุปใต้ปฏิทิน — `{month}` และ `{range}` ถูกแทนที่
+     *
+     * มีไว้เพราะตาราง 12 เดือนบอกได้แค่ *เดือน* ซึ่งไม่ใช่ช่วงวันของงวด
+     */
+    footer: string;
+    /** ส่งต่อให้ปฏิทิน */
+    prevYear: string;
+    nextYear: string;
+    chooseYear: string;
+    prevYears: string;
+    nextYears: string;
+};
+type PeriodNavigatorProps = Omit<DateNavigatorProps, "value" | "onChange" | "unit" | "label" | "minDate" | "maxDate" | "calendar" | "children" | "confirmLabel" | "onConfirm"> & {
+    /** รายการงวด — เรียงมาแบบไหนก็ได้ ⛔ component ไม่พึ่งลำดับ */
+    periods: PeriodNavigatorItem[];
+    /** `null` = ยังไม่เลือก ⇒ ป้ายกลางอ่านว่า "ยังไม่มีงวด" */
+    value: string | number | null;
+    onChange: (periodId: string | number) => void;
+    /** BCP-47 · ค่าเริ่มต้น `th-TH` = ปี พ.ศ. อัตโนมัติ */
+    locale?: string;
+    labels?: Partial<PeriodNavigatorLabels>;
+    /** บรรทัดสรุปใต้ปฏิทิน @default true */
+    showFooter?: boolean;
+    /**
+     * ปิดทั้งอันชั่วคราว — ลูกศรกดไม่ได้และปฏิทินไม่เปิด **แต่ป้ายกลางยังบอกงวดเดิม**
+     *
+     * ใช้ตอนรายการงวดกำลังโหลดใหม่ · ⛔ ไม่ใช่การส่ง `periods={[]}` ซึ่งจะทำให้ป้ายพลิกไปเป็น
+     * "ยังไม่มีงวด" ทั้งที่งวดมีอยู่ แล้วจอกะพริบทุกครั้งที่ refetch
+     */
+    disabled?: boolean;
+};
+/**
+ * ตัวเลื่อน **งวด** — `‹ 26 ก.ค. – 25 ส.ค. 2569 ›` + ตาราง 12 เดือนที่กดตรงกลางแล้วเปิด
+ *
+ * 🔴 **งวดคือแถวในฐานข้อมูล ไม่ใช่เดือนปฏิทิน** — เดือนที่เลือกได้คือเดือนที่ *มีแถวงวดจริง*
+ * เท่านั้น ⛔ ไม่ใช่การคิดขอบเองจากปฏิทิน ซึ่งจะกลายเป็นกฎชุดที่สองที่ drift จากหลังบ้าน
+ *
+ * 🔑 **ลูกศรเดินทีละ _งวด_ ⛔ ไม่ใช่ทีละเดือน** — เดือนหนึ่งมี 1 หรือ 2 งวดก็ได้ และเดือนที่
+ * ไม่มีงวดเลยก็มีจริง · ถ้าเดินทีละเดือนแล้วหางวดไม่เจอ ปุ่มจะกลายเป็น "กดแล้วอยู่ที่เดิม"
+ * ซึ่งผู้ใช้อ่านว่าจอค้าง
+ */
+declare const PeriodNavigator: React.ForwardRefExoticComponent<Omit<PeriodNavigatorProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
+
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, AppShowcaseDialog, type AppShowcaseDialogProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, SHOWCASE_COPY, SHOWCASE_LAYOUT, Select, SelectItem, type SelectOption, type SelectProps, type ShowcaseAppKey, type ShowcaseAssets, type ShowcaseLocale, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, AppShowcaseDialog, type AppShowcaseDialogProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PeriodNavigator, type PeriodNavigatorItem, type PeriodNavigatorLabels, type PeriodNavigatorProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, SHOWCASE_COPY, SHOWCASE_LAYOUT, Select, SelectItem, type SelectOption, type SelectProps, type ShowcaseAppKey, type ShowcaseAssets, type ShowcaseLocale, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
