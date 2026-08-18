@@ -170,12 +170,29 @@ function Select<V extends string = string>({
       rightAdornment={
         <>
           {clearable && hasValue && !disabled && (
+            /* 🔴🔴 **`pointer-events-auto` ที่นี่คือสิ่งที่ทำให้ปุ่มนี้กดได้จริง**
+             *
+             * `FloatingFieldShell` ห่อ `rightAdornment` ด้วย `pointer-events-none` โดยเจตนา (คลิก
+             * ตรงไอคอนต้องทะลุไปเปิดช่อง) และเขียนกำกับไว้เองว่า *"adornment ที่เป็นปุ่มจริงต้องเปิด
+             * `pointer-events-auto` ที่ตัวมันเอง"* — `TimePicker` กับปุ่มล้างของ `DateRangePicker`
+             * ทำแบบนั้นอยู่ก่อนแล้ว **แต่ตัวนี้ตกไป** ⇒ คลิกทะลุไปโดน trigger ⇒ **แผงเปิดขึ้นมา
+             * แทนที่จะล้างค่า** และ `stopPropagation` ใน `handleClear` ช่วยไม่ได้เพราะ event
+             * ไม่เคยถึงปุ่มเลย (ยืนยันจากจอจริงของ mediact-web-backoffice 2026-08-18)
+             *
+             * 🔑 **ปุ่มนี้อยู่นอก `RadixSelect.Trigger`** (shell วาง adornment เป็น sibling แบบ
+             * `absolute`) ⇒ ไม่ใช่ปุ่มซ้อนปุ่ม และเปิด pointer events ได้โดยไม่ทำให้ HTML ผิด
+             *
+             * 🔴 **ถอด `tabIndex={-1}` ออก** — เดิมคีย์บอร์ดเข้าไม่ถึงปุ่มล้างเลย ⇒ คนที่ใช้ Tab
+             * ล้างค่าไม่ได้ทั้งที่เห็นปุ่มอยู่ · ปุ่มอยู่หลัง trigger ในลำดับ DOM อยู่แล้ว
+             * ⇒ ลำดับ Tab ที่ได้คือ "ช่อง → ปุ่มล้าง" ซึ่งเป็นลำดับที่อ่านจากซ้ายไปขวาพอดี */
             <button
               type="button"
               aria-label="Clear"
-              tabIndex={-1}
               onClick={handleClear}
-              className="rounded-full p-0.5 hover:bg-overlay-press"
+              /* `cursor-pointer` ต้องเขียนเอง — Tailwind v4 เปลี่ยน preflight ของ `button`
+               * จาก `cursor: pointer` (v3) เป็น `cursor: default` ตาม UA stylesheet
+               * ⇒ ปุ่มทุกตัวที่ไม่ประกาศเองจะได้ลูกศรธรรมดา ซึ่งอ่านเหมือนกดไม่ได้ */
+              className="pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-press"
             >
               <X />
             </button>

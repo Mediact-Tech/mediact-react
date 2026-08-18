@@ -134,6 +134,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
               <button
                 type="button"
                 aria-label="Clear"
+                /* ⚠️ คง `tabIndex={-1}` ไว้ตามเดิมโดยเจตนา — `Input` ถูกใช้กว้างมาก
+                 * การเพิ่มจุดหยุด Tab จะเปลี่ยนลำดับคีย์บอร์ดของฟอร์มทั้งระบบ ซึ่งเกินขอบเขต
+                 * ของบั๊กที่พิสูจน์ได้ (กดด้วยเมาส์ไม่ได้) */
                 tabIndex={-1}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -142,7 +145,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
                     target: { value: "" },
                   } as React.ChangeEvent<HTMLInputElement>);
                 }}
-                className="rounded-full p-0.5 hover:bg-overlay-hover"
+                /* 🔴 **บั๊กเดียวกับปุ่มล้างของ `Select`** — `FloatingFieldShell` ห่อ `rightAdornment`
+                 * ด้วย `pointer-events-none` (เขียนกำกับไว้เองว่า adornment ที่เป็นปุ่มจริงต้องเปิด
+                 * กลับที่ตัวมันเอง) ⇒ ของเดิม **กดด้วยเมาส์ไม่ได้เลย** และเงียบสนิทเพราะ event
+                 * ไม่เคยถึงปุ่ม · `cursor-pointer` ต้องเขียนเองเพราะ Tailwind v4 เปลี่ยน preflight
+                 * ของ `button` เป็น `cursor: default` (v3 เป็น `pointer`) */
+                className="pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-hover"
               >
                 <X />
               </button>
@@ -153,7 +161,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 tabIndex={-1}
                 onClick={() => setShowPassword((s) => !s)}
-                className="rounded-full p-0.5 hover:bg-overlay-hover"
+                /* กดไม่ได้ด้วยเหตุเดียวกับปุ่มล้างข้างบน — ปุ่มแสดง/ซ่อนรหัสผ่านของทุกฟอร์มล็อกอิน
+                 * อยู่ใต้ตัวห่อ `pointer-events-none` เหมือนกัน */
+                className="pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-hover"
               >
                 {showPassword ? <Eye /> : <EyeOff />}
               </button>

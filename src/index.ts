@@ -324,6 +324,14 @@ export {
   type DateNavigatorProps,
   type DateNavigatorUnit,
 } from "./ui/DateNavigator";
+/* ตัวเลื่อน **งวด** — `DateNavigator` + ตาราง 12 เดือนที่กดได้เฉพาะเดือนที่มีงวดจริง
+ * (Mediwork "บันทึกเวลางาน" 3 จอ · MediHR "ข้อมูลงวด") */
+export {
+  PeriodNavigator,
+  type PeriodNavigatorProps,
+  type PeriodNavigatorItem,
+  type PeriodNavigatorLabels,
+} from "./ui/PeriodNavigator";
 /* ปฏิทินฐาน — `DatePicker` และ `DateNavigator` ใช้ตัวนี้ตัวเดียวกัน
  * เผยแพร่ออกไปด้วยเพราะจอที่ต้องฝังปฏิทินลงในหน้า (ไม่ใช่ใน popover) มีจริง */
 export {

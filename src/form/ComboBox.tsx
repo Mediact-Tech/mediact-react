@@ -163,6 +163,18 @@ export type ComboBoxSingleProps<V extends string = string> =
     defaultValue?: V;
     /** ไม่มีค่า = `null` (ตรงกับ `EntityAutocomplete`) */
     onChange?: (value: V | null) => void;
+    /**
+     * แสดงปุ่ม × ในช่องเมื่อมีค่าอยู่ กดแล้วคืนค่าเป็น `null`
+     *
+     * 🔴 **มีไว้เพราะโหมดเลือกอันเดียวเคยล้างค่าจาก UI ไม่ได้เลย** — โหมดหลายอันมีปุ่ม `Clear`
+     * ในแผงอยู่แล้ว แต่โหมดนี้ไม่มีทางกลับไปสถานะ "ไม่ได้เลือก" นอกจากรีโหลดหน้าหรือแก้ URL เอง
+     * (พบจาก mediact-web-backoffice 2026-08-18: ช่องแผนก/หน่วยงานบนแถบขอบเขต — ตัวกรองที่
+     * ล้างไม่ได้ทำให้ตัวเลือก "ดูทั้งหมด" เป็นไปไม่ได้ในทางปฏิบัติ)
+     *
+     * ทรงเดียวกับ `clearable` ของ `Select` โดยเจตนา — สองตัวนี้ถูกสลับกันใช้บ่อย
+     * ⛔ ไม่มีผลในโหมดหลายอัน (`multiple`) ซึ่งมีปุ่มล้างของตัวเองในแผง
+     */
+    clearable?: boolean;
   };
 
 export type ComboBoxMultiProps<V extends string = string> =
@@ -221,6 +233,10 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
   const { renderChip, maxVisibleChips = 3, maxItems } = isMultiple
     ? (props as ComboBoxMultiProps<V>)
     : ({} as ComboBoxMultiOnlyProps<V>);
+  /* ปุ่มล้างเป็นของโหมดเดี่ยวเท่านั้น — โหมดหลายอันมีปุ่ม `Clear` ของตัวเองอยู่ในแผง */
+  const { clearable } = isMultiple
+    ? ({} as ComboBoxSingleProps<V>)
+    : (props as ComboBoxSingleProps<V>);
 
   const reactId = React.useId();
   const triggerId = id ?? reactId;
@@ -254,6 +270,37 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
       (onChange as ((v: V | null) => void) | undefined)?.(next[0] ?? null);
     }
   };
+
+  /**
+   * ปุ่ม × ในช่องของโหมดเลือกอันเดียว — **ประกาศครั้งเดียว ใช้ทั้งเส้น `typeahead` และช่องธรรมดา**
+   *
+   * 🔴🔴 **`pointer-events-auto` เป็นส่วนที่ทำให้กดได้จริง** — `FloatingFieldShell` ห่อ
+   * `rightAdornment` ด้วย `pointer-events-none` โดยเจตนา (คลิกตรงไอคอนต้องทะลุไปเปิดแผง) และเขียน
+   * กำกับไว้เองว่า adornment ที่เป็นปุ่มจริงต้องเปิดกลับที่ตัวมันเอง · `Select` เคยตกข้อนี้จนปุ่มล้าง
+   * กดไม่ได้เลยบนจอจริง (แก้พร้อมกันในรอบนี้)
+   *
+   * ⛔ **หยุด event ไม่ให้ไปถึง trigger** — `PopoverTrigger`/`Command.Input` อยู่ใต้ปุ่มนี้
+   * ⇒ ปล่อยผ่านเมื่อไหร่ การล้างค่าจะเปิดแผงขึ้นมาด้วยทุกครั้ง ซึ่งอ่านเหมือนกดผิด
+   */
+  const clearButton =
+    clearable && !isMultiple && selected.length > 0 && !disabled ? (
+      <button
+        type="button"
+        aria-label="Clear"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setSelected([]);
+          setQuery("");
+        }}
+        onPointerDown={(event) => event.stopPropagation()}
+        /* `cursor-pointer` เขียนเอง — Tailwind v4 ตั้ง `button { cursor: default }` ใน preflight
+         * (ต่างจาก v3) ⇒ ไม่ประกาศแล้วได้ลูกศรธรรมดา ซึ่งอ่านเหมือนปุ่มกดไม่ได้ */
+        className="pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-press"
+      >
+        <X className="size-4" />
+      </button>
+    ) : null;
 
   const flatOptions = React.useMemo(
     () => (groups ? groups.flatMap((g) => g.options) : options),
@@ -439,9 +486,12 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
             reserveMessageSpace={reserveMessageSpace}
             containerClassName={containerClassName}
             rightAdornment={
-              <ChevronDown
-                className={cn("transition-transform", open && "rotate-180")}
-              />
+              <>
+                {clearButton}
+                <ChevronDown
+                  className={cn("transition-transform", open && "rotate-180")}
+                />
+              </>
             }
           >
             <PopoverAnchor asChild>
@@ -515,7 +565,12 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
       hasError={hasError}
       reserveMessageSpace={reserveMessageSpace}
       containerClassName={containerClassName}
-      rightAdornment={<ChevronsUpDown />}
+      rightAdornment={
+        <>
+          {clearButton}
+          <ChevronsUpDown />
+        </>
+      }
     >
       <Popover
         open={open}

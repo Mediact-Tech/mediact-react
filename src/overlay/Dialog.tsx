@@ -51,7 +51,12 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           ref={ref}
           className={cn(
             "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2",
-            "rounded-md border border-border-default bg-white p-6 shadow-xl outline-none",
+            /* `rounded-3xl` = **24px** ตามดีไซน์ของกล่องโต้ตอบ (เดิม `rounded-md` = 6px ซึ่งไม่ตรง
+             * กับ mockup ของทุกกล่องที่ออกแบบมา) — เปลี่ยนที่นี่เพราะเป็น *ค่าตั้งต้น* ที่ทุกกล่อง
+             * ควรได้เหมือนกัน ⛔ ไม่ใช่ให้แต่ละแอปส่ง `className` ทับเอง ซึ่งจะเพี้ยนกันไปคนละค่า
+             * ⚠️ กระทบ `Dialog` ทุกตัวในทุกแอปที่ใช้ DS โดยเจตนา · ทับเฉพาะจุดยังทำได้ผ่าน
+             * `className` เพราะ `cn` เป็น tailwind-merge (คลาส `rounded-*` ตัวหลังชนะ) */
+            "rounded-3xl border border-border-default bg-white p-6 shadow-xl outline-none",
             "data-[state=open]:animate-in data-[state=open]:zoom-in-95",
             "data-[state=closed]:animate-out data-[state=closed]:zoom-out-95",
             sizeClasses[size],

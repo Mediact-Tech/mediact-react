@@ -338,3 +338,93 @@ describe("ปุ่มยังไม่ได้ตั้ง type จะ submit
     expect(wrong).toEqual([]);
   });
 });
+
+/**
+ * 🔴 มุมมองเดือน/ปีเคยไม่อ่าน `minDate`/`maxDate` เลย — ค่าพวกนั้นถูกใช้เฉพาะมุมมองวัน
+ * ⇒ เดือนที่อยู่นอกช่วงกดได้ตามปกติ แล้วผู้เรียกที่กรองต่อก็เงียบ = ปุ่มที่กดแล้วอยู่ที่เดิม
+ * ซึ่งแย่กว่าปุ่มที่บอกว่ากดไม่ได้ (`mediact-hr-web` เคยต้องวาดตาราง 12 เดือนเองทั้งชุด
+ * เพราะข้อนี้ · ดูหัวไฟล์ `period-summary/components/PeriodPicker.tsx`)
+ */
+describe("ขอบเขตในมุมมองเดือน/ปี", () => {
+  const monthCell = (name: string) => screen.getByRole("button", { name });
+
+  it("minDate / maxDate ปิดเดือนนอกช่วง", () => {
+    setup({
+      defaultView: "month",
+      minDate: new Date(2026, 3, 20), // 20 เม.ย. — เดือน เม.ย. ยังเปิด
+      maxDate: new Date(2026, 6, 5), // 5 ก.ค. — เดือน ก.ค. ยังเปิด
+    });
+    expect(monthCell("มี.ค.")).toBeDisabled();
+    expect(monthCell("เม.ย.")).toBeEnabled();
+    expect(monthCell("ก.ค.")).toBeEnabled();
+    expect(monthCell("ส.ค.")).toBeDisabled();
+  });
+
+  it("disabledMonth ปิดเดือนเป็นราย ๆ — ชุดที่เลือกได้ไม่ต้องต่อเนื่อง", () => {
+    setup({
+      defaultView: "month",
+      disabledMonth: (m) => m.getMonth() !== 4 && m.getMonth() !== 9,
+    });
+    expect(monthCell("พ.ค.")).toBeEnabled();
+    expect(monthCell("ต.ค.")).toBeEnabled();
+    expect(monthCell("มิ.ย.")).toBeDisabled();
+  });
+
+  it("เดือนที่ปิดกดแล้วไม่เกิดอะไรขึ้น ⛔ ไม่ใช่เปลี่ยนเดือนเงียบ ๆ", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    const onSelect = vi.fn();
+    setup({
+      defaultView: "month",
+      selectMonth: true,
+      onMonthChange,
+      onSelect,
+      minDate: new Date(2026, 4, 1),
+    });
+    await user.click(monthCell("ม.ค."));
+    expect(onMonthChange).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("ปีปิดเมื่อทุกเดือนในปีนั้นปิด — ⛔ ไม่พาไปเจอตารางเทาล้วน", async () => {
+    const user = userEvent.setup();
+    setup({ defaultView: "month", minDate: new Date(2026, 0, 1) });
+    await user.click(screen.getByRole("button", { name: "Choose year" }));
+    expect(screen.getByRole("button", { name: "2568" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "2569" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "2570" })).toBeEnabled();
+  });
+
+  it("ลูกศรปิดเมื่อหน้าถัดไปไม่เหลืออะไรให้เลือก (ทั้งสามมุมมอง)", async () => {
+    const user = userEvent.setup();
+    /* พ.ค. 2026 · ช่วงที่เลือกได้คือเดือนนี้เดือนเดียว */
+    const bounds = {
+      minDate: new Date(2026, 4, 1),
+      maxDate: new Date(2026, 4, 31),
+    };
+    const { unmount } = setup(bounds);
+    expect(screen.getByRole("button", { name: "Previous month" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next month" })).toBeDisabled();
+    unmount();
+
+    setup({ ...bounds, defaultView: "month" });
+    expect(screen.getByRole("button", { name: "Previous year" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next year" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Choose year" }));
+    expect(screen.getByRole("button", { name: "Previous years" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next years" })).toBeDisabled();
+  });
+
+  /* 🔴 ช่องว่างที่อยู่ **ตรงกลาง** ต้องเดินผ่านได้ — ไม่งั้นเดือนที่มีข้อมูลอยู่อีกฝั่ง
+   * ของช่องว่างจะไปไม่ถึงเลย · ลูกศรจึงดูแค่ min/max ⛔ ไม่ดู `disabledMonth` */
+  it("disabledMonth ไม่ทำให้ลูกศรปิด", () => {
+    setup({
+      defaultView: "month",
+      disabledMonth: (m) => m.getFullYear() === 2027,
+      minDate: new Date(2026, 0, 1),
+      maxDate: new Date(2028, 11, 31),
+    });
+    expect(screen.getByRole("button", { name: "Next year" })).toBeEnabled();
+  });
+});

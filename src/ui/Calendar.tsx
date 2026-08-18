@@ -76,10 +76,22 @@ const YEARS_PER_PAGE = 12;
  *
  * 🔴 แยกออกมาเพราะสองตารางนี้ต้องเท่ากันเสมอ ถ้าต่างคนต่างถือ class มันจะเพี้ยน
  * ออกจากกันแบบเงียบ ๆ (บทเรียนเดียวกับ checkbox/radio ที่ `ui/toggle-parts.tsx` แก้) */
-const GRID_CELL_BASE =
-  "h-11 cursor-pointer rounded-[10px] text-body-sm transition-colors";
-const GRID_CELL_SELECTED = "bg-brand font-bold text-brand-foreground";
-const GRID_CELL_IDLE = "bg-overlay-hover text-text-black hover:bg-overlay-press";
+const GRID_CELL_BASE = "h-11 rounded-[10px] text-body-sm transition-colors";
+/* 🔴 **ขาวตายตัว ⛔ ไม่ใช่ `text-brand-foreground`** (ผู้ใช้เคาะ 2026-08-18 จากจอ Mediwork จริง)
+ * — theme ของ Mediwork ตั้ง `brand-foreground` เป็น `neutral-900` โดยตั้งใจ เพราะขาวบน
+ * เขียวมิ้นต์วัดได้ **1.93:1** · ผลคือช่องเดือนที่เลือกอยู่เป็นตัวหนังสือเกือบดำที่นั่น
+ * ขณะที่อีก 3 แอปเป็นขาว ⇒ ตัวควบคุมเดียวกันดูคนละสถานะกันคนละแอป
+ * **ราคาที่รับ: contrast ของช่องที่เลือกบน Mediwork ต่ำกว่าเกณฑ์** — ยอมได้เพราะสถานะนี้
+ * ยังอ่านออกจาก *พื้นสี* ไม่ได้พึ่งตัวอักษรอย่างเดียว (ช่องอื่นพื้นเทาอ่อนหมด) */
+const GRID_CELL_SELECTED = "cursor-pointer bg-brand font-bold text-white";
+const GRID_CELL_IDLE =
+  "cursor-pointer bg-overlay-hover text-text-black hover:bg-overlay-press";
+/** นอกขอบ `minDate`/`maxDate` หรือถูก `disabledMonth` ปิด
+ *
+ * ⛔ **ห้าม `pointer-events-none`** — มันตัด hit-test ทิ้ง เมาส์จึงไม่เคย "อยู่บน" ช่อง
+ * และ `cursor-not-allowed` ก็ไม่มีวันทำงาน · `disabled` ของปุ่มกันการกดอยู่แล้ว */
+const GRID_CELL_DISABLED =
+  "cursor-not-allowed bg-overlay-hover/40 text-text-muted";
 
 export type CalendarProps = {
   /** เดือนที่กำลังแสดง — ผู้เรียกถือ state เอง เพื่อให้อยู่รอดตอน popover re-render */
@@ -95,6 +107,16 @@ export type CalendarProps = {
   maxDate?: Date | null;
   /** ปิดวันเป็นราย ๆ นอกเหนือจากช่วง min/max (เช่นวันหยุด) */
   disabledDate?: (day: Date) => boolean;
+  /**
+   * ปิด **เดือน** เป็นราย ๆ ในตาราง 12 เดือน — คู่ขนานกับ `disabledDate` ของมุมมองวัน
+   *
+   * 🔑 มีไว้เพราะ `minDate`/`maxDate` ปิดได้แค่หัวท้าย ส่วนชุดเดือนที่เลือกได้จริง
+   * **ไม่จำเป็นต้องต่อเนื่อง** — ตัวเลื่อนงวดมีเดือนที่ไม่มีงวดคั่นกลางได้ และเดือนแบบนั้น
+   * ต้องกดไม่ได้ ไม่ใช่กดแล้วเงียบ
+   *
+   * รับ `Date` ที่เป็นวันที่ 1 ของเดือนเสมอ
+   */
+  disabledMonth?: (month: Date) => boolean;
   onSelect?: (day: Date) => void;
   onDayHover?: (day: Date | null) => void;
   /** มุมมองเริ่มต้น · `month` = เปิดมาที่ตาราง 12 เดือนเลย */
@@ -153,6 +175,7 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
       minDate = null,
       maxDate = null,
       disabledDate,
+      disabledMonth,
       onSelect,
       onDayHover,
       defaultView = "day",
@@ -197,6 +220,58 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
       (!!minDate && startOfDay(d) < startOfDay(minDate)) ||
       (!!maxDate && startOfDay(d) > startOfDay(maxDate)) ||
       !!disabledDate?.(d);
+
+    /* เลขลำดับเดือนบนเส้นเวลา — เทียบเดือนกับเดือนโดยไม่ต้องสน "วันที่เท่าไร"
+     * (`minDate = 15 ส.ค.` ไม่ได้แปลว่าเดือน ส.ค. ทั้งเดือนถูกปิด) */
+    const monthIndexOf = (d: Date) => d.getFullYear() * 12 + d.getMonth();
+
+    const monthOutOfBounds = (d: Date) => {
+      const i = monthIndexOf(d);
+      return (
+        (!!minDate && i < monthIndexOf(minDate)) ||
+        (!!maxDate && i > monthIndexOf(maxDate)) ||
+        !!disabledMonth?.(startOfMonth(d))
+      );
+    };
+
+    /* ปีปิดก็ต่อเมื่อ **ทุกเดือนในปีนั้นปิด** ⛔ ไม่ใช่กฎชุดที่สองที่ดู min/max เอง —
+     * มีสองสูตรเมื่อไหร่ก็มีที่ให้ตอบไม่ตรงกันเมื่อนั้น (ตารางปีบอกว่าเข้าได้
+     * แล้วเข้าไปเจอ 12 ช่องเทาล้วน) · 12 ครั้ง × 12 ช่อง เกิดเฉพาะตอนอยู่มุมมองปี */
+    const yearOutOfBounds = (d: Date) => {
+      const year = d.getFullYear();
+      for (let m = 0; m < 12; m += 1) {
+        if (!monthOutOfBounds(new Date(year, m, 1))) return false;
+      }
+      return true;
+    };
+
+    /* ลูกศรพาไปหน้าไหน แล้วหน้านั้นยังมีอะไรให้เลือกไหม
+     *
+     * 🔴 ดูแค่ `minDate`/`maxDate` ⛔ ไม่ดู `disabledMonth` — ช่องว่างที่**อยู่ตรงกลาง**
+     * ต้องเดินผ่านได้ ไม่งั้นเดือนที่มีข้อมูลอยู่อีกฝั่งของช่องว่างจะไปไม่ถึงเลย */
+    const canStep = (dir: -1 | 1) => {
+      const target = addMonths(
+        month,
+        dir *
+          (view === "day" ? 1 : view === "month" ? 12 : 12 * YEARS_PER_PAGE),
+      );
+      let from: number;
+      let to: number;
+      if (view === "day") {
+        from = to = monthIndexOf(target);
+      } else if (view === "month") {
+        from = monthIndexOf(new Date(target.getFullYear(), 0, 1));
+        to = from + 11;
+      } else {
+        const pageStart =
+          Math.floor(target.getFullYear() / YEARS_PER_PAGE) * YEARS_PER_PAGE;
+        from = monthIndexOf(new Date(pageStart, 0, 1));
+        to = monthIndexOf(new Date(pageStart + YEARS_PER_PAGE - 1, 11, 1));
+      }
+      if (minDate && to < monthIndexOf(minDate)) return false;
+      if (maxDate && from > monthIndexOf(maxDate)) return false;
+      return true;
+    };
 
     const end = rangeEnd ?? (selected && hoverEnd ? hoverEnd : null);
     const isSpan = !!(selected && end && !isSameDay(selected, end));
@@ -325,7 +400,7 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
      * (ดำ 5% ≈ `#f2f2f2` บนพื้นขาว) แทน เป็น token ที่ตั้งใจไว้ให้ใช้กับพื้นแบบนี้
      * และไม่พึ่งชื่อที่ชนกับ palette ของ Tailwind */
     const navClass =
-      "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-overlay-hover text-text-body transition-colors hover:bg-overlay-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-[18px]";
+      "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-overlay-hover text-text-body transition-colors hover:bg-overlay-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-overlay-hover [&_svg]:size-[18px]";
 
     return (
       <div ref={ref} className={cn("w-[340px] p-4 pb-0", className)}>
@@ -340,6 +415,7 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
                   ? L.prevYear
                   : L.prevYears
             }
+            disabled={!canStep(-1)}
             onClick={() => stepMonth(-1)}
             className={navClass}
           >
@@ -365,6 +441,7 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
                   ? L.nextYear
                   : L.nextYears
             }
+            disabled={!canStep(1)}
             onClick={() => stepMonth(1)}
             className={navClass}
           >
@@ -381,18 +458,24 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
               const year = yearPageStart + i;
               const cell = new Date(year, month.getMonth(), 1);
               const isCurrent = month.getFullYear() === year;
+              const isDisabled = yearOutOfBounds(cell);
               return (
                 <button
                   key={year}
                   type="button"
                   aria-pressed={isCurrent}
+                  disabled={isDisabled}
                   onClick={() => {
                     onMonthChange(cell);
                     setView("month");
                   }}
                   className={cn(
                     GRID_CELL_BASE,
-                    isCurrent ? GRID_CELL_SELECTED : GRID_CELL_IDLE,
+                    isDisabled
+                      ? GRID_CELL_DISABLED
+                      : isCurrent
+                        ? GRID_CELL_SELECTED
+                        : GRID_CELL_IDLE,
                   )}
                 >
                   {yearCellLabel(cell)}
@@ -405,11 +488,13 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
             {Array.from({ length: 12 }, (_, i) => {
               const cell = new Date(month.getFullYear(), i, 1);
               const isCurrent = month.getMonth() === i;
+              const isDisabled = monthOutOfBounds(cell);
               return (
                 <button
                   key={i}
                   type="button"
                   aria-pressed={isCurrent}
+                  disabled={isDisabled}
                   onClick={() => {
                     onMonthChange(cell);
                     if (selectMonth) onSelect?.(cell);
@@ -417,7 +502,11 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
                   }}
                   className={cn(
                     GRID_CELL_BASE,
-                    isCurrent ? GRID_CELL_SELECTED : GRID_CELL_IDLE,
+                    isDisabled
+                      ? GRID_CELL_DISABLED
+                      : isCurrent
+                        ? GRID_CELL_SELECTED
+                        : GRID_CELL_IDLE,
                   )}
                 >
                   {fmt.monthCell.format(cell)}
