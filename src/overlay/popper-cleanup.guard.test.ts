@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * 🔴🔴 **popper ที่ติดตั้งอยู่ต้องไม่มี `setState` ใน cleanup ของ `useLayoutEffect`**
@@ -43,14 +44,39 @@ describe("react-popper cleanup", () => {
       "@radix-ui/react-menu",
     ];
 
-    const popperDistFor = (pkg: string): string | null => {
-      const nested = join("node_modules", pkg, "node_modules", "@radix-ui", "react-popper", "dist", "index.mjs");
+    /**
+     * 🔴 **ไล่จากตำแหน่งของไฟล์เทสเอง ⛔ ไม่ใช่ `process.cwd()`**
+     *
+     * เดิมใช้ path แบบ relative กับ cwd ⇒ รันตรงจาก `packages/react` ผ่าน แต่พอรันผ่าน script ของ
+     * workspace (cwd เป็นที่อื่น) หาไฟล์ไม่เจอเลยแล้วล้มที่ด่าน "ต้องเจอไฟล์จริง" — เทสที่ผล
+     * ขึ้นกับว่าใครสั่งรันจากไหน คือเทสที่เชื่อไม่ได้
+     * 🔑 ไต่ขึ้นจากไฟล์นี้ไปหาทุก `node_modules` ที่มีอยู่ตามทาง = เลียนแบบสิ่งที่ resolver ทำจริง
+     * ⇒ ครอบทั้ง layout ของ npm (hoist/nested) และของ bun (symlink เข้า store)
+     */
+    const here = dirname(fileURLToPath(import.meta.url));
+    const roots: string[] = [];
+    for (let dir = here, up = 0; up < 8; up += 1) {
+      const candidate = join(dir, "node_modules");
+      if (existsSync(candidate)) roots.push(candidate);
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+
+    const popperDistIn = (root: string, pkg: string): string | null => {
+      const nested = join(root, pkg, "node_modules", "@radix-ui", "react-popper", "dist", "index.mjs");
       if (existsSync(nested)) return nested;
-      const hoisted = join("node_modules", "@radix-ui", "react-popper", "dist", "index.mjs");
+      const hoisted = join(root, "@radix-ui", "react-popper", "dist", "index.mjs");
       return existsSync(hoisted) ? hoisted : null;
     };
 
-    const dists = OVERLAYS.map(popperDistFor).filter((path): path is string => path !== null);
+    const dists = [
+      ...new Set(
+        roots.flatMap((root) =>
+          OVERLAYS.map((pkg) => popperDistIn(root, pkg)).filter((path): path is string => path !== null),
+        ),
+      ),
+    ];
 
     /* ต้องเจอไฟล์จริง ไม่ใช่ผ่านเพราะไม่มีอะไรให้ตรวจ */
     expect(dists.length).toBeGreaterThan(0);
