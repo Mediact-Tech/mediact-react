@@ -224,4 +224,20 @@ describe("ComboBox typeahead", () => {
 
     expect(document.activeElement).toBe(department);
   });
+  it("typeahead: กด Esc ปิดแผงแล้วคลิกที่ช่องซ้ำ ⇒ แผงเปิดใหม่ได้", async () => {
+    /* 🔴 เคสที่ `onFocus` ครอบไม่ได้ — ช่องยังมีโฟกัสอยู่หลังกด Esc ⇒ ไม่มี focus event ใหม่
+     * ⇒ ถ้าถอดตัวจับคลิกทิ้ง (ตอนแก้บั๊ก popper) ผู้ใช้จะเปิดแผงซ้ำไม่ได้เลย และเงียบ */
+    const user = userEvent.setup();
+    render(<ComboBox label="Country" typeahead options={countries} />);
+    const field = screen.getByRole("combobox");
+
+    await user.click(field);
+    expect(await screen.findByText("Thailand")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByText("Thailand")).toBeNull();
+
+    await user.click(field);
+
+    expect(await screen.findByText("Thailand")).toBeInTheDocument();
+  });
 });

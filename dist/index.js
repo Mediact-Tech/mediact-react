@@ -1,7 +1,7 @@
 import {
   TYPE_SCALE,
   TYPE_SCALE_DEFAULT_WEIGHT
-} from "./chunk-55J7CLWB.js";
+} from "./chunk-4WZ3XEF5.js";
 
 // src/ui/Button.tsx
 import * as React2 from "react";
@@ -5457,7 +5457,7 @@ function ComboBox(props) {
                       if (!open) setOpen(true);
                     },
                     onFocus: () => !disabled && setOpen(true),
-                    onMouseDown: () => !disabled && setOpen(true),
+                    onClick: () => !disabled && setOpen(true),
                     className: cn(
                       fieldShapeClasses({ hasError, size }),
                       "pr-9",

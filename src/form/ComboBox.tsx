@@ -526,7 +526,26 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
                   if (!open) setOpen(true);
                 }}
                 onFocus={() => !disabled && setOpen(true)}
-                onMouseDown={() => !disabled && setOpen(true)}
+                /* 🔴🔴 **`onClick` ⛔ ไม่ใช่ `onMouseDown`** — ตัวกันบั๊กของ `@radix-ui/react-popper`
+                 * (มีอยู่ตั้งแต่ 1.3.0 ถึง 1.3.7 ที่เป็นล่าสุด · ไม่มีใน 1.2.8):
+                 *
+                 * ```js
+                 * useLayoutEffect(() => { setPlacementState(placement);
+                 *   return () => { setPlacementState(void 0); };  // setState ตอน unmount
+                 * }, [placement]);
+                 * ```
+                 *
+                 * `mousedown` ปิดแผงของช่องอื่น (pointer-down-outside) **และ** เปิดแผงของช่องนี้
+                 * ในคอมมิตเดียวกัน ⇒ unmount กับ mount ของ `PopperContent` ชนกัน แล้ว cleanup
+                 * ข้างบนยิง `setState` ระหว่างที่ fiber กำลังถูกลบ ⇒ React ตัดด้วย
+                 * **`Maximum update depth exceeded`** (stack: `commitHookLayoutUnmountEffects`
+                 * → `commitDeletionEffectsOnFiber` → `PopperContent.useLayoutEffect`)
+                 * ⇒ `click` ยิงหลัง `mouseup` ⇒ การปิดของตัวเก่าจบไปก่อนแล้ว คนละคอมมิต
+                 *
+                 * ⚠️ **ห้ามถอดทิ้งเฉย ๆ** — `onFocus` ไม่ครอบเคสที่ช่องมีโฟกัสอยู่แล้วแต่แผงปิด
+                 * (กด Esc แล้วคลิกซ้ำ) เพราะไม่มี focus event ใหม่ ⇒ ต้องมีตัวจับคลิกไว้เสมอ
+                 * 💰 ราคาที่รับ: แผงเปิดช้าลงครึ่งจังหวะ (รอ `mouseup`) — วัดด้วยตาไม่ออก */
+                onClick={() => !disabled && setOpen(true)}
                 className={cn(
                   fieldShapeClasses({ hasError, size }),
                   "pr-9",
