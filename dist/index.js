@@ -1,7 +1,7 @@
 import {
   TYPE_SCALE,
   TYPE_SCALE_DEFAULT_WEIGHT
-} from "./chunk-4WZ3XEF5.js";
+} from "./chunk-55J7CLWB.js";
 
 // src/ui/Button.tsx
 import * as React2 from "react";
