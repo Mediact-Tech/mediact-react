@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
+import { StrictMode, useState } from "react";
 
 import { Dialog, DialogContent } from "../overlay/Dialog";
 import { EntityAutocomplete } from "./EntityAutocomplete";
@@ -52,6 +52,55 @@ export const InDialog: Story = {
         </Dialog>
       );
     };
-    return <Harness />;
+    return (
+      <StrictMode>
+        <Harness />
+      </StrictMode>
+    );
+  },
+};
+
+/**
+ * ⚠️ **repro ของ `Maximum update depth exceeded`** — ทรงที่ผู้ใช้เจอ: **ปิดโมดัลขณะที่แผงยังเปิดอยู่**
+ * ⇒ subtree ทั้งก้อนถูกลบพร้อมกัน (stack จริงเป็น `recursivelyTraverseDeletionEffects` หลายชั้น)
+ * ⇒ cleanup ของ `PopperContent.useLayoutEffect` ใน popper **1.3.x** เรียก `setPlacementState(void 0)`
+ * ระหว่างที่ fiber กำลังถูกลบ ⇒ วนจน React ตัด
+ */
+export const CloseDialogWhilePanelOpen: Story = {
+  render: () => {
+    const Harness = () => {
+      const [open, setOpen] = useState(true);
+      return (
+        /* 🔴 **StrictMode สำคัญ** — Next dev เปิดไว้เป็นค่าเริ่มต้น ⇒ effect ถูกเรียกสองรอบ
+           (mount → unmount → mount) ซึ่งเป็นตัวขยายบั๊กชนิด `setState` ใน cleanup ให้กลายเป็นวงวน
+           ⇒ Storybook ที่ไม่มี StrictMode จำลองอาการที่ผู้ใช้เจอไม่ได้ */
+        <div className="p-6">
+          <button type="button" data-testid="reopen" onClick={() => setOpen(true)}>
+            เปิดโมดัลใหม่
+          </button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent>
+              <EntityAutocomplete<Person>
+                label="ค้นหาผู้ใช้ในระบบ"
+                searchPlaceholder="พิมพ์ชื่อหรืออีเมล..."
+                options={directory}
+                onSearch={() => {}}
+                onChange={() => {}}
+                getOptionValue={(p) => p.id}
+                getOptionLabel={(p) => p.name}
+              />
+              <button type="button" data-testid="close-dialog" onClick={() => setOpen(false)}>
+                ปิดโมดัล
+              </button>
+            </DialogContent>
+          </Dialog>
+        </div>
+      );
+    };
+    return (
+      <StrictMode>
+        <Harness />
+      </StrictMode>
+    );
   },
 };
