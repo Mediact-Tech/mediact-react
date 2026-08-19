@@ -155,6 +155,10 @@ export {
   type ComboBoxOption,
   type ComboBoxOptionGroup,
 } from "./form/ComboBox";
+
+/* ช่องค้นหา-แล้วเลือก **ที่ไม่ผูก Radix Popover เลย** — ทางเลือกสำหรับที่ที่แผงถูก portal แล้วพัง
+   (โฟกัสในโมดัล · setState ใน cleanup ของ popper/floating-ui) · เหตุผลเต็มในไฟล์ */
+export { SearchSelect, type SearchSelectProps } from "./form/SearchSelect";
 export type { OptionRowState, ChipState } from "./form/option-row";
 export type { GroupBy } from "./form/group-options";
 export {
