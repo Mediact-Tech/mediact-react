@@ -245,8 +245,18 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(function Sidebar(
           </div>
         )}
 
-        {/* `px-4` ไม่ใช่ `px-3` · ระยะระหว่างเมนู 4px — วัดจาก Portal ทั้งคู่ */}
-        <nav className="flex-1 space-y-1 overflow-y-auto px-4">{children}</nav>
+        {/* `px-4` ไม่ใช่ `px-3` · ระยะระหว่างเมนู 4px — วัดจาก Portal ทั้งคู่
+         *
+         * 🔴 **เลื่อนได้แต่ไม่มีแถบ** (2026-08-19) — ราง `lg:fixed lg:inset-y-0` สูงเท่าหน้าจอเสมอ
+         * ⇒ แอปที่เมนูยาวเกิน (Mediwork มี 4 กลุ่ม) ต้องเลื่อนได้ ⛔ ถอด `overflow-y-auto` ไม่ได้
+         * เพราะเมนูท้าย ๆ จะล้นหายใต้ขอบจอหรือทับปุ่มติดต่อฝ่ายสนับสนุน = เข้าไม่ถึงเลย
+         * ⇒ ซ่อนเฉพาะ *แถบ* : `scrollbar-width: none` (Firefox) + `::-webkit-scrollbar` (Chrome/Safari)
+         *   ล้อ `TimePicker` ที่ทำแถบให้บางลงด้วยวิธีเดียวกัน (เรโปไม่มี plugin `scrollbar-*`)
+         * ⚠️ ราคาที่รับ: **ไม่มีอะไรบอกผู้ใช้ว่ายังมีเมนูต่ออยู่ด้านล่าง** — คนที่ไม่รู้จะไม่ลองเลื่อน
+         *   ⇒ ถ้าเมนูยาวขึ้นอีกจนเป็นปัญหาจริง ทางแก้คือเงาบอกขอบ (scroll shadow) ไม่ใช่เอาแถบกลับมา */}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {children}
+        </nav>
 
         <div className="px-4 pb-4">
           {supportAction && (

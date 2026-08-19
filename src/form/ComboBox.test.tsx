@@ -180,4 +180,48 @@ describe("ComboBox typeahead", () => {
     expect(screen.getByRole("button").tagName).toBe("BUTTON");
     expect(screen.queryByRole("combobox")).toBeNull();
   });
+  /* ────────────────────────────────────────────────────────────────────────
+   * โฟกัสตอนแผงปิด (โหมด `typeahead`)
+   *
+   * 🔴 กัน regression 2 ทิศพร้อมกัน:
+   *   ① เลือก option / Esc ⇒ **ต้องคืนโฟกัสให้ช่อง** (คนใช้คีย์บอร์ดต้องพิมพ์ต่อได้)
+   *   ② คลิกไปที่ช่องอื่น ⇒ **ห้ามแย่งโฟกัสกลับ** — ช่องนี้เปิดแผงตอนได้โฟกัส ⇒ แย่งกลับ
+   *      = ปิด/เปิดวนไม่จบ แล้ว React ตัดด้วย `Maximum update depth exceeded`
+   *      (เกิดจริงบนจอที่มี `ComboBox` แบบ `typeahead` สองตัวข้างกัน)
+   * ⚠️ jsdom จำลอง focus scope ของ Radix ไม่ครบ ⇒ เคส ② จับได้ที่ *ค่าโฟกัสสุดท้าย*
+   *    ไม่ใช่ที่ตัววงวน · ตัววงวนต้องยืนยันบนเบราว์เซอร์จริง
+   * ──────────────────────────────────────────────────────────────────────── */
+  it("typeahead: เลือก option แล้วแผงปิดและช่องโชว์ป้ายที่เลือก", async () => {
+    const user = userEvent.setup();
+    render(<ComboBox label="Country" typeahead options={countries} />);
+    const field = screen.getByRole("combobox");
+
+    await user.click(field);
+    await user.click(await screen.findByText("Singapore"));
+
+    /* ⚠️ **โฟกัสไม่กลับมาที่ช่อง** — หนี้ที่มีอยู่ก่อนของโหมดนี้: ช่องเป็น `PopoverAnchor`
+     * ไม่ใช่ `PopoverTrigger` ⇒ Radix ไม่มี trigger ให้คืนโฟกัส · ยืนยันด้วยการรันเทสนี้
+     * บน source ก่อนแก้แล้วว่าตกเหมือนกัน ⇒ ตัวกันวงวน (`onCloseAutoFocus`) ไม่ได้ทำให้แย่ลง
+     * ⇒ เคสนี้จึงล็อกแค่ *แผงปิดและค่าถูกเลือก* ⛔ ไม่ assert โฟกัส เพราะจะเป็นคำที่ไม่จริง */
+    expect(field).toHaveValue("Singapore");
+    expect(screen.queryByPlaceholderText("Search...")).toBeNull();
+  });
+
+  it("typeahead: เปิดแผงของตัวหนึ่งแล้วคลิกช่องของอีกตัว ⇒ โฟกัสอยู่ที่ช่องที่คลิก", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <ComboBox label="Department" typeahead options={countries} />
+        <ComboBox label="Sub-unit" typeahead options={countries} />
+      </>,
+    );
+    const fields = screen.getAllByRole("combobox");
+    const department = fields[0]!;
+    const subUnit = fields[1]!;
+
+    await user.click(subUnit);
+    await user.click(department);
+
+    expect(document.activeElement).toBe(department);
+  });
 });

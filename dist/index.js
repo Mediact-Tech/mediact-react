@@ -1,7 +1,7 @@
 import {
   TYPE_SCALE,
   TYPE_SCALE_DEFAULT_WEIGHT
-} from "./chunk-55J7CLWB.js";
+} from "./chunk-4WZ3XEF5.js";
 
 // src/ui/Button.tsx
 import * as React2 from "react";
@@ -3794,7 +3794,7 @@ var Sidebar = React26.forwardRef(function Sidebar2({
               ] })
             }
           ),
-          /* @__PURE__ */ jsx32("nav", { className: "flex-1 space-y-1 overflow-y-auto px-4", children }),
+          /* @__PURE__ */ jsx32("nav", { className: "flex-1 space-y-1 overflow-y-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", children }),
           /* @__PURE__ */ jsxs26("div", { className: "px-4 pb-4", children: [
             supportAction && /* ปุ่มติดต่อฝ่ายสนับสนุน — วัดจาก Portal: 36 สูง · มุม 8 · pad 8/12
              * · 14px · `white/60` · ไอคอน 16 · gap 8 · เต็มความกว้าง จัดกึ่งกลาง */
@@ -5256,6 +5256,7 @@ function ComboBox(props) {
   const [open, setOpen] = React32.useState(false);
   const [query, setQuery] = React32.useState("");
   const typeaheadInputRef = React32.useRef(null);
+  const closedByOutsideRef = React32.useRef(false);
   const [internal, setInternal] = React32.useState(() => {
     if (isMultiple) return defaultValue ?? [];
     return defaultValue !== void 0 ? [defaultValue] : [];
@@ -5475,12 +5476,21 @@ function ComboBox(props) {
                 onPointerDownOutside: (e) => {
                   if (typeaheadInputRef.current?.contains(e.target)) {
                     e.preventDefault();
+                    return;
                   }
+                  closedByOutsideRef.current = true;
                 },
                 onFocusOutside: (e) => {
                   if (typeaheadInputRef.current?.contains(e.target)) {
                     e.preventDefault();
+                    return;
                   }
+                  closedByOutsideRef.current = true;
+                },
+                onCloseAutoFocus: (e) => {
+                  if (!closedByOutsideRef.current) return;
+                  closedByOutsideRef.current = false;
+                  e.preventDefault();
                 },
                 children: optionList
               }

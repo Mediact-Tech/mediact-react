@@ -217,4 +217,19 @@ describe("brand — โลโก้แบบแยกชิ้น", () => {
     expect(screen.queryByTestId("symbol")).not.toBeInTheDocument();
   });
 });
+  it("เมนูเลื่อนได้แต่ไม่มีแถบ scroll", () => {
+    /* 🔴 ล็อกทั้งสองครึ่ง — `overflow-y-auto` ต้องอยู่ (ราง `fixed` สูงเท่าจอ ⇒ เมนูยาวเกิน
+     * ต้องเลื่อนถึงได้ ไม่งั้นเมนูท้าย ๆ เข้าไม่ถึงเลย) และแถบต้องถูกซ่อน (เจ้าของเคาะ 2026-08-19)
+     * ⚠️ jsdom ไม่จัดเลย์เอาต์ ⇒ พิสูจน์ได้แค่ *คลาส* ไม่ใช่ว่าเลื่อนได้จริง — อย่างหลังต้องวัดในเบราว์เซอร์ */
+    const { container } = render(
+      <Sidebar>
+        <SidebarItem id="home" label="Home" href="/" />
+      </Sidebar>,
+    );
+    const nav = container.querySelector("nav");
+
+    expect(nav?.className).toContain("overflow-y-auto");
+    expect(nav?.className).toContain("[scrollbar-width:none]");
+    expect(nav?.className).toContain("[&::-webkit-scrollbar]:hidden");
+  });
 });

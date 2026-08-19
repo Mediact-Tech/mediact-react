@@ -246,6 +246,21 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
    * (ดูเหตุผลเต็มที่ `onPointerDownOutside` ข้างล่าง) */
   const typeaheadInputRef = React.useRef<HTMLInputElement>(null);
 
+  /**
+   * แผงปิดเพราะผู้ใช้ไปคลิก/โฟกัสที่อื่น ⛔ ไม่ใช่เพราะเลือก option หรือกด Esc
+   *
+   * 🔴🔴 **ตัวกันวงวน `Maximum update depth exceeded`** — ช่องของโหมดนี้เปิดแผงตอนได้โฟกัส
+   * (`onFocus`) และ Radix คืนโฟกัสให้ anchor เสมอตอนปิด (`onCloseAutoFocus` ค่าเริ่มต้น)
+   * ⇒ มี `ComboBox` แบบ `typeahead` สองตัวอยู่ข้างกัน (แถบตัวกรองของ Mediwork มีสองตัว):
+   *   เปิดแผงของตัว A ไว้ → คลิกที่ช่องของตัว B
+   *   → A ปิดเพราะคลิกข้างนอก → Radix คืนโฟกัสให้ช่อง A → `onFocus` ของ A เปิดแผงใหม่
+   *   → โฟกัสจริงต้องไปที่ B → A เห็น focus outside → ปิด → คืนโฟกัส → เปิด → **วนไม่จบ**
+   * ⇒ ต้องไม่คืนโฟกัสเมื่อการปิดเกิดจากการที่ผู้ใช้ไปที่อื่นแล้ว
+   * ⚠️ **ห้าม `preventDefault` ทุกกรณี** — ปิดด้วยการเลือก option หรือกด Esc ต้องคืนโฟกัสให้ช่อง
+   * ตามเดิม ไม่งั้นคนที่ใช้คีย์บอร์ดจะหลุดโฟกัสออกจากฟอร์มทุกครั้งที่เลือกค่า
+   */
+  const closedByOutsideRef = React.useRef(false);
+
   /* เก็บสถานะเป็นอาร์เรย์เสมอ แล้วค่อยแปลงตอนส่งออก
    * ⇒ ตรรกะข้างในมีเส้นเดียว ไม่ใช่สองเส้นที่ต้องคอยดูแลให้ตรงกัน */
   const [internal, setInternal] = React.useState<V[]>(() => {
@@ -536,12 +551,24 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
             onPointerDownOutside={(e) => {
               if (typeaheadInputRef.current?.contains(e.target as Node)) {
                 e.preventDefault();
+                return;
               }
+              closedByOutsideRef.current = true;
             }}
             onFocusOutside={(e) => {
               if (typeaheadInputRef.current?.contains(e.target as Node)) {
                 e.preventDefault();
+                return;
               }
+              closedByOutsideRef.current = true;
+            }}
+            /* 🔴 ปิดเพราะผู้ใช้ไปที่อื่นแล้ว = **ห้ามแย่งโฟกัสกลับมา** — ไม่งั้นจะวนไม่จบกับ
+             * `onFocus` ที่สั่งเปิดแผง (เหตุผลเต็มที่ `closedByOutsideRef` ข้างบน)
+             * ปิดด้วยการเลือก option หรือ Esc ⇒ ปล่อยให้ Radix คืนโฟกัสให้ช่องตามปกติ */
+            onCloseAutoFocus={(e) => {
+              if (!closedByOutsideRef.current) return;
+              closedByOutsideRef.current = false;
+              e.preventDefault();
             }}
           >
             {optionList}
