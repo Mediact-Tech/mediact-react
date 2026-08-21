@@ -1971,7 +1971,9 @@ var Chip = React15.forwardRef(function Chip2({
               onRemove?.(e);
             },
             className: cn(
-              "-mr-1 rounded-full p-0.5",
+              /* `cursor-pointer` — ตัวชิปได้จาก variant `clickable` แต่ปุ่ม × เป็น `<button>` ต่างหาก
+               * ⇒ ชิปที่ไม่ `clickable` แต่ลบได้ จะมีลูกศรปกติอยู่บนปุ่มที่กดได้ */
+              "-mr-1 cursor-pointer rounded-full p-0.5",
               isSolid ? "hover:bg-white/20" : "hover:bg-black/10"
             ),
             children: /* @__PURE__ */ jsx19(X3, {})
@@ -3143,7 +3145,7 @@ var TopNavBrand = React24.forwardRef(
   }
 );
 var TopNavSpacer = ({ className }) => /* @__PURE__ */ jsx29("div", { className: cn("flex-1", className), "aria-hidden": "true" });
-var iconButtonClass = "inline-flex size-11 shrink-0 items-center justify-center rounded-full text-text-body transition-colors hover:bg-gray-50 hover:text-text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-7";
+var iconButtonClass = "inline-flex size-11 cursor-pointer shrink-0 items-center justify-center rounded-full text-text-body transition-colors hover:bg-gray-50 hover:text-text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-7";
 var DEFAULT_APP_DEFS = {
   mediwork: { label: "Medi Work", src: medi_workDataUrl },
   medimatch: { label: "Medi Match", src: medi_matchDataUrl },
@@ -3412,7 +3414,7 @@ function UserMenu({
         type: "button",
         "aria-label": label,
         className: cn(
-          "group inline-flex items-center gap-2 rounded-full p-0.5 pr-1 text-body-sm font-medium text-text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+          "group inline-flex cursor-pointer items-center gap-2 rounded-full p-0.5 pr-1 text-body-sm font-medium text-text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
           className
         ),
         children: [
@@ -4309,7 +4311,9 @@ var Calendar = React27.forwardRef(
                         onMouseLeave: () => onDayHover?.(null),
                         className: cn(
                           "size-[34px] rounded-full text-body-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
-                          edge ? "bg-brand font-bold text-brand-foreground" : disabled ? "cursor-default text-text-disabled" : "cursor-pointer text-text-black hover:bg-overlay-hover",
+                          /* `cursor-pointer` ต้องอยู่ **ทุกสาขาที่กดได้** — เดิมมีแค่สาขาปกติ
+                           * ⇒ วันที่เป็นขอบของช่วงที่เลือกไว้ (ยังกดเปลี่ยนได้) ได้ลูกศรปกติ */
+                          edge ? "cursor-pointer bg-brand font-bold text-brand-foreground" : disabled ? "cursor-default text-text-disabled" : "cursor-pointer text-text-black hover:bg-overlay-hover",
                           /* วันนี้ = วงแหวน · ที่เลือก = ทึบ · ถ้าเป็นวันเดียวกัน
                            * ทึบชนะ (ไม่ซ้อนสองสถานะบนช่องเดียวจนอ่านไม่ออกว่าอันไหนคืออะไร)
                            * `ring-inset` เพื่อไม่ให้วงแหวนล้นออกไปทับช่องข้าง ๆ ในแถบช่วงวัน */
@@ -4892,7 +4896,7 @@ function TimePicker({
             type: "button",
             "aria-label": "Open time picker",
             disabled,
-            className: "pointer-events-auto inline-flex size-6 items-center justify-center rounded-sm hover:bg-black/5 disabled:cursor-not-allowed [&_svg]:size-4",
+            className: "pointer-events-auto inline-flex size-6 cursor-pointer items-center justify-center rounded-sm hover:bg-black/5 disabled:cursor-not-allowed [&_svg]:size-4",
             children: /* @__PURE__ */ jsx37(Clock, {})
           }
         ) }),
@@ -5007,7 +5011,7 @@ function TimePicker({
                 disabled,
                 onClick: () => handlePeriodChange(period === "AM" ? "PM" : "AM"),
                 "aria-label": "Toggle AM/PM",
-                className: "shrink-0 rounded-sm px-1 text-caption font-medium text-text-tertiary hover:bg-black/5 disabled:cursor-not-allowed",
+                className: "shrink-0 cursor-pointer rounded-sm px-1 text-caption font-medium text-text-tertiary hover:bg-black/5 disabled:cursor-not-allowed",
                 children: period
               }
             ),
@@ -5056,7 +5060,7 @@ function TimeColumn({
             onClick: () => onPick(item),
             className: cn(
               "mx-2 my-0.5 flex h-8 shrink-0 items-center justify-center rounded-md text-center font-medium tabular-nums transition-colors",
-              disabled ? "cursor-not-allowed text-text-tertiary/40" : isSelected ? "bg-brand-active text-white" : "text-text-body hover:bg-brand-subtle"
+              disabled ? "cursor-not-allowed text-text-tertiary/40" : isSelected ? "cursor-pointer bg-brand-active text-white" : "cursor-pointer text-text-body hover:bg-brand-subtle"
             ),
             children: formatLabel ? formatLabel(item) : typeof item === "number" ? pad2(item) : String(item)
           },
@@ -6494,7 +6498,7 @@ function RetryButton({
     {
       type: "button",
       onClick,
-      className: "inline-flex h-9 items-center rounded-md border border-border-strong bg-bg-default px-4 text-body-sm font-medium text-text-secondary transition-colors hover:bg-bg-subtle focus:outline-none focus-visible:ring-1 focus-visible:ring-brand",
+      className: "inline-flex h-9 cursor-pointer items-center rounded-md border border-border-strong bg-bg-default px-4 text-body-sm font-medium text-text-secondary transition-colors hover:bg-bg-subtle focus:outline-none focus-visible:ring-1 focus-visible:ring-brand",
       children
     }
   );
@@ -6538,7 +6542,7 @@ function DataTableGroupRow({
           onClick: onToggle,
           "aria-expanded": !collapsed,
           "aria-label": toggleAriaLabel,
-          className: "-mx-1 flex items-center gap-1.5 rounded-sm px-1 py-0.5 hover:bg-overlay-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-brand",
+          className: "-mx-1 flex cursor-pointer items-center gap-1.5 rounded-sm px-1 py-0.5 hover:bg-overlay-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-brand",
           children: [
             /* @__PURE__ */ jsx44(
               ChevronDown5,
@@ -7159,7 +7163,7 @@ function PaginationFooter({
   const selectedCount = table.getSelectedRowModel().rows.length;
   const atFirst = pagination.pageIndex === 0;
   const atLast = pagination.pageIndex >= totalPages - 1;
-  const pagerButton = "rounded-md p-1 text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-30";
+  const pagerButton = "cursor-pointer rounded-md p-1 text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-30";
   return (
     /* 📐 วัดจาก `ActionTabel` ของ Portal: 14px/500 · ไม่มีเส้นคั่น ไม่มีพื้นหลัง
      * pad **8 ข้าง · 16 บน · ล่าง 0** — ไม่มี pad ล่างเพราะแถบเป็นของสุดท้ายในกล่อง
@@ -7396,7 +7400,7 @@ function Breadcrumb({
         }
         const itemBaseClass = "inline-flex items-center gap-2 leading-none [&_svg]:size-5";
         const currentClass = "font-semibold text-text-body";
-        const linkClass = "text-text-tertiary transition-colors hover:text-text-black";
+        const linkClass = "cursor-pointer text-text-tertiary transition-colors hover:text-text-black";
         return /* @__PURE__ */ jsxs39("li", { className: "flex items-center gap-3 leading-none", children: [
           isLast ? /* @__PURE__ */ jsxs39(
             "span",
@@ -7986,11 +7990,29 @@ var statusBadgeVariants = cva13(
   "inline-flex items-center gap-1.5 rounded-full font-medium",
   {
     variants: {
+      /* 🔄 **สามโทนเดินตามจานสีของดีไซน์ (2026-08-20 · เจ้าของเคาะ)**
+       *   success `#0BB767` บน `#E7F8F0` · warning `#AE7008` บน `#FEF5E7` · danger `#F52D0A` บน `#FEEAE7`
+       *
+       * 🔴 **แก้ที่ tone ของ component นี้ ⛔ ไม่ใช่ทับค่าใน palette** — `warning-yellow-800`,
+       * `success-green-800`, `cherry-red-*` ที่ใช้อยู่เดิมถูกแชร์กับ `Toast` · `Chip` · `EmptyState`
+       * · `ConfirmDialog` · `hover` ของปุ่ม destructive · `TopNav` · ai-chat ⇒ ทาสีทับที่ palette
+       * เท่ากับเปลี่ยนสีของ component เหล่านั้นทั้ง 4 แอปในที่ที่ไม่มีใครขอ
+       *
+       * 🔑 ทุกค่าเป็น **token** ⛔ ไม่มี hex ในไฟล์นี้ · 3 ตัวมีอยู่แล้วในจานสี (success ทั้งคู่ +
+       * `error-red-icon`) อีก 3 ตัวเพิ่มใหม่ที่ `@mediact/tokens` ในรอบเดียวกัน
+       *
+       * 📐 contrast ที่วัดได้จริง (สูตร WCAG จากค่า hex ไม่ใช่ประมาณ) — **ต่ำกว่า 4.5:1 ทั้งสามใบ**
+       * และตัวอักษรของป้ายเป็น `text-caption` (12px) ซึ่งเกณฑ์คือ 4.5:1:
+       *   warning `#AE7008`/`#FEF5E7` = **3.79:1** · danger `#F52D0A`/`#FEEAE7` = **3.45:1**
+       *   success `#0BB767`/`#E7F8F0` = **2.39:1** ⇐ ต่ำสุด ตกเกณฑ์ 3:1 ของกราฟิกด้วย
+       * ⇒ เป็นการตัดสินใจของเจ้าของดีไซน์ที่รับความเสี่ยงนี้ไว้ · ถ้าวันหนึ่งต้องผ่าน AA
+       * ให้ขยับ **ตัวอักษร** ให้เข้มขึ้น (พื้นอ่อนคือส่วนที่ดีไซน์สื่อความ) เช่น success → `#067F47`
+       * ⛔ อย่าแก้ด้วยการทำพื้นให้เข้ม — ป้ายจะกลายเป็นปุ่ม */
       tone: {
         neutral: "bg-nuetral-light-50 text-text-secondary",
-        success: "bg-success-green-50 text-success-green-800",
-        warning: "bg-warning-yellow-50 text-warning-yellow-800",
-        danger: "bg-cherry-red-50 text-cherry-red-800",
+        success: "bg-success-green-background-50 text-success-green-primary",
+        warning: "bg-warning-yellow-background-50 text-warning-yellow-700",
+        danger: "bg-error-red-background-50 text-error-red-icon",
         info: "bg-info-blue-50 text-info-blue-800"
       },
       size: {
