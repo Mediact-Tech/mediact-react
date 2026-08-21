@@ -170,8 +170,9 @@ const TopNavSpacer = ({ className }: { className?: string }) => (
  * `oklch(0.446 0.03 256.802)` คือค่า `gray-700` ของ Tailwind เอง ไม่ใช่ของ DS
  * (กับดักชื่อชนที่ §3 เตือนไว้ — `bg-gray-50` บังเอิญได้ค่าถูก แต่ตัวนี้ไม่)
  * จึงใช้ `text-text-body` (`#535a61`) ซึ่งเข้มกว่าเล็กน้อยแต่เป็น token จริง */
+/* `cursor-pointer` — preflight v4 ปล่อย `<button>` ไว้ที่ลูกศรปกติ (ดู `Tabs.tsx` ที่บันทึกเหตุไว้) */
 const iconButtonClass =
-  "inline-flex size-11 shrink-0 items-center justify-center rounded-full text-text-body transition-colors hover:bg-gray-50 hover:text-text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-7";
+  "inline-flex size-11 cursor-pointer shrink-0 items-center justify-center rounded-full text-text-body transition-colors hover:bg-gray-50 hover:text-text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-7";
 
 /* ─────────────────────────────────────────────────────────────────── */
 /* AppLauncher — Mediact ecosystem app catalog                          */
@@ -688,7 +689,7 @@ function UserMenu({
           type="button"
           aria-label={label}
           className={cn(
-            "group inline-flex items-center gap-2 rounded-full p-0.5 pr-1 text-body-sm font-medium text-text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+            "group inline-flex cursor-pointer items-center gap-2 rounded-full p-0.5 pr-1 text-body-sm font-medium text-text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
             className,
           )}
         >

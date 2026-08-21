@@ -263,7 +263,8 @@ function RetryButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-9 items-center rounded-md border border-border-strong bg-bg-default px-4 text-body-sm font-medium text-text-secondary transition-colors hover:bg-bg-subtle focus:outline-none focus-visible:ring-1 focus-visible:ring-brand"
+      /* `cursor-pointer` — preflight ของ Tailwind v4 ไม่ตั้ง cursor ให้ `<button>` */
+      className="inline-flex h-9 cursor-pointer items-center rounded-md border border-border-strong bg-bg-default px-4 text-body-sm font-medium text-text-secondary transition-colors hover:bg-bg-subtle focus:outline-none focus-visible:ring-1 focus-visible:ring-brand"
     >
       {children}
     </button>

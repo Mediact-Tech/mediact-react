@@ -144,7 +144,9 @@ const Chip = React.forwardRef<HTMLSpanElement, ChipProps>(function Chip(
             onRemove?.(e);
           }}
           className={cn(
-            "-mr-1 rounded-full p-0.5",
+            /* `cursor-pointer` — ตัวชิปได้จาก variant `clickable` แต่ปุ่ม × เป็น `<button>` ต่างหาก
+             * ⇒ ชิปที่ไม่ `clickable` แต่ลบได้ จะมีลูกศรปกติอยู่บนปุ่มที่กดได้ */
+            "-mr-1 cursor-pointer rounded-full p-0.5",
             isSolid ? "hover:bg-white/20" : "hover:bg-black/10",
           )}
         >

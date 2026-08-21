@@ -598,8 +598,10 @@ const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
                           onMouseLeave={() => onDayHover?.(null)}
                           className={cn(
                             "size-[34px] rounded-full text-body-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+                            /* `cursor-pointer` ต้องอยู่ **ทุกสาขาที่กดได้** — เดิมมีแค่สาขาปกติ
+                             * ⇒ วันที่เป็นขอบของช่วงที่เลือกไว้ (ยังกดเปลี่ยนได้) ได้ลูกศรปกติ */
                             edge
-                              ? "bg-brand font-bold text-brand-foreground"
+                              ? "cursor-pointer bg-brand font-bold text-brand-foreground"
                               : disabled
                                 ? "cursor-default text-text-disabled"
                                 : "cursor-pointer text-text-black hover:bg-overlay-hover",

@@ -77,8 +77,11 @@ function Breadcrumb({
            * ลำดับความสำคัญมาจาก **น้ำหนักตัวอักษร** ไม่ใช่สี — ของ Portal ก็พึ่งตำแหน่ง
            * กับตัวคั่นเป็นหลัก ไม่ได้ย้อมสีหน้าปัจจุบันให้ต่างออกไป */
           const currentClass = "font-semibold text-text-body";
+          /* `cursor-pointer` — รายการที่ส่ง `onClick` มา render เป็น `<button>` ซึ่ง preflight ของ
+           * Tailwind v4 ไม่ตั้ง cursor ให้ ⇒ เดิมได้ลูกศรปกติทั้งที่กดได้ · `<a>` ได้ pointer จาก UA
+           * อยู่แล้ว แต่ใส่รวมที่นี่เพราะสองทางต้องหน้าตาเหมือนกัน */
           const linkClass =
-            "text-text-tertiary transition-colors hover:text-text-black";
+            "cursor-pointer text-text-tertiary transition-colors hover:text-text-black";
           return (
             <li key={i} className="flex items-center gap-3 leading-none">
               {isLast ? (

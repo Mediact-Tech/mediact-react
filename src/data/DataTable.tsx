@@ -991,8 +991,11 @@ function PaginationFooter<TData>({
 
   /* ปุ่มหน้าเป็น**ไอคอนล้วน** ⇒ ต้องมี `aria-label` ไม่งั้นโปรแกรมอ่านหน้าจอ
    * อ่านออกมาเป็นปุ่มเปล่า · ใช้คำเดียวกับที่เคยเป็นข้อความบนปุ่ม */
+  /* `cursor-pointer` — preflight ของ Tailwind v4 **ไม่ตั้ง cursor ให้ `<button>` เลย**
+   * (ต่างจาก v3) ⇒ ปุ่มได้ `cursor: default` ของ UA · `disabled:pointer-events-none`
+   * ตัดทั้ง hover และ cursor ตอนปิดใช้งานอยู่แล้ว จึงไม่ต้องมี `disabled:cursor-*` */
   const pagerButton =
-    "rounded-md p-1 text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-30";
+    "cursor-pointer rounded-md p-1 text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-30";
 
   return (
     /* 📐 วัดจาก `ActionTabel` ของ Portal: 14px/500 · ไม่มีเส้นคั่น ไม่มีพื้นหลัง

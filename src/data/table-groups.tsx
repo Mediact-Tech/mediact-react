@@ -152,7 +152,8 @@ export function DataTableGroupRow({
             onClick={onToggle}
             aria-expanded={!collapsed}
             aria-label={toggleAriaLabel}
-            className="-mx-1 flex items-center gap-1.5 rounded-sm px-1 py-0.5 hover:bg-overlay-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-brand"
+            /* `cursor-pointer` — preflight ของ Tailwind v4 ไม่ตั้ง cursor ให้ `<button>` */
+            className="-mx-1 flex cursor-pointer items-center gap-1.5 rounded-sm px-1 py-0.5 hover:bg-overlay-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-brand"
           >
             <ChevronDown
               aria-hidden

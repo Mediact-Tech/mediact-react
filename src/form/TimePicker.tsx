@@ -318,7 +318,7 @@ function TimePicker({
               type="button"
               aria-label="Open time picker"
               disabled={disabled}
-              className="pointer-events-auto inline-flex size-6 items-center justify-center rounded-sm hover:bg-black/5 disabled:cursor-not-allowed [&_svg]:size-4"
+              className="pointer-events-auto inline-flex size-6 cursor-pointer items-center justify-center rounded-sm hover:bg-black/5 disabled:cursor-not-allowed [&_svg]:size-4"
             >
               <Clock />
             </button>
@@ -424,7 +424,7 @@ function TimePicker({
             disabled={disabled}
             onClick={() => handlePeriodChange(period === "AM" ? "PM" : "AM")}
             aria-label="Toggle AM/PM"
-            className="shrink-0 rounded-sm px-1 text-caption font-medium text-text-tertiary hover:bg-black/5 disabled:cursor-not-allowed"
+            className="shrink-0 cursor-pointer rounded-sm px-1 text-caption font-medium text-text-tertiary hover:bg-black/5 disabled:cursor-not-allowed"
           >
             {period}
           </button>
@@ -486,12 +486,12 @@ function TimeColumn<T extends string | number>({
               disabled
                 ? "cursor-not-allowed text-text-tertiary/40"
                 : isSelected
-                  ? "bg-brand-active text-white"
+                  ? "cursor-pointer bg-brand-active text-white"
                   /* 🔴 สีเนื้อความปกติ — `text-text-primary` alias ไป `--color-brand`
                    * ⇒ รายการเวลาที่ยังไม่ถูกเลือกจะเป็นสีแบรนด์ อ่านเหมือนถูกเลือกไว้แล้ว
                    * ตัวที่เลือกจริงคือแถบทึบสีแบรนด์ตัวอักษรขาวในกิ่งด้านบน
                    * (ห้ามเขียนชื่อคลาสสีขาวตรง ๆ ในคอมเมนต์ — `tokens.guard` สแกนคอมเมนต์ด้วย) */
-                  : "text-text-body hover:bg-brand-subtle",
+                  : "cursor-pointer text-text-body hover:bg-brand-subtle",
             )}
           >
             {formatLabel
