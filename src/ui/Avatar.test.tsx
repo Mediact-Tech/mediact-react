@@ -68,3 +68,37 @@ describe("Avatar — โทนสีตาม colorKey", () => {
     expect(root("JC").className).toContain("text-caption");
   });
 });
+
+describe("Avatar — อักษรย่อจาก name เมื่อไม่ส่ง fallback", () => {
+  /* 🔴 ชื่อ/นามสกุลที่ขึ้นต้นด้วยสระนำ (เ แ โ ใ ไ) — ตัวอักษรแรกดิบ ๆ เป็นสระลอย
+     ไม่มีพยัญชนะให้เกาะ เรนเดอร์เป็นเครื่องหมายที่อ่านไม่ออก ต้องข้ามไปหาพยัญชนะตัวแรก */
+  it("นามสกุลขึ้นต้นด้วยสระนำ ⇒ ข้ามสระไปเอาพยัญชนะตัวแรก", () => {
+    render(<Avatar name="ธนชาญ โอค้ากอง" />);
+    expect(screen.getByText("ธอ")).toBeInTheDocument();
+  });
+
+  it("ทั้งชื่อและนามสกุลขึ้นต้นด้วยสระนำ", () => {
+    render(<Avatar name="ใจดี ไอศวรรย์" />);
+    expect(screen.getByText("จอ")).toBeInTheDocument();
+  });
+
+  it("ชื่อเดียวไม่มีนามสกุล ⇒ ยังตัด 2 ตัวอักษรแรกตามเดิม (สระ+พยัญชนะอ่านเป็นคำเดียวกันได้)", () => {
+    render(<Avatar name="โชคดี" />);
+    expect(screen.getByText("โช")).toBeInTheDocument();
+  });
+
+  it("ตัดคำนำหน้าแล้วนามสกุลยังขึ้นต้นด้วยสระนำ", () => {
+    render(<Avatar name="ดร. สมชาย ใจดี" />);
+    expect(screen.getByText("สจ")).toBeInTheDocument();
+  });
+
+  it("ชื่ออังกฤษไม่มีพยัญชนะไทยให้หา ⇒ ตกกลับไปใช้ตัวอักษรแรกดิบตามเดิม", () => {
+    render(<Avatar name="John Smith" />);
+    expect(screen.getByText("JS")).toBeInTheDocument();
+  });
+
+  it("ส่ง fallback มาเอง ⇒ ไม่คำนวณจาก name เลย", () => {
+    render(<Avatar name="โอค้ากอง สมชาย" fallback="OS" />);
+    expect(screen.getByText("OS")).toBeInTheDocument();
+  });
+});

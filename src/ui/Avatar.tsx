@@ -93,9 +93,27 @@ const TITLE_PREFIXES = new Set([
 ]);
 
 /**
+ * Thai consonants ก–ฮ (U+0E01–U+0E2E). Leading vowels (เ แ โ ใ ไ) sort before the
+ * consonant they belong to in string order, so a bare "first character" can land
+ * on a vowel mark that means nothing on its own — this is what a single-character
+ * initial must skip.
+ */
+const THAI_CONSONANT_REGEX = /[ก-ฮ]/;
+
+/** First Thai consonant of a word (skipping any leading vowel), else its first character. */
+function firstInitialOf(word: string): string {
+  const consonant = Array.from(word).find((char) => THAI_CONSONANT_REGEX.test(char));
+  return consonant ?? word[0]!;
+}
+
+/**
  * Compute up to 2 uppercase initials from a name string.
  * Leading titles (e.g. "นพ.", "พญ.", "Dr.") are skipped, so
  * "นพ. วรวิทย์ ตันสกุล" → "วต" and "Dr. John Smith" → "JS".
+ *
+ * Each name's initial is its first *consonant*, not its first character: "ธนชาญ
+ * โอค้ากอง" → "ธอ", not "ธโ" — a leading vowel alone renders as a floating mark
+ * with nothing to attach to.
  */
 function initials(name?: string) {
   if (!name) return "";
@@ -108,7 +126,9 @@ function initials(name?: string) {
   }
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
-  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+  return (
+    firstInitialOf(parts[0]!) + firstInitialOf(parts[parts.length - 1]!)
+  ).toUpperCase();
 }
 
 const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
