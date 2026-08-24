@@ -233,3 +233,40 @@ describe("brand — โลโก้แบบแยกชิ้น", () => {
     expect(nav?.className).toContain("[&::-webkit-scrollbar]:hidden");
   });
 });
+describe("ขยายจากยุบ — เนื้อหาต้องถูกเผยออกมา ไม่ใช่จัดเรียงใหม่", () => {
+  /* อาการที่จับได้: กดกางแล้วเมนูโผล่เป็น **คอลัมน์ตั้ง** ก่อนเด้งเป็นแนวนอน
+   * เหตุ: label ถูก mount ทันทีที่กาง แต่รางกว้างขึ้นใน 300ms ⇒ ช่วงนั้น label อยู่ในกล่อง
+   * กว้าง 72 และ `wrap-break-word` หักบรรทัดทีละตัวอักษร
+   * วัดบน Storybook ตอนราง 72: `Access Rights` 169×19 → 0×227 · `Metrics Settings` → 0×283
+   * แก้ด้วยกล่องในกว้างคงที่เท่าปลายทาง + ตัดส่วนเกินที่ราง ⇒ วัดซ้ำแล้วคง 169×19 ทุกตัว
+   *
+   * ⚠️ happy-dom ไม่คำนวณเลย์เอาต์ ⇒ ที่นี่ล็อก **กลไก** ไม่ใช่ตัวเลข */
+  const inner = (c: HTMLElement) =>
+    c.querySelector("aside")!.firstElementChild as HTMLElement;
+
+  it("กล่องในกว้างเท่าปลายทาง และไม่มี transition — ไม่งั้นมันจะหดตามรางแล้วหักบรรทัด", () => {
+    const { container } = render(tree());
+
+    expect(inner(container).style.width).toBe("260px");
+    // ห้ามมี transition ที่กล่องใน: ความกว้างต้องกระโดดถึงปลายทางทันที
+    expect(inner(container).className).not.toContain("transition");
+  });
+
+  it("รางตัดส่วนเกิน — คู่กับกล่องในที่กว้างกว่ารางระหว่างแอนิเมชัน", () => {
+    const { container } = render(tree());
+
+    expect(container.querySelector("aside")!.className).toContain("overflow-hidden");
+  });
+
+  it("ยุบค้างอยู่ กล่องในกว้าง 72 ไม่ใช่ 260 — ไม่งั้นไอคอนวางตามกล่อง 260 แล้วโดนตัด", () => {
+    const { container } = render(tree({ collapsed: true }));
+
+    expect(inner(container).style.width).toBe("72px");
+  });
+
+  it("ความกว้างมาจาก prop ไม่ใช่ค่าตายตัว", () => {
+    const { container } = render(tree({ expandedWidth: 300 }));
+
+    expect(inner(container).style.width).toBe("300px");
+  });
+});

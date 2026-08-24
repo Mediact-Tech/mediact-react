@@ -206,6 +206,9 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(function Sidebar(
            * ทับได้ที่ไฟล์ธีมของตัวเอง แทนที่จะต้อง `className` ทับทุกจุดที่เรียก
            * เกณฑ์ว่าธีมไหนทับได้อยู่ในคอมเมนต์ของ token ใน `semantic.css` */
           "flex h-full shrink-0 flex-col bg-bg-nav-rail text-white transition-[width] duration-300 ease-in-out lg:rounded-2xl",
+          /* 🔴 คู่กับกล่องกว้างคงที่ข้างใน — ระหว่าง 300ms ที่รางกำลังขยาย เนื้อหาข้างในกว้าง
+           * เต็มปลายทางแล้ว จึงต้องมีอะไรตัดส่วนที่ยังโผล่ออกมานอกราง (เหตุผลเต็มอยู่ที่กล่องนั้น) */
+          "overflow-hidden",
           isMobileMode && [
             "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
             "lg:static lg:z-auto lg:translate-x-0 lg:transition-[width]",
@@ -215,83 +218,109 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(function Sidebar(
         )}
         {...props}
       >
-        {(header || brand) && (
-          /* วัดจาก Portal: สูง 88 · pad 24 · เว้นบนอีก 16 · กางแล้วชิดซ้าย ยุบแล้วกึ่งกลาง */
-          <div
-            className={cn(
-              "mt-4 flex items-center transition-all duration-300 ease-in-out",
-              showExpanded
-                ? "min-h-[88px] justify-between p-6"
-                : "justify-center p-4",
-            )}
-          >
-            {header ?? (
-              <>
-                {/* เครื่องหมายอยู่ตลอด · ชื่อกับปุ่มโผล่เฉพาะตอนกาง — ตรงนี้คือเหตุผลทั้งหมด
-                    ที่ prop นี้มี: แอปไม่ต้องรู้ว่าตอนยุบต้องสลับไฟล์ไหน */}
-                {/* `flex-1 justify-center` — กล่องหัวรางเป็น `justify-between` เพราะต้องดันปุ่ม
-                    ปิดลิ้นชักไปขวาสุด ⇒ ก้อนโลโก้ต้องยืดเองถึงจะอยู่กึ่งกลางจริง */}
-                <span className="flex min-w-0 flex-1 items-center justify-center gap-3">
-                  <span className="flex shrink-0 items-center">{brand!.symbol}</span>
-                  {showExpanded && brand!.name && (
-                    <span className="truncate text-title-md font-bold tracking-wide">
-                      {brand!.name}
-                    </span>
-                  )}
-                </span>
-                {showExpanded && brand!.action}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* `px-4` ไม่ใช่ `px-3` · ระยะระหว่างเมนู 4px — วัดจาก Portal ทั้งคู่
+        {/**
+         * กล่องกว้าง **คงที่เท่าปลายทาง** ครอบเนื้อหาทั้งราง — กว้างเท่ากับ `width` เป๊ะ แต่
+         * **ไม่มี transition** ⇒ พอ `showExpanded` พลิก กล่องนี้กระโดดไปความกว้างปลายทางทันที
+         * ส่วนตัวรางค่อย ๆ ขยายใน 300ms แล้วตัดส่วนเกินด้วย `overflow-hidden` ⇒ เนื้อหาถูก
+         * "เผยออกมา" ไม่ใช่ "จัดเรียงใหม่"
          *
-         * 🔴 **เลื่อนได้แต่ไม่มีแถบ** (2026-08-19) — ราง `lg:fixed lg:inset-y-0` สูงเท่าหน้าจอเสมอ
-         * ⇒ แอปที่เมนูยาวเกิน (Mediwork มี 4 กลุ่ม) ต้องเลื่อนได้ ⛔ ถอด `overflow-y-auto` ไม่ได้
-         * เพราะเมนูท้าย ๆ จะล้นหายใต้ขอบจอหรือทับปุ่มติดต่อฝ่ายสนับสนุน = เข้าไม่ถึงเลย
-         * ⇒ ซ่อนเฉพาะ *แถบ* : `scrollbar-width: none` (Firefox) + `::-webkit-scrollbar` (Chrome/Safari)
-         *   ล้อ `TimePicker` ที่ทำแถบให้บางลงด้วยวิธีเดียวกัน (เรโปไม่มี plugin `scrollbar-*`)
-         * ⚠️ ราคาที่รับ: **ไม่มีอะไรบอกผู้ใช้ว่ายังมีเมนูต่ออยู่ด้านล่าง** — คนที่ไม่รู้จะไม่ลองเลื่อน
-         *   ⇒ ถ้าเมนูยาวขึ้นอีกจนเป็นปัญหาจริง ทางแก้คือเงาบอกขอบ (scroll shadow) ไม่ใช่เอาแถบกลับมา */}
-        <nav className="flex-1 space-y-1 overflow-y-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {children}
-        </nav>
-
-        <div className="px-4 pb-4">
-          {supportAction && (
-            /* ปุ่มติดต่อฝ่ายสนับสนุน — วัดจาก Portal: 36 สูง · มุม 8 · pad 8/12
-             * · 14px · `white/60` · ไอคอน 16 · gap 8 · เต็มความกว้าง จัดกึ่งกลาง */
-            <button
-              type="button"
-              onClick={supportAction.onClick}
-              title={
-                !showExpanded && typeof supportAction.label === "string"
-                  ? supportAction.label
-                  : undefined
-              }
-              aria-label={
-                !showExpanded && typeof supportAction.label === "string"
-                  ? supportAction.label
-                  : undefined
-              }
+         * 🔴 ที่ต้องมีเพราะ label ถูก mount **ทันที** ที่กาง (`!isCollapsed && …`) แต่รางกว้างขึ้น
+         * ใน 300ms ⇒ ช่วงนั้น label อยู่ในกล่องกว้าง 72px และ `wrap-break-word` (ซึ่งตั้งใจไม่ใช้
+         * `truncate` เพราะเมนูไทยยาว) หักบรรทัด **ทีละตัวอักษร** ⇒ เมนูกลายเป็นคอลัมน์ตั้ง
+         * แล้วเด้งกลับเป็นแนวนอนตอนแอนิเมชันจบ · วัดของจริงบน Storybook ตอนราง 72px:
+         *   `Home` 168×24 → 0×96 · `Access Rights` 169×19 → 0×227 · `Metrics Settings` → 0×283
+         * ใส่กล่องนี้แล้ววัดซ้ำ: คง 168×24 / 169×19 ทุกตัว ไม่ขยับเลย
+         *
+         * ⛔ อย่า "แก้" ด้วยการใส่ `whitespace-nowrap`/`truncate` ที่ label — นั่นไปทับการตัดสินใจ
+         * ที่ปิดแล้วว่าเมนูต้องตัดขึ้นบรรทัดใหม่ ไม่ใช่ตัดท้ายทิ้ง (ดูคอมเมนต์ใน `SidebarItem`)
+         * และย้ายการเด้งไปอยู่ตอนจบแอนิเมชันแทน ไม่ได้หายไป
+         *
+         * 📐 ความกว้างต้องเป็น `width` **ตัวเดียวกับราง** ไม่ใช่ `expandedWidth` ตายตัว — ตอนยุบ
+         * ค้างอยู่ เนื้อหาต้องวางตัวที่ 72px จริง ๆ ไม่งั้นไอคอนจะถูกจัดตำแหน่งตามกล่อง 260
+         * แล้วโดนตัดทิ้ง
+         */}
+        <div
+          style={{ width: typeof width === "number" ? `${width}px` : width }}
+          className="flex h-full shrink-0 flex-col"
+        >
+          {(header || brand) && (
+            /* วัดจาก Portal: สูง 88 · pad 24 · เว้นบนอีก 16 · กางแล้วชิดซ้าย ยุบแล้วกึ่งกลาง */
+            <div
               className={cn(
-                "flex w-full cursor-pointer items-center gap-2 rounded-lg py-2 text-body-sm text-white/60 transition-colors hover:bg-white/10 hover:text-white",
-                showExpanded ? "justify-center px-3" : "justify-center px-0",
+                "mt-4 flex items-center transition-all duration-300 ease-in-out",
+                showExpanded
+                  ? "min-h-[88px] justify-between p-6"
+                  : "justify-center p-4",
               )}
             >
-              <span aria-hidden className="flex shrink-0 [&_svg]:size-4">
-                {supportAction.icon ?? <Headphones className="size-4" />}
-              </span>
-              {showExpanded && supportAction.label}
-            </button>
-          )}
-          {footer && showExpanded && (
-            /* วัดจาก Portal: 12px · `white/40` · กึ่งกลาง · เว้นบนล่าง 8 */
-            <div className="py-2 text-center text-caption text-white/40">
-              {footer}
+              {header ?? (
+                <>
+                  {/* เครื่องหมายอยู่ตลอด · ชื่อกับปุ่มโผล่เฉพาะตอนกาง — ตรงนี้คือเหตุผลทั้งหมด
+                    ที่ prop นี้มี: แอปไม่ต้องรู้ว่าตอนยุบต้องสลับไฟล์ไหน */}
+                  {/* `flex-1 justify-center` — กล่องหัวรางเป็น `justify-between` เพราะต้องดันปุ่ม
+                    ปิดลิ้นชักไปขวาสุด ⇒ ก้อนโลโก้ต้องยืดเองถึงจะอยู่กึ่งกลางจริง */}
+                  <span className="flex min-w-0 flex-1 items-center justify-center gap-3">
+                    <span className="flex shrink-0 items-center">{brand!.symbol}</span>
+                    {showExpanded && brand!.name && (
+                      <span className="truncate text-title-md font-bold tracking-wide">
+                        {brand!.name}
+                      </span>
+                    )}
+                  </span>
+                  {showExpanded && brand!.action}
+                </>
+              )}
             </div>
           )}
+
+          {/* `px-4` ไม่ใช่ `px-3` · ระยะระหว่างเมนู 4px — วัดจาก Portal ทั้งคู่
+           *
+           * 🔴 **เลื่อนได้แต่ไม่มีแถบ** (2026-08-19) — ราง `lg:fixed lg:inset-y-0` สูงเท่าหน้าจอเสมอ
+           * ⇒ แอปที่เมนูยาวเกิน (Mediwork มี 4 กลุ่ม) ต้องเลื่อนได้ ⛔ ถอด `overflow-y-auto` ไม่ได้
+           * เพราะเมนูท้าย ๆ จะล้นหายใต้ขอบจอหรือทับปุ่มติดต่อฝ่ายสนับสนุน = เข้าไม่ถึงเลย
+           * ⇒ ซ่อนเฉพาะ *แถบ* : `scrollbar-width: none` (Firefox) + `::-webkit-scrollbar` (Chrome/Safari)
+           *   ล้อ `TimePicker` ที่ทำแถบให้บางลงด้วยวิธีเดียวกัน (เรโปไม่มี plugin `scrollbar-*`)
+           * ⚠️ ราคาที่รับ: **ไม่มีอะไรบอกผู้ใช้ว่ายังมีเมนูต่ออยู่ด้านล่าง** — คนที่ไม่รู้จะไม่ลองเลื่อน
+           *   ⇒ ถ้าเมนูยาวขึ้นอีกจนเป็นปัญหาจริง ทางแก้คือเงาบอกขอบ (scroll shadow) ไม่ใช่เอาแถบกลับมา */}
+          <nav className="flex-1 space-y-1 overflow-y-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {children}
+          </nav>
+
+          <div className="px-4 pb-4">
+            {supportAction && (
+              /* ปุ่มติดต่อฝ่ายสนับสนุน — วัดจาก Portal: 36 สูง · มุม 8 · pad 8/12
+               * · 14px · `white/60` · ไอคอน 16 · gap 8 · เต็มความกว้าง จัดกึ่งกลาง */
+              <button
+                type="button"
+                onClick={supportAction.onClick}
+                title={
+                  !showExpanded && typeof supportAction.label === "string"
+                    ? supportAction.label
+                    : undefined
+                }
+                aria-label={
+                  !showExpanded && typeof supportAction.label === "string"
+                    ? supportAction.label
+                    : undefined
+                }
+                className={cn(
+                  "flex w-full cursor-pointer items-center gap-2 rounded-lg py-2 text-body-sm text-white/60 transition-colors hover:bg-white/10 hover:text-white",
+                  showExpanded ? "justify-center px-3" : "justify-center px-0",
+                )}
+              >
+                <span aria-hidden className="flex shrink-0 [&_svg]:size-4">
+                  {supportAction.icon ?? <Headphones className="size-4" />}
+                </span>
+                {showExpanded && supportAction.label}
+              </button>
+            )}
+            {footer && showExpanded && (
+              /* วัดจาก Portal: 12px · `white/40` · กึ่งกลาง · เว้นบนล่าง 8 */
+              <div className="py-2 text-center text-caption text-white/40">
+                {footer}
+              </div>
+            )}
+          </div>
         </div>
       </aside>
     </SidebarContext.Provider>
@@ -372,7 +401,7 @@ function SidebarItem({
            * (`wrap-break-word` + ไม่มี `truncate`) เมนูภาษาไทยยาวกว่าอังกฤษเสมอ
            * ถ้าตัดท้ายทิ้ง ผู้ใช้จะอ่านไม่ออกว่าเมนูไหนเป็นเมนูไหน */}
           {/* ⚠️ บังคับ 14px **เฉพาะเมนูย่อย** — เมนูระดับบนสืบทอด 16px/lh-24 จากปุ่ม
-            * วัดเจอ: ใส่ 14px ทุกระดับทำให้เมนูบนสูง 41 แทนที่จะเป็น 46 */}
+           * วัดเจอ: ใส่ 14px ทุกระดับทำให้เมนูบนสูง 41 แทนที่จะเป็น 46 */}
           <span
             className={cn(
               "w-full wrap-break-word",
@@ -548,8 +577,8 @@ function SidebarGroup({
       </button>
 
       {/* 🔴 รางเส้นซ้ายใต้หัวกลุ่ม — วัดจาก Portal: `1px white/12` · เยื้อง 22 · เว้นใน 12
-        * เส้นนี้คือสิ่งที่บอกลำดับชั้นแทนจุด/ไอคอนนำหน้าที่ของเดิมวาดไว้
-        * ตอนยุบไม่ต้องมี เพราะเมนูลูกไม่ถูก render */}
+       * เส้นนี้คือสิ่งที่บอกลำดับชั้นแทนจุด/ไอคอนนำหน้าที่ของเดิมวาดไว้
+       * ตอนยุบไม่ต้องมี เพราะเมนูลูกไม่ถูก render */}
       {isExpanded && !isCollapsed && (
         <div
           id={`${id}-content`}
