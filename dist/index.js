@@ -2049,6 +2049,11 @@ var TITLE_PREFIXES = /* @__PURE__ */ new Set([
   "dr",
   "prof"
 ]);
+var THAI_CONSONANT_REGEX = /[ก-ฮ]/;
+function firstInitialOf(word) {
+  const consonant = Array.from(word).find((char) => THAI_CONSONANT_REGEX.test(char));
+  return consonant ?? word[0];
+}
 function initials(name) {
   if (!name) return "";
   let parts = name.trim().split(/\s+/).filter(Boolean);
@@ -2057,7 +2062,7 @@ function initials(name) {
   }
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (firstInitialOf(parts[0]) + firstInitialOf(parts[parts.length - 1])).toUpperCase();
 }
 var Avatar = React16.forwardRef(function Avatar2({ className, size, src, name, fallback, colorKey, isLoading, ...props }, ref) {
   if (isLoading) {
