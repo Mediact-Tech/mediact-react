@@ -91,7 +91,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   History,
-  MessageCircle,
   Plus,
   X
 } from "lucide-react";
@@ -384,7 +383,8 @@ import { CircleCheck, CircleSlash } from "lucide-react";
 import * as React3 from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import { Fragment, jsx as jsx4 } from "react/jsx-runtime";
+import { ExternalLink, CornerDownRight } from "lucide-react";
+import { Fragment, jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
 var hooked = false;
 function ensureLinkHardening() {
   if (hooked || typeof window === "undefined") return;
@@ -397,7 +397,15 @@ function ensureLinkHardening() {
   hooked = true;
 }
 var ALIAS_TOKEN = /<(user|facility|department|subUnit):(\d+)>/g;
-function Markdown({ text, className }) {
+var POPOVER_WIDTH = 208;
+var POPOVER_HEIGHT = 92;
+var EDGE_GAP = 8;
+function Markdown({
+  text,
+  className,
+  labels
+}) {
+  const [choice, setChoice] = React3.useState(null);
   const html = React3.useMemo(() => {
     if (typeof window === "undefined") return null;
     ensureLinkHardening();
@@ -408,40 +416,144 @@ function Markdown({ text, className }) {
       return null;
     }
   }, [text]);
+  const onClick = (event) => {
+    if (!labels) return;
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const anchor = event.target.closest?.("a[href]");
+    if (!anchor) return;
+    const href = anchor.getAttribute("href");
+    if (!href || href.startsWith("#")) return;
+    event.preventDefault();
+    const rect = anchor.getBoundingClientRect();
+    const originX = event.detail === 0 ? rect.left : event.clientX;
+    const originY = event.detail === 0 ? rect.bottom : event.clientY;
+    setChoice({
+      href: anchor.href,
+      x: Math.min(originX, window.innerWidth - POPOVER_WIDTH - EDGE_GAP),
+      y: Math.min(originY + EDGE_GAP, window.innerHeight - POPOVER_HEIGHT - EDGE_GAP)
+    });
+  };
   if (html === null) return /* @__PURE__ */ jsx4(Fragment, { children: text });
-  return /* @__PURE__ */ jsx4(
+  return /* @__PURE__ */ jsxs4(Fragment, { children: [
+    /* @__PURE__ */ jsx4(
+      "div",
+      {
+        onClick,
+        className: cn(
+          "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+          "[&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5",
+          "[&_li]:my-0.5",
+          "[&_h1]:my-2 [&_h1]:text-body-md [&_h1]:font-semibold",
+          "[&_h2]:my-2 [&_h2]:text-body-sm [&_h2]:font-semibold",
+          "[&_h3]:my-1.5 [&_h3]:text-body-sm [&_h3]:font-semibold",
+          "[&_a]:text-brand-active [&_a]:underline",
+          "[&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.9em]",
+          "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-gray-100 [&_pre]:p-2",
+          "[&_pre_code]:bg-transparent [&_pre_code]:p-0",
+          "[&_blockquote]:border-l-2 [&_blockquote]:border-border-default [&_blockquote]:pl-2 [&_blockquote]:text-gray-600",
+          // Tables scroll inside the bubble instead of stretching the drawer.
+          "[&_table]:my-2 [&_table]:block [&_table]:w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_table]:text-caption",
+          "[&_th]:border [&_th]:border-border-default [&_th]:bg-gray-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:whitespace-nowrap",
+          "[&_td]:border [&_td]:border-border-default [&_td]:px-2 [&_td]:py-1 [&_td]:whitespace-nowrap",
+          className
+        ),
+        dangerouslySetInnerHTML: { __html: html }
+      }
+    ),
+    choice && labels ? /* @__PURE__ */ jsx4(LinkChoicePopover, { choice, labels, onClose: () => setChoice(null) }) : null
+  ] });
+}
+function LinkChoicePopover({
+  choice,
+  labels,
+  onClose
+}) {
+  const ref = React3.useRef(null);
+  React3.useEffect(() => {
+    ref.current?.querySelector("button")?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    const onPointerDown = (event) => {
+      if (!ref.current?.contains(event.target)) onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [onClose]);
+  const open = (newTab) => {
+    if (newTab) window.open(choice.href, "_blank", "noopener,noreferrer");
+    else window.location.assign(choice.href);
+    onClose();
+  };
+  return /* @__PURE__ */ jsxs4(
     "div",
     {
-      className: cn(
-        "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        "[&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5",
-        "[&_li]:my-0.5",
-        "[&_h1]:my-2 [&_h1]:text-body-md [&_h1]:font-semibold",
-        "[&_h2]:my-2 [&_h2]:text-body-sm [&_h2]:font-semibold",
-        "[&_h3]:my-1.5 [&_h3]:text-body-sm [&_h3]:font-semibold",
-        "[&_a]:text-brand-active [&_a]:underline",
-        "[&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.9em]",
-        "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-gray-100 [&_pre]:p-2",
-        "[&_pre_code]:bg-transparent [&_pre_code]:p-0",
-        "[&_blockquote]:border-l-2 [&_blockquote]:border-border-default [&_blockquote]:pl-2 [&_blockquote]:text-gray-600",
-        // Tables scroll inside the bubble instead of stretching the drawer.
-        "[&_table]:my-2 [&_table]:block [&_table]:w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_table]:text-caption",
-        "[&_th]:border [&_th]:border-border-default [&_th]:bg-gray-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:whitespace-nowrap",
-        "[&_td]:border [&_td]:border-border-default [&_td]:px-2 [&_td]:py-1 [&_td]:whitespace-nowrap",
-        className
-      ),
-      dangerouslySetInnerHTML: { __html: html }
+      ref,
+      role: "menu",
+      "aria-label": labels.linkOpenTitle,
+      "data-slot": "ai-chat-link-choice",
+      style: { left: choice.x, top: choice.y, width: POPOVER_WIDTH },
+      className: "fixed z-10 overflow-hidden rounded-lg border border-border-default bg-bg-default py-1 shadow-lg",
+      children: [
+        /* @__PURE__ */ jsx4("p", { className: "truncate px-3 pb-1 text-caption text-text-body", children: hostOf(choice.href) }),
+        /* @__PURE__ */ jsx4(
+          LinkChoiceItem,
+          {
+            icon: /* @__PURE__ */ jsx4(CornerDownRight, { className: "size-3.5 shrink-0" }),
+            label: labels.linkOpenHere,
+            onClick: () => open(false)
+          }
+        ),
+        /* @__PURE__ */ jsx4(
+          LinkChoiceItem,
+          {
+            icon: /* @__PURE__ */ jsx4(ExternalLink, { className: "size-3.5 shrink-0" }),
+            label: labels.linkOpenNewTab,
+            onClick: () => open(true)
+          }
+        )
+      ]
     }
   );
+}
+function LinkChoiceItem({
+  icon,
+  label,
+  onClick
+}) {
+  return /* @__PURE__ */ jsxs4(
+    "button",
+    {
+      type: "button",
+      role: "menuitem",
+      onClick,
+      className: "flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-caption text-text-black hover:bg-brand-subtle hover:text-brand-hover",
+      children: [
+        icon,
+        /* @__PURE__ */ jsx4("span", { className: "truncate", children: label })
+      ]
+    }
+  );
+}
+function hostOf(href) {
+  try {
+    return new URL(href, window.location.href).host;
+  } catch {
+    return href;
+  }
 }
 
 // src/ai-chat/components/ToolTrail.tsx
 import * as React4 from "react";
 import { Check, Loader2 as Loader22, TriangleAlert } from "lucide-react";
-import { jsx as jsx5, jsxs as jsxs4 } from "react/jsx-runtime";
+import { jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
 function ToolTrail({ tools }) {
   if (tools.length === 0) return null;
-  return /* @__PURE__ */ jsx5("ul", { className: "mb-2 flex flex-col gap-1", "data-slot": "ai-chat-tool-trail", children: tools.map((tool, index) => /* @__PURE__ */ jsxs4(
+  return /* @__PURE__ */ jsx5("ul", { className: "mb-2 flex flex-col gap-1", "data-slot": "ai-chat-tool-trail", children: tools.map((tool, index) => /* @__PURE__ */ jsxs5(
     "li",
     {
       className: cn(
@@ -464,7 +576,7 @@ function Elapsed({ since }) {
     return () => clearInterval(timer);
   }, [since]);
   if (seconds < 3) return null;
-  return /* @__PURE__ */ jsxs4("span", { className: "tabular-nums opacity-60", children: [
+  return /* @__PURE__ */ jsxs5("span", { className: "tabular-nums opacity-60", children: [
     "(",
     seconds,
     " \u0E27\u0E34)"
@@ -479,7 +591,7 @@ function ToolIcon({ status }) {
 
 // src/ai-chat/components/WidgetRenderer.tsx
 import { CircleAlert, TriangleAlert as TriangleAlert2 } from "lucide-react";
-import { jsx as jsx6, jsxs as jsxs5 } from "react/jsx-runtime";
+import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
 function WidgetRenderer({ widget, onAction, disabled }) {
   switch (widget.type) {
     case "confirm":
@@ -493,7 +605,7 @@ function WidgetRenderer({ widget, onAction, disabled }) {
     case "schedule_diff":
       return /* @__PURE__ */ jsx6(ScheduleDiff, { payload: widget.payload });
     default:
-      return /* @__PURE__ */ jsx6(Frame, { children: /* @__PURE__ */ jsxs5("p", { className: "text-caption text-gray-500", children: [
+      return /* @__PURE__ */ jsx6(Frame, { children: /* @__PURE__ */ jsxs6("p", { className: "text-caption text-gray-500", children: [
         "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E1B\u0E23\u0E30\u0E01\u0E2D\u0E1A (",
         widget.type,
         ")"
@@ -536,10 +648,10 @@ function ConfirmCard({
   onAction,
   disabled
 }) {
-  return /* @__PURE__ */ jsxs5(Frame, { children: [
+  return /* @__PURE__ */ jsxs6(Frame, { children: [
     /* @__PURE__ */ jsx6("p", { className: "text-body-sm font-semibold text-black", children: payload.title_th }),
     /* @__PURE__ */ jsx6("p", { className: "mt-1 whitespace-pre-wrap text-body-sm text-gray-600", children: payload.summary_th }),
-    /* @__PURE__ */ jsxs5("div", { className: "mt-3 flex gap-2", children: [
+    /* @__PURE__ */ jsxs6("div", { className: "mt-3 flex gap-2", children: [
       /* @__PURE__ */ jsx6(ActionButton, { onClick: () => onAction(payload.confirmLabel), disabled, children: payload.confirmLabel }),
       /* @__PURE__ */ jsx6(
         ActionButton,
@@ -563,15 +675,15 @@ function ErrorCard({
     Frame,
     {
       className: isError ? "border-error-red-100 bg-error-red-50" : "border-warning-yellow-200 bg-warning-yellow-50",
-      children: /* @__PURE__ */ jsxs5("div", { className: "flex items-start gap-2", children: [
+      children: /* @__PURE__ */ jsxs6("div", { className: "flex items-start gap-2", children: [
         isError ? /* @__PURE__ */ jsx6(CircleAlert, { className: "mt-0.5 size-4 shrink-0 text-error-red-600" }) : /* @__PURE__ */ jsx6(TriangleAlert2, { className: "mt-0.5 size-4 shrink-0 text-warning-normal" }),
-        /* @__PURE__ */ jsxs5("div", { className: "min-w-0 flex-1", children: [
-          /* @__PURE__ */ jsxs5("p", { className: "text-body-sm font-semibold text-black", children: [
+        /* @__PURE__ */ jsxs6("div", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsxs6("p", { className: "text-body-sm font-semibold text-black", children: [
             payload.code,
             " \u2014 ",
             payload.message_th
           ] }),
-          payload.location && /* @__PURE__ */ jsxs5("p", { className: "mt-1 text-caption text-gray-600", children: [
+          payload.location && /* @__PURE__ */ jsxs6("p", { className: "mt-1 text-caption text-gray-600", children: [
             payload.location.date,
             " \xB7 \u0E40\u0E27\u0E23 ",
             payload.location.shiftType
@@ -596,9 +708,9 @@ function StaffPicker({
   onAction,
   disabled
 }) {
-  return /* @__PURE__ */ jsxs5(Frame, { children: [
+  return /* @__PURE__ */ jsxs6(Frame, { children: [
     /* @__PURE__ */ jsx6("p", { className: "text-body-sm text-gray-700", children: payload.prompt_th }),
-    /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-col gap-1", children: payload.candidates.map((candidate) => /* @__PURE__ */ jsxs5(
+    /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-col gap-1", children: payload.candidates.map((candidate) => /* @__PURE__ */ jsxs6(
       "button",
       {
         type: "button",
@@ -619,8 +731,8 @@ function StaffPicker({
   ] });
 }
 function SummaryStats({ payload }) {
-  return /* @__PURE__ */ jsxs5(Frame, { children: [
-    /* @__PURE__ */ jsx6("dl", { className: "grid grid-cols-2 gap-2", children: payload.stats.map((stat) => /* @__PURE__ */ jsxs5("div", { className: "rounded-sm bg-gray-50 px-2 py-1.5", children: [
+  return /* @__PURE__ */ jsxs6(Frame, { children: [
+    /* @__PURE__ */ jsx6("dl", { className: "grid grid-cols-2 gap-2", children: payload.stats.map((stat) => /* @__PURE__ */ jsxs6("div", { className: "rounded-sm bg-gray-50 px-2 py-1.5", children: [
       /* @__PURE__ */ jsx6("dt", { className: "text-caption text-gray-500", children: stat.label_th }),
       /* @__PURE__ */ jsx6(
         "dd",
@@ -635,15 +747,15 @@ function SummaryStats({ payload }) {
         }
       )
     ] }, stat.label_th)) }),
-    payload.warnings_th.length > 0 && /* @__PURE__ */ jsx6("ul", { className: "mt-2 flex flex-col gap-1", children: payload.warnings_th.map((warning) => /* @__PURE__ */ jsxs5("li", { className: "text-caption text-warning-normal", children: [
+    payload.warnings_th.length > 0 && /* @__PURE__ */ jsx6("ul", { className: "mt-2 flex flex-col gap-1", children: payload.warnings_th.map((warning) => /* @__PURE__ */ jsxs6("li", { className: "text-caption text-warning-normal", children: [
       "\u2022 ",
       warning
     ] }, warning)) })
   ] });
 }
 function ScheduleDiff({ payload }) {
-  return /* @__PURE__ */ jsxs5(Frame, { className: "overflow-x-auto", children: [
-    /* @__PURE__ */ jsxs5("p", { className: "mb-2 text-caption text-gray-500", children: [
+  return /* @__PURE__ */ jsxs6(Frame, { className: "overflow-x-auto", children: [
+    /* @__PURE__ */ jsxs6("p", { className: "mb-2 text-caption text-gray-500", children: [
       "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E40\u0E27\u0E23 #",
       payload.scheduleId,
       " \xB7 \u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E0A\u0E31\u0E19 ",
@@ -652,7 +764,7 @@ function ScheduleDiff({ payload }) {
       payload.changes.length,
       " \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23"
     ] }),
-    /* @__PURE__ */ jsx6("table", { className: "w-full border-collapse text-body-sm", children: /* @__PURE__ */ jsx6("tbody", { children: payload.changes.map((change, index) => /* @__PURE__ */ jsxs5("tr", { className: "border-b border-border-subtle", children: [
+    /* @__PURE__ */ jsx6("table", { className: "w-full border-collapse text-body-sm", children: /* @__PURE__ */ jsx6("tbody", { children: payload.changes.map((change, index) => /* @__PURE__ */ jsxs6("tr", { className: "border-b border-border-subtle", children: [
       /* @__PURE__ */ jsx6("td", { className: "py-1 pr-2 whitespace-nowrap text-gray-600", children: change.date }),
       /* @__PURE__ */ jsx6("td", { className: "py-1 pr-2 text-gray-400 line-through", children: change.before ?? "\u2014" }),
       /* @__PURE__ */ jsx6("td", { className: "py-1 font-medium text-black", children: change.after ?? "\u2014" })
@@ -661,10 +773,10 @@ function ScheduleDiff({ payload }) {
 }
 
 // src/ai-chat/components/MessageBubble.tsx
-import { jsx as jsx7, jsxs as jsxs6 } from "react/jsx-runtime";
+import { jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
 function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
   if (message.role === "system") {
-    return /* @__PURE__ */ jsxs6("div", { className: "my-2 flex items-center gap-2", "data-slot": "ai-chat-divider", children: [
+    return /* @__PURE__ */ jsxs7("div", { className: "my-2 flex items-center gap-2", "data-slot": "ai-chat-divider", children: [
       /* @__PURE__ */ jsx7("span", { className: "h-px flex-1 bg-border-subtle" }),
       /* @__PURE__ */ jsx7("span", { className: "text-[11px] text-text-tertiary", children: message.content }),
       /* @__PURE__ */ jsx7("span", { className: "h-px flex-1 bg-border-subtle" })
@@ -677,7 +789,7 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
       "data-slot": "ai-chat-message",
       "data-role": message.role,
       className: cn("flex w-full", isUser ? "justify-end" : "justify-start"),
-      children: /* @__PURE__ */ jsxs6("div", { className: cn(isUser ? "flex max-w-[85%] flex-col items-end" : "w-full min-w-0"), children: [
+      children: /* @__PURE__ */ jsxs7("div", { className: cn(isUser ? "flex max-w-[85%] flex-col items-end" : "w-full min-w-0"), children: [
         /* @__PURE__ */ jsx7(
           "span",
           {
@@ -715,7 +827,7 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
                 "text-text-black"
               )
             ),
-            children: isUser ? message.content : message.content ? /* @__PURE__ */ jsx7(Markdown, { text: message.content }) : message.streaming ? /* @__PURE__ */ jsx7(TypingDots, { label: labels.thinking }) : null
+            children: isUser ? message.content : message.content ? /* @__PURE__ */ jsx7(Markdown, { text: message.content, labels }) : message.streaming ? /* @__PURE__ */ jsx7(TypingDots, { label: labels.thinking }) : null
           }
         ),
         message.widgets?.map((widget, index) => /* @__PURE__ */ jsx7(
@@ -737,7 +849,7 @@ function OutcomeBadge({
   labels
 }) {
   if (outcome.committed === void 0) return null;
-  return /* @__PURE__ */ jsxs6(
+  return /* @__PURE__ */ jsxs7(
     "span",
     {
       className: cn(
@@ -752,7 +864,7 @@ function OutcomeBadge({
   );
 }
 function TypingDots({ label }) {
-  return /* @__PURE__ */ jsxs6("span", { className: "flex items-center gap-1 text-text-tertiary", "aria-label": label, children: [
+  return /* @__PURE__ */ jsxs7("span", { className: "flex items-center gap-1 text-text-tertiary", "aria-label": label, children: [
     /* @__PURE__ */ jsx7(Dot, { delay: "0ms" }),
     /* @__PURE__ */ jsx7(Dot, { delay: "150ms" }),
     /* @__PURE__ */ jsx7(Dot, { delay: "300ms" })
@@ -769,7 +881,7 @@ function Dot({ delay }) {
 }
 
 // src/ai-chat/components/MessageList.tsx
-import { jsx as jsx8, jsxs as jsxs7 } from "react/jsx-runtime";
+import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
 function MessageList({
   messages,
   labels,
@@ -782,7 +894,7 @@ function MessageList({
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
   if (messages.length === 0) {
-    return /* @__PURE__ */ jsxs7("div", { className: "flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center", children: [
+    return /* @__PURE__ */ jsxs8("div", { className: "flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center", children: [
       /* @__PURE__ */ jsx8(Sparkles, { className: "size-8 text-brand-active" }),
       /* @__PURE__ */ jsx8("p", { className: "text-body-sm font-semibold text-text-black", children: labels.emptyTitle }),
       /* @__PURE__ */ jsx8("p", { className: "text-caption text-text-body", children: labels.emptyHint }),
@@ -803,7 +915,7 @@ function MessageList({
       )) })
     ] });
   }
-  return /* @__PURE__ */ jsxs7(
+  return /* @__PURE__ */ jsxs8(
     "div",
     {
       "data-slot": "ai-chat-messages",
@@ -826,7 +938,7 @@ function MessageList({
 }
 
 // src/ai-chat/components/ChatDrawer.tsx
-import { Fragment as Fragment2, jsx as jsx9, jsxs as jsxs8 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx9, jsxs as jsxs9 } from "react/jsx-runtime";
 function ChatDrawer(props) {
   const {
     open,
@@ -845,15 +957,13 @@ function ChatDrawer(props) {
     loadConversations,
     activeConversationId,
     mode,
-    onModeChange,
-    showModeToggle,
     contextUsage,
     suggestions
   } = props;
   const [historyOpen, setHistoryOpen] = React6.useState(false);
   const busy = status === "sending" || status === "streaming";
   const starting = status === "starting";
-  return /* @__PURE__ */ jsx9(RadixDialog.Root, { open, onOpenChange, modal: false, children: /* @__PURE__ */ jsx9(RadixDialog.Portal, { children: /* @__PURE__ */ jsxs8(
+  return /* @__PURE__ */ jsx9(RadixDialog.Root, { open, onOpenChange, modal: false, children: /* @__PURE__ */ jsx9(RadixDialog.Portal, { children: /* @__PURE__ */ jsxs9(
     RadixDialog.Content,
     {
       "data-slot": "ai-chat-drawer",
@@ -871,37 +981,24 @@ function ChatDrawer(props) {
         position === "bottom-left" ? "data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left" : "data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right"
       ),
       children: [
-        /* @__PURE__ */ jsxs8("header", { className: "flex items-center gap-2 border-b border-border-subtle bg-bg-default px-4 py-3", children: [
+        /* @__PURE__ */ jsxs9("header", { className: "flex items-center gap-2 border-b border-border-subtle bg-bg-default px-4 py-3", children: [
           historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.historyBack, onClick: () => setHistoryOpen(false), children: /* @__PURE__ */ jsx9(ChevronLeft, { className: "size-4" }) }),
-          /* @__PURE__ */ jsxs8("div", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsxs9("div", { className: "min-w-0 flex-1", children: [
             /* @__PURE__ */ jsx9(RadixDialog.Title, { className: "truncate text-body-sm font-semibold text-text-black", children: historyOpen ? labels.historyTitle : labels.title }),
-            !historyOpen && /* @__PURE__ */ jsx9("p", { className: "truncate text-caption text-text-body", children: labels.subtitle })
+            !historyOpen && mode === "schedule" ? /* @__PURE__ */ jsxs9("p", { className: "mt-0.5 flex min-w-0 items-center gap-1 truncate text-caption font-medium text-brand", children: [
+              /* @__PURE__ */ jsx9(CalendarDays, { className: "size-3 shrink-0", "aria-hidden": true }),
+              labels.scheduleMode
+            ] }) : !historyOpen ? (
+              /* คำบรรยายมีเฉพาะหน้าแชท — ในหน้าประวัติ หัวข้อบอกตัวเองครบแล้ว
+                 และแถวรายการต้องการความสูงมากกว่าคำอธิบายซ้ำ */
+              /* @__PURE__ */ jsx9("p", { className: "truncate text-caption text-text-body", children: labels.subtitle })
+            ) : null
           ] }),
           !historyOpen && /* @__PURE__ */ jsx9(ContextMeter, { usage: contextUsage ?? null, labels, className: "mr-1" }),
           !historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.history, onClick: () => setHistoryOpen(true), children: /* @__PURE__ */ jsx9(History, { className: "size-4" }) }),
           /* @__PURE__ */ jsx9(IconButton, { label: labels.newChat, onClick: onNewChat, children: /* @__PURE__ */ jsx9(Plus, { className: "size-4" }) }),
           historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.historyClose, onClick: () => setHistoryOpen(false), children: /* @__PURE__ */ jsx9(X, { className: "size-4" }) }),
           !historyOpen && /* @__PURE__ */ jsx9(RadixDialog.Close, { asChild: true, children: /* @__PURE__ */ jsx9(IconButton, { label: labels.minimize, children: position === "bottom-left" ? /* @__PURE__ */ jsx9(ChevronsLeft, { className: "size-4" }) : /* @__PURE__ */ jsx9(ChevronsRight, { className: "size-4" }) }) })
-        ] }),
-        !historyOpen && (showModeToggle || mode === "schedule") && onModeChange && /* @__PURE__ */ jsxs8("div", { className: "flex gap-1 border-b border-border-subtle bg-bg-default px-4 py-2", children: [
-          /* @__PURE__ */ jsx9(
-            ModeChip,
-            {
-              active: mode === "assistant",
-              onClick: () => onModeChange("assistant"),
-              icon: /* @__PURE__ */ jsx9(MessageCircle, { className: "size-3.5" }),
-              label: labels.assistantMode
-            }
-          ),
-          /* @__PURE__ */ jsx9(
-            ModeChip,
-            {
-              active: mode === "schedule",
-              onClick: () => onModeChange("schedule"),
-              icon: /* @__PURE__ */ jsx9(CalendarDays, { className: "size-3.5" }),
-              label: labels.scheduleMode
-            }
-          )
         ] }),
         historyOpen ? /* @__PURE__ */ jsx9(
           ConversationPicker,
@@ -914,7 +1011,7 @@ function ChatDrawer(props) {
               onPickConversation(id);
             }
           }
-        ) : /* @__PURE__ */ jsxs8(Fragment2, { children: [
+        ) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
           /* @__PURE__ */ jsx9(
             StatusBar,
             {
@@ -959,8 +1056,8 @@ function StatusBar({
   onRetry
 }) {
   if (status === "error") {
-    return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-error-red-50 px-4 py-2 text-caption text-error-red-800", children: [
-      /* @__PURE__ */ jsxs8("span", { className: "min-w-0 flex-1", children: [
+    return /* @__PURE__ */ jsxs9("div", { className: "flex items-center gap-2 bg-error-red-50 px-4 py-2 text-caption text-error-red-800", children: [
+      /* @__PURE__ */ jsxs9("span", { className: "min-w-0 flex-1", children: [
         error,
         transportStatus === "connecting" && /* @__PURE__ */ jsx9("span", { className: "mt-0.5 block text-error-red-800/70", children: labels.reconnecting })
       ] }),
@@ -979,7 +1076,7 @@ function StatusBar({
     return /* @__PURE__ */ jsx9("div", { className: "bg-brand-subtle px-4 py-1.5 text-caption text-brand", children: labels.connecting });
   }
   if (transportStatus === "disconnected") {
-    return /* @__PURE__ */ jsxs8("div", { className: "flex items-center gap-2 bg-overlay-hover px-4 py-1.5 text-caption text-text-body", children: [
+    return /* @__PURE__ */ jsxs9("div", { className: "flex items-center gap-2 bg-overlay-hover px-4 py-1.5 text-caption text-text-body", children: [
       /* @__PURE__ */ jsx9("span", { className: "min-w-0 flex-1 truncate", children: labels.disconnected }),
       /* @__PURE__ */ jsx9(
         "button",
@@ -1016,29 +1113,6 @@ var IconButton = React6.forwardRef(function IconButton2({ label, onClick, active
     }
   );
 });
-function ModeChip({
-  active,
-  onClick,
-  icon,
-  label
-}) {
-  return /* @__PURE__ */ jsxs8(
-    "button",
-    {
-      type: "button",
-      onClick,
-      "aria-pressed": active,
-      className: cn(
-        "flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-medium transition-colors cursor-pointer",
-        active ? "bg-brand text-brand-foreground" : "border border-border-default bg-bg-default text-text-body hover:bg-bg-subtle"
-      ),
-      children: [
-        icon,
-        label
-      ]
-    }
-  );
-}
 
 // src/ai-chat/components/FloatingButton.tsx
 import * as React7 from "react";
@@ -1205,6 +1279,9 @@ var thLabels = {
   thinking: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E04\u0E34\u0E14\u2026",
   scheduleMode: "\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23",
   assistantMode: "\u0E42\u0E2B\u0E21\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22",
+  linkOpenTitle: "\u0E40\u0E1B\u0E34\u0E14\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E07",
+  linkOpenHere: "\u0E40\u0E1B\u0E34\u0E14\u0E43\u0E19\u0E2B\u0E19\u0E49\u0E32\u0E19\u0E35\u0E49",
+  linkOpenNewTab: "\u0E40\u0E1B\u0E34\u0E14\u0E43\u0E19\u0E41\u0E17\u0E47\u0E1A\u0E43\u0E2B\u0E21\u0E48",
   you: "\u0E04\u0E38\u0E13",
   assistant: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22",
   historyTitle: "\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u0E01\u0E32\u0E23\u0E2A\u0E19\u0E17\u0E19\u0E32",
@@ -1262,6 +1339,9 @@ var enLabels = {
   thinking: "Thinking\u2026",
   scheduleMode: "Scheduling mode",
   assistantMode: "Assistant mode",
+  linkOpenTitle: "How should this link open?",
+  linkOpenHere: "Open here",
+  linkOpenNewTab: "Open in a new tab",
   you: "You",
   assistant: "Assistant",
   historyTitle: "Conversation history",
@@ -2110,7 +2190,7 @@ function writeStored(key, value) {
 }
 
 // src/ai-chat/AiChatWidget.tsx
-import { Fragment as Fragment3, jsx as jsx11, jsxs as jsxs9 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx11, jsxs as jsxs10 } from "react/jsx-runtime";
 var SUGGESTIONS_BY_LOCALE = {
   th: [
     "\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48 6 \u0E43\u0E04\u0E23\u0E02\u0E36\u0E49\u0E19\u0E40\u0E27\u0E23\u0E40\u0E0A\u0E49\u0E32\u0E1A\u0E49\u0E32\u0E07",
@@ -2209,7 +2289,7 @@ function AiChatWidget({
     session.newConversation();
     void session.start();
   }, [session.state.conversationId, session.newConversation, session.start]);
-  return /* @__PURE__ */ jsxs9(Fragment3, { children: [
+  return /* @__PURE__ */ jsxs10(Fragment3, { children: [
     !hideLauncher && /* @__PURE__ */ jsx11(
       FloatingButton,
       {
@@ -2233,8 +2313,6 @@ function AiChatWidget({
         labels,
         position,
         mode: session.state.mode,
-        onModeChange: setMode,
-        showModeToggle: config.showModeToggle,
         contextUsage: session.state.contextUsage,
         suggestions,
         onSend: handleSend,

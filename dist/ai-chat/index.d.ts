@@ -306,7 +306,18 @@ interface AiChatLabels {
     notCommitted: string;
     thinking: string;
     scheduleMode: string;
+    /**
+     * 🔴 No longer rendered by the drawer — the header states the mode, it does not offer to change it.
+     * Kept because it is part of the public label set three apps may already override, and because the
+     * name of the default mode is the obvious thing a host writes into its own copy.
+     */
     assistantMode: string;
+    /** Accessible name of the popover that asks how to open a link the assistant wrote. */
+    linkOpenTitle: string;
+    /** "Open here" — navigates this tab, ending the page the conversation was about. */
+    linkOpenHere: string;
+    /** "Open in a new tab" — keeps the conversation alive behind it. */
+    linkOpenNewTab: string;
     /**
      * ป้ายกำกับผู้พูดเหนือทุกเทิร์น
      *
@@ -406,7 +417,11 @@ interface AiChatConfig {
     scope?: ChatScope;
     /** Default turn mode. `schedule` switches the backend to the roster agent profile (DEC-AI-06). */
     mode?: ChatMode;
-    /** Show the assistant/schedule toggle in the drawer header. Default `false`. */
+    /**
+     * @deprecated Ignored since the mode became read-only. Entering and leaving scheduling mode is the
+     * assistant's decision (`[[ENTER_MODE:…]]` in, `exit` back), so the drawer states the mode instead of
+     * offering a switch. Still accepted so hosts that pass it keep compiling; remove it on their next pass.
+     */
     showModeToggle?: boolean;
     /** Example questions on the empty state — tapping one sends it. Defaults to roster examples. */
     suggestions?: string[];
@@ -576,9 +591,14 @@ interface ChatDrawerProps {
     onRetry: () => void;
     loadConversations: () => Promise<ConversationListItem[]>;
     activeConversationId: string | null;
+    /**
+     * Which mode the CONVERSATION is in, as the session reports it — read-only here.
+     *
+     * The drawer has no control for it on purpose: entering and leaving scheduling mode is the
+     * assistant's decision (`[[ENTER_MODE:…]]` on the way in, `exit` on the way back — see
+     * `useAiChatSession`), so the header states the mode rather than offering to change it.
+     */
     mode: ChatMode;
-    onModeChange?: (mode: ChatMode) => void;
-    showModeToggle?: boolean;
     /** Conversation memory fill, as last measured by the service. Null hides the meter entirely. */
     contextUsage?: ContextUsage | null;
     suggestions?: string[];
@@ -716,9 +736,10 @@ interface ContextMeterProps {
 }
 declare function ContextMeter({ usage, labels, className }: ContextMeterProps): React.JSX.Element | null;
 
-declare function Markdown({ text, className }: {
+declare function Markdown({ text, className, labels, }: {
     text: string;
     className?: string;
+    labels?: AiChatLabels;
 }): React.JSX.Element;
 
 /** Scope resolved at hand-off, so scheduling mode doesn't have to re-ask which department/month. */
