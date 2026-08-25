@@ -85,7 +85,7 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
             {isUser ? (
               message.content
             ) : message.content ? (
-              <Markdown text={message.content} />
+              <Markdown text={message.content} labels={labels} />
             ) : message.streaming ? (
               <TypingDots label={labels.thinking} />
             ) : null}

@@ -127,3 +127,50 @@ describe("ChatDrawer — ประวัติสลับทั้งแผง"
     );
   });
 });
+
+/**
+ * โหมดเป็น **ข้อความบนบรรทัดที่สองของแถบหัว** ไม่ใช่ชิปที่กดได้ และไม่ใช่แถวของตัวเองใต้แถบหัว
+ *
+ * แถวเดิมกินความสูงถาวรราว 36px ในแผงกว้าง 416px ที่ทุกบรรทัดต้องแย่งกัน ขณะที่คำบรรยายเป็น
+ * ข้อความคงที่ซึ่งอ่านรอบเดียวก็พอ — ช่องเดียวกันนั้นจึงควรเป็นของสิ่งที่เปลี่ยนตามสถานะ
+ *
+ * 🔴 ห้ามมีปุ่มสลับโหมด — การเข้า/ออกโหมดเป็นการตัดสินใจของผู้ช่วย (`[[ENTER_MODE:…]]` พาเข้า
+ * `exit` พากลับ) ปุ่มบนแถบหัวจะเปิดทางให้ผู้ใช้สั่งสวนสิ่งที่ผู้ช่วยเพิ่งตัดสินใจไป
+ */
+describe("ChatDrawer — โหมดบนแถบหัว", () => {
+  it("บอกโหมดจัดเวรเป็นข้อความแทนคำบรรยาย", () => {
+    render(<ChatDrawer {...props({ mode: "schedule" })} />);
+    expect(screen.getByText(defaultLabels.scheduleMode)).toBeTruthy();
+    expect(screen.queryByText(defaultLabels.subtitle)).toBeNull();
+  });
+
+  it("ไม่มีปุ่มให้กดสลับโหมด ไม่ว่าจะอยู่โหมดไหน", () => {
+    const { unmount } = render(<ChatDrawer {...props({ mode: "schedule" })} />);
+    expect(screen.queryByRole("button", { name: defaultLabels.scheduleMode })).toBeNull();
+    expect(screen.queryByRole("button", { name: defaultLabels.assistantMode })).toBeNull();
+    unmount();
+
+    render(<ChatDrawer {...props({ mode: "assistant" })} />);
+    expect(screen.queryByRole("button", { name: defaultLabels.scheduleMode })).toBeNull();
+    expect(screen.queryByRole("button", { name: defaultLabels.assistantMode })).toBeNull();
+  });
+
+  it("วางข้อความไว้ในแถบหัวเดียวกับหัวข้อ ไม่ใช่แถวแยกใต้แถบหัว", () => {
+    render(<ChatDrawer {...props({ mode: "schedule" })} />);
+    const header = screen.getByText(defaultLabels.scheduleMode).closest("header");
+    expect(header).toBeTruthy();
+    expect(header!.textContent).toContain(defaultLabels.title);
+  });
+
+  it("โหมดผู้ช่วยเป็นค่าปกติ จึงไม่ต้องเอ่ยชื่อ — คำบรรยายอยู่ครบ", () => {
+    render(<ChatDrawer {...props({ mode: "assistant" })} />);
+    expect(screen.getByText(defaultLabels.subtitle)).toBeTruthy();
+    expect(screen.queryByText(defaultLabels.scheduleMode)).toBeNull();
+  });
+
+  it("ไม่บอกโหมดในหน้าประวัติ — หน้านั้นไม่ได้คุยกับผู้ช่วย", async () => {
+    render(<ChatDrawer {...props({ mode: "schedule" })} />);
+    screen.getByRole("button", { name: defaultLabels.history }).click();
+    await waitFor(() => expect(screen.queryByText(defaultLabels.scheduleMode)).toBeNull());
+  });
+});

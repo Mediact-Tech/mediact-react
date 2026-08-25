@@ -180,8 +180,6 @@ export function AiChatWidget({
         labels={labels}
         position={position}
         mode={session.state.mode}
-        onModeChange={setMode}
-        showModeToggle={config.showModeToggle}
         contextUsage={session.state.contextUsage}
         suggestions={suggestions}
         onSend={handleSend}

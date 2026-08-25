@@ -6,7 +6,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   History,
-  MessageCircle,
   Plus,
   X,
 } from "lucide-react";
@@ -35,9 +34,14 @@ export interface ChatDrawerProps {
   onRetry: () => void;
   loadConversations: () => Promise<ConversationListItem[]>;
   activeConversationId: string | null;
+  /**
+   * Which mode the CONVERSATION is in, as the session reports it — read-only here.
+   *
+   * The drawer has no control for it on purpose: entering and leaving scheduling mode is the
+   * assistant's decision (`[[ENTER_MODE:…]]` on the way in, `exit` on the way back — see
+   * `useAiChatSession`), so the header states the mode rather than offering to change it.
+   */
   mode: ChatMode;
-  onModeChange?: (mode: ChatMode) => void;
-  showModeToggle?: boolean;
   /** Conversation memory fill, as last measured by the service. Null hides the meter entirely. */
   contextUsage?: ContextUsage | null;
   suggestions?: string[];
@@ -66,8 +70,6 @@ export function ChatDrawer(props: ChatDrawerProps) {
     loadConversations,
     activeConversationId,
     mode,
-    onModeChange,
-    showModeToggle,
     contextUsage,
     suggestions,
   } = props;
@@ -114,11 +116,27 @@ export function ChatDrawer(props: ChatDrawerProps) {
               <RadixDialog.Title className="truncate text-body-sm font-semibold text-text-black">
                 {historyOpen ? labels.historyTitle : labels.title}
               </RadixDialog.Title>
-              {/* คำบรรยายมีเฉพาะหน้าแชท — ในหน้าประวัติ หัวข้อบอกตัวเองครบแล้ว
-                  และแถวรายการต้องการความสูงมากกว่าคำอธิบายซ้ำ */}
-              {!historyOpen && (
+              {/* บรรทัดที่สองมีค่าหนึ่งช่อง จึงให้ของที่ **เปลี่ยนตามสถานะ** ก่อนของที่คงที่:
+                  โหมดเปลี่ยนสิ่งที่ผู้ช่วยทำได้จริง (ช่องพิมพ์คนละคำใบ้ · เปิดเส้นเขียนตาราง)
+                  ส่วนคำบรรยายอ่านรอบเดียวก็พอ · แถบโหมดเคยเป็นแถวของตัวเองใต้แถบหัว ซึ่งกิน
+                  ความสูงถาวรราว 36px ในแผงกว้าง 416px ที่ทุกบรรทัดต้องแย่งกัน
+
+                  🔴 เป็น **ข้อความอย่างเดียว กดไม่ได้** — การเข้า/ออกโหมดเป็นการตัดสินใจของผู้ช่วย
+                  (ตัวแทน `[[ENTER_MODE:…]]` พาเข้า และ `exit` พากลับ ดู `useAiChatSession`)
+                  ไม่ใช่สวิตช์ของผู้ใช้ · เมื่อไม่มีปุ่มให้กด ก็ไม่ต้องบอกชื่อโหมดปกติ — บอกเฉพาะ
+                  ตอนที่ผู้ช่วยพาเข้าโหมดจัดเวร ซึ่งเป็นตอนเดียวที่สถานะต่างจากที่ผู้ใช้คาด */}
+              {!historyOpen && mode === "schedule" ? (
+                <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-caption font-medium text-brand">
+                  <CalendarDays className="size-3 shrink-0" aria-hidden />
+                  {/* แค่ "โหมดจัดเวร" — เคยต่อท้ายด้วยแผนก/หน่วยงานที่ล็อกไว้ ซึ่งยาวเกินบรรทัดนี้
+                      และซ้ำกับข้อความเปิดโหมดที่ผู้ช่วยพิมพ์ไปแล้ว */}
+                  {labels.scheduleMode}
+                </p>
+              ) : !historyOpen ? (
+                /* คำบรรยายมีเฉพาะหน้าแชท — ในหน้าประวัติ หัวข้อบอกตัวเองครบแล้ว
+                   และแถวรายการต้องการความสูงมากกว่าคำอธิบายซ้ำ */
                 <p className="truncate text-caption text-text-body">{labels.subtitle}</p>
-              )}
+              ) : null}
             </div>
 
             {/* Sits beside the actions rather than in the log: it describes the CONVERSATION, and it
@@ -163,28 +181,6 @@ export function ChatDrawer(props: ChatDrawerProps) {
               </RadixDialog.Close>
             )}
           </header>
-
-          {/* Shown when the host enables the toggle OR the agent handed the turn into scheduling
-              mode on its own — the user must always be able to see (and leave) the mode they're in. */}
-          {!historyOpen && (showModeToggle || mode === "schedule") && onModeChange && (
-            <div className="flex gap-1 border-b border-border-subtle bg-bg-default px-4 py-2">
-              <ModeChip
-                active={mode === "assistant"}
-                onClick={() => onModeChange("assistant")}
-                icon={<MessageCircle className="size-3.5" />}
-                label={labels.assistantMode}
-              />
-              <ModeChip
-                active={mode === "schedule"}
-                onClick={() => onModeChange("schedule")}
-                icon={<CalendarDays className="size-3.5" />}
-                // Just "โหมดจัดเวร". The resolved department/sub-unit used to be appended here, which put a
-                // long org name in a 2-word chip and repeated what the mode's own opening message already
-                // states — the chip's job is to say which mode you are in, and how to leave it.
-                label={labels.scheduleMode}
-              />
-            </div>
-          )}
 
           {/* 🔴 ประวัติ **แทนที่** บทสนทนา ไม่ได้แทรกทับ — ที่ 416px รายการแบบแทรกเห็นได้ทีละ ~4 แถว
               และหัวข้อถูกตัดกลางคำ · การสลับทั้งใบยังทำให้ "ตอนนี้อยู่โหมดไหน" มีคำตอบเดียว
@@ -317,31 +313,3 @@ const IconButton = React.forwardRef<
   );
 });
 
-function ModeChip({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-medium transition-colors cursor-pointer",
-        active
-          ? "bg-brand text-brand-foreground"
-          : "border border-border-default bg-bg-default text-text-body hover:bg-bg-subtle",
-      )}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
