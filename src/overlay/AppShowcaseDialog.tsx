@@ -2,6 +2,8 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { cn } from "../lib/cn";
+import { AppMark } from "../brand/AppMark";
+import { appBrandInk, appWordmarks } from "../brand/app-marks";
 import {
   MEDIACT_LINE_HANDLE,
   MEDIACT_LINE_URL,
@@ -234,25 +236,41 @@ const PHONE_HREF = `tel:${MEDIACT_SUPPORT_PHONE.replace(/\s/g, "")}`;
 /* ─────────────────────────────────────────────────────────────────── */
 
 export type ShowcaseAssets = {
-  /** โลโก้เต็มของผลิตภัณฑ์ */
-  logo: string;
-  /** ภาพจอกว้าง (ชั้นหลัง) */
-  wide: string;
-  /** ภาพที่ซ้อนทับมุมล่างซ้าย */
-  card: string;
+  /**
+   * ภาพเดียวที่ **ประกอบจอกว้างกับการ์ดซ้อนมาแล้ว** — วางเต็มกรอบภาพตัวอย่าง
+   *
+   * ทางที่ควรใช้กับภาพชุดใหม่: ดีไซน์ส่ง mockup ที่ซ้อนเสร็จแล้วมาเป็นไฟล์เดียว ⇒ แยกกลับ
+   * เป็นสองใบไม่ได้ (การ์ดบังจอด้านหลังอยู่ ส่วนที่ถูกบังหายไปจากไฟล์แล้ว)
+   *
+   * มีค่านี้เมื่อไหร่ `wide`/`card` จะถูกข้าม
+   */
+  composed?: string;
+  /** โลโก้เต็มของผลิตภัณฑ์ — **ไม่ต้องส่งแล้ว** ค่าเริ่มต้นวาดจาก `AppMark` + ชื่อผลิตภัณฑ์ */
+  logo?: string;
+  /** ภาพจอกว้าง (ชั้นหลัง) — ใช้เมื่อไม่มี `composed` */
+  wide?: string;
+  /** ภาพที่ซ้อนทับมุมล่างซ้าย — ใช้เมื่อไม่มี `composed` */
+  card?: string;
 };
 
 /**
- * 🔴 **ภาพไม่ได้ฝังมาใน DS ต่างจากไอคอนแอป** — ภาพหน้าจอผลิตภัณฑ์ 4 ชุด (webp 20–52 KB
- * + โลโก้ png) รวม ~250 KB ถ้าแปลงเป็น data URL จะโป่งเป็น ~340 KB ในบันเดิลของ **ทุกแอป**
- * ที่ import DS ไม่ว่าจะใช้กล่องนี้หรือไม่ · ไอคอนแอปตัวละ 2–7 KB จึงฝังได้ แต่ชุดนี้ไม่คุ้ม
+ * 🔴 **ภาพไม่ได้ฝังในบันเดิล ต่างจากเครื่องหมายแอป** — ทั้งชุด 224 KB ถ้าเป็น data URL จะเป็น
+ * 307 KB ⇒ `dist/index.js` โตจาก 404 KB เป็น **711 KB (+76%)** กับทุกแอปที่ import DS แม้ไม่เคย
+ * เปิดกล่องนี้ · เครื่องหมายแอปตัวละ 1–5 KB และถูกวาดทุกหน้าอยู่แล้วจึงฝังได้ แต่ชุดนี้ไม่คุ้ม
  *
- * ⇒ ค่าเริ่มต้นอ่านจาก `/images/app-showcase/<key>-{logo.png,preview-wide.webp,preview-card.webp}`
- *   ซึ่งเป็นชื่อไฟล์ชุดเดียวกับที่ Portal ใช้อยู่ ⇒ แอปที่คัดลอกโฟลเดอร์นั้นมาวางใน `public/`
- *   ใช้ได้ทันทีโดยไม่ต้องส่ง prop · แอปที่วางไว้ที่อื่นส่ง `assetBaseUrl` หรือ `assets` มาทับ
+ * ✅ **แต่ตัวไฟล์อยู่ใน DS แล้ว** (`assets/` ของแพ็กเกจนี้ · 2026-08-25) — แอป `import` ที่อยู่
+ * ของไฟล์มาส่งเป็น prop แล้ว bundler ของแอปจัดการเสิร์ฟเอง ⇒ **ไม่มีสำเนาใน `public/` ของใคร
+ * อีกแล้ว** · ก่อนหน้านี้ทุกแอปคัดลอกไปเก็บเอง แล้วมันดริฟต์จริง (hr-web ได้ชุดใหม่ ส่วน Portal
+ * ค้างอยู่ที่ชุด 17 ส.ค.) · เหตุผลเต็มและวิธีใช้อยู่ที่ `assets/README.md`
+ *
+ * ⚠️ ค่าเริ่มต้นยังอ่านจาก `/images/app-showcase/<key>-preview-{wide,card}.webp` ตามเดิม
+ * สำหรับแอปที่ยังไม่ย้าย — **ห้ามเปลี่ยน** ไม่งั้นภาพของแอปที่พึ่งค่าเริ่มต้นจะหายเงียบ ๆ
+ * (มีเทสล็อกข้อนี้ไว้) · แอปที่ย้ายแล้วส่ง `assets` มาทับ
  */
 const defaultAssets = (key: ShowcaseAppKey, baseUrl: string): ShowcaseAssets => ({
-  logo: `${baseUrl}/${key}-logo.png`,
+  /* ⛔ **ไม่มี `logo` โดยตั้งใจ** — ปล่อยให้ตกไปที่ `AppMark` ซึ่งอ่านจากชุดกลางใน DS
+   * ⇒ โลโก้ผลิตภัณฑ์ไม่มีวันค้างอยู่ที่รุ่นที่แต่ละแอปคัดลอกไว้อีก (`{key}-logo.png`
+   * เลิกถูกอ่านแล้ว — ไฟล์นั้นลบได้) · แอปที่อยากทับยังส่ง `logo` มาเองได้ */
   wide: `${baseUrl}/${key}-preview-wide.webp`,
   card: `${baseUrl}/${key}-preview-card.webp`,
 });
@@ -280,9 +298,10 @@ const PreviewImage = ({
   alt,
 }: {
   box: ShowcaseImageBox;
-  src: string;
+  src: string | undefined;
   alt: string;
-}) => (
+}) =>
+  !src ? null : (
   /* ไม่มีมุมโค้ง/เงา — ที่เห็นในแบบเป็นของในภาพหน้าจอเอง ไม่ใช่สไตล์ที่ Figma ใส่ให้กรอบ */
   <img
     src={src}
@@ -291,7 +310,7 @@ const PreviewImage = ({
     className="absolute max-w-none object-cover"
     style={{ left: box.x, top: box.y, width: box.width, height: box.height }}
   />
-);
+  );
 
 /**
  * หน้าต่าง "ตัวอย่างผลิตภัณฑ์ + ช่องทางติดต่อ" ของแอปที่ยังไม่เปิดใช้งานบนแอปที่ผู้ใช้ยืนอยู่
@@ -371,32 +390,105 @@ function AppShowcaseDialog({
             className="absolute left-0 top-1/2 -translate-y-1/2"
             style={{ width: layout.preview.width, height: layout.preview.height }}
           >
-            <PreviewImage box={layout.preview.wide} src={asset.wide} alt={copy.name} />
-            <PreviewImage box={layout.preview.card} src={asset.card} alt={copy.name} />
+            {asset.composed ? (
+              /* ภาพเดียวที่ซ้อนมาแล้ว — `object-contain` ไม่ใช่ `cover` เพราะสัดส่วนของ
+                 ภาพจริงไม่ได้ตรงกับกรอบที่ Figma กันไว้เป๊ะทุกแอป (ต่างกัน 2–8%)
+                 ⇒ `cover` จะครอปขอบจอทิ้งไปเงียบ ๆ */
+              <img
+                src={asset.composed}
+                alt={copy.name}
+                aria-hidden="true"
+                className="absolute inset-0 size-full object-contain"
+              />
+            ) : (
+              <>
+                <PreviewImage
+                  box={layout.preview.wide}
+                  src={asset.wide}
+                  alt={copy.name}
+                />
+                <PreviewImage
+                  box={layout.preview.card}
+                  src={asset.card}
+                  alt={copy.name}
+                />
+              </>
+            )}
           </div>
 
           <div
             className="absolute top-1/2 -translate-y-1/2"
             style={{ left: layout.columnX, width: layout.columnWidth }}
           >
-            <img
-              src={asset.logo}
-              alt={copy.name}
-              className="w-auto max-w-none object-contain"
-              style={{ height: layout.logoHeight }}
-            />
+            {/* 🎨 **โลโก้วาดจาก `AppMark` + ตัวหนังสือ ไม่ใช่ไฟล์ภาพ** (2026-08-25)
+              * ของเดิมอ่าน `{key}-logo.png` จาก `public/` ของแอปที่กำลังรัน ⇒ โลโก้ของ
+              * ผลิตภัณฑ์อื่นค้างอยู่ที่รุ่นที่แอปนั้นคัดลอกไว้ (วัดจริง: ไฟล์ลงวันที่ 17 ส.ค.
+              * ⇒ MediRefer ยังเป็นสีน้ำตาลชุดเก่า ทั้งที่ชุดปัจจุบันเป็น `#0e6b8d`)
+              * ส่ง `logo` มาเมื่อไหร่ยังทับได้ สำหรับแอปที่ยังไม่พร้อมย้าย
+              *
+              * 🔴 **สีตัวหนังสือห้ามเป็น token ที่ตามธีม** — กล่องนี้แสดง "โลโก้ของแอปอื่น"
+              * บนแอปที่ผู้ใช้ยืนอยู่ · `text-text-primary` ถูก alias ไปที่สีแบรนด์ในธีมของ
+              * MediHR/Medimatch ⇒ ชื่อ "MEDI PAY" จะกลายเป็นสีครามของ MediHR
+              * ⇒ ใช้หมึกคงที่ตัวเดียวกับหัวเรื่อง ซึ่งวัดมาจากแบบอยู่แล้ว */}
+            {asset.logo ? (
+              <img
+                src={asset.logo}
+                alt={copy.name}
+                className="w-auto max-w-none object-contain"
+                style={{ height: layout.logoHeight }}
+              />
+            ) : (
+              <div
+                className="flex items-center gap-2"
+                style={{ height: layout.logoHeight }}
+              >
+                {/* 🔴 **ขนาดต้องเป็น inline style ห้ามเป็นคลาส** — DS ถูกใช้ในแอปที่มี CSS
+                  * **unlayered** อยู่ด้วย (mediwork: `styles/globals.css` สั่ง
+                  * `img{max-width:100%;height:auto}` ไม่มี layer) ⇒ กฎนั้นชนะ utility ของ
+                  * Tailwind **ทุกตัวไม่ว่า specificity** เพราะ layered แพ้ unlayered เสมอ
+                  * ⇒ `h-full` ถูกกลืนเงียบ ๆ แล้ว `<img>` กลับไปใช้ความสูงของไฟล์
+                  * (วัดบนจอจริง: medioncloud ได้ 126px แทนที่จะเป็น 49 = ใหญ่เกิน 2.6 เท่า
+                  * จนทับพาดหัวที่อยู่ข้างล่าง) · inline อยู่เหนือทุก layer จึงแน่นอนกว่า */}
+                <AppMark
+                  app={app}
+                  alt=""
+                  style={{ height: "100%", width: "auto" }}
+                />
+                {/* 🔴 **`whitespace-nowrap` ไม่ใช่ของประดับ** — คอลัมน์นี้กว้าง 284–293
+                  * ส่วน "MEDI ONCLOUD" ที่ 30px กินเกือบทั้งแถว ⇒ ไม่กันไว้จะตกบรรทัด
+                  * แล้วดันคำโปรยลงไปทับปุ่มติดต่อ (เห็นบนจอจริงมาแล้ว) */}
+                <span
+                  className="whitespace-nowrap font-semibold tracking-[0.02em]"
+                  style={{
+                    /* 0.62 ของความสูงกรอบ — วัดจาก `{key}-logo.png` ทั้ง 4 ไฟล์
+                       (ตัวอักษรสูง ~28 ในกรอบ 45–49) */
+                    fontSize: layout.logoHeight * 0.62,
+                    /* สีของแบรนด์นั้น ไม่ใช่หมึกกลาง และไม่ใช่ token ของธีมที่กำลังรัน
+                       — เหตุผลเต็มอยู่ที่ `appBrandInk` ใน `brand/app-marks.ts` */
+                    color: appBrandInk[app],
+                  }}
+                >
+                  {appWordmarks[app]}
+                </span>
+              </div>
+            )}
             {/* 20/1.4 น้ำหนัก 600 · `whitespace-pre-line` = ขึ้นบรรทัดตาม `\n` ในคำโปรย
               * ไม่ปล่อยให้เบราว์เซอร์ตัดเอง — ภาษาไทยไม่มีเว้นวรรค จุดตัดจะไม่ตรงกับแบบ */}
+            {/* 🔴 **ระยะห่างเป็น inline style ห้ามเป็นคลาส** — เหตุผลเดียวกับความสูงของโลโก้
+              * ข้างบน: mediwork มี `h1-h6{margin-top:0}` และ `p{margin-top:0}` แบบ **ไม่มี layer**
+              * ใน `styles/globals.css` ⇒ ชนะ `mt-*` ของ Tailwind ทุกตัว (layered แพ้ unlayered)
+              * ⇒ พาดหัวชิดโลโก้และคำโปรยชิดพาดหัว **เฉพาะในแอปนั้นแอปเดียว** ซึ่งอ่านเหมือน
+              * "กล่องเดียวกันแต่ระยะไม่เท่ากัน" โดยไม่มีอะไรบอกว่าทำไม (เห็นบนจอจริงมาแล้ว) */}
             <h2
-              className="mt-2 whitespace-pre-line text-[20px] font-semibold leading-[1.4]"
-              style={{ color: HEADLINE_INK }}
+              className="whitespace-pre-line text-[20px] font-semibold leading-[1.4]"
+              style={{ marginTop: 8, color: HEADLINE_INK }}
             >
               {copy.headline}
             </h2>
             {/* 14/1.25 · กว้าง 327.58 เยื้องซ้าย 4.58 (ล้นคอลัมน์ตามแบบ) */}
             <p
-              className="mt-6 w-[327.58px] max-w-none whitespace-pre-line pl-[4.58px] text-[14px] leading-[1.25]"
-              style={{ color: DESCRIPTION_INK }}
+              className="w-[327.58px] max-w-none whitespace-pre-line pl-[4.58px] text-[14px] leading-[1.25]"
+              style={{ marginTop: 24, color: DESCRIPTION_INK }}
             >
               {copy.description}
             </p>

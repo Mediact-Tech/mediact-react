@@ -8,6 +8,7 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
+    "assets",
     "style.css",
     "README.md",
     "AI-CHAT.md"
@@ -31,7 +32,11 @@
     "./theme/portal.css": "./dist/theme/portal.css",
     "./theme/mediwork.css": "./dist/theme/mediwork.css",
     "./theme/medimatch.css": "./dist/theme/medimatch.css",
-    "./theme/medihr.css": "./dist/theme/medihr.css"
+    "./theme/medihr.css": "./dist/theme/medihr.css",
+    "./theme/medipay.css": "./dist/theme/medipay.css",
+    "./theme/medirefer.css": "./dist/theme/medirefer.css",
+    "./theme/medioncloud.css": "./dist/theme/medioncloud.css",
+    "./assets/*": "./assets/*"
   },
   "sideEffects": [
     "**/*.css"

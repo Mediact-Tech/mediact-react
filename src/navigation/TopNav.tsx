@@ -11,14 +11,13 @@ import {
 import {
   sidebarHideDataUrl,
   sidebarShowDataUrl,
-  medi_hrDataUrl,
-  medi_matchDataUrl,
-  medi_oncloudDataUrl,
-  medi_payDataUrl,
-  medi_referDataUrl,
-  medi_workDataUrl,
   mediactLogoDataUrl,
 } from "./_app-icons/data";
+import { AppMark } from "../brand/AppMark";
+import {
+  appMarkLabels,
+  type MediactAppKey,
+} from "../brand/app-marks";
 import {
   AppShowcaseDialog,
   type ShowcaseAppKey,
@@ -178,8 +177,13 @@ const iconButtonClass =
 /* AppLauncher — Mediact ecosystem app catalog                          */
 /* ─────────────────────────────────────────────────────────────────── */
 
-/** Canonical app keys across the Mediact ecosystem. */
-/** แอปในระบบนิเวศ Mediact
+/**
+ * แอปในระบบนิเวศ Mediact — **นิยามย้ายไปอยู่กับตัวเครื่องหมายแล้ว** ที่
+ * [`brand/app-marks.ts`](../brand/app-marks.ts) · re-export ไว้ที่นี่เพราะเป็นชื่อที่แอปต่าง ๆ
+ * import จาก `TopNav` มาตั้งแต่ต้น การย้ายเงียบ ๆ จะทำให้ของที่ใช้อยู่พัง
+ *
+ * เหตุผลที่ย้าย: ชุดคีย์กับชุดเครื่องหมายต้องเพิ่ม/ลดพร้อมกันเสมอ ⇒ อยู่คนละไฟล์เมื่อไหร่
+ * ก็มีโอกาสที่ `Record<MediactAppKey, …>` ฝั่งหนึ่งครบแต่อีกฝั่งไม่ครบ
  *
  * 🔄 **กลับมาครบ 6 ตัว 2026-08-16** — รอบก่อนตัด `medipay`/`medirefer` ฯลฯ ออก (2026-08-09)
  * เพราะช่องที่เขียนว่า "เร็ว ๆ นี้" เป็นสัญญาที่ไม่มีใครถือ · ตอนนี้กลับมาได้เพราะ **ไม่ใช่ป้ายตาย
@@ -187,14 +191,9 @@ const iconButtonClass =
  * (`feat/app-launcher-coming-soon`) ⇒ กดแล้วผู้ใช้ได้เห็นว่าแอปทำอะไรและติดต่อใครต่อได้ทันที
  *
  * ⚠️ `medistock`/`medicare` **ยังไม่กลับมา** — ยังไม่มีทั้งแบบและคำโปรยจาก Figma
- * ⇒ ถ้าเติมโดยไม่มีเนื้อหา จะกลายเป็นป้ายตายแบบเดิมอีกรอบ */
-export type MediactAppKey =
-  | "mediwork"
-  | "medimatch"
-  | "medihr"
-  | "medioncloud"
-  | "medirefer"
-  | "medipay";
+ * ⇒ ถ้าเติมโดยไม่มีเนื้อหา จะกลายเป็นป้ายตายแบบเดิมอีกรอบ
+ */
+export type { MediactAppKey };
 
 export type MediactAppConfig = {
   /** Where this app lives. Falsy → tile is rendered as not-clickable. */
@@ -252,43 +251,19 @@ export type AppLauncherProps = {
 };
 
 /**
- * ไอคอนของแต่ละแอป + **สัดส่วนกล่องที่ต้องย่อลงเพื่อให้ "หมึก" เท่ากันทุกใบ**
+ * ชื่อที่แสดงบนการ์ด — **ตัวเครื่องหมายไม่ได้อยู่ที่นี่แล้ว**
  *
- * 🔴 กล่องเท่ากันไม่ได้แปลว่าโลโก้ดูเท่ากัน — สิ่งที่ตาเทียบคือ *หมึก* (พื้นที่ที่ไม่โปร่งใส)
- * ไม่ใช่ viewBox · วัดจริงด้วยการ rasterise ทุกใบลงกล่อง 128px เดียวกันแล้วอ่านกรอบหมึก:
+ * ย้ายไป [`brand/app-marks.ts`](../brand/app-marks.ts) ทั้งชุด (2026-08-25) เพราะแอปอื่นต้องใช้
+ * เครื่องหมายเดียวกันนี้นอกลิ้นชักด้วย — หัวรางของ hr-web เคยชี้ไปที่ไฟล์ใน `public/` ของตัวเอง
+ * ⇒ โลโก้ชุดเดียวกันมีสองสำเนาที่เปลี่ยนคนละเวลา
  *
- * | แอป | viewBox | หมึก (สูง/128) |
- * |---|---|---|
- * | mediwork · medimatch | 515×515 | **80** = 0.625 |
- * | medihr | 1373.6×1373.6 | **80** = 0.625 | ← วัดใหม่ 2026-08-24 (มาร์กชุดใหม่)
- * | medioncloud | 23×32 | 128 = 1.00 |
- * | medirefer | 28×26 | 120 = 0.9375 |
- * | medipay | 91×105 (PNG) | 128 = 1.00 |
- *
- * สามใบแรกมีขอบเปล่าในไฟล์อยู่แล้ว (หมึกกิน 62.5% ของกรอบ) · สามใบหลังหมึกชนขอบ
- * ⇒ วางในกล่องเท่ากันแล้ว **ใหญ่กว่าเพื่อน ~60%**
- *
- * `inkScale` = ตัวคูณกล่องเพื่อดึงหมึกกลับมาที่ 0.625 (`0.625 ÷ สัดส่วนหมึกเดิม`)
- * ⛔ **ไม่แก้ตัวอาร์ตเวิร์ก** ตามกฎของ repo (`CLAUDE.md` §8 "Never rescale the artwork itself")
- * — และเป็นทางเดียวที่ใช้ได้กับ `medipay` ซึ่งเป็น PNG ไม่มี viewBox ให้เติมขอบ
- *
- * ⚠️ เปลี่ยนไฟล์ไอคอนเมื่อไหร่ **ต้องวัดใหม่** ตัวเลขพวกนี้ผูกกับไฟล์ ไม่ใช่กับชื่อแอป
+ * ✅ **`inkScale` หายไปทั้งหมด** — เดิมมีตัวคูณย่อกล่องรายแอป (`medioncloud` 0.625 · `medirefer`
+ * 0.667 · `medipay` 0.625) เพราะไฟล์ชุดเก่ามีหมึกชนขอบบ้างไม่ชนบ้าง และ `medipay` เป็น PNG
+ * ที่เติมขอบใน viewBox ไม่ได้ · ชุดใหม่เป็น SVG ทั้ง 12 ไฟล์ ⇒ เติมขอบที่ `viewBox` ได้ทุกตัว
+ * ตามที่ `CLAUDE.md` §8 บอกให้ทำ ("pad the viewBox until the ink heights agree") ⇒ ทุกใบมาถึงที่นี่
+ * ด้วยสัดส่วนหมึกเท่ากันแล้ว ไม่ต้องมีตัวเลขชดเชยที่ฝั่ง component อีก
  */
-const DEFAULT_APP_DEFS: Record<
-  MediactAppKey,
-  { label: string; src: string; inkScale?: number }
-> = {
-  mediwork: { label: "Medi Work", src: medi_workDataUrl },
-  medimatch: { label: "Medi Match", src: medi_matchDataUrl },
-  medihr: { label: "Medi HR", src: medi_hrDataUrl },
-  medioncloud: {
-    label: "Medi On cloud",
-    src: medi_oncloudDataUrl,
-    inkScale: 0.625,
-  },
-  medirefer: { label: "Medi Refer", src: medi_referDataUrl, inkScale: 0.667 },
-  medipay: { label: "Medi Pay", src: medi_payDataUrl, inkScale: 0.625 },
-};
+const DEFAULT_APP_LABELS = appMarkLabels;
 
 /** ลำดับตาม Figma: Work · Match · HR / On cloud · Refer · Pay (กริด 3 คอลัมน์ = 2 แถวพอดี) */
 const DEFAULT_APP_ORDER: MediactAppKey[] = [
@@ -389,35 +364,26 @@ function AppLauncher({
         <div className="grid grid-cols-3 gap-x-2 gap-y-6">
           {visible.map((key) => {
             const config = apps[key]!;
-            const def = DEFAULT_APP_DEFS[key];
+            const label = config.label ?? DEFAULT_APP_LABELS[key];
             return (
               <AppLauncherTile
                 key={key}
                 appKey={key}
                 config={config}
-                label={config.label ?? def.label}
+                label={label}
                 icon={
                   config.icon ?? (
-                    <img
-                      src={def.src}
-                      alt={def.label}
-                      /* 🔴 `min-h-0` ไม่ใช่ของประดับ — `<img>` เป็น flex item และ
-                       * `min-height: auto` ของ flex ยอมให้มัน **โตเกินกล่องตามอัตราส่วนของไฟล์**
-                       * แม้จะสั่ง `h-full` ไว้แล้ว · วัดบนจอจริง: medioncloud ได้กล่อง
-                       * **32×45.55** ในช่อง 32×32 (medipay 32×36.9 · medirefer 32×29.7)
-                       * ⇒ โลโก้ทะลุกรอบมนของการ์ด · ใส่ `min-h-0` แล้วกลับเป็น 32×32 ทุกใบ
-                       * (ไอคอนสามใบแรกไม่เคยแสดงอาการ เพราะไฟล์เป็นสี่เหลี่ยมจัตุรัสพอดี) */
-                      className="size-full min-h-0 object-contain"
-                      /* ย่อกล่องเฉพาะไฟล์ที่หมึกชนขอบ — เหตุผลและตัวเลขที่วัดได้อยู่ที่
-                       * `DEFAULT_APP_DEFS` · ไม่ส่ง = ใช้เต็มกล่องเหมือนเดิม */
-                      style={
-                        def.inkScale
-                          ? {
-                              width: `${def.inkScale * 100}%`,
-                              height: `${def.inkScale * 100}%`,
-                            }
-                          : undefined
-                      }
+                    /* การ์ดในลิ้นชักเป็นพื้นขาว ⇒ โทน `primary` เสมอ
+                     *
+                     * `fit="grid"` คือหัวใจของแถวนี้ — ไฟล์เครื่องหมายชิดหมึกทุกใบ ⇒ ถ้าปล่อย
+                     * ให้เต็มกล่อง ใบที่ทรงต่างกันจะดูใหญ่ไม่เท่ากัน · โหมดนี้ย่อความสูงหมึก
+                     * ให้เท่ากันทุกใบ (62.5% — ตัวเลขและที่มาอยู่ใน `AppMark`)
+                     * · `min-h-0`/`object-contain` มาจาก `AppMark` เองแล้ว */
+                    <AppMark
+                      app={key}
+                      fit="grid"
+                      alt={label}
+                      className="size-full"
                     />
                   )
                 }
@@ -722,7 +688,12 @@ function UserMenu({
             </h3>
           )}
           {user.role && (
-            <p className="mt-0.5 text-[15px] font-medium text-text-tertiary">
+            /* ระยะเป็น inline — mediwork มี `p{margin-top:0}` แบบไม่มี layer ที่ชนะ `mt-*`
+               ของ Tailwind (เหตุผลเต็มอยู่ที่ `AppShowcaseDialog`) · 2px จึงหายเงียบที่นั่น */
+            <p
+              className="text-[15px] font-medium text-text-tertiary"
+              style={{ marginTop: 2 }}
+            >
               {user.role}
             </p>
           )}

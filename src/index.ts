@@ -74,6 +74,28 @@ export {
 export { Text, textVariants, type TextProps } from "./ui/Text";
 export { Heading, headingVariants, type HeadingProps } from "./ui/Heading";
 
+// Brand — เครื่องหมายประจำผลิตภัณฑ์ (ชุดเดียวของทั้งแพลตฟอร์ม)
+export {
+  AppMark,
+  GRID_INK_HEIGHT,
+  type AppMarkProps,
+  type AppMarkFit,
+} from "./brand/AppMark";
+/* เปิดค่าดิบออกมาด้วย ไม่ใช่แค่ component — บางที่ต้องการ **ที่อยู่ของรูป** ไม่ใช่ `<img>`
+ * (เช่น `<link rel="icon">` · `og:image` · `background-image` ใน CSS · หรือส่งให้ prop ที่รับ
+ * `src: string` อย่าง `ShowcaseAssets`) ⇒ ถ้าเปิดแค่ component พวกนั้นจะกลับไปคัดลอกไฟล์เอง
+ * ซึ่งเป็นปัญหาที่ไฟล์นี้ตั้งใจแก้ */
+export {
+  appMarks,
+  appMarkLabels,
+  /* ชื่อ + สีของ wordmark — เปิดออกมาเพราะแอปที่ประกอบหัวรางเองต้องใช้ชุดเดียวกับ DS
+   * ไม่งั้นจะได้ "MEDI ON CLOUD" ที่ตกบรรทัด หรือสีที่ไหลตามธีมของแอปที่กำลังรัน */
+  appWordmarks,
+  appBrandInk,
+  type AppMarkTone,
+  type MediactAppKey,
+} from "./brand/app-marks";
+
 // Navigation
 export {
   TopNav,
@@ -87,7 +109,8 @@ export {
   type TopNavToggleProps,
   type TopNavBrandProps,
   type AppLauncherProps,
-  type MediactAppKey,
+  /* `MediactAppKey` ไม่ได้ออกทางนี้แล้ว — ออกจาก `brand/app-marks` ข้างบน (นิยามอยู่ที่นั่น)
+   * ชื่อที่ผู้ใช้ import ยังเหมือนเดิมทุกประการ */
   type MediactAppConfig,
   type NotificationBellProps,
   type UserMenuProps,

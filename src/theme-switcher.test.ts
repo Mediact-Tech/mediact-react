@@ -14,7 +14,15 @@ import { join } from "node:path";
  * ──────────────────────────────────────────────────────────────────────────── */
 
 const ROOT = join(import.meta.dirname, "..", "..", "..");
-const APPS = ["portal", "mediwork", "medimatch", "medihr"] as const;
+const APPS = [
+  "portal",
+  "mediwork",
+  "medimatch",
+  "medihr",
+  "medipay",
+  "medirefer",
+  "medioncloud",
+] as const;
 
 /** ดึงคู่ `--color-x: y;` ออกมาจาก CSS ก้อนหนึ่ง */
 function decls(css: string) {

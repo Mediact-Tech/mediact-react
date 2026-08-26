@@ -133,34 +133,68 @@ describe("AppShowcaseDialog", () => {
     expect(links).toContain(`tel:${MEDIACT_SUPPORT_PHONE.replace(/\s/g, "")}`);
   });
 
-  it("ภาพอ่านจากโฟลเดอร์กลางโดยไม่ต้องส่ง prop และทับได้เมื่อจำเป็น", () => {
-    const { rerender } = render(
-      <AppShowcaseDialog app="medirefer" onClose={() => {}} />,
-    );
-    /* ⚠️ ภาพตัวอย่างอยู่ก่อนโลโก้ใน DOM ⇒ `[0]` ไม่ใช่โลโก้ · จับโลโก้จากที่มันอยู่จริง
-     * (ในคอลัมน์ขวา) ไม่ใช่จากลำดับ */
-    const logo = () =>
-      document.body.querySelector<HTMLImageElement>(
-        '[role="dialog"] img:not([aria-hidden="true"])',
-      );
-    expect(logo()?.getAttribute("src")).toContain(
-      "/images/app-showcase/medirefer-logo",
+  /* ⚠️ ภาพตัวอย่างมี `aria-hidden` ส่วนโลโก้ไม่มี ⇒ จับโลโก้จากที่มันอยู่จริง ไม่ใช่จากลำดับ */
+  const logo = () =>
+    document.body.querySelector<HTMLImageElement>(
+      '[role="dialog"] img:not([aria-hidden="true"])',
     );
 
-    rerender(
+  /* 🔄 **เปลี่ยนโดยตั้งใจ 2026-08-25** — เดิมเทสนี้ล็อกว่าโลโก้อ่านจาก `{key}-logo.png`
+   * ในโฟลเดอร์กลาง · ปัญหาคือไฟล์นั้นอยู่ใน `public/` ของ **แอปที่กำลังรัน** ⇒ โลโก้ของ
+   * ผลิตภัณฑ์อื่นค้างอยู่ที่รุ่นที่แอปนั้นคัดลอกไว้ (วัดจริงบน hr-web: ไฟล์ลงวันที่ 17 ส.ค.
+   * ⇒ MediRefer ยังเป็นสีน้ำตาลชุดเก่า ทั้งที่ชุดปัจจุบันคือ `#0e6b8d`)
+   * ⇒ ค่าเริ่มต้นวาดจาก `AppMark` ซึ่งอ่านชุดกลางใน DS · ไฟล์ `-logo.png` เลิกถูกอ่านแล้ว */
+  it("โลโก้มาจากชุดกลางของ DS ไม่ใช่ไฟล์ในแอป", () => {
+    render(<AppShowcaseDialog app="medirefer" onClose={() => {}} />);
+    const src = logo()?.getAttribute("src") ?? "";
+    expect(src).toContain("data:image/svg+xml");
+    expect(src).not.toContain("-logo.png");
+    /* ชื่อผลิตภัณฑ์เป็นตัวหนังสือคู่กับเครื่องหมาย ไม่ได้อยู่ในไฟล์ภาพ */
+    expect(screen.getByText("MEDI REFER")).toBeTruthy();
+  });
+
+  it("ส่ง logo มาเองได้ สำหรับแอปที่ยังไม่พร้อมย้าย", () => {
+    render(
       <AppShowcaseDialog
         app="medirefer"
         onClose={() => {}}
-        assets={{
-          medirefer: {
-            logo: "https://cdn.example/logo.png",
-            wide: "https://cdn.example/wide.webp",
-            card: "https://cdn.example/card.webp",
-          },
-        }}
+        assets={{ medirefer: { logo: "https://cdn.example/logo.png" } }}
       />,
     );
     expect(logo()).toHaveAttribute("src", "https://cdn.example/logo.png");
+  });
+
+  /* ภาพชุดใหม่จากดีไซน์ซ้อนจอกับการ์ดมาแล้วในไฟล์เดียว ⇒ แยกกลับเป็นสองใบไม่ได้
+   * (การ์ดบังจอด้านหลัง ส่วนที่ถูกบังไม่มีอยู่ในไฟล์) ⇒ ต้องมีทางส่งภาพเดียว */
+  it("ส่ง composed มา = วาดภาพเดียว ไม่แตะ wide/card", () => {
+    render(
+      <AppShowcaseDialog
+        app="medirefer"
+        onClose={() => {}}
+        assets={{ medirefer: { composed: "https://cdn.example/all.webp" } }}
+      />,
+    );
+    const previews = [
+      ...document.body.querySelectorAll<HTMLImageElement>(
+        '[role="dialog"] img[aria-hidden="true"]',
+      ),
+    ].map((i) => i.getAttribute("src"));
+    expect(previews).toEqual(["https://cdn.example/all.webp"]);
+  });
+
+  /* ไม่ส่งอะไรเลย = ยังอ่านสองไฟล์จากโฟลเดอร์กลางเหมือนเดิม — Portal ยังใช้ทางนี้อยู่
+   * ⇒ ถ้าเผลอเปลี่ยนค่าเริ่มต้น ภาพของ Portal จะหายเงียบ ๆ */
+  it("ไม่ส่ง assets = ยังอ่าน wide + card จากโฟลเดอร์กลาง", () => {
+    render(<AppShowcaseDialog app="medirefer" onClose={() => {}} />);
+    const previews = [
+      ...document.body.querySelectorAll<HTMLImageElement>(
+        '[role="dialog"] img[aria-hidden="true"]',
+      ),
+    ].map((i) => i.getAttribute("src"));
+    expect(previews).toEqual([
+      "/images/app-showcase/medirefer-preview-wide.webp",
+      "/images/app-showcase/medirefer-preview-card.webp",
+    ]);
   });
 
   it("app = null แล้วไม่เหลืออะไรใน document.body", () => {
