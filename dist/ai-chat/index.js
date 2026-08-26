@@ -1301,7 +1301,7 @@ var thLabels = {
   dateLocale: "th-TH",
   // `{context}` ถูกแทนด้วยแผนก/เดือนที่ hand-off ระบุมา (หรือคำชวนให้ระบุ เมื่อยังไม่รู้)
   scheduleGreeting: [
-    "\u{1F5D3}\uFE0F **\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23\u0E41\u0E25\u0E49\u0E27\u0E04\u0E23\u0E31\u0E1A**",
+    "**\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23\u0E41\u0E25\u0E49\u0E27\u0E04\u0E23\u0E31\u0E1A**",
     "{context}",
     "",
     "\u0E1A\u0E2D\u0E01\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22\u0E27\u0E48\u0E32\u0E08\u0E30\u0E17\u0E33\u0E2D\u0E30\u0E44\u0E23\u0E15\u0E48\u0E2D \u0E40\u0E0A\u0E48\u0E19",
@@ -1311,7 +1311,8 @@ var thLabels = {
     "",
     '\u0E1E\u0E34\u0E21\u0E1E\u0E4C *"\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01"* \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E42\u0E2B\u0E21\u0E14\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E04\u0E23\u0E31\u0E1A'
   ].join("\n"),
-  scheduleGreetingScoped: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E15\u0E23\u0E35\u0E22\u0E21\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23 **\u0E41\u0E1C\u0E19\u0E01 {department}**{period}",
+  scheduleGreetingScoped: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E15\u0E23\u0E35\u0E22\u0E21\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23 **\u0E41\u0E1C\u0E19\u0E01 {department}**{subUnit}{period}",
+  scheduleGreetingSubUnit: " \xB7 **\u0E2B\u0E19\u0E48\u0E27\u0E22\u0E07\u0E32\u0E19 {subUnit}**",
   scheduleGreetingPeriod: " \u0E40\u0E14\u0E37\u0E2D\u0E19 {month}/{year}",
   scheduleGreetingUnscoped: '\u0E40\u0E23\u0E34\u0E48\u0E21\u0E44\u0E14\u0E49\u0E42\u0E14\u0E22\u0E1A\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E01\u0E41\u0E25\u0E30\u0E40\u0E14\u0E37\u0E2D\u0E19\u0E17\u0E35\u0E48\u0E08\u0E30\u0E08\u0E31\u0E14\u0E01\u0E48\u0E2D\u0E19 \u0E40\u0E0A\u0E48\u0E19 *"\u0E41\u0E1C\u0E19\u0E01 ICU \u0E40\u0E14\u0E37\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32"*',
   contextTooltip: "\u0E04\u0E27\u0E32\u0E21\u0E08\u0E33\u0E02\u0E2D\u0E07\u0E41\u0E0A\u0E17\u0E19\u0E35\u0E49 \u2014 \u0E43\u0E0A\u0E49\u0E44\u0E1B\u0E1B\u0E23\u0E30\u0E21\u0E32\u0E13 {used} \u0E08\u0E32\u0E01 {limit} \u0E42\u0E17\u0E40\u0E04\u0E19\n\u0E40\u0E01\u0E34\u0E19\u0E01\u0E27\u0E48\u0E32\u0E19\u0E35\u0E49 \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E40\u0E01\u0E48\u0E32\u0E2A\u0E38\u0E14\u0E08\u0E30\u0E16\u0E39\u0E01\u0E15\u0E31\u0E14\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2A\u0E34\u0E48\u0E07\u0E17\u0E35\u0E48 AI \u0E08\u0E33\u0E44\u0E14\u0E49",
@@ -1360,7 +1361,7 @@ var enLabels = {
   timeHoursAgo: "{count} hr ago",
   dateLocale: "en-GB",
   scheduleGreeting: [
-    "\u{1F5D3}\uFE0F **Scheduling mode is on.**",
+    "**Scheduling mode is on.**",
     "{context}",
     "",
     "Tell me what to do next, for example:",
@@ -1370,7 +1371,8 @@ var enLabels = {
     "",
     'Type *"cancel"* to leave this mode at any time.'
   ].join("\n"),
-  scheduleGreetingScoped: "Getting ready to schedule **{department}**{period}",
+  scheduleGreetingScoped: "Getting ready to schedule **{department}**{subUnit}{period}",
+  scheduleGreetingSubUnit: " \xB7 **{subUnit}**",
   scheduleGreetingPeriod: " for {month}/{year}",
   scheduleGreetingUnscoped: 'Start by naming the department and month \u2014 e.g. *"ICU next month"*',
   contextTooltip: "This chat's memory \u2014 about {used} of {limit} tokens used\nPast that, the oldest messages drop out of what the AI remembers",
@@ -1387,7 +1389,8 @@ function resolveLabels(overrides, locale = "th") {
 }
 function buildScheduleGreeting(labels, seed) {
   const period = seed?.month ? labels.scheduleGreetingPeriod.replace("{month}", String(seed.month)).replace("{year}", String(seed.year ?? "")).trimEnd() : "";
-  const context = seed?.departmentName ? labels.scheduleGreetingScoped.replace("{department}", seed.departmentName).replace("{period}", period) : labels.scheduleGreetingUnscoped;
+  const subUnit = seed?.subUnitName ? labels.scheduleGreetingSubUnit.replace("{subUnit}", seed.subUnitName) : "";
+  const context = seed?.departmentName ? labels.scheduleGreetingScoped.replace("{department}", seed.departmentName).replace("{subUnit}", subUnit).replace("{period}", period) : labels.scheduleGreetingUnscoped;
   return labels.scheduleGreeting.replace("{context}", context);
 }
 
@@ -1485,6 +1488,10 @@ var ENTER_MODE = /\[\[ENTER_MODE:([^\]]+)\]\]/;
 var REDIRECT = /\[\[REDIRECT:([^\]]+)\]\]/;
 var EXIT_MODE = /\[\[EXIT_MODE\]\]/;
 var ANY_SENTINEL = /\[\[(?:ENTER_MODE:[^\]]+|REDIRECT:[^\]]+|EXIT_MODE)\]\]/g;
+function seedScope(seed) {
+  const { subUnitName: _subUnitName, ...scope } = seed;
+  return scope;
+}
 function extractEnterMode(text) {
   const match = ENTER_MODE.exec(text);
   if (!match?.[1]) return null;
@@ -1496,6 +1503,8 @@ function extractEnterMode(text) {
     const value = part.slice(eq + 1);
     if (key === "dept") seed.departmentId = Number(value);
     else if (key === "deptName") seed.departmentName = safeDecode(value);
+    else if (key === "subUnit") seed.subUnitId = Number(value);
+    else if (key === "subUnitName") seed.subUnitName = safeDecode(value);
     else if (key === "month") seed.month = Number(value);
     else if (key === "year") seed.year = Number(value);
   }
@@ -1681,7 +1690,7 @@ function mapState(state) {
 }
 
 // src/ai-chat/state/useAiChatSession.ts
-var MODE_ENTER_TEXT = "\u{1F5D3}\uFE0F \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23";
+var MODE_ENTER_TEXT = "\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23";
 var MODE_EXIT_TEXT = "\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23";
 var NO_ANSWER_TEXT = "(\u0E44\u0E21\u0E48\u0E21\u0E35\u0E04\u0E33\u0E15\u0E2D\u0E1A)";
 var UNACKED_GRACE_MS = 15e4;
@@ -2089,8 +2098,10 @@ function useAiChatSession(config) {
           message: trimmed,
           mode: state.mode,
           ...scope,
-          // A scheduling hand-off already resolved dept/month — carry it so the agent doesn't re-ask.
-          ...state.mode === "schedule" ? state.scheduleSeed : null
+          // A scheduling hand-off already resolved dept/ward/month — carry it so the agent doesn't re-ask.
+          // Through `seedScope`, because the seed also holds the ward NAME, which is ours to display
+          // and not a field the service takes.
+          ...state.mode === "schedule" && state.scheduleSeed ? seedScope(state.scheduleSeed) : null
         });
         if (turnRef.current?.own) turnRef.current.id = ticket.runId;
         dispatch({ type: "run_accepted", runId: ticket.runId });
@@ -2353,6 +2364,7 @@ export {
   openAiChat,
   resolveLabels,
   resolveTokenProvider,
+  seedScope,
   stripSentinels,
   thLabels,
   useAiChatSession

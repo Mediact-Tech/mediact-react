@@ -1,3 +1,4 @@
+import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as React from 'react';
 import { ClassValue } from 'clsx';
 
@@ -360,8 +361,10 @@ interface AiChatLabels {
     dateLocale: string;
     /** Onboarding shown right after entering scheduling mode. `{context}` = the scoped/unscoped line. */
     scheduleGreeting: string;
-    /** `{department}` + `{period}` — used when the hand-off already resolved the scope. */
+    /** `{department}` + `{subUnit}` + `{period}` — used when the hand-off already resolved the scope. */
     scheduleGreetingScoped: string;
+    /** The `{subUnit}` fragment itself — the ward a roster is actually built in. Empty when unknown. */
+    scheduleGreetingSubUnit: string;
     /** The `{period}` fragment itself — `{month}` / `{year}`. Empty when the hand-off carried no month. */
     scheduleGreetingPeriod: string;
     /** Used when nothing is resolved yet, to ask for department + month. */
@@ -459,7 +462,7 @@ interface AiChatWidgetProps extends AiChatConfig {
  * the host arrives as props (`baseUrl`, `getToken`, `scope`), so it stays free of any app's
  * auth wiring, HTTP client or router.
  */
-declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): React.JSX.Element;
+declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): react_jsx_runtime.JSX.Element;
 
 /**
  * Host → widget bridge. The drawer is mounted ONCE at the app root, but the moments that want to
@@ -515,6 +518,7 @@ declare function resolveLabels(overrides?: Partial<AiChatLabels>, locale?: AiCha
  */
 declare function buildScheduleGreeting(labels: AiChatLabels, seed: {
     departmentName?: string;
+    subUnitName?: string;
     month?: number;
     year?: number;
 } | null): string;
@@ -608,7 +612,7 @@ interface ChatDrawerProps {
  * kept alive): the assistant answers questions about the page behind it, so covering that
  * page — or stealing its scroll and focus — would defeat the point.
  */
-declare function ChatDrawer(props: ChatDrawerProps): React.JSX.Element;
+declare function ChatDrawer(props: ChatDrawerProps): react_jsx_runtime.JSX.Element;
 
 interface FloatingButtonProps {
     open: boolean;
@@ -662,7 +666,7 @@ interface MessageListProps {
     /** Example questions shown on the empty state — tapping one sends it. */
     suggestions?: string[];
 }
-declare function MessageList({ messages, labels, onWidgetAction, busy, suggestions, }: MessageListProps): React.JSX.Element;
+declare function MessageList({ messages, labels, onWidgetAction, busy, suggestions, }: MessageListProps): react_jsx_runtime.JSX.Element;
 
 interface MessageBubbleProps {
     message: ChatMessage;
@@ -675,7 +679,7 @@ interface MessageBubbleProps {
      */
     widgetsDisabled?: boolean;
 }
-declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): React.JSX.Element;
+declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): react_jsx_runtime.JSX.Element;
 
 interface ComposerProps {
     onSend: (text: string) => void;
@@ -687,7 +691,7 @@ interface ComposerProps {
     /** Overrides the default hint (scheduling mode accepts different input). */
     placeholder?: string;
 }
-declare function Composer({ onSend, onCancel, busy, disabled, labels, placeholder, }: ComposerProps): React.JSX.Element;
+declare function Composer({ onSend, onCancel, busy, disabled, labels, placeholder, }: ComposerProps): react_jsx_runtime.JSX.Element;
 
 interface ConversationPickerProps {
     load: () => Promise<ConversationListItem[]>;
@@ -704,7 +708,7 @@ interface ConversationPickerProps {
  *
  * โหลดตอนเปิดเท่านั้น — ลิ้นชักที่ปิดอยู่จึงไม่กินคำขอสักครั้ง
  */
-declare function ConversationPicker({ load, onPick, activeId, labels }: ConversationPickerProps): React.JSX.Element;
+declare function ConversationPicker({ load, onPick, activeId, labels }: ConversationPickerProps): react_jsx_runtime.JSX.Element;
 
 /**
  * Renders the frozen §3 widget payloads. The service owns the shapes; how they look is ours.
@@ -719,7 +723,7 @@ interface WidgetRendererProps {
     onAction: (reply: string) => void;
     disabled?: boolean;
 }
-declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererProps): React.JSX.Element;
+declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererProps): react_jsx_runtime.JSX.Element;
 
 /**
  * RR-A.6 transparency trail — what the agent actually did this turn, in the service's own
@@ -727,24 +731,33 @@ declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererPr
  */
 declare function ToolTrail({ tools }: {
     tools: ToolCallEntry[];
-}): React.JSX.Element | null;
+}): react_jsx_runtime.JSX.Element | null;
 
 interface ContextMeterProps {
     usage: ContextUsage | null;
     labels: AiChatLabels;
     className?: string;
 }
-declare function ContextMeter({ usage, labels, className }: ContextMeterProps): React.JSX.Element | null;
+declare function ContextMeter({ usage, labels, className }: ContextMeterProps): react_jsx_runtime.JSX.Element | null;
 
 declare function Markdown({ text, className, labels, }: {
     text: string;
     className?: string;
     labels?: AiChatLabels;
-}): React.JSX.Element;
+}): react_jsx_runtime.JSX.Element;
 
-/** Scope resolved at hand-off, so scheduling mode doesn't have to re-ask which department/month. */
-type ScheduleSeed = Pick<ChatScope, "departmentId" | "departmentName" | "month" | "year">;
-/** `[[ENTER_MODE:schedule|dept=7|deptName=ICU|month=8|year=2026]]` → seed, or null when absent. */
+/**
+ * Scope resolved at hand-off, so scheduling mode doesn't have to re-ask which department/month.
+ *
+ * `subUnitName` is the one field here the service does NOT accept back — it exists so the greeting can
+ * name the ward. Send with `seedScope()`, never the seed itself.
+ */
+type ScheduleSeed = Pick<ChatScope, "departmentId" | "subUnitId" | "departmentName" | "month" | "year"> & {
+    subUnitName?: string;
+};
+/** The half of a seed the service takes. Drops the display-only name. */
+declare function seedScope(seed: ScheduleSeed): ChatScope;
+/** `[[ENTER_MODE:schedule|dept=7|deptName=ICU|subUnit=12|subUnitName=Ward%203|month=8|year=2026]]` → seed. */
 declare function extractEnterMode(text: string): ScheduleSeed | null;
 declare function hasExitMode(text: string): boolean;
 declare function extractRedirect(text: string): string | null;
@@ -848,4 +861,4 @@ declare function resolveTokenProvider(auth: AiChatAuthConfig | undefined, hostGe
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatLocale, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type UserTurnPayload, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, enLabels, extractEnterMode, extractRedirect, hasExitMode, labelsByLocale, openAiChat, resolveLabels, resolveTokenProvider, stripSentinels, thLabels, useAiChatSession };
+export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatLocale, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type UserTurnPayload, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, enLabels, extractEnterMode, extractRedirect, hasExitMode, labelsByLocale, openAiChat, resolveLabels, resolveTokenProvider, seedScope, stripSentinels, thLabels, useAiChatSession };

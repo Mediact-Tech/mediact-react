@@ -14,10 +14,24 @@ const REDIRECT = /\[\[REDIRECT:([^\]]+)\]\]/;
 const EXIT_MODE = /\[\[EXIT_MODE\]\]/;
 const ANY_SENTINEL = /\[\[(?:ENTER_MODE:[^\]]+|REDIRECT:[^\]]+|EXIT_MODE)\]\]/g;
 
-/** Scope resolved at hand-off, so scheduling mode doesn't have to re-ask which department/month. */
-export type ScheduleSeed = Pick<ChatScope, "departmentId" | "departmentName" | "month" | "year">;
+/**
+ * Scope resolved at hand-off, so scheduling mode doesn't have to re-ask which department/month.
+ *
+ * `subUnitName` is the one field here the service does NOT accept back — it exists so the greeting can
+ * name the ward. Send with `seedScope()`, never the seed itself.
+ */
+export type ScheduleSeed = Pick<
+  ChatScope,
+  "departmentId" | "subUnitId" | "departmentName" | "month" | "year"
+> & { subUnitName?: string };
 
-/** `[[ENTER_MODE:schedule|dept=7|deptName=ICU|month=8|year=2026]]` → seed, or null when absent. */
+/** The half of a seed the service takes. Drops the display-only name. */
+export function seedScope(seed: ScheduleSeed): ChatScope {
+  const { subUnitName: _subUnitName, ...scope } = seed;
+  return scope;
+}
+
+/** `[[ENTER_MODE:schedule|dept=7|deptName=ICU|subUnit=12|subUnitName=Ward%203|month=8|year=2026]]` → seed. */
 export function extractEnterMode(text: string): ScheduleSeed | null {
   const match = ENTER_MODE.exec(text);
   if (!match?.[1]) return null;
@@ -30,6 +44,8 @@ export function extractEnterMode(text: string): ScheduleSeed | null {
     const value = part.slice(eq + 1);
     if (key === "dept") seed.departmentId = Number(value);
     else if (key === "deptName") seed.departmentName = safeDecode(value);
+    else if (key === "subUnit") seed.subUnitId = Number(value);
+    else if (key === "subUnitName") seed.subUnitName = safeDecode(value);
     else if (key === "month") seed.month = Number(value);
     else if (key === "year") seed.year = Number(value);
   }

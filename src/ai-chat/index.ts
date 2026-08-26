@@ -40,6 +40,7 @@ export {
   extractEnterMode,
   extractRedirect,
   hasExitMode,
+  seedScope,
   stripSentinels,
   type ScheduleSeed,
 } from "./lib/sentinels";

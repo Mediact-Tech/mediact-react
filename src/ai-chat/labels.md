@@ -42,7 +42,8 @@ are generated per turn, not drawn from a fixed vocabulary.
   the words, not a separate prop that can drift.
 - **The month fragment of the scheduling greeting was a template literal** (`` ` เดือน ${month}/…` ``)
   inlined in `buildScheduleGreeting`, so an English `scheduleGreetingScoped` still rendered a Thai
-  word in the middle of itself. It is now `scheduleGreetingPeriod`.
+  word in the middle of itself. It is now `scheduleGreetingPeriod`. `scheduleGreetingSubUnit` was
+  added the same way rather than inlined, for the same reason.
 - **Suggestion chips are sent verbatim as the user's first message**, so they follow the UI language,
   not the model's. A chip read in English that sends Thai reads as a bug in the widget.
 - **The host must pass its *current* language.** The widget is mounted once at a root layout and never
@@ -63,3 +64,5 @@ base pinned to Thai each fail it.
 | 2026-08-16 | `dateLocale` lives in `labels`, not as its own prop | A tag is not "copy"; accepted because it must change with the words or dates drift out of language |
 | 2026-08-16 | `AiChatLocale` is a closed union of `th \| en` | A third language needs a full injected `labels`; adding a member without a set would render `undefined` |
 | 2026-08-16 | `defaultLabels` kept as an alias of `thLabels` | Dead-ish name, but three apps and one test import it — renaming buys nothing |
+| 2026-08-26 | The scheduling greeting names the **ward** after the department | One more optional fragment to keep out of the way when the hand-off carried no ward; the alternative — letting the first tool call reveal the ward — puts the scope on screen only after the user has already asked for something |
+| 2026-08-26 | No emoji in the greeting or the mode divider | The calendar glyph was the only thing marking the mode change in the transcript; the divider's own rule and its words carry it instead, and the drawer header states the mode continuously |

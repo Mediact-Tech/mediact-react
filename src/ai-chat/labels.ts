@@ -50,7 +50,7 @@ export const thLabels: AiChatLabels = {
   dateLocale: "th-TH",
   // `{context}` ถูกแทนด้วยแผนก/เดือนที่ hand-off ระบุมา (หรือคำชวนให้ระบุ เมื่อยังไม่รู้)
   scheduleGreeting: [
-    "🗓️ **เข้าสู่โหมดจัดเวรแล้วครับ**",
+    "**เข้าสู่โหมดจัดเวรแล้วครับ**",
     "{context}",
     "",
     "บอกได้เลยว่าจะทำอะไรต่อ เช่น",
@@ -60,7 +60,8 @@ export const thLabels: AiChatLabels = {
     "",
     'พิมพ์ *"ยกเลิก"* เพื่อออกจากโหมดได้ทุกเมื่อครับ',
   ].join("\n"),
-  scheduleGreetingScoped: "กำลังเตรียมจัดเวร **แผนก {department}**{period}",
+  scheduleGreetingScoped: "กำลังเตรียมจัดเวร **แผนก {department}**{subUnit}{period}",
+  scheduleGreetingSubUnit: " · **หน่วยงาน {subUnit}**",
   scheduleGreetingPeriod: " เดือน {month}/{year}",
   scheduleGreetingUnscoped: 'เริ่มได้โดยบอกแผนกและเดือนที่จะจัดก่อน เช่น *"แผนก ICU เดือนหน้า"*',
   contextTooltip:
@@ -118,7 +119,7 @@ export const enLabels: AiChatLabels = {
   timeHoursAgo: "{count} hr ago",
   dateLocale: "en-GB",
   scheduleGreeting: [
-    "🗓️ **Scheduling mode is on.**",
+    "**Scheduling mode is on.**",
     "{context}",
     "",
     "Tell me what to do next, for example:",
@@ -128,7 +129,8 @@ export const enLabels: AiChatLabels = {
     "",
     'Type *"cancel"* to leave this mode at any time.',
   ].join("\n"),
-  scheduleGreetingScoped: "Getting ready to schedule **{department}**{period}",
+  scheduleGreetingScoped: "Getting ready to schedule **{department}**{subUnit}{period}",
+  scheduleGreetingSubUnit: " · **{subUnit}**",
   scheduleGreetingPeriod: " for {month}/{year}",
   scheduleGreetingUnscoped: 'Start by naming the department and month — e.g. *"ICU next month"*',
   contextTooltip:
@@ -167,7 +169,7 @@ export function resolveLabels(
  */
 export function buildScheduleGreeting(
   labels: AiChatLabels,
-  seed: { departmentName?: string; month?: number; year?: number } | null,
+  seed: { departmentName?: string; subUnitName?: string; month?: number; year?: number } | null,
 ): string {
   /* The period fragment is its own label, not a template literal — it used to be `\` เดือน ${…}\``
      inlined here, which meant an English `scheduleGreetingScoped` still rendered a Thai month word
@@ -178,9 +180,16 @@ export function buildScheduleGreeting(
         .replace("{year}", String(seed.year ?? ""))
         .trimEnd()
     : "";
+  /* The ward is the scope a roster is actually built in, so it belongs next to the department rather
+     than left for the first tool call to discover. It is optional: a hand-off can name a department
+     before anyone has picked a ward under it. */
+  const subUnit = seed?.subUnitName
+    ? labels.scheduleGreetingSubUnit.replace("{subUnit}", seed.subUnitName)
+    : "";
   const context = seed?.departmentName
     ? labels.scheduleGreetingScoped
         .replace("{department}", seed.departmentName)
+        .replace("{subUnit}", subUnit)
         .replace("{period}", period)
     : labels.scheduleGreetingUnscoped;
   return labels.scheduleGreeting.replace("{context}", context);

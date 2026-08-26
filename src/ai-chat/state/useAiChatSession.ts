@@ -12,6 +12,7 @@ import {
   extractEnterMode,
   extractRedirect,
   hasExitMode,
+  seedScope,
   stripSentinels,
   type ScheduleSeed,
 } from "../lib/sentinels";
@@ -37,7 +38,7 @@ import type { AiChatConfig, ChatMessage, SessionStatus } from "../types";
  */
 
 /** Mirrors the backend's own `system` boundary markers (chat.usecase `appendModeMarker`). */
-const MODE_ENTER_TEXT = "🗓️ เข้าสู่โหมดจัดเวร";
+const MODE_ENTER_TEXT = "เข้าสู่โหมดจัดเวร";
 const MODE_EXIT_TEXT = "ออกจากโหมดจัดเวร";
 const NO_ANSWER_TEXT = "(ไม่มีคำตอบ)";
 
@@ -656,8 +657,10 @@ export function useAiChatSession(config: AiChatSessionConfig): AiChatSession {
           message: trimmed,
           mode: state.mode,
           ...scope,
-          // A scheduling hand-off already resolved dept/month — carry it so the agent doesn't re-ask.
-          ...(state.mode === "schedule" ? state.scheduleSeed : null),
+          // A scheduling hand-off already resolved dept/ward/month — carry it so the agent doesn't re-ask.
+          // Through `seedScope`, because the seed also holds the ward NAME, which is ours to display
+          // and not a field the service takes.
+          ...(state.mode === "schedule" && state.scheduleSeed ? seedScope(state.scheduleSeed) : null),
         });
         // Name the turn we claimed above, now that the service has told us what it is called. Guarded:
         // a short turn can be finished (and the claim released) before its ack lands.

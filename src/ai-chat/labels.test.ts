@@ -113,6 +113,33 @@ describe("buildScheduleGreeting", () => {
     }
   });
 
+  it("บอกหน่วยงานต่อจากแผนก — หน่วยงานคือขอบเขตที่ตารางเวรถูกจัดจริง", () => {
+    const greeting = buildScheduleGreeting(thLabels, {
+      departmentName: "อายุรกรรม",
+      subUnitName: "หอผู้ป่วยใน 2",
+      month: 9,
+      year: 2026,
+    });
+    expect(greeting).toContain("หน่วยงาน หอผู้ป่วยใน 2");
+    // ลำดับต้องเป็น แผนก → หน่วยงาน → เดือน
+    expect(greeting.indexOf("อายุรกรรม")).toBeLessThan(greeting.indexOf("หอผู้ป่วยใน 2"));
+    expect(greeting.indexOf("หอผู้ป่วยใน 2")).toBeLessThan(greeting.indexOf("9/2026"));
+  });
+
+  it("รู้แผนกแต่ยังไม่รู้หน่วยงาน = ไม่มีเศษ `{subUnit}` ค้าง", () => {
+    for (const labels of [thLabels, enLabels]) {
+      const greeting = buildScheduleGreeting(labels, { departmentName: "ICU" });
+      expect(greeting).not.toContain("{subUnit}");
+    }
+  });
+
+  it("ไม่มี emoji ในคำทักทาย", () => {
+    for (const labels of [thLabels, enLabels]) {
+      const greeting = buildScheduleGreeting(labels, { departmentName: "ICU" });
+      expect(greeting).not.toMatch(/\p{Extended_Pictographic}/u);
+    }
+  });
+
   it("ไม่มีขอบเขตเลย = ใช้ประโยคชวนให้ระบุ", () => {
     const greeting = buildScheduleGreeting(enLabels, null);
     expect(greeting).toContain(enLabels.scheduleGreetingUnscoped);

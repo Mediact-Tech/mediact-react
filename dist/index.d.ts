@@ -1,6 +1,7 @@
 import * as class_variance_authority_types from 'class-variance-authority/types';
 import * as React from 'react';
 import { VariantProps } from 'class-variance-authority';
+import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import * as RadixSwitch from '@radix-ui/react-switch';
 import * as RadixRadio from '@radix-ui/react-radio-group';
@@ -147,12 +148,12 @@ type FloatingFieldShellProps = {
  *   - applying its own padding (the shell does not enforce the field's internal padding,
  *     but does shift the rest-position label right when `leftAdornment` is provided)
  */
-declare function FloatingFieldShell({ label, hint, error, required, hideLabel, htmlFor, size, floating, focused, hasError: hasErrorProp, leftAdornment, rightAdornment, containerClassName, multiline, reserveMessageSpace, children, }: FloatingFieldShellProps): React.JSX.Element;
+declare function FloatingFieldShell({ label, hint, error, required, hideLabel, htmlFor, size, floating, focused, hasError: hasErrorProp, leftAdornment, rightAdornment, containerClassName, multiline, reserveMessageSpace, children, }: FloatingFieldShellProps): react_jsx_runtime.JSX.Element;
 type FieldSkeletonProps = Pick<FloatingFieldShellProps, "label" | "hint" | "required" | "hideLabel" | "size" | "containerClassName" | "multiline" | "reserveMessageSpace" | "leftAdornment" | "rightAdornment"> & {
     /** class รูปทรงของช่อง — ปกติคือ `fieldShapeClasses(...)` ตัวเดียวกับที่ component ใช้ */
     shape?: string;
 };
-declare function FieldSkeleton({ size, shape, containerClassName, ...shellProps }: FieldSkeletonProps): React.JSX.Element;
+declare function FieldSkeleton({ size, shape, containerClassName, ...shellProps }: FieldSkeletonProps): react_jsx_runtime.JSX.Element;
 /**
  * Field shape classes shared by all interactive elements (input/textarea/button).
  * Apply to the inner element so border/focus ring/error states stay consistent.
@@ -248,7 +249,7 @@ type FormatInputProps = Omit<InputProps, "value" | "defaultValue" | "onChange" |
     decimalScale?: number;
     allowNegative?: boolean;
 };
-declare function FormatInput({ format, value, onValueChange, showMask, thousandSeparator, decimalScale, allowNegative, ...rest }: FormatInputProps): React.JSX.Element;
+declare function FormatInput({ format, value, onValueChange, showMask, thousandSeparator, decimalScale, allowNegative, ...rest }: FormatInputProps): react_jsx_runtime.JSX.Element;
 declare namespace FormatInput {
     var displayName: string;
 }
@@ -280,8 +281,6 @@ type TextareaProps = React.ComponentProps<"textarea"> & {
     isLoading?: boolean;
 };
 declare const Textarea: React.ForwardRefExoticComponent<Omit<TextareaProps, "ref"> & React.RefAttributes<HTMLTextAreaElement>>;
-
-/** @doc ./toggle.md */
 
 type ToggleSize = "sm" | "md";
 /**
@@ -394,8 +393,6 @@ type SwitchProps = Omit<React.ComponentProps<typeof RadixSwitch.Root>, "asChild"
 };
 declare const Switch: React.ForwardRefExoticComponent<Omit<SwitchProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
-/** @doc ./toggle.md */
-
 type RadioOption<V extends string = string> = {
     value: V;
     label: React.ReactNode;
@@ -418,7 +415,7 @@ type RadioGroupProps<V extends string = string> = Omit<React.ComponentProps<type
     containerClassName?: string;
     children?: React.ReactNode;
 };
-declare function RadioGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, orientation, size, isLoading, children, ...props }: RadioGroupProps<V>): React.JSX.Element;
+declare function RadioGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, orientation, size, isLoading, children, ...props }: RadioGroupProps<V>): react_jsx_runtime.JSX.Element;
 type RadioGroupItemProps = Omit<React.ComponentProps<typeof RadixRadio.Item>, "asChild"> & {
     description?: React.ReactNode;
     /** ทับขนาดที่ได้จากกลุ่ม — ปกติไม่ต้องใส่ */
@@ -507,10 +504,8 @@ type SelectProps<V extends string = string> = {
     /** วาดสถานะว่างเอง — ชนะ `emptyText`/`emptyAction` */
     renderEmpty?: () => React.ReactNode;
 };
-declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, clearable, isLoading, invalid, reserveMessageSpace, emptyText, emptyAction, renderEmpty, }: SelectProps<V>): React.JSX.Element;
+declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, clearable, isLoading, invalid, reserveMessageSpace, emptyText, emptyAction, renderEmpty, }: SelectProps<V>): react_jsx_runtime.JSX.Element;
 declare const SelectItem: React.ForwardRefExoticComponent<Omit<RadixSelect.SelectItemProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
-
-/** @doc ./toggle.md */
 
 type CheckboxOption<V extends string = string> = {
     value: V;
@@ -546,7 +541,7 @@ type CheckboxGroupProps<V extends string = string> = {
     containerClassName?: string;
     children?: React.ReactNode;
 };
-declare function CheckboxGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, name, disabled, options, value: valueProp, defaultValue, onValueChange, orientation, size, isLoading, children, }: CheckboxGroupProps<V>): React.JSX.Element;
+declare function CheckboxGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, name, disabled, options, value: valueProp, defaultValue, onValueChange, orientation, size, isLoading, children, }: CheckboxGroupProps<V>): react_jsx_runtime.JSX.Element;
 declare namespace CheckboxGroup {
     var displayName: string;
 }
@@ -588,7 +583,7 @@ type PillSwitchProps<V extends string = string> = Omit<React.ComponentProps<type
     options: readonly [PillSwitchOption<V>, PillSwitchOption<V>];
     containerClassName?: string;
 };
-declare function PillSwitch<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, disabled, ...props }: PillSwitchProps<V>): React.JSX.Element;
+declare function PillSwitch<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, disabled, ...props }: PillSwitchProps<V>): react_jsx_runtime.JSX.Element;
 declare namespace PillSwitch {
     var displayName: string;
 }
@@ -741,141 +736,6 @@ type HeadingProps = Omit<React.ComponentProps<"h2">, "color"> & VariantProps<typ
 };
 declare const Heading: React.ForwardRefExoticComponent<Omit<HeadingProps, "ref"> & React.RefAttributes<HTMLHeadingElement>>;
 
-/**
- * เครื่องหมายประจำผลิตภัณฑ์ทั้ง 6 ตัว — **ชุดเดียวของทั้งแพลตฟอร์ม**
- *
- * ทุกแอปในตระกูลต้องวาดเครื่องหมายของกันและกัน (ลิ้นชักแอป · หัวราง · หน้า login) ⇒ ถ้าแต่ละแอป
- * เก็บสำเนาเอง โลโก้จะเปลี่ยนคนละเวลา · วัดของจริงตอนย้ายเข้ามา: hr-web มี 19 ไฟล์ใน `public/icons`
- * แต่ **ใช้จริง 3** ที่เหลือเป็นซากจากตอนที่ยังวาดลิ้นชักเอง ซึ่งยังขึ้น deploy อยู่ทุกรอบ
- *
- * 📌 **ฝังเป็น data URL ไม่ใช่ไฟล์ใน `public/`** — เหตุผลเดียวกับ `_app-icons/data.ts`:
- * แอปที่ import DS ได้เครื่องหมายไปเลยโดยไม่ต้องคัดลอกไฟล์ไปวางเอง (ซึ่งเป็นต้นตอของ 19 ไฟล์นั้น)
- * ราคาที่จ่ายคือ ~28.9 KB ในบันเดิลของทุกแอปที่ import · ต่างจากภาพ showcase ใน
- * `AppShowcaseDialog` (~250 KB) ที่ยังอ่านจาก `public/` เพราะใหญ่เกินกว่าจะฝัง
- *
- * 🎨 สองโทนต่อแอป — `primary` (สีจริง วางบนพื้นขาว เช่นการ์ดในลิ้นชัก) และ `white` (ขาวล้วน
- * วางบนพื้นสีแบรนด์ เช่นหัวราง) · ดีไซน์ส่งมาสองไฟล์แยกตั้งแต่ต้น **ไม่ใช่ย้อมสีเอา**:
- * มาร์กหลายตัวเป็นสองสีในตัว (MediHR = เส้น `#3A63E8` + จุด `#29B4EB`) ⇒ ย้อมสีเดียวทับไม่ได้
- *
- * ⚠️ **viewBox ในไฟล์นี้ไม่ใช่ค่าที่ดีไซน์ส่งมา** — ต้นฉบับเป็น `0 0 158 158` ทั้ง 12 ไฟล์
- * ซึ่งเว้นขอบเปล่าไว้ไม่เท่ากันทุกใบ (หมึกสูง 89.8–126.8 จาก 158 ⇒ ต่างกัน 41%) ⇒ ครอบกรอบ
- * ใหม่ให้ **ชิดหมึกพอดี** ทุกไฟล์ · **ไม่มีพิกัดใน `<path>` ถูกแตะ** ตาม `CLAUDE.md` §8
- * ("Never rescale the artwork itself") — เปลี่ยนแค่ `viewBox` · `width` · `height`
- *
- * 🔴 **ระยะขอบไม่ได้อยู่ในไฟล์ — อยู่ที่ `AppMark`** เพราะ "ขอบเท่าไร" ขึ้นกับที่ที่วาด:
- * วางเดี่ยว (หัวราง) อยากได้เต็มพื้นที่ · วางเรียงกับมาร์กตัวอื่น (ลิ้นชัก) ต้องเว้นขอบเท่ากัน
- * ทุกใบถึงจะดูขนาดเท่ากัน ⇒ `fit="grid"` ของ `AppMark` เว้นให้ตอนวาด ไม่ใช่ตอนสร้างไฟล์
- * (รอบแรกทำกลับกัน คือ pad ลงไปในไฟล์เลย ผลคือหัวรางของ hr-web หดลง **37.5%** เงียบ ๆ
- * ทันทีที่สลับมาใช้ `AppMark` — `h-10` ที่เคยแปลว่า "หมึกสูง 40" กลายเป็น 25)
- *
- * | แอป | หมึกจริง (วัดในกรอบ 158) | สัดส่วน กว้าง÷สูง |
- * |---|---|---|
- * | `mediwork` | 115.11 × 89.80 | 143.68 | 0.801 |
-  * | `medimatch` | 125.14 × 96.74 | 154.79 | 0.808 |
-  * | `medihr` | 94.12 × 115.11 | 184.17 | 0.511 |
-  * | `medioncloud` | 89.18 × 126.83 | 202.93 | 0.439 |
-  * | `medirefer` | 100.76 × 92.58 | 148.13 | 0.680 |
-  * | `medipay` | 86.10 × 98.44 | 157.51 | 0.547 |
- *
- * ทุกไฟล์หมึกเต็มกรอบ ⇒ **ความสูงของ `<img>` = ความสูงของหมึก** ตรงไปตรงมา · เวลาวางเรียงกัน
- * `AppMark fit="grid"` ย่อความสูงลงเหลือ 62.5% เท่ากันทุกใบ ⇒ หมึกสูงเท่ากัน ส่วนความกว้าง
- * ต่างกันตามทรงของโลโก้เอง (Mediwork/Medimatch เป็นทรงนอน · MediOnCloud เป็นทรงตั้ง)
- * ซึ่งเป็นสิ่งที่ตาอ่านว่า "ขนาดเท่ากัน" จริง ๆ
- *
- * 🔴 **เปลี่ยนไฟล์ไอคอนเมื่อไหร่ ต้องวัดหมึกใหม่ทั้งชุด** — ตัวเลขข้างบนผูกกับไฟล์ ไม่ใช่ชื่อแอป
- * วิธีวัด: rasterise ที่ขนาดเดียวกัน (ใช้ 1024) แล้วอ่านกรอบพิกเซลที่ alpha > 8
- */
-/** แอปในตระกูล Mediact — เรียงตามลำดับที่ลิ้นชักแสดง */
-type MediactAppKey = "mediwork" | "medimatch" | "medihr" | "medioncloud" | "medirefer" | "medipay";
-/**
- * โทนของเครื่องหมาย — เลือกตาม **พื้นหลังที่วางทับ** ไม่ใช่ตามธีมของแอป
- *
- * `primary` = สีจริงของแบรนด์นั้น (พื้นขาว/อ่อน) · `white` = ขาวล้วน (พื้นสีเข้ม/สีแบรนด์)
- */
-type AppMarkTone = "primary" | "white";
-/** เครื่องหมายของทุกแอป แยกตามโทน — data URL พร้อมใส่ `<img src>` ได้เลย */
-declare const appMarks: Record<MediactAppKey, Record<AppMarkTone, string>>;
-/** ชื่อที่แสดงคู่กับเครื่องหมาย — ตัวสะกดตามที่ดีไซน์ส่งมา (เว้นวรรคของ "Medi On cloud" ด้วย) */
-declare const appMarkLabels: Record<MediactAppKey, string>;
-/**
- * ตัวหนังสือที่วางคู่เครื่องหมายเวลาทำเป็น **wordmark** — ไม่ใช่ `appMarkLabels` ที่ทำตัวใหญ่
- *
- * 🔴 ต่างกันจริงหนึ่งตัว: `medioncloud` อ่านว่า "Medi On cloud" แต่โลโก้เขียน **"MEDI ONCLOUD"**
- * ติดกัน · ถ้าใช้ label มาทำตัวใหญ่จะได้ "MEDI ON CLOUD" ซึ่งยาวขึ้นจนตกบรรทัดในคอลัมน์แคบ
- * และไม่ตรงกับที่ดีไซน์เขียน (วัดจากไฟล์โลโก้เดิมและ mockup ชุดใหม่ — ตรงกันทั้งสองที่)
- */
-declare const appWordmarks: Record<MediactAppKey, string>;
-/**
- * สีตัวหนังสือของ wordmark — **สีหลักของเครื่องหมายแอปนั้นเอง**
- *
- * 🔴 **ต้องเป็นค่าคงที่ ห้ามเป็น token ของธีม** — wordmark ถูกวาดบนแอปอื่นได้เสมอ (ลิ้นชักแอป ·
- * หน้าต่างตัวอย่างผลิตภัณฑ์) · `--color-brand` คือสีของ **แอปที่กำลังรัน** ⇒ ถ้าอ้าง token
- * ชื่อ "MEDI PAY" จะกลายเป็นสีครามเมื่อเปิดบน MediHR ซึ่งผิดทั้งแบรนด์และความหมาย
- *
- * ค่าที่ใช้ = สีที่อยู่ใน `<path>` ของมาร์กโทน `primary` จริง ๆ (ดึงออกมาจากไฟล์ ไม่ใช่เดา)
- * ⇒ ชื่อกับเครื่องหมายเป็นสีเดียวกันเสมอโดยไม่ต้องดูแลสองที่ · สามตัวล่างตรงกับสีธีมที่
- * ดีไซน์กำหนดให้พอดี (`#11b96b` · `#0e6b8d` · `#0e8a72`)
- *
- * ⚠️ **คอนทราสต์บนพื้นขาวต่ำในบางตัว** (mediwork 1.86:1 · medimatch 2.53:1) — รับได้เพราะ
- * WCAG 1.4.3 ยกเว้นตัวอักษรที่เป็นส่วนหนึ่งของโลโก้/ชื่อแบรนด์ · ⛔ ห้ามเอาค่าพวกนี้ไปใช้กับ
- * ข้อความอื่นที่ไม่ใช่ wordmark
- */
-declare const appBrandInk: Record<MediactAppKey, string>;
-
-/**
- * สัดส่วนความสูงของหมึกเมื่อวางเรียงกับมาร์กตัวอื่น
- *
- * 📐 มาจาก `TopNav.md` (2026-08-24) ที่วัดกริดของลิ้นชักไว้ — ไอคอนสามใบแรกในชุดเก่ามีขอบเปล่า
- * ในไฟล์อยู่แล้ว หมึกกิน 62.5% ของกรอบพอดี ⇒ ใบที่เหลือถูกดึงมาที่เลขนี้เพื่อให้ทั้งแถวดูเท่ากัน
- *
- * 🔴 **อยู่ที่นี่ที่เดียว ไม่ใช่ในไฟล์ SVG** — ระยะขอบขึ้นกับที่ที่วาด ไม่ใช่ตัวอาร์ตเวิร์ก
- * (ดูเหตุผลเต็มที่หัว `app-marks.ts` · รอบแรกฝังลงไฟล์แล้วหัวรางหด 37.5% เงียบ ๆ)
- */
-declare const GRID_INK_HEIGHT = 0.625;
-type AppMarkFit = "ink" | "grid";
-type AppMarkProps = Omit<React.ComponentProps<"img">, "src" | "alt" | "children"> & {
-    /** แอปที่ต้องการวาดเครื่องหมาย */
-    app: MediactAppKey;
-    /**
-     * โทน — เลือกตาม **พื้นหลังที่วางทับ** ไม่ใช่ตามธีมของแอปที่กำลังรันอยู่
-     *
-     * ค่าเริ่มต้น `primary` เพราะพื้นขาวเป็นกรณีที่พบบ่อยกว่า (การ์ด · รายการ · เนื้อหา)
-     * ส่วน `white` มีไว้สำหรับพื้นสีแบรนด์อย่างหัวรางของ MediHR
-     */
-    tone?: AppMarkTone;
-    /**
-     * ให้หมึกเต็มกล่องที่ให้มา หรือเว้นขอบเพื่อไปเรียงกับมาร์กตัวอื่น
-     *
-     * - `"ink"` (ค่าเริ่มต้น) — หมึกเต็มกล่อง ⇒ `className="h-10"` แปลว่า **หมึกสูง 40**
-     *   ใช้เมื่อมาร์กอยู่ตัวเดียวในพื้นที่ของมัน เช่นหัวรางเมนู
-     * - `"grid"` — ย่อความสูงเหลือ 62.5% เท่ากันทุกใบ ⇒ มาร์กที่ทรงต่างกันดูขนาดเท่ากัน
-     *   ใช้เมื่อวางหลายแอปเรียงกัน เช่นการ์ดในลิ้นชักแอป
-     *
-     * 🔴 **ค่าเริ่มต้นเป็น `ink` โดยตั้งใจ** — เป็นพฤติกรรมที่ `<img>` ปกติให้ ⇒ คนที่ไม่รู้เรื่อง
-     * กริดจะไม่โดนย่อโดยไม่รู้ตัว · กรณีกริดเป็นกรณีพิเศษที่ผู้เรียกใช้รู้ตัวว่ากำลังทำอะไรอยู่
-     */
-    fit?: AppMarkFit;
-    /** ทับข้อความ `alt` — ค่าเริ่มต้นคือชื่อผลิตภัณฑ์ (เช่น `"Medi HR"`) */
-    alt?: string;
-};
-/**
- * เครื่องหมายประจำผลิตภัณฑ์ — ที่เดียวที่แอปควรหยิบโลโก้ของแอปอื่นไปใช้
- *
- * ก่อนมีตัวนี้ แต่ละแอปคัดลอกไฟล์ไปไว้ใน `public/` ของตัวเอง แล้วชุดโลโก้ก็เปลี่ยนคนละเวลา
- * (วัดตอนย้าย: hr-web มี 19 ไฟล์ ใช้จริง 3) · ตัวเครื่องหมายอยู่ใน [`app-marks.ts`](./app-marks.ts)
- *
- * ```tsx
- * <AppMark app="medihr" tone="white" className="h-10 w-auto" />        // หัวราง — หมึกสูง 40
- * <AppMark app="mediwork" fit="grid" className="size-full" />          // การ์ดในลิ้นชัก
- * ```
- *
- * 🔴 **`min-h-0` ไม่ใช่ของประดับ** — `<img>` ที่เป็น flex item มี `min-height: auto` ซึ่ง
- * ยอมให้มัน **โตเกินกล่องตามอัตราส่วนของไฟล์** แม้จะสั่ง `h-full` ไว้แล้ว · วัดบนจอจริง
- * ตอนที่ยังไม่มี: ไอคอนได้กล่อง 32×45.55 ในช่อง 32×32 ⇒ ทะลุกรอบมนของการ์ด
- * ⇒ ใส่ไว้เป็นค่าตั้งต้นตรงนี้ที่เดียว แทนที่จะให้ทุกที่ที่เรียกใช้ต้องรู้เอง
- */
-declare const AppMark: React.ForwardRefExoticComponent<Omit<AppMarkProps, "ref"> & React.RefAttributes<HTMLImageElement>>;
-
 /** @doc ./AppShowcaseDialog.md */
 
 /**
@@ -937,21 +797,12 @@ type ShowcaseLayout = {
  */
 declare const SHOWCASE_LAYOUT: Record<ShowcaseAppKey, ShowcaseLayout>;
 type ShowcaseAssets = {
-    /**
-     * ภาพเดียวที่ **ประกอบจอกว้างกับการ์ดซ้อนมาแล้ว** — วางเต็มกรอบภาพตัวอย่าง
-     *
-     * ทางที่ควรใช้กับภาพชุดใหม่: ดีไซน์ส่ง mockup ที่ซ้อนเสร็จแล้วมาเป็นไฟล์เดียว ⇒ แยกกลับ
-     * เป็นสองใบไม่ได้ (การ์ดบังจอด้านหลังอยู่ ส่วนที่ถูกบังหายไปจากไฟล์แล้ว)
-     *
-     * มีค่านี้เมื่อไหร่ `wide`/`card` จะถูกข้าม
-     */
-    composed?: string;
-    /** โลโก้เต็มของผลิตภัณฑ์ — **ไม่ต้องส่งแล้ว** ค่าเริ่มต้นวาดจาก `AppMark` + ชื่อผลิตภัณฑ์ */
-    logo?: string;
-    /** ภาพจอกว้าง (ชั้นหลัง) — ใช้เมื่อไม่มี `composed` */
-    wide?: string;
-    /** ภาพที่ซ้อนทับมุมล่างซ้าย — ใช้เมื่อไม่มี `composed` */
-    card?: string;
+    /** โลโก้เต็มของผลิตภัณฑ์ */
+    logo: string;
+    /** ภาพจอกว้าง (ชั้นหลัง) */
+    wide: string;
+    /** ภาพที่ซ้อนทับมุมล่างซ้าย */
+    card: string;
 };
 type AppShowcaseDialogProps = {
     /** แอปที่ถูกกด · `null` = ปิด */
@@ -1008,8 +859,18 @@ type TopNavBrandProps = React.ComponentProps<"div"> & {
 declare const TopNavBrand: React.ForwardRefExoticComponent<Omit<TopNavBrandProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
 declare const TopNavSpacer: ({ className }: {
     className?: string;
-}) => React.JSX.Element;
-
+}) => react_jsx_runtime.JSX.Element;
+/** Canonical app keys across the Mediact ecosystem. */
+/** แอปในระบบนิเวศ Mediact
+ *
+ * 🔄 **กลับมาครบ 6 ตัว 2026-08-16** — รอบก่อนตัด `medipay`/`medirefer` ฯลฯ ออก (2026-08-09)
+ * เพราะช่องที่เขียนว่า "เร็ว ๆ นี้" เป็นสัญญาที่ไม่มีใครถือ · ตอนนี้กลับมาได้เพราะ **ไม่ใช่ป้ายตาย
+ * อีกแล้ว** — Portal ทำหน้าต่างตัวอย่างผลิตภัณฑ์ + ช่องทางติดต่อไว้บน staging แล้ว
+ * (`feat/app-launcher-coming-soon`) ⇒ กดแล้วผู้ใช้ได้เห็นว่าแอปทำอะไรและติดต่อใครต่อได้ทันที
+ *
+ * ⚠️ `medistock`/`medicare` **ยังไม่กลับมา** — ยังไม่มีทั้งแบบและคำโปรยจาก Figma
+ * ⇒ ถ้าเติมโดยไม่มีเนื้อหา จะกลายเป็นป้ายตายแบบเดิมอีกรอบ */
+type MediactAppKey = "mediwork" | "medimatch" | "medihr" | "medioncloud" | "medirefer" | "medipay";
 type MediactAppConfig = {
     /** Where this app lives. Falsy → tile is rendered as not-clickable. */
     baseUrl?: string;
@@ -1063,7 +924,7 @@ type AppLauncherProps = {
     };
     className?: string;
 };
-declare function AppLauncher({ apps, order, onAppClick, label, comingSoonText, showcaseLocale, showcaseAssetBaseUrl, showcaseAssets, settingsAction, className, }: AppLauncherProps): React.JSX.Element;
+declare function AppLauncher({ apps, order, onAppClick, label, comingSoonText, showcaseLocale, showcaseAssetBaseUrl, showcaseAssets, settingsAction, className, }: AppLauncherProps): react_jsx_runtime.JSX.Element;
 type NotificationBellProps = React.ComponentProps<"button"> & {
     hasUnread?: boolean;
     unreadCount?: number;
@@ -1104,7 +965,7 @@ type UserMenuProps = {
  * profile menu: centered avatar + name + role header, full-width menu items, and
  * a bottom row that pairs an optional language switcher with a red Log Out button.
  */
-declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): React.JSX.Element;
+declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): react_jsx_runtime.JSX.Element;
 
 type LanguageOption = {
     /** ค่าที่คืนกลับตอนเลือก — โดยมากคือรหัสภาษาของ i18n (`th-TH` · `en-EN`) */
@@ -1138,7 +999,7 @@ type LanguageSwitcherProps = {
  * เดาเป็นตัวแรกในรายการคือการบอกผู้ใช้ว่ากำลังอยู่ภาษาที่ไม่ได้อยู่จริง
  * (แอปที่ i18n มี fallback ของตัวเองอยู่แล้ว ให้ normalize ก่อนส่งมา)
  */
-declare function LanguageSwitcher({ languages, value, onChange, label, align, className, }: LanguageSwitcherProps): React.JSX.Element;
+declare function LanguageSwitcher({ languages, value, onChange, label, align, className, }: LanguageSwitcherProps): react_jsx_runtime.JSX.Element;
 declare namespace LanguageSwitcher {
     var displayName: string;
 }
@@ -1246,7 +1107,7 @@ type SidebarItemProps = {
     badge?: React.ReactNode;
     className?: string;
 };
-declare function SidebarItem({ id, label, icon: Icon, href, onClick, badge, className, }: SidebarItemProps): React.JSX.Element;
+declare function SidebarItem({ id, label, icon: Icon, href, onClick, badge, className, }: SidebarItemProps): react_jsx_runtime.JSX.Element;
 type SidebarGroupProps = {
     /** Stable id used for the chevron-toggle aria. */
     id: string;
@@ -1268,7 +1129,7 @@ type SidebarGroupProps = {
     children?: React.ReactNode;
     className?: string;
 };
-declare function SidebarGroup({ id, label, icon: Icon, defaultExpanded, expanded, onExpandedChange, isChildActive: hasActiveChild, children, className, }: SidebarGroupProps): React.JSX.Element;
+declare function SidebarGroup({ id, label, icon: Icon, defaultExpanded, expanded, onExpandedChange, isChildActive: hasActiveChild, children, className, }: SidebarGroupProps): react_jsx_runtime.JSX.Element;
 
 type FormFieldProps = {
     /** Field label rendered above the input. Omit for unlabeled fields. */
@@ -1302,7 +1163,7 @@ type FormFieldProps = {
  * Layout shell shared by every form primitive (Input, Textarea, Select, ...).
  * Renders: [Label] [children] [hint | error]
  */
-declare function FormField({ label, hint, error, required, htmlFor, hideLabel, reserveMessageSpace, className, children, }: FormFieldProps): React.JSX.Element;
+declare function FormField({ label, hint, error, required, htmlFor, hideLabel, reserveMessageSpace, className, children, }: FormFieldProps): react_jsx_runtime.JSX.Element;
 
 /** @doc ./Calendar.md */
 
@@ -1394,8 +1255,6 @@ type CalendarProps = {
  */
 declare const Calendar: React.ForwardRefExoticComponent<CalendarProps & React.RefAttributes<HTMLDivElement>>;
 
-/** @doc ../ui/Calendar.md */
-
 type DatePickerProps = {
     id?: string;
     label?: React.ReactNode;
@@ -1457,7 +1316,7 @@ type DatePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, clearLabel, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): React.JSX.Element;
+declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, clearLabel, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): react_jsx_runtime.JSX.Element;
 
 type FieldIconSlotProps = {
     /** ไอคอนประจำช่อง (ปฏิทิน · นาฬิกา · ฯลฯ) — โชว์เป็นค่าปกติ */
@@ -1471,9 +1330,7 @@ type FieldIconSlotProps = {
     clearLabel: string;
     onClear: () => void;
 };
-declare function FieldIconSlot({ icon, showClear, clearLabel, onClear, }: FieldIconSlotProps): React.JSX.Element;
-
-/** @doc ../ui/Calendar.md */
+declare function FieldIconSlot({ icon, showClear, clearLabel, onClear, }: FieldIconSlotProps): react_jsx_runtime.JSX.Element;
 
 /** A closed range. `to` is only ever `null` while a selection is half-made. */
 type DateRangeValue = {
@@ -1580,7 +1437,7 @@ type DateRangePickerProps = {
  * the end; clicking before the start begins a new range rather than silently
  * swapping the pair.
  */
-declare function DateRangePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, labels, className, containerClassName, }: DateRangePickerProps): React.JSX.Element;
+declare function DateRangePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, labels, className, containerClassName, }: DateRangePickerProps): react_jsx_runtime.JSX.Element;
 
 /** "HH:mm" string in 24-hour format. */
 type TimeValue = string;
@@ -1629,7 +1486,7 @@ type TimePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function TimePicker({ id, label, hint, error, required, hideLabel, reserveMessageSpace, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, className, containerClassName, }: TimePickerProps): React.JSX.Element;
+declare function TimePicker({ id, label, hint, error, required, hideLabel, reserveMessageSpace, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
 
 declare const numberStepperVariants: (props?: ({
     invalid?: boolean | null | undefined;
@@ -1842,7 +1699,7 @@ type ComboBoxMultiProps<V extends string = string> = ComboBoxCommonProps<V> & Co
     onChange?: (value: V[]) => void;
 };
 type ComboBoxProps<V extends string = string> = ComboBoxSingleProps<V> | ComboBoxMultiProps<V>;
-declare function ComboBox<V extends string = string>(props: ComboBoxProps<V>): React.JSX.Element;
+declare function ComboBox<V extends string = string>(props: ComboBoxProps<V>): react_jsx_runtime.JSX.Element;
 
 /**
  * ช่องค้นหา-แล้วเลือก **ที่ไม่มี Radix Popover · ไม่มี popper · ไม่มี floating-ui**
@@ -2047,7 +1904,7 @@ type EntityAutocompleteProps<T> = EntityAutocompleteSingleProps<T> | EntityAutoc
  * `ComboBox` (single) / `MultiAutocomplete` (multi) — this is the generic-`T`
  * counterpart for remote entity search specifically.
  */
-declare function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>): React.JSX.Element;
+declare function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>): react_jsx_runtime.JSX.Element;
 
 declare const Table: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.TableHTMLAttributes<HTMLTableElement>, HTMLTableElement>, "ref"> & React.RefAttributes<HTMLTableElement>>;
 declare const TableHeader: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React.RefAttributes<HTMLTableSectionElement>>;
@@ -2136,7 +1993,7 @@ declare function DataTableGroupRow({ colSpan, label, collapsible, collapsed, onT
     collapsed?: boolean;
     onToggle?: () => void;
     toggleAriaLabel?: string;
-}): React.JSX.Element;
+}): react_jsx_runtime.JSX.Element;
 
 type FreezeColumns = {
     /**
@@ -2396,7 +2253,7 @@ type DataTableProps<TData> = {
     /** Override any built-in copy — see `DataTableLabels`. All English by default. */
     labels?: DataTableLabels;
 } & DataTableGroupingProps<TData>;
-declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, skeletonRowCount, containerClassName, cardClassName, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): React.JSX.Element;
+declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, skeletonRowCount, containerClassName, cardClassName, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): react_jsx_runtime.JSX.Element;
 
 declare const cardVariants: (props?: ({
     variant?: "flat" | "elevated" | "outlined" | null | undefined;
@@ -2404,11 +2261,11 @@ declare const cardVariants: (props?: ({
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 type CardProps = React.ComponentProps<"div"> & VariantProps<typeof cardVariants>;
 declare const Card: React.ForwardRefExoticComponent<Omit<CardProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
-declare const CardHeader: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
-declare const CardTitle: ({ className, ...props }: React.ComponentProps<"h3">) => React.JSX.Element;
-declare const CardDescription: ({ className, ...props }: React.ComponentProps<"p">) => React.JSX.Element;
-declare const CardContent: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
-declare const CardFooter: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
+declare const CardHeader: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const CardTitle: ({ className, ...props }: React.ComponentProps<"h3">) => react_jsx_runtime.JSX.Element;
+declare const CardDescription: ({ className, ...props }: React.ComponentProps<"p">) => react_jsx_runtime.JSX.Element;
+declare const CardContent: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const CardFooter: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
 
 declare const Tabs: React.ForwardRefExoticComponent<RadixTabs.TabsProps & React.RefAttributes<HTMLDivElement>>;
 declare const tabsListVariants: (props?: ({
@@ -2442,9 +2299,9 @@ type BreadcrumbProps = React.ComponentProps<"nav"> & {
      *  which keeps this package framework-agnostic (no router import inside DS). */
     linkComponent?: React.ElementType;
 };
-declare function Breadcrumb({ items, separator, maxItems, linkComponent: LinkComponent, className, ...props }: BreadcrumbProps): React.JSX.Element;
+declare function Breadcrumb({ items, separator, maxItems, linkComponent: LinkComponent, className, ...props }: BreadcrumbProps): react_jsx_runtime.JSX.Element;
 /** Low-level escape hatch — use `<BreadcrumbRoot>` + `<BreadcrumbLink>` for custom rendering. */
-declare const BreadcrumbRoot: ({ className, ...props }: React.ComponentProps<"nav">) => React.JSX.Element;
+declare const BreadcrumbRoot: ({ className, ...props }: React.ComponentProps<"nav">) => react_jsx_runtime.JSX.Element;
 declare const BreadcrumbLink: React.ForwardRefExoticComponent<Omit<React.ClassAttributes<HTMLAnchorElement> & React.AnchorHTMLAttributes<HTMLAnchorElement> & {
     asChild?: boolean;
 }, "ref"> & React.RefAttributes<HTMLAnchorElement>>;
@@ -2470,7 +2327,7 @@ type StepperProps = {
     /** Allow click on completed steps to navigate. */
     onStepClick?: (index: number) => void;
 };
-declare function Stepper({ steps, current, orientation, connector, className, onStepClick, }: StepperProps): React.JSX.Element;
+declare function Stepper({ steps, current, orientation, connector, className, onStepClick, }: StepperProps): react_jsx_runtime.JSX.Element;
 
 type SkeletonProps = React.ComponentProps<"div"> & {
     /** Shape preset. `text` defaults to a 1em-height bar. `circle` is square + rounded-full. */
@@ -2495,7 +2352,7 @@ declare const Spinner: React.ForwardRefExoticComponent<Omit<SpinnerProps, "ref">
 declare function LoadingScreen({ label, className, }: {
     label?: React.ReactNode;
     className?: string;
-}): React.JSX.Element;
+}): react_jsx_runtime.JSX.Element;
 
 /** โทนสีพื้นของป้ายรูป · `brand` = ตามธีมของแอป */
 type StateTone = "brand" | "info" | "success" | "warning" | "danger" | "neutral" | "none";
@@ -2555,7 +2412,7 @@ type EmptyStateProps = StateBlockProps & {
  * บอกให้ผู้ใช้ไปสร้างใหม่ทั้งที่เขาแค่กรองผิด คือทางที่ทำให้เขาสร้างข้อมูลซ้ำ
  * (ใน `DataTable` ใช้ `renderEmpty` ที่ได้ `isFiltered` มาแยกสองกรณีนี้)
  */
-declare function EmptyState({ iconTone, tone, ...props }: EmptyStateProps): React.JSX.Element;
+declare function EmptyState({ iconTone, tone, ...props }: EmptyStateProps): react_jsx_runtime.JSX.Element;
 type ErrorStateProps = Omit<StateBlockProps, "action"> & {
     /** ปุ่มลองใหม่ — ไม่ส่ง = ไม่มีปุ่ม */
     onRetry?: () => void;
@@ -2576,7 +2433,7 @@ type ErrorStateProps = Omit<StateBlockProps, "action"> & {
  * ⚠️ **ไม่มีข้อความตั้งต้นเป็นภาษาไทย** — DS ไม่มี i18n และไม่ควรมี
  * ทุกคำมาจากแอป ที่นี่มีแต่ค่าอังกฤษไว้กันจอว่างเปล่าตอนลืมส่ง
  */
-declare function ErrorState({ icon, image, tone, onRetry, retryLabel, action, error: _error, ...props }: ErrorStateProps): React.JSX.Element;
+declare function ErrorState({ icon, image, tone, onRetry, retryLabel, action, error: _error, ...props }: ErrorStateProps): react_jsx_runtime.JSX.Element;
 
 type ToasterProps = React.ComponentProps<typeof Toaster$1>;
 /**
@@ -2591,7 +2448,7 @@ type ToasterProps = React.ComponentProps<typeof Toaster$1>;
  * @example
  * <Toaster position="top-right" />
  */
-declare function Toaster(props: ToasterProps): React.JSX.Element;
+declare function Toaster(props: ToasterProps): react_jsx_runtime.JSX.Element;
 
 declare const Popover: React.FC<RadixPopover.PopoverProps>;
 declare const PopoverTrigger: React.ForwardRefExoticComponent<RadixPopover.PopoverTriggerProps & React.RefAttributes<HTMLButtonElement>>;
@@ -2610,8 +2467,8 @@ type DialogContentProps = React.ComponentProps<typeof RadixDialog.Content> & {
     showClose?: boolean;
 };
 declare const DialogContent: React.ForwardRefExoticComponent<Omit<DialogContentProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
-declare const DialogHeader: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
-declare const DialogFooter: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
+declare const DialogHeader: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const DialogFooter: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
 declare const DialogTitle: React.ForwardRefExoticComponent<Omit<RadixDialog.DialogTitleProps & React.RefAttributes<HTMLHeadingElement>, "ref"> & React.RefAttributes<HTMLHeadingElement>>;
 declare const DialogDescription: React.ForwardRefExoticComponent<Omit<RadixDialog.DialogDescriptionProps & React.RefAttributes<HTMLParagraphElement>, "ref"> & React.RefAttributes<HTMLParagraphElement>>;
 
@@ -2624,10 +2481,10 @@ type ConfirmTone = "info" | "warning" | "danger" | "success";
  * (`<ConfirmDialog icon={toneIcon.danger} … />`)
  */
 declare const toneIcon: {
-    readonly info: React.JSX.Element;
-    readonly warning: React.JSX.Element;
-    readonly danger: React.JSX.Element;
-    readonly success: React.JSX.Element;
+    readonly info: react_jsx_runtime.JSX.Element;
+    readonly warning: react_jsx_runtime.JSX.Element;
+    readonly danger: react_jsx_runtime.JSX.Element;
+    readonly success: react_jsx_runtime.JSX.Element;
 };
 type ConfirmDialogProps = {
     open: boolean;
@@ -2701,9 +2558,7 @@ type ConfirmDialogProps = {
      */
     children?: React.ReactNode;
 };
-declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, loading: loadingProp, dismissible, align, errorMessage, showCancel, confirmDisabled, children, }: ConfirmDialogProps): React.JSX.Element;
-
-/** @doc ./ContactSupportDialog.md */
+declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, loading: loadingProp, dismissible, align, errorMessage, showCancel, confirmDisabled, children, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
 
 /**
  * ช่องทางติดต่อของ MediAct — **ค่าเดียวกันทั้ง 4 แอป**
@@ -2752,7 +2607,7 @@ type ContactSupportDialogProps = {
  * มีป้ายไอคอนและเส้นคั่น — จงใจ เพราะกล่องนี้พูดในนามบริษัท ไม่ใช่ส่วนหนึ่งของงานในจอ
  * และผู้ใช้คนเดียวกันเปิดหลายแอป จึงต้องจำหน้าตา "ที่ขอความช่วยเหลือ" ได้ทันที
  */
-declare function ContactSupportDialog({ open, onOpenChange, labels, logo, lineUrl, lineHandle, phoneNumber, className, }: ContactSupportDialogProps): React.JSX.Element;
+declare function ContactSupportDialog({ open, onOpenChange, labels, logo, lineUrl, lineHandle, phoneNumber, className, }: ContactSupportDialogProps): react_jsx_runtime.JSX.Element;
 
 type PopoverContentProps = React.ComponentProps<typeof RadixPopover.Content>;
 type FilterProps = {
@@ -2773,7 +2628,7 @@ type FilterProps = {
     /** Class for the popover content panel. */
     contentClassName?: string;
 };
-declare function Filter({ children, triggerLabel, trigger, triggerProps, open, defaultOpen, onOpenChange, align, side, sideOffset, contentClassName, }: FilterProps): React.JSX.Element;
+declare function Filter({ children, triggerLabel, trigger, triggerProps, open, defaultOpen, onOpenChange, align, side, sideOffset, contentClassName, }: FilterProps): react_jsx_runtime.JSX.Element;
 
 declare const TooltipProvider: React.FC<RadixTooltip.TooltipProviderProps>;
 declare const TooltipRoot: React.FC<RadixTooltip.TooltipProps>;
@@ -2803,7 +2658,7 @@ type TooltipProps = {
  * Convenience wrapper. For grouped tooltips wrap your tree in <TooltipProvider>.
  * This component creates its own provider if none is in scope (safe to nest).
  */
-declare function Tooltip({ content, children, side, align, delayDuration, open, defaultOpen, onOpenChange, asChild, arrow, contentClassName, }: TooltipProps): React.JSX.Element;
+declare function Tooltip({ content, children, side, align, delayDuration, open, defaultOpen, onOpenChange, asChild, arrow, contentClassName, }: TooltipProps): react_jsx_runtime.JSX.Element;
 
 declare const DropdownMenu: React.FC<RadixMenu.DropdownMenuProps>;
 declare const DropdownMenuTrigger: React.ForwardRefExoticComponent<RadixMenu.DropdownMenuTriggerProps & React.RefAttributes<HTMLButtonElement>>;
@@ -3005,4 +2860,4 @@ declare const PeriodNavigator: React.ForwardRefExoticComponent<Omit<PeriodNaviga
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, AppMark, type AppMarkFit, type AppMarkProps, type AppMarkTone, AppShowcaseDialog, type AppShowcaseDialogProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, GRID_INK_HEIGHT, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PeriodNavigator, type PeriodNavigatorItem, type PeriodNavigatorLabels, type PeriodNavigatorProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, SHOWCASE_COPY, SHOWCASE_LAYOUT, SearchSelect, type SearchSelectProps, Select, SelectItem, type SelectOption, type SelectProps, type ShowcaseAppKey, type ShowcaseAssets, type ShowcaseLocale, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, appBrandInk, appMarkLabels, appMarks, appWordmarks, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, AppShowcaseDialog, type AppShowcaseDialogProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PeriodNavigator, type PeriodNavigatorItem, type PeriodNavigatorLabels, type PeriodNavigatorProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, SHOWCASE_COPY, SHOWCASE_LAYOUT, SearchSelect, type SearchSelectProps, Select, SelectItem, type SelectOption, type SelectProps, type ShowcaseAppKey, type ShowcaseAssets, type ShowcaseLocale, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };

@@ -131,8 +131,10 @@ export interface AiChatLabels {
   dateLocale: string;
   /** Onboarding shown right after entering scheduling mode. `{context}` = the scoped/unscoped line. */
   scheduleGreeting: string;
-  /** `{department}` + `{period}` — used when the hand-off already resolved the scope. */
+  /** `{department}` + `{subUnit}` + `{period}` — used when the hand-off already resolved the scope. */
   scheduleGreetingScoped: string;
+  /** The `{subUnit}` fragment itself — the ward a roster is actually built in. Empty when unknown. */
+  scheduleGreetingSubUnit: string;
   /** The `{period}` fragment itself — `{month}` / `{year}`. Empty when the hand-off carried no month. */
   scheduleGreetingPeriod: string;
   /** Used when nothing is resolved yet, to ask for department + month. */
