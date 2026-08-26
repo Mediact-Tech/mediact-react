@@ -736,6 +736,141 @@ type HeadingProps = Omit<React.ComponentProps<"h2">, "color"> & VariantProps<typ
 };
 declare const Heading: React.ForwardRefExoticComponent<Omit<HeadingProps, "ref"> & React.RefAttributes<HTMLHeadingElement>>;
 
+/**
+ * เครื่องหมายประจำผลิตภัณฑ์ทั้ง 6 ตัว — **ชุดเดียวของทั้งแพลตฟอร์ม**
+ *
+ * ทุกแอปในตระกูลต้องวาดเครื่องหมายของกันและกัน (ลิ้นชักแอป · หัวราง · หน้า login) ⇒ ถ้าแต่ละแอป
+ * เก็บสำเนาเอง โลโก้จะเปลี่ยนคนละเวลา · วัดของจริงตอนย้ายเข้ามา: hr-web มี 19 ไฟล์ใน `public/icons`
+ * แต่ **ใช้จริง 3** ที่เหลือเป็นซากจากตอนที่ยังวาดลิ้นชักเอง ซึ่งยังขึ้น deploy อยู่ทุกรอบ
+ *
+ * 📌 **ฝังเป็น data URL ไม่ใช่ไฟล์ใน `public/`** — เหตุผลเดียวกับ `_app-icons/data.ts`:
+ * แอปที่ import DS ได้เครื่องหมายไปเลยโดยไม่ต้องคัดลอกไฟล์ไปวางเอง (ซึ่งเป็นต้นตอของ 19 ไฟล์นั้น)
+ * ราคาที่จ่ายคือ ~28.9 KB ในบันเดิลของทุกแอปที่ import · ต่างจากภาพ showcase ใน
+ * `AppShowcaseDialog` (~250 KB) ที่ยังอ่านจาก `public/` เพราะใหญ่เกินกว่าจะฝัง
+ *
+ * 🎨 สองโทนต่อแอป — `primary` (สีจริง วางบนพื้นขาว เช่นการ์ดในลิ้นชัก) และ `white` (ขาวล้วน
+ * วางบนพื้นสีแบรนด์ เช่นหัวราง) · ดีไซน์ส่งมาสองไฟล์แยกตั้งแต่ต้น **ไม่ใช่ย้อมสีเอา**:
+ * มาร์กหลายตัวเป็นสองสีในตัว (MediHR = เส้น `#3A63E8` + จุด `#29B4EB`) ⇒ ย้อมสีเดียวทับไม่ได้
+ *
+ * ⚠️ **viewBox ในไฟล์นี้ไม่ใช่ค่าที่ดีไซน์ส่งมา** — ต้นฉบับเป็น `0 0 158 158` ทั้ง 12 ไฟล์
+ * ซึ่งเว้นขอบเปล่าไว้ไม่เท่ากันทุกใบ (หมึกสูง 89.8–126.8 จาก 158 ⇒ ต่างกัน 41%) ⇒ ครอบกรอบ
+ * ใหม่ให้ **ชิดหมึกพอดี** ทุกไฟล์ · **ไม่มีพิกัดใน `<path>` ถูกแตะ** ตาม `CLAUDE.md` §8
+ * ("Never rescale the artwork itself") — เปลี่ยนแค่ `viewBox` · `width` · `height`
+ *
+ * 🔴 **ระยะขอบไม่ได้อยู่ในไฟล์ — อยู่ที่ `AppMark`** เพราะ "ขอบเท่าไร" ขึ้นกับที่ที่วาด:
+ * วางเดี่ยว (หัวราง) อยากได้เต็มพื้นที่ · วางเรียงกับมาร์กตัวอื่น (ลิ้นชัก) ต้องเว้นขอบเท่ากัน
+ * ทุกใบถึงจะดูขนาดเท่ากัน ⇒ `fit="grid"` ของ `AppMark` เว้นให้ตอนวาด ไม่ใช่ตอนสร้างไฟล์
+ * (รอบแรกทำกลับกัน คือ pad ลงไปในไฟล์เลย ผลคือหัวรางของ hr-web หดลง **37.5%** เงียบ ๆ
+ * ทันทีที่สลับมาใช้ `AppMark` — `h-10` ที่เคยแปลว่า "หมึกสูง 40" กลายเป็น 25)
+ *
+ * | แอป | หมึกจริง (วัดในกรอบ 158) | สัดส่วน กว้าง÷สูง |
+ * |---|---|---|
+ * | `mediwork` | 115.11 × 89.80 | 143.68 | 0.801 |
+  * | `medimatch` | 125.14 × 96.74 | 154.79 | 0.808 |
+  * | `medihr` | 94.12 × 115.11 | 184.17 | 0.511 |
+  * | `medioncloud` | 89.18 × 126.83 | 202.93 | 0.439 |
+  * | `medirefer` | 100.76 × 92.58 | 148.13 | 0.680 |
+  * | `medipay` | 86.10 × 98.44 | 157.51 | 0.547 |
+ *
+ * ทุกไฟล์หมึกเต็มกรอบ ⇒ **ความสูงของ `<img>` = ความสูงของหมึก** ตรงไปตรงมา · เวลาวางเรียงกัน
+ * `AppMark fit="grid"` ย่อความสูงลงเหลือ 62.5% เท่ากันทุกใบ ⇒ หมึกสูงเท่ากัน ส่วนความกว้าง
+ * ต่างกันตามทรงของโลโก้เอง (Mediwork/Medimatch เป็นทรงนอน · MediOnCloud เป็นทรงตั้ง)
+ * ซึ่งเป็นสิ่งที่ตาอ่านว่า "ขนาดเท่ากัน" จริง ๆ
+ *
+ * 🔴 **เปลี่ยนไฟล์ไอคอนเมื่อไหร่ ต้องวัดหมึกใหม่ทั้งชุด** — ตัวเลขข้างบนผูกกับไฟล์ ไม่ใช่ชื่อแอป
+ * วิธีวัด: rasterise ที่ขนาดเดียวกัน (ใช้ 1024) แล้วอ่านกรอบพิกเซลที่ alpha > 8
+ */
+/** แอปในตระกูล Mediact — เรียงตามลำดับที่ลิ้นชักแสดง */
+type MediactAppKey = "mediwork" | "medimatch" | "medihr" | "medioncloud" | "medirefer" | "medipay";
+/**
+ * โทนของเครื่องหมาย — เลือกตาม **พื้นหลังที่วางทับ** ไม่ใช่ตามธีมของแอป
+ *
+ * `primary` = สีจริงของแบรนด์นั้น (พื้นขาว/อ่อน) · `white` = ขาวล้วน (พื้นสีเข้ม/สีแบรนด์)
+ */
+type AppMarkTone = "primary" | "white";
+/** เครื่องหมายของทุกแอป แยกตามโทน — data URL พร้อมใส่ `<img src>` ได้เลย */
+declare const appMarks: Record<MediactAppKey, Record<AppMarkTone, string>>;
+/** ชื่อที่แสดงคู่กับเครื่องหมาย — ตัวสะกดตามที่ดีไซน์ส่งมา (เว้นวรรคของ "Medi On cloud" ด้วย) */
+declare const appMarkLabels: Record<MediactAppKey, string>;
+/**
+ * ตัวหนังสือที่วางคู่เครื่องหมายเวลาทำเป็น **wordmark** — ไม่ใช่ `appMarkLabels` ที่ทำตัวใหญ่
+ *
+ * 🔴 ต่างกันจริงหนึ่งตัว: `medioncloud` อ่านว่า "Medi On cloud" แต่โลโก้เขียน **"MEDI ONCLOUD"**
+ * ติดกัน · ถ้าใช้ label มาทำตัวใหญ่จะได้ "MEDI ON CLOUD" ซึ่งยาวขึ้นจนตกบรรทัดในคอลัมน์แคบ
+ * และไม่ตรงกับที่ดีไซน์เขียน (วัดจากไฟล์โลโก้เดิมและ mockup ชุดใหม่ — ตรงกันทั้งสองที่)
+ */
+declare const appWordmarks: Record<MediactAppKey, string>;
+/**
+ * สีตัวหนังสือของ wordmark — **สีหลักของเครื่องหมายแอปนั้นเอง**
+ *
+ * 🔴 **ต้องเป็นค่าคงที่ ห้ามเป็น token ของธีม** — wordmark ถูกวาดบนแอปอื่นได้เสมอ (ลิ้นชักแอป ·
+ * หน้าต่างตัวอย่างผลิตภัณฑ์) · `--color-brand` คือสีของ **แอปที่กำลังรัน** ⇒ ถ้าอ้าง token
+ * ชื่อ "MEDI PAY" จะกลายเป็นสีครามเมื่อเปิดบน MediHR ซึ่งผิดทั้งแบรนด์และความหมาย
+ *
+ * ค่าที่ใช้ = สีที่อยู่ใน `<path>` ของมาร์กโทน `primary` จริง ๆ (ดึงออกมาจากไฟล์ ไม่ใช่เดา)
+ * ⇒ ชื่อกับเครื่องหมายเป็นสีเดียวกันเสมอโดยไม่ต้องดูแลสองที่ · สามตัวล่างตรงกับสีธีมที่
+ * ดีไซน์กำหนดให้พอดี (`#11b96b` · `#0e6b8d` · `#0e8a72`)
+ *
+ * ⚠️ **คอนทราสต์บนพื้นขาวต่ำในบางตัว** (mediwork 1.86:1 · medimatch 2.53:1) — รับได้เพราะ
+ * WCAG 1.4.3 ยกเว้นตัวอักษรที่เป็นส่วนหนึ่งของโลโก้/ชื่อแบรนด์ · ⛔ ห้ามเอาค่าพวกนี้ไปใช้กับ
+ * ข้อความอื่นที่ไม่ใช่ wordmark
+ */
+declare const appBrandInk: Record<MediactAppKey, string>;
+
+/**
+ * สัดส่วนความสูงของหมึกเมื่อวางเรียงกับมาร์กตัวอื่น
+ *
+ * 📐 มาจาก `TopNav.md` (2026-08-24) ที่วัดกริดของลิ้นชักไว้ — ไอคอนสามใบแรกในชุดเก่ามีขอบเปล่า
+ * ในไฟล์อยู่แล้ว หมึกกิน 62.5% ของกรอบพอดี ⇒ ใบที่เหลือถูกดึงมาที่เลขนี้เพื่อให้ทั้งแถวดูเท่ากัน
+ *
+ * 🔴 **อยู่ที่นี่ที่เดียว ไม่ใช่ในไฟล์ SVG** — ระยะขอบขึ้นกับที่ที่วาด ไม่ใช่ตัวอาร์ตเวิร์ก
+ * (ดูเหตุผลเต็มที่หัว `app-marks.ts` · รอบแรกฝังลงไฟล์แล้วหัวรางหด 37.5% เงียบ ๆ)
+ */
+declare const GRID_INK_HEIGHT = 0.625;
+type AppMarkFit = "ink" | "grid";
+type AppMarkProps = Omit<React.ComponentProps<"img">, "src" | "alt" | "children"> & {
+    /** แอปที่ต้องการวาดเครื่องหมาย */
+    app: MediactAppKey;
+    /**
+     * โทน — เลือกตาม **พื้นหลังที่วางทับ** ไม่ใช่ตามธีมของแอปที่กำลังรันอยู่
+     *
+     * ค่าเริ่มต้น `primary` เพราะพื้นขาวเป็นกรณีที่พบบ่อยกว่า (การ์ด · รายการ · เนื้อหา)
+     * ส่วน `white` มีไว้สำหรับพื้นสีแบรนด์อย่างหัวรางของ MediHR
+     */
+    tone?: AppMarkTone;
+    /**
+     * ให้หมึกเต็มกล่องที่ให้มา หรือเว้นขอบเพื่อไปเรียงกับมาร์กตัวอื่น
+     *
+     * - `"ink"` (ค่าเริ่มต้น) — หมึกเต็มกล่อง ⇒ `className="h-10"` แปลว่า **หมึกสูง 40**
+     *   ใช้เมื่อมาร์กอยู่ตัวเดียวในพื้นที่ของมัน เช่นหัวรางเมนู
+     * - `"grid"` — ย่อความสูงเหลือ 62.5% เท่ากันทุกใบ ⇒ มาร์กที่ทรงต่างกันดูขนาดเท่ากัน
+     *   ใช้เมื่อวางหลายแอปเรียงกัน เช่นการ์ดในลิ้นชักแอป
+     *
+     * 🔴 **ค่าเริ่มต้นเป็น `ink` โดยตั้งใจ** — เป็นพฤติกรรมที่ `<img>` ปกติให้ ⇒ คนที่ไม่รู้เรื่อง
+     * กริดจะไม่โดนย่อโดยไม่รู้ตัว · กรณีกริดเป็นกรณีพิเศษที่ผู้เรียกใช้รู้ตัวว่ากำลังทำอะไรอยู่
+     */
+    fit?: AppMarkFit;
+    /** ทับข้อความ `alt` — ค่าเริ่มต้นคือชื่อผลิตภัณฑ์ (เช่น `"Medi HR"`) */
+    alt?: string;
+};
+/**
+ * เครื่องหมายประจำผลิตภัณฑ์ — ที่เดียวที่แอปควรหยิบโลโก้ของแอปอื่นไปใช้
+ *
+ * ก่อนมีตัวนี้ แต่ละแอปคัดลอกไฟล์ไปไว้ใน `public/` ของตัวเอง แล้วชุดโลโก้ก็เปลี่ยนคนละเวลา
+ * (วัดตอนย้าย: hr-web มี 19 ไฟล์ ใช้จริง 3) · ตัวเครื่องหมายอยู่ใน [`app-marks.ts`](./app-marks.ts)
+ *
+ * ```tsx
+ * <AppMark app="medihr" tone="white" className="h-10 w-auto" />        // หัวราง — หมึกสูง 40
+ * <AppMark app="mediwork" fit="grid" className="size-full" />          // การ์ดในลิ้นชัก
+ * ```
+ *
+ * 🔴 **`min-h-0` ไม่ใช่ของประดับ** — `<img>` ที่เป็น flex item มี `min-height: auto` ซึ่ง
+ * ยอมให้มัน **โตเกินกล่องตามอัตราส่วนของไฟล์** แม้จะสั่ง `h-full` ไว้แล้ว · วัดบนจอจริง
+ * ตอนที่ยังไม่มี: ไอคอนได้กล่อง 32×45.55 ในช่อง 32×32 ⇒ ทะลุกรอบมนของการ์ด
+ * ⇒ ใส่ไว้เป็นค่าตั้งต้นตรงนี้ที่เดียว แทนที่จะให้ทุกที่ที่เรียกใช้ต้องรู้เอง
+ */
+declare const AppMark: React.ForwardRefExoticComponent<Omit<AppMarkProps, "ref"> & React.RefAttributes<HTMLImageElement>>;
+
 /** @doc ./AppShowcaseDialog.md */
 
 /**
@@ -797,12 +932,21 @@ type ShowcaseLayout = {
  */
 declare const SHOWCASE_LAYOUT: Record<ShowcaseAppKey, ShowcaseLayout>;
 type ShowcaseAssets = {
-    /** โลโก้เต็มของผลิตภัณฑ์ */
-    logo: string;
-    /** ภาพจอกว้าง (ชั้นหลัง) */
-    wide: string;
-    /** ภาพที่ซ้อนทับมุมล่างซ้าย */
-    card: string;
+    /**
+     * ภาพเดียวที่ **ประกอบจอกว้างกับการ์ดซ้อนมาแล้ว** — วางเต็มกรอบภาพตัวอย่าง
+     *
+     * ทางที่ควรใช้กับภาพชุดใหม่: ดีไซน์ส่ง mockup ที่ซ้อนเสร็จแล้วมาเป็นไฟล์เดียว ⇒ แยกกลับ
+     * เป็นสองใบไม่ได้ (การ์ดบังจอด้านหลังอยู่ ส่วนที่ถูกบังหายไปจากไฟล์แล้ว)
+     *
+     * มีค่านี้เมื่อไหร่ `wide`/`card` จะถูกข้าม
+     */
+    composed?: string;
+    /** โลโก้เต็มของผลิตภัณฑ์ — **ไม่ต้องส่งแล้ว** ค่าเริ่มต้นวาดจาก `AppMark` + ชื่อผลิตภัณฑ์ */
+    logo?: string;
+    /** ภาพจอกว้าง (ชั้นหลัง) — ใช้เมื่อไม่มี `composed` */
+    wide?: string;
+    /** ภาพที่ซ้อนทับมุมล่างซ้าย — ใช้เมื่อไม่มี `composed` */
+    card?: string;
 };
 type AppShowcaseDialogProps = {
     /** แอปที่ถูกกด · `null` = ปิด */
@@ -860,17 +1004,7 @@ declare const TopNavBrand: React.ForwardRefExoticComponent<Omit<TopNavBrandProps
 declare const TopNavSpacer: ({ className }: {
     className?: string;
 }) => react_jsx_runtime.JSX.Element;
-/** Canonical app keys across the Mediact ecosystem. */
-/** แอปในระบบนิเวศ Mediact
- *
- * 🔄 **กลับมาครบ 6 ตัว 2026-08-16** — รอบก่อนตัด `medipay`/`medirefer` ฯลฯ ออก (2026-08-09)
- * เพราะช่องที่เขียนว่า "เร็ว ๆ นี้" เป็นสัญญาที่ไม่มีใครถือ · ตอนนี้กลับมาได้เพราะ **ไม่ใช่ป้ายตาย
- * อีกแล้ว** — Portal ทำหน้าต่างตัวอย่างผลิตภัณฑ์ + ช่องทางติดต่อไว้บน staging แล้ว
- * (`feat/app-launcher-coming-soon`) ⇒ กดแล้วผู้ใช้ได้เห็นว่าแอปทำอะไรและติดต่อใครต่อได้ทันที
- *
- * ⚠️ `medistock`/`medicare` **ยังไม่กลับมา** — ยังไม่มีทั้งแบบและคำโปรยจาก Figma
- * ⇒ ถ้าเติมโดยไม่มีเนื้อหา จะกลายเป็นป้ายตายแบบเดิมอีกรอบ */
-type MediactAppKey = "mediwork" | "medimatch" | "medihr" | "medioncloud" | "medirefer" | "medipay";
+
 type MediactAppConfig = {
     /** Where this app lives. Falsy → tile is rendered as not-clickable. */
     baseUrl?: string;
@@ -2860,4 +2994,4 @@ declare const PeriodNavigator: React.ForwardRefExoticComponent<Omit<PeriodNaviga
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, AppShowcaseDialog, type AppShowcaseDialogProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PeriodNavigator, type PeriodNavigatorItem, type PeriodNavigatorLabels, type PeriodNavigatorProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, SHOWCASE_COPY, SHOWCASE_LAYOUT, SearchSelect, type SearchSelectProps, Select, SelectItem, type SelectOption, type SelectProps, type ShowcaseAppKey, type ShowcaseAssets, type ShowcaseLocale, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, AppMark, type AppMarkFit, type AppMarkProps, type AppMarkTone, AppShowcaseDialog, type AppShowcaseDialogProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, GRID_INK_HEIGHT, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PeriodNavigator, type PeriodNavigatorItem, type PeriodNavigatorLabels, type PeriodNavigatorProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, type RadioGroupProps, type RadioOption, SHOWCASE_COPY, SHOWCASE_LAYOUT, SearchSelect, type SearchSelectProps, Select, SelectItem, type SelectOption, type SelectProps, type ShowcaseAppKey, type ShowcaseAssets, type ShowcaseLocale, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, appBrandInk, appMarkLabels, appMarks, appWordmarks, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
