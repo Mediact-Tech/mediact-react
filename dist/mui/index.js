@@ -1,7 +1,7 @@
 import {
   TYPE_SCALE,
   TYPE_SCALE_DEFAULT_WEIGHT
-} from "../chunk-4WZ3XEF5.js";
+} from "../chunk-55J7CLWB.js";
 
 // src/mui/index.ts
 var LEGACY_COEFFICIENT = 12.3 / 14;
