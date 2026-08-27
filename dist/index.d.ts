@@ -1575,6 +1575,32 @@ declare function DateRangePicker({ id, label, hint, error, required, hideLabel, 
 
 /** "HH:mm" string in 24-hour format. */
 type TimeValue = string;
+/**
+ * ทุกคำที่ผู้ใช้อ่านได้ในตัวนี้ — **รวม `aria-label` ด้วย**
+ *
+ * 🔑 **`aria-label` เป็นคำที่ผู้ใช้ *ได้ยิน*** ⇒ ต้องแปลได้เท่ากับคำที่ *เห็น* · การปล่อยให้เป็นอังกฤษ
+ *    ตายตัวแปลว่าผู้ใช้ screen reader ภาษาไทยได้ยิน "Hours" ในฟอร์มที่เหลือเป็นไทยทั้งใบ
+ * ⚠️ `hour`/`minute` เป็น **placeholder ในช่อง** ⇒ สั้นมาก (กว้าง `w-8`) · ภาษาที่ยาวกว่า 2 ตัวอักษร
+ *    จะถูกตัด — ผู้เรียกเลือกคำเองได้จึงเป็นเรื่องของผู้เรียก ไม่ใช่ของ component
+ */
+type TimePickerLabels = {
+    /** placeholder ของช่องชั่วโมง */
+    hour: string;
+    /** placeholder ของช่องนาที */
+    minute: string;
+    /** `aria-label` ของช่องชั่วโมง */
+    hourAria: string;
+    /** `aria-label` ของช่องนาที */
+    minuteAria: string;
+    /** `aria-label` ของปุ่มสลับ AM/PM (ใช้เมื่อ `ampm` เท่านั้น) */
+    togglePeriod: string;
+    /** `aria-label` ของปุ่มนาฬิกาที่เปิดแผง */
+    openPicker: string;
+    /** `aria-label` ของตัวแผงเลือกเวลา (`role="dialog"`) */
+    picker: string;
+    /** `aria-label` ของคอลัมน์ AM/PM ในแผง (ใช้เมื่อ `ampm` เท่านั้น) */
+    period: string;
+};
 type TimePickerProps = {
     id?: string;
     label?: React.ReactNode;
@@ -1617,10 +1643,15 @@ type TimePickerProps = {
     ampm?: boolean;
     disabled?: boolean;
     size?: FieldSize;
+    /**
+     * คำที่ผู้ใช้อ่าน/ได้ยิน — **ส่งเฉพาะที่อยากทับ** ที่เหลือใช้ค่าตั้งต้นอังกฤษ
+     * (ทรงเดียวกับ `labels` ของ `DateRangePicker`/`DataTable`)
+     */
+    labels?: Partial<TimePickerLabels>;
     className?: string;
     containerClassName?: string;
 };
-declare function TimePicker({ id, label, hint, error, required, hideLabel, reserveMessageSpace, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
+declare function TimePicker({ id, label, hint, error, required, hideLabel, reserveMessageSpace, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, labels, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
 
 declare const numberStepperVariants: (props?: ({
     invalid?: boolean | null | undefined;
