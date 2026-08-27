@@ -157,3 +157,52 @@ describe("fieldShapeClasses", () => {
     );
   });
 });
+
+describe("พื้นของป้ายลอยต้องเป็นสีเดียวกับพื้นช่อง", () => {
+  /* 🔴 ป้ายลอยต้องมีพื้นทึบเพื่อ **ตัดเส้นขอบ** ไม่ให้เส้นขีดทับตัวหนังสือ — กล่องป้าย
+   * กินตั้งแต่ −6 ถึง +10 ส่วนเส้นขอบอยู่ที่ 0–1 ⇒ ซ้อนกันเสมอ ไม่ว่าจะตั้งค่าอะไร
+   *
+   * แต่เดิมพื้นนั้นเป็น `bg-bg-default` **ตายตัว** ⇒ ตอนช่องถูกปิดใช้งาน (ซึ่ง
+   * `fieldShapeClasses` ทาเป็น `bg-bg-surface`) ป้ายกลายเป็น **แถบขาวลอยบนช่องสีเทา**
+   * เห็นได้ทุกแอป · เทสชุดนี้ล็อกว่าสองอย่างนี้เดินคู่กันเสมอ
+   *
+   * ⚠️ ต้องส่ง `alwaysFloatLabel` — คลาสพื้นอยู่ในกิ่ง "ป้ายลอย" เท่านั้น ช่องที่ว่างและ
+   * ไม่ได้โฟกัสจะอยู่ในกิ่ง "ป้ายพัก" ซึ่งไม่มีพื้นเลย (เทสรุ่นแรกตกเพราะข้อนี้)
+   *
+   * ⚠️ ตอนปิดใช้งานคลาสเป็น `bg-[var(--color-bg-surface,var(--color-bg-default))]`
+   * ไม่ใช่ `bg-bg-surface` เปล่า — เหตุผลอยู่ในคอมเมนต์ของ `FloatingFieldShell`
+   * (สรุป: แอปที่ใช้ preset ยังไม่มี token ตัวนั้น ถ้าไม่มีค่าสำรองป้ายจะโปร่งใส)
+   *
+   * ⚠️ happy-dom ไม่ resolve สี — ที่ล็อกได้คือ **ชื่อคลาส** ไม่ใช่ค่าสีจริง
+   * (ค่าจริงวัดในเบราว์เซอร์แล้ว: ป้ายกับช่องได้ `rgb(243,244,246)` เท่ากัน)
+   */
+  const labelOf = (c: HTMLElement) => c.querySelector("label") as HTMLElement;
+
+  it.each([
+    ["Input", (d: boolean) => <Input label="ชื่อ" alwaysFloatLabel disabled={d} />],
+    ["Select", (d: boolean) => <Select label="ชื่อ" alwaysFloatLabel disabled={d} options={[]} />],
+    ["Textarea", (d: boolean) => <Textarea label="ชื่อ" alwaysFloatLabel disabled={d} />],
+  ])("%s: ปิดใช้งาน ⇒ ป้ายใช้ bg-bg-surface", (_name, node) => {
+    const { container } = render(node(true));
+    expect(labelOf(container).className).toContain("--color-bg-surface");
+    expect(labelOf(container).className).not.toContain("bg-bg-default");
+  });
+
+  it.each([
+    ["Input", (d: boolean) => <Input label="ชื่อ" alwaysFloatLabel disabled={d} />],
+    ["Select", (d: boolean) => <Select label="ชื่อ" alwaysFloatLabel disabled={d} options={[]} />],
+    ["Textarea", (d: boolean) => <Textarea label="ชื่อ" alwaysFloatLabel disabled={d} />],
+  ])("%s: ใช้งานได้ ⇒ ป้ายใช้ bg-bg-default", (_name, node) => {
+    const { container } = render(node(false));
+    expect(labelOf(container).className).toContain("bg-bg-default");
+    expect(labelOf(container).className).not.toContain("bg-bg-surface");
+  });
+
+  /* ตัวช่องต้องยังทาพื้น disabled ของมันเองด้วย — ถ้าวันหนึ่งมีใครถอด
+   * `disabled:bg-bg-surface` ออกจาก `fieldShapeClasses` ป้ายจะกลายเป็นเทาอยู่ฝ่ายเดียว */
+  it("`fieldShapeClasses` ยังทาพื้น disabled เป็น bg-bg-surface", () => {
+    expect(fieldShapeClasses({ hasError: false, size: "md" })).toContain(
+      "disabled:bg-bg-surface",
+    );
+  });
+});

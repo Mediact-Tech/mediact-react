@@ -155,6 +155,7 @@ function Select<V extends string = string>({
 
   return (
     <FloatingFieldShell
+      disabled={disabled}
       label={label}
       hint={hint}
       error={error}

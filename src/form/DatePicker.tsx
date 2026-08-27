@@ -144,6 +144,7 @@ function DatePicker({
 
   return (
     <FloatingFieldShell
+      disabled={disabled}
       label={label}
       hint={hint}
       error={error}

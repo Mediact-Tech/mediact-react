@@ -371,6 +371,7 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
 
   return (
     <FloatingFieldShell
+      disabled={disabled}
       label={label}
       hint={hint}
       error={error}
