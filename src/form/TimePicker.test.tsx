@@ -273,4 +273,102 @@ describe("TimePicker", () => {
       expect(onChange).toHaveBeenLastCalledWith("15:45");
     });
   });
+
+  /**
+   * `labels` — ทุกคำที่ผู้ใช้ **อ่าน** และ **ได้ยิน** ต้องแปลได้
+   *
+   * 🔴 ก่อนมี prop นี้ `HH`/`mm` และ `aria-label` ทุกตัวเป็นอังกฤษตายตัว ⇒ ฟอร์มภาษาไทยทั้งใบ
+   *    มีช่องเวลาที่อ่านว่า `HH : mm` และผู้ใช้ screen reader ได้ยิน "Hours" (พบจริงบน
+   *    mediact-web-backoffice 2026-08-26)
+   */
+  /**
+   * การเลื่อนไปยังตัวที่เลือก — ด่านกันถอยหลังของบั๊ก "เลือกเวลาไม่ลื่น"
+   *
+   * 🔴🔴 อาการเดิม: `scrollIntoView()` เลื่อน **ทุก ancestor ที่เลื่อนได้** ⇒ เมื่อแผงอยู่ในโมดัล
+   *      ทั้งโมดัลและหน้าเบื้องหลังกระตุกตามทุกครั้งที่เลือก (พบจริง 2026-08-26)
+   *      · jsdom ไม่มี layout จึงพิสูจน์ *ตำแหน่ง* ไม่ได้ — แต่พิสูจน์ *วิธี* ได้ และวิธีคือตัวบั๊ก
+   */
+  describe("การเลื่อนไปยังตัวที่เลือก", () => {
+    it("🔴 ไม่เรียก scrollIntoView เลย — ไม่งั้นโมดัลที่ครอบอยู่จะถูกลากตามไปด้วย", async () => {
+      const spy = vi
+        .spyOn(Element.prototype, "scrollIntoView")
+        .mockImplementation(() => {});
+      const user = userEvent.setup();
+      render(<TimePicker label="Time" value="14:30" />);
+
+      await user.click(screen.getByLabelText("Open time picker"));
+      await screen.findByRole("listbox", { name: "Hours" });
+
+      /* ⛔ กลับไปใช้ `scrollIntoView` เมื่อไหร่ เทสนี้แดงทันที */
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it("🔴 คอลัมน์เป็น relative — `offsetTop` ต้องวัดจากคอลัมน์ ไม่ใช่จาก popper", async () => {
+      const user = userEvent.setup();
+      render(<TimePicker label="Time" value="14:30" />);
+
+      await user.click(screen.getByLabelText("Open time picker"));
+      const column = await screen.findByRole("listbox", { name: "Hours" });
+
+      /* ถอด `relative` ออก = `offsetParent` กลายเป็น popper ⇒ ค่าที่คำนวณเพี้ยนทั้งก้อน
+       * **แบบเงียบ** (ไม่มี error · แค่เลื่อนไปผิดที่) */
+      expect(column).toHaveClass("relative");
+    });
+
+    it("แถบเลื่อนโปร่งใสจนกว่าจะ hover — และรางกว้างคงที่ ⇒ ปุ่มไม่ขยับ", async () => {
+      const user = userEvent.setup();
+      render(<TimePicker label="Time" value="14:30" />);
+
+      await user.click(screen.getByLabelText("Open time picker"));
+      const column = await screen.findByRole("listbox", { name: "Hours" });
+
+      expect(column).toHaveClass("[scrollbar-color:transparent_transparent]");
+      /* ⛔ ห้ามเปลี่ยนเป็น `overflow-hidden` + `hover:overflow-y-auto` แบบ MUI —
+       * รางจะเกิด/หายตอน hover แล้วปุ่มตัวเลือกขยับซ้ายขวา (คอลัมน์ของเราเป็น `flex-1`
+       * ไม่ใช่กว้างตายตัว 56px แบบ MUI) */
+      expect(column).toHaveClass("overflow-y-auto");
+    });
+  });
+
+  describe("labels", () => {
+    it("ใช้คำอังกฤษเป็นค่าตั้งต้นเมื่อไม่ส่ง labels (⛔ ไม่ใช่ breaking change)", () => {
+      render(<TimePicker label="Time" />);
+      expect(screen.getByLabelText("Hours")).toHaveAttribute("placeholder", "HH");
+      expect(screen.getByLabelText("Minutes")).toHaveAttribute("placeholder", "mm");
+    });
+
+    it("ทับ placeholder ของทั้ง 2 ช่องได้", () => {
+      render(<TimePicker label="Time" labels={{ hour: "ชม.", minute: "นาที" }} />);
+      expect(screen.getByLabelText("Hours")).toHaveAttribute("placeholder", "ชม.");
+      expect(screen.getByLabelText("Minutes")).toHaveAttribute("placeholder", "นาที");
+    });
+
+    it("ทับ aria-label ได้ — คำที่ผู้ใช้ *ได้ยิน* ก็ต้องแปลได้", () => {
+      render(
+        <TimePicker label="Time" labels={{ hourAria: "ชั่วโมง", minuteAria: "นาที" }} />,
+      );
+      expect(screen.getByLabelText("ชั่วโมง")).toBeInTheDocument();
+      expect(screen.getByLabelText("นาที")).toBeInTheDocument();
+    });
+
+    it("ส่งมาบางตัว ⇒ ที่เหลือใช้ค่าตั้งต้น (`Partial`)", () => {
+      render(<TimePicker label="Time" labels={{ hour: "ชม." }} />);
+      expect(screen.getByLabelText("Hours")).toHaveAttribute("placeholder", "ชม.");
+      /* ⛔ ตัวที่ไม่ได้ส่งต้องไม่กลายเป็น `undefined` — spread กับ `DEFAULT_LABELS` ต้องมาก่อน */
+      expect(screen.getByLabelText("Minutes")).toHaveAttribute("placeholder", "mm");
+    });
+
+    it("ทับคำของแผงและปุ่มเปิดได้", async () => {
+      const user = userEvent.setup();
+      render(
+        <TimePicker
+          label="Time"
+          labels={{ openPicker: "เปิดตัวเลือกเวลา", picker: "เลือกเวลา" }}
+        />,
+      );
+      await user.click(screen.getByLabelText("เปิดตัวเลือกเวลา"));
+      expect(await screen.findByRole("dialog", { name: "เลือกเวลา" })).toBeInTheDocument();
+    });
+  });
 });

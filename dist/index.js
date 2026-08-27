@@ -2536,7 +2536,10 @@ var PopoverTrigger = RadixPopover.Trigger;
 var PopoverAnchor = RadixPopover.Anchor;
 var PopoverClose = RadixPopover.Close;
 var PopoverContent = React22.forwardRef(
-  function PopoverContent2({ className, align = "start", sideOffset = 4, ...props }, ref) {
+  function PopoverContent2({ className, align = "start", sideOffset = 4, onWheel, onTouchMove, ...props }, ref) {
+    const stopScrollLock = React22.useCallback((event) => {
+      event.stopPropagation();
+    }, []);
     return /* @__PURE__ */ jsx26(RadixPopover.Portal, { children: /* @__PURE__ */ jsx26(
       RadixPopover.Content,
       {
@@ -2559,6 +2562,14 @@ var PopoverContent = React22.forwardRef(
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           className
         ),
+        onWheel: (event) => {
+          stopScrollLock(event);
+          onWheel?.(event);
+        },
+        onTouchMove: (event) => {
+          stopScrollLock(event);
+          onTouchMove?.(event);
+        },
         ...props
       }
     ) });
@@ -4846,6 +4857,16 @@ function DateRangePicker({
 import * as React31 from "react";
 import { Clock } from "lucide-react";
 import { jsx as jsx38, jsxs as jsxs31 } from "react/jsx-runtime";
+var DEFAULT_LABELS3 = {
+  hour: "HH",
+  minute: "mm",
+  hourAria: "Hours",
+  minuteAria: "Minutes",
+  togglePeriod: "Toggle AM/PM",
+  openPicker: "Open time picker",
+  picker: "Pick time",
+  period: "Period"
+};
 var heights = {
   sm: "h-9 text-body-sm",
   md: "h-11 text-body-sm",
@@ -4910,9 +4931,11 @@ function TimePicker({
   ampm = false,
   disabled,
   size = "md",
+  labels,
   className,
   containerClassName
 }) {
+  const t = React31.useMemo(() => ({ ...DEFAULT_LABELS3, ...labels }), [labels]);
   const reactId = React31.useId();
   const inputId = id ?? reactId;
   const isControlled = value !== void 0;
@@ -5050,7 +5073,7 @@ function TimePicker({
           "button",
           {
             type: "button",
-            "aria-label": "Open time picker",
+            "aria-label": t.openPicker,
             disabled,
             className: "pointer-events-auto inline-flex size-6 cursor-pointer items-center justify-center rounded-sm hover:bg-black/5 disabled:cursor-not-allowed [&_svg]:size-4",
             children: /* @__PURE__ */ jsx38(Clock, {})
@@ -5064,12 +5087,12 @@ function TimePicker({
               ampm ? "w-56" : "w-40"
             ),
             role: "dialog",
-            "aria-label": "Pick time",
+            "aria-label": t.picker,
             children: [
               /* @__PURE__ */ jsx38(
                 TimeColumn,
                 {
-                  ariaLabel: "Hours",
+                  ariaLabel: t.hourAria,
                   items: hourItems,
                   selected: ampm ? h != null ? to12Hour(h).h12 : null : h,
                   isDisabled: (item) => isHourBlockDisabled(ampm ? from12Hour(item, period) : item),
@@ -5079,7 +5102,7 @@ function TimePicker({
               /* @__PURE__ */ jsx38(
                 TimeColumn,
                 {
-                  ariaLabel: "Minutes",
+                  ariaLabel: t.minuteAria,
                   items: minuteItems,
                   selected: m,
                   isDisabled: isMinuteDisabled,
@@ -5089,7 +5112,7 @@ function TimePicker({
               ampm && /* @__PURE__ */ jsx38(
                 TimeColumn,
                 {
-                  ariaLabel: "Period",
+                  ariaLabel: t.period,
                   items: ["AM", "PM"],
                   selected: h != null ? period : null,
                   isDisabled: isPeriodBlockDisabled,
@@ -5139,8 +5162,8 @@ function TimePicker({
                 value: hStr,
                 onChange: (e) => handleHourChange(e.target.value),
                 onBlur: handleHourBlur,
-                placeholder: "HH",
-                "aria-label": "Hours",
+                placeholder: t.hour,
+                "aria-label": t.hourAria,
                 className: "w-8 bg-transparent text-center font-medium tabular-nums outline-none disabled:cursor-not-allowed"
               }
             ),
@@ -5155,8 +5178,8 @@ function TimePicker({
                 value: mStr,
                 onChange: (e) => handleMinuteChange(e.target.value),
                 onBlur: handleMinuteBlur,
-                placeholder: "mm",
-                "aria-label": "Minutes",
+                placeholder: t.minute,
+                "aria-label": t.minuteAria,
                 className: "w-8 bg-transparent text-center font-medium tabular-nums outline-none disabled:cursor-not-allowed"
               }
             ),
@@ -5166,7 +5189,7 @@ function TimePicker({
                 type: "button",
                 disabled,
                 onClick: () => handlePeriodChange(period === "AM" ? "PM" : "AM"),
-                "aria-label": "Toggle AM/PM",
+                "aria-label": t.togglePeriod,
                 className: "shrink-0 cursor-pointer rounded-sm px-1 text-caption font-medium text-text-tertiary hover:bg-black/5 disabled:cursor-not-allowed",
                 children: period
               }
@@ -5187,12 +5210,18 @@ function TimeColumn({
   formatLabel
 }) {
   const containerRef = React31.useRef(null);
-  React31.useEffect(() => {
-    if (selected == null || !containerRef.current) return;
-    const el = containerRef.current.querySelector(
+  const previousActive = React31.useRef(null);
+  React31.useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (selected == null || !container) return;
+    const activeItem = container.querySelector(
       `[data-value="${selected}"]`
     );
-    el?.scrollIntoView({ block: "center" });
+    if (!activeItem || previousActive.current === activeItem) return;
+    previousActive.current = activeItem;
+    const centered = activeItem.offsetTop - container.clientHeight / 2 + activeItem.offsetHeight / 2;
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+    container.scrollTop = Math.max(0, Math.min(centered, maxScrollTop));
   }, [selected]);
   return /* @__PURE__ */ jsx38(
     "div",
@@ -5200,7 +5229,7 @@ function TimeColumn({
       ref: containerRef,
       role: "listbox",
       "aria-label": ariaLabel,
-      className: "flex flex-1 flex-col overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300",
+      className: "relative flex flex-1 flex-col overflow-y-auto py-1 [scroll-behavior:auto] [scrollbar-color:transparent_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar]:w-1.5 hover:[scrollbar-color:var(--color-border-default)_transparent] hover:[&::-webkit-scrollbar-thumb]:bg-border-default",
       children: items.map((item) => {
         const isSelected = item === selected;
         const disabled = isDisabled?.(item) ?? false;
@@ -8415,7 +8444,7 @@ DateNavigator.displayName = "DateNavigator";
 // src/ui/PeriodNavigator.tsx
 import * as React46 from "react";
 import { jsx as jsx57 } from "react/jsx-runtime";
-var DEFAULT_LABELS3 = {
+var DEFAULT_LABELS4 = {
   prev: "Previous period",
   next: "Next period",
   empty: "No periods yet",
@@ -8451,7 +8480,7 @@ var PeriodNavigator = React46.forwardRef(
     calendarProps,
     ...props
   }, ref) {
-    const L = { ...DEFAULT_LABELS3, ...labels };
+    const L = { ...DEFAULT_LABELS4, ...labels };
     const fmt = React46.useMemo(
       () => ({
         full: new Intl.DateTimeFormat(locale, {

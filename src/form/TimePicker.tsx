@@ -7,6 +7,46 @@ import { Popover, PopoverContent, PopoverTrigger } from "../overlay/Popover";
 /** "HH:mm" string in 24-hour format. */
 export type TimeValue = string;
 
+/**
+ * ทุกคำที่ผู้ใช้อ่านได้ในตัวนี้ — **รวม `aria-label` ด้วย**
+ *
+ * 🔑 **`aria-label` เป็นคำที่ผู้ใช้ *ได้ยิน*** ⇒ ต้องแปลได้เท่ากับคำที่ *เห็น* · การปล่อยให้เป็นอังกฤษ
+ *    ตายตัวแปลว่าผู้ใช้ screen reader ภาษาไทยได้ยิน "Hours" ในฟอร์มที่เหลือเป็นไทยทั้งใบ
+ * ⚠️ `hour`/`minute` เป็น **placeholder ในช่อง** ⇒ สั้นมาก (กว้าง `w-8`) · ภาษาที่ยาวกว่า 2 ตัวอักษร
+ *    จะถูกตัด — ผู้เรียกเลือกคำเองได้จึงเป็นเรื่องของผู้เรียก ไม่ใช่ของ component
+ */
+export type TimePickerLabels = {
+  /** placeholder ของช่องชั่วโมง */
+  hour: string;
+  /** placeholder ของช่องนาที */
+  minute: string;
+  /** `aria-label` ของช่องชั่วโมง */
+  hourAria: string;
+  /** `aria-label` ของช่องนาที */
+  minuteAria: string;
+  /** `aria-label` ของปุ่มสลับ AM/PM (ใช้เมื่อ `ampm` เท่านั้น) */
+  togglePeriod: string;
+  /** `aria-label` ของปุ่มนาฬิกาที่เปิดแผง */
+  openPicker: string;
+  /** `aria-label` ของตัวแผงเลือกเวลา (`role="dialog"`) */
+  picker: string;
+  /** `aria-label` ของคอลัมน์ AM/PM ในแผง (ใช้เมื่อ `ampm` เท่านั้น) */
+  period: string;
+};
+
+/* ค่าตั้งต้นเป็นอังกฤษ — ทรงเดียวกับ `DateRangePicker` (`DEFAULT_LABELS`) ⇒ ผู้เรียกที่ไม่ส่ง
+   `labels` ได้พฤติกรรมเดิมเป๊ะ ไม่ใช่ breaking change */
+const DEFAULT_LABELS: TimePickerLabels = {
+  hour: "HH",
+  minute: "mm",
+  hourAria: "Hours",
+  minuteAria: "Minutes",
+  togglePeriod: "Toggle AM/PM",
+  openPicker: "Open time picker",
+  picker: "Pick time",
+  period: "Period",
+};
+
 export type TimePickerProps = {
   id?: string;
   label?: React.ReactNode;
@@ -49,6 +89,11 @@ export type TimePickerProps = {
   ampm?: boolean;
   disabled?: boolean;
   size?: FieldSize;
+  /**
+   * คำที่ผู้ใช้อ่าน/ได้ยิน — **ส่งเฉพาะที่อยากทับ** ที่เหลือใช้ค่าตั้งต้นอังกฤษ
+   * (ทรงเดียวกับ `labels` ของ `DateRangePicker`/`DataTable`)
+   */
+  labels?: Partial<TimePickerLabels>;
   className?: string;
   containerClassName?: string;
 };
@@ -135,9 +180,15 @@ function TimePicker({
   ampm = false,
   disabled,
   size = "md",
+  labels,
   className,
   containerClassName,
 }: TimePickerProps) {
+  /* ⚠️ `useMemo` ⛔ ไม่ใช่ spread สดทุก render — object ใหม่ทุกครั้งจะทำให้ทุก `useMemo`/`useCallback`
+     ที่ผูกกับมันเปลี่ยน identity ตาม (บทเรียนเดียวกับที่ `EMPTY_LIST` ของ mediact-web-backoffice
+     เขียนกำกับไว้เอง) · dep เป็นตัว `labels` ที่ผู้เรียกส่งมา ⇒ ผู้เรียกที่ส่ง object inline
+     ยังได้ค่าถูกเสมอ แค่ไม่ประหยัด ซึ่งเป็นเรื่องของผู้เรียก */
+  const t = React.useMemo(() => ({ ...DEFAULT_LABELS, ...labels }), [labels]);
   const reactId = React.useId();
   const inputId = id ?? reactId;
   const isControlled = value !== undefined;
@@ -316,7 +367,7 @@ function TimePicker({
           <PopoverTrigger asChild>
             <button
               type="button"
-              aria-label="Open time picker"
+              aria-label={t.openPicker}
               disabled={disabled}
               className="pointer-events-auto inline-flex size-6 cursor-pointer items-center justify-center rounded-sm hover:bg-black/5 disabled:cursor-not-allowed [&_svg]:size-4"
             >
@@ -330,10 +381,10 @@ function TimePicker({
                 ampm ? "w-56" : "w-40",
               )}
               role="dialog"
-              aria-label="Pick time"
+              aria-label={t.picker}
             >
               <TimeColumn
-                ariaLabel="Hours"
+                ariaLabel={t.hourAria}
                 items={hourItems}
                 selected={ampm ? (h != null ? to12Hour(h).h12 : null) : h}
                 isDisabled={(item) =>
@@ -344,7 +395,7 @@ function TimePicker({
                 }
               />
               <TimeColumn
-                ariaLabel="Minutes"
+                ariaLabel={t.minuteAria}
                 items={minuteItems}
                 selected={m}
                 isDisabled={isMinuteDisabled}
@@ -352,7 +403,7 @@ function TimePicker({
               />
               {ampm && (
                 <TimeColumn
-                  ariaLabel="Period"
+                  ariaLabel={t.period}
                   items={["AM", "PM"] as const}
                   selected={h != null ? period : null}
                   isDisabled={isPeriodBlockDisabled}
@@ -401,8 +452,8 @@ function TimePicker({
           value={hStr}
           onChange={(e) => handleHourChange(e.target.value)}
           onBlur={handleHourBlur}
-          placeholder="HH"
-          aria-label="Hours"
+          placeholder={t.hour}
+          aria-label={t.hourAria}
           className="w-8 bg-transparent text-center font-medium tabular-nums outline-none disabled:cursor-not-allowed"
         />
         <span className="select-none text-text-tertiary">:</span>
@@ -414,8 +465,8 @@ function TimePicker({
           value={mStr}
           onChange={(e) => handleMinuteChange(e.target.value)}
           onBlur={handleMinuteBlur}
-          placeholder="mm"
-          aria-label="Minutes"
+          placeholder={t.minute}
+          aria-label={t.minuteAria}
           className="w-8 bg-transparent text-center font-medium tabular-nums outline-none disabled:cursor-not-allowed"
         />
         {ampm && (
@@ -423,7 +474,7 @@ function TimePicker({
             type="button"
             disabled={disabled}
             onClick={() => handlePeriodChange(period === "AM" ? "PM" : "AM")}
-            aria-label="Toggle AM/PM"
+            aria-label={t.togglePeriod}
             className="shrink-0 cursor-pointer rounded-sm px-1 text-caption font-medium text-text-tertiary hover:bg-black/5 disabled:cursor-not-allowed"
           >
             {period}
@@ -452,13 +503,39 @@ function TimeColumn<T extends string | number>({
   formatLabel?: (item: T) => string;
 }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const previousActive = React.useRef<HTMLElement | null>(null);
 
-  React.useEffect(() => {
-    if (selected == null || !containerRef.current) return;
-    const el = containerRef.current.querySelector<HTMLButtonElement>(
+  /* เลื่อนตัวที่เลือกมากลางคอลัมน์ — **ตั้ง `scrollTop` ของคอลัมน์เอง**
+   *
+   * 🔴🔴 ⛔ **ห้ามกลับไปใช้ `el.scrollIntoView()`** — มันเลื่อน *ทุก ancestor ที่เลื่อนได้* ไม่ใช่แค่
+   *      คอลัมน์ ⇒ เมื่อแผงอยู่ในโมดัล **ทั้งโมดัลและหน้าเบื้องหลังกระตุกตามไปด้วยทุกครั้งที่เลือก**
+   *      (พบจริงบน mediact-web-backoffice 2026-08-26 — ผู้ใช้รายงานว่า "เลือกเวลาไม่ลื่น")
+   *      · พิมพ์ `14` ในช่องชั่วโมง = `selected` เปลี่ยน 2 ครั้ง ⇒ กระตุก 2 ที
+   *
+   * 🔑 3 อย่างที่ทำให้ลื่น — ลอกมาจาก MUI `MultiSectionDigitalClockSection.js:129-157`
+   *    ซึ่งเป็นตัวที่ผู้ใช้เคยใช้อยู่ก่อนหน้า:
+   *    ① `scrollTop` ตรง ๆ ⇒ ไม่แตะ ancestor เลย
+   *    ② `useLayoutEffect` ⇒ เลื่อนเสร็จ **ก่อน paint** ไม่เห็นเฟรมที่ยังไม่เลื่อน
+   *    ③ `previousActive` ⇒ เลื่อนเฉพาะตอนตัวที่เลือก *เปลี่ยนจริง* ไม่ใช่ทุก render
+   *
+   * ⚠️ **จงใจไม่ใส่ `behavior: "smooth"`** — MUI ก็ปักเป็น `auto` เหมือนกัน · ผู้ใช้เลือกเวลารัว ๆ
+   *    การอนิเมชันทุกครั้งจะรู้สึก *ช้าลง* ไม่ใช่ลื่นขึ้น */
+  React.useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (selected == null || !container) return;
+    const activeItem = container.querySelector<HTMLButtonElement>(
       `[data-value="${selected}"]`,
     );
-    el?.scrollIntoView({ block: "center" });
+    if (!activeItem || previousActive.current === activeItem) return;
+    previousActive.current = activeItem;
+
+    /* 🔴 `offsetTop` วัดจาก `offsetParent` ⇒ คอลัมน์ **ต้องเป็น `relative`** (คลาสอยู่ข้างล่าง)
+     *    ไม่งั้นค่าที่ได้จะวัดจาก popper ที่อยู่นอกคอลัมน์ แล้วเพี้ยนไปทั้งก้อนแบบเงียบ ๆ */
+    const centered =
+      activeItem.offsetTop - container.clientHeight / 2 + activeItem.offsetHeight / 2;
+    /* ไม่ให้เหลือที่ว่างท้ายคอลัมน์เมื่อเลือกตัวท้าย ๆ (MUI คิดเหมือนกัน) */
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+    container.scrollTop = Math.max(0, Math.min(centered, maxScrollTop));
   }, [selected]);
 
   return (
@@ -466,7 +543,17 @@ function TimeColumn<T extends string | number>({
       ref={containerRef}
       role="listbox"
       aria-label={ariaLabel}
-      className="flex flex-1 flex-col overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300"
+      /* `relative` = ให้ `offsetTop` ของตัวเลือกวัดจากคอลัมน์นี้ (ดูคอมเมนต์ใน effect ข้างบน)
+       * `[scroll-behavior:auto]` = กันแอปที่ตั้ง `scroll-behavior: smooth` ไว้ที่ `html`
+       *   ไม่ให้การตั้ง `scrollTop` กลายเป็นอนิเมชัน (MUI ปักค่านี้ด้วยเหตุผลเดียวกัน)
+       *
+       * 🔑 **แถบเลื่อนโผล่ตอน hover** — รางกว้างคงที่ ตัวลากโปร่งใสจนกว่าจะเอาเมาส์เข้ามา
+       *    ⛔ **ไม่ทำแบบ MUI ที่สลับ `overflow: hidden` → `auto`** (`MultiSectionDigitalClockSection.js:42-54`)
+       *    เพราะแบบนั้นรางเกิด/หายตอน hover ⇒ ปุ่มตัวเลือก**ขยับซ้ายขวาทุกครั้งที่เมาส์เข้าออก**
+       *    · MUI ทนได้เพราะคอลัมน์มันกว้างตายตัว 56px ส่วนของเราเป็น `flex-1`
+       *    ⇒ ได้ผลตาที่เห็นเหมือนกัน (ไม่มีแถบจนกว่าจะ hover) โดยไม่มีการขยับ
+       *    ⚠️ ราคาที่รับ: เสียที่ราง 6px ถาวร · และตอนไม่ hover จะไม่มีอะไรบอกว่าเลื่อนได้ */
+      className="relative flex flex-1 flex-col overflow-y-auto py-1 [scroll-behavior:auto] [scrollbar-color:transparent_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar]:w-1.5 hover:[scrollbar-color:var(--color-border-default)_transparent] hover:[&::-webkit-scrollbar-thumb]:bg-border-default"
     >
       {items.map((item) => {
         const isSelected = item === selected;
