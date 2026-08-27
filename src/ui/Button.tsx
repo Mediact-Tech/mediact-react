@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 import { SkeletonBox } from "../feedback/Skeleton";
+import { SpinnerGlyph } from "../feedback/spinner-parts";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * รูปทรงของปุ่มยึดจาก 2 แหล่งที่ตรงกันเอง — Figma (`shadcn/ui Button` ใน
@@ -77,27 +78,6 @@ type ButtonProps = React.ComponentProps<"button"> &
     rightIcon?: React.ReactNode;
   };
 
-const Spinner = () => (
-  <svg
-    className="size-4 animate-spin"
-    viewBox="0 0 24 24"
-    fill="none"
-    aria-hidden="true"
-  >
-    <circle
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="3"
-      opacity="0.25"
-    />
-    <path
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
-    />
-  </svg>
-);
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -149,7 +129,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const content = (
       <>
-        {loading ? <Spinner /> : leftIcon ? slot(leftIcon, "left") : null}
+        {loading ? <SpinnerGlyph className="size-4" /> : leftIcon ? slot(leftIcon, "left") : null}
         {children}
         {!loading && rightIcon ? slot(rightIcon, "right") : null}
       </>
@@ -176,7 +156,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 child as React.ReactElement<{ children?: React.ReactNode }>,
                 undefined,
                 <>
-                  {loading ? <Spinner /> : leftIcon ? slot(leftIcon, "left") : null}
+                  {loading ? <SpinnerGlyph className="size-4" /> : leftIcon ? slot(leftIcon, "left") : null}
                   {(child.props as { children?: React.ReactNode }).children}
                   {!loading && rightIcon ? slot(rightIcon, "right") : null}
                 </>,
