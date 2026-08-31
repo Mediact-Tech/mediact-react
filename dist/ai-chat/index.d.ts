@@ -304,6 +304,12 @@ interface AiChatLabels {
     minimize: string;
     committed: string;
     notCommitted: string;
+    /**
+     * Caption on a confirm card that a NEWER confirm card in the same turn has replaced. The service keeps
+     * exactly one pending proposal per conversation (staging supersedes), so only the newest card can be
+     * answered — the older ones keep their summary as a record, with this line where their buttons were.
+     */
+    cardSuperseded: string;
     thinking: string;
     scheduleMode: string;
     /**
@@ -721,8 +727,18 @@ interface WidgetRendererProps {
     widget: WidgetEnvelope;
     onAction: (reply: string) => void;
     disabled?: boolean;
+    /**
+     * A NEWER confirm card in the same turn replaced this one. The service holds one pending proposal per
+     * conversation — every staging supersedes the previous one — so the buttons of an older card answer a
+     * proposal that no longer exists. Seen live (31 Aug): one turn staged the same rule three times and all
+     * three cards sat pressable; two of them were corpses. The summary stays as a record; the buttons give
+     * way to `supersededNote`.
+     */
+    superseded?: boolean;
+    /** The caption shown in place of the buttons when `superseded` (labels.cardSuperseded). */
+    supersededNote?: string;
 }
-declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererProps): React.JSX.Element;
+declare function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote }: WidgetRendererProps): React.JSX.Element;
 
 /**
  * RR-A.6 transparency trail — what the agent actually did this turn, in the service's own

@@ -592,10 +592,19 @@ function ToolIcon({ status }) {
 // src/ai-chat/components/WidgetRenderer.tsx
 import { CircleAlert, TriangleAlert as TriangleAlert2 } from "lucide-react";
 import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
-function WidgetRenderer({ widget, onAction, disabled }) {
+function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote }) {
   switch (widget.type) {
     case "confirm":
-      return /* @__PURE__ */ jsx6(ConfirmCard, { payload: widget.payload, onAction, disabled });
+      return /* @__PURE__ */ jsx6(
+        ConfirmCard,
+        {
+          payload: widget.payload,
+          onAction,
+          disabled,
+          superseded,
+          supersededNote
+        }
+      );
     case "error_card":
       return /* @__PURE__ */ jsx6(ErrorCard, { payload: widget.payload, onAction, disabled });
     case "staff_picker":
@@ -646,12 +655,14 @@ function ActionButton({
 function ConfirmCard({
   payload,
   onAction,
-  disabled
+  disabled,
+  superseded,
+  supersededNote
 }) {
-  return /* @__PURE__ */ jsxs6(Frame, { children: [
+  return /* @__PURE__ */ jsxs6(Frame, { className: superseded ? "opacity-70" : void 0, children: [
     /* @__PURE__ */ jsx6("p", { className: "text-body-sm font-semibold text-black", children: payload.title_th }),
     /* @__PURE__ */ jsx6("p", { className: "mt-1 whitespace-pre-wrap text-body-sm text-gray-600", children: payload.summary_th }),
-    /* @__PURE__ */ jsxs6("div", { className: "mt-3 flex gap-2", children: [
+    superseded ? /* @__PURE__ */ jsx6("p", { className: "mt-2 text-caption text-text-tertiary", "data-slot": "ai-chat-superseded", children: supersededNote }) : /* @__PURE__ */ jsxs6("div", { className: "mt-3 flex gap-2", children: [
       /* @__PURE__ */ jsx6(ActionButton, { onClick: () => onAction(payload.confirmLabel), disabled, children: payload.confirmLabel }),
       /* @__PURE__ */ jsx6(
         ActionButton,
@@ -783,6 +794,7 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
     ] });
   }
   const isUser = message.role === "user";
+  const lastConfirm = lastConfirmIndex(message.widgets ?? []);
   return /* @__PURE__ */ jsx7(
     "div",
     {
@@ -835,7 +847,9 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
           {
             widget,
             onAction: onWidgetAction,
-            disabled: widgetsDisabled
+            disabled: widgetsDisabled,
+            superseded: widget.type === "confirm" && index !== lastConfirm,
+            supersededNote: labels.cardSuperseded
           },
           `${widget.type}-${index}`
         )),
@@ -878,6 +892,12 @@ function Dot({ delay }) {
       style: { animationDelay: delay }
     }
   );
+}
+function lastConfirmIndex(widgets) {
+  for (let index = widgets.length - 1; index >= 0; index -= 1) {
+    if (widgets[index]?.type === "confirm") return index;
+  }
+  return -1;
 }
 
 // src/ai-chat/components/MessageList.tsx
@@ -1276,6 +1296,7 @@ var thLabels = {
   minimize: "\u0E22\u0E48\u0E2D\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E41\u0E0A\u0E17 (\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E22\u0E31\u0E07\u0E2D\u0E22\u0E39\u0E48)",
   committed: "\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E41\u0E25\u0E49\u0E27",
   notCommitted: "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01",
+  cardSuperseded: "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E19\u0E35\u0E49\u0E16\u0E39\u0E01\u0E41\u0E17\u0E19\u0E17\u0E35\u0E48\u0E14\u0E49\u0E27\u0E22\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E43\u0E2B\u0E21\u0E48\u0E01\u0E27\u0E48\u0E32\u0E41\u0E25\u0E49\u0E27",
   thinking: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E04\u0E34\u0E14\u2026",
   scheduleMode: "\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23",
   assistantMode: "\u0E42\u0E2B\u0E21\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22",
@@ -1337,6 +1358,7 @@ var enLabels = {
   minimize: "Minimise the chat (the conversation is kept)",
   committed: "Saved",
   notCommitted: "Not saved yet",
+  cardSuperseded: "Replaced by a newer item",
   thinking: "Thinking\u2026",
   scheduleMode: "Scheduling mode",
   assistantMode: "Assistant mode",
