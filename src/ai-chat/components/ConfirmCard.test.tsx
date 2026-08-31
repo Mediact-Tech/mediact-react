@@ -94,3 +94,54 @@ describe("MessageList — only the newest card can be answered", () => {
     expect(container.querySelectorAll('[data-slot="ai-chat-widget"]')).toHaveLength(1);
   });
 });
+
+describe("WidgetRenderer — superseded confirm", () => {
+  it("keeps the summary but swaps the buttons for the replaced note", () => {
+    const onAction = vi.fn();
+    render(
+      <WidgetRenderer
+        widget={card}
+        onAction={onAction}
+        superseded
+        supersededNote={defaultLabels.cardSuperseded}
+      />,
+    );
+
+    // The record of what was asked stays readable…
+    expect(screen.getByText("เปิดกฎชั่วโมงต่อเนื่อง — แผนก «ICU»")).toBeTruthy();
+    expect(screen.getByText(defaultLabels.cardSuperseded)).toBeTruthy();
+    // …but there is nothing left to press: the proposal behind it no longer exists.
+    expect(screen.queryByRole("button", { name: "ยืนยัน" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "ยกเลิก" })).toBeNull();
+  });
+
+  it("within one turn only the LAST confirm card keeps its buttons (live 31 Aug: three staged cards, two corpses)", () => {
+    const older: WidgetEnvelope = {
+      type: "confirm",
+      payload: { ...(card.payload as ConfirmWidget), proposalId: "p-41", resumeToken: "p-41" },
+    };
+    const onAction = vi.fn();
+    render(
+      <MessageList
+        labels={defaultLabels}
+        onWidgetAction={onAction}
+        messages={[
+          {
+            id: "m1",
+            role: "assistant",
+            content: "จัดการให้แล้วค่ะ",
+            widgets: [older, card],
+          },
+        ]}
+      />,
+    );
+
+    // Exactly ONE pressable pair — the newest card's.
+    expect(screen.getAllByRole("button", { name: "ยืนยัน" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "ยกเลิก" })).toHaveLength(1);
+    expect(screen.getByText(defaultLabels.cardSuperseded)).toBeTruthy();
+
+    screen.getByRole("button", { name: "ยืนยัน" }).click();
+    expect(onAction).toHaveBeenCalledWith("ยืนยัน");
+  });
+});

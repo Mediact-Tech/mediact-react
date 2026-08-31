@@ -31,6 +31,9 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
   }
 
   const isUser = message.role === "user";
+  // One pending proposal per conversation: each staging supersedes the previous, so within a turn only
+  // the LAST confirm card is still answerable — live (31 Aug) three identical pressable cards stacked.
+  const lastConfirm = lastConfirmIndex(message.widgets ?? []);
 
   return (
     <div
@@ -98,6 +101,8 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
             widget={widget}
             onAction={onWidgetAction}
             disabled={widgetsDisabled}
+            superseded={widget.type === "confirm" && index !== lastConfirm}
+            supersededNote={labels.cardSuperseded}
           />
         ))}
 
@@ -156,4 +161,12 @@ function Dot({ delay }: { delay: string }) {
       style={{ animationDelay: delay }}
     />
   );
+}
+
+/** Index of the last confirm widget in the turn — the only one whose proposal still exists. */
+function lastConfirmIndex(widgets: NonNullable<ChatMessage["widgets"]>): number {
+  for (let index = widgets.length - 1; index >= 0; index -= 1) {
+    if (widgets[index]?.type === "confirm") return index;
+  }
+  return -1;
 }

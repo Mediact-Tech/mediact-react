@@ -75,6 +75,12 @@ export interface AiChatLabels {
   minimize: string;
   committed: string;
   notCommitted: string;
+  /**
+   * Caption on a confirm card that a NEWER confirm card in the same turn has replaced. The service keeps
+   * exactly one pending proposal per conversation (staging supersedes), so only the newest card can be
+   * answered — the older ones keep their summary as a record, with this line where their buttons were.
+   */
+  cardSuperseded: string;
   thinking: string;
   scheduleMode: string;
   /**

@@ -22,12 +22,30 @@ export interface WidgetRendererProps {
   widget: WidgetEnvelope;
   onAction: (reply: string) => void;
   disabled?: boolean;
+  /**
+   * A NEWER confirm card in the same turn replaced this one. The service holds one pending proposal per
+   * conversation — every staging supersedes the previous one — so the buttons of an older card answer a
+   * proposal that no longer exists. Seen live (31 Aug): one turn staged the same rule three times and all
+   * three cards sat pressable; two of them were corpses. The summary stays as a record; the buttons give
+   * way to `supersededNote`.
+   */
+  superseded?: boolean;
+  /** The caption shown in place of the buttons when `superseded` (labels.cardSuperseded). */
+  supersededNote?: string;
 }
 
-export function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererProps) {
+export function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote }: WidgetRendererProps) {
   switch (widget.type) {
     case "confirm":
-      return <ConfirmCard payload={widget.payload as ConfirmWidget} onAction={onAction} disabled={disabled} />;
+      return (
+        <ConfirmCard
+          payload={widget.payload as ConfirmWidget}
+          onAction={onAction}
+          disabled={disabled}
+          superseded={superseded}
+          supersededNote={supersededNote}
+        />
+      );
     case "error_card":
       return <ErrorCard payload={widget.payload as ErrorCardWidget} onAction={onAction} disabled={disabled} />;
     case "staff_picker":
@@ -91,27 +109,37 @@ function ConfirmCard({
   payload,
   onAction,
   disabled,
+  superseded,
+  supersededNote,
 }: {
   payload: ConfirmWidget;
   onAction: (reply: string) => void;
   disabled?: boolean;
+  superseded?: boolean;
+  supersededNote?: string;
 }) {
   return (
-    <Frame>
+    <Frame className={superseded ? "opacity-70" : undefined}>
       <p className="text-body-sm font-semibold text-black">{payload.title_th}</p>
       <p className="mt-1 whitespace-pre-wrap text-body-sm text-gray-600">{payload.summary_th}</p>
-      <div className="mt-3 flex gap-2">
-        <ActionButton onClick={() => onAction(payload.confirmLabel)} disabled={disabled}>
-          {payload.confirmLabel}
-        </ActionButton>
-        <ActionButton
-          variant="secondary"
-          onClick={() => onAction(payload.cancelLabel)}
-          disabled={disabled}
-        >
-          {payload.cancelLabel}
-        </ActionButton>
-      </div>
+      {superseded ? (
+        <p className="mt-2 text-caption text-text-tertiary" data-slot="ai-chat-superseded">
+          {supersededNote}
+        </p>
+      ) : (
+        <div className="mt-3 flex gap-2">
+          <ActionButton onClick={() => onAction(payload.confirmLabel)} disabled={disabled}>
+            {payload.confirmLabel}
+          </ActionButton>
+          <ActionButton
+            variant="secondary"
+            onClick={() => onAction(payload.cancelLabel)}
+            disabled={disabled}
+          >
+            {payload.cancelLabel}
+          </ActionButton>
+        </div>
+      )}
     </Frame>
   );
 }
