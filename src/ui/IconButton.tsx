@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 import { SkeletonBox } from "../feedback/Skeleton";
+import { BUTTON_DISABLED_OPACITY } from "./button-parts";
 
 // Square hit targets, same px scale as Solid/OutlineButton's size tokens
 // (sm=h-8/32px, md=h-9/36px, lg=h-11/44px) so an IconButton dropped next to
@@ -12,7 +13,7 @@ import { SkeletonBox } from "../feedback/Skeleton";
 // contexts. Exact default is a placeholder for UX sign-off (see audit
 // "ต้องให้คนตัดสิน" #3) — swap here if the team calls a different scale.
 const iconButtonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center rounded-full transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  `inline-flex shrink-0 items-center justify-center rounded-full transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none ${BUTTON_DISABLED_OPACITY} [&_svg]:pointer-events-none [&_svg]:shrink-0`,
   {
     variants: {
       variant: {

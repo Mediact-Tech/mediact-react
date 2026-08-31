@@ -2,6 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
+import { BUTTON_DISABLED_OPACITY } from "./button-parts";
 
 // Default color is the brand-active blue; `neutral` is the standard gray
 // Cancel button. One-off tints can still go through className,
@@ -12,7 +13,7 @@ import { cn } from "../lib/cn";
 // pointer-events stays on); resting bg of an outline button is always white,
 // so a single disabled:hover:bg-white covers every color override.
 const outlineButtonVariants = cva(
-  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-white px-3 py-2 text-body-sm font-medium leading-6 tracking-normal shadow-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  `cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-white px-3 py-2 text-body-sm font-medium leading-6 tracking-normal shadow-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed ${BUTTON_DISABLED_OPACITY} disabled:hover:bg-white [&_svg]:pointer-events-none [&_svg]:shrink-0`,
   {
     variants: {
       variant: {
