@@ -41,9 +41,21 @@ const tones = {
  * hit it yet only because none had adopted this `Toaster`; the first adopter
  * would have.
  *
- * Consumers must have `sonner` in their own `package.json` (npm 7+ and bun
- * auto-install a missing peer). An app that pins `^1.x` alongside one pinning
- * `^2.x` still ends up with two copies — align the majors.
+ * The declared range is `^2.0.0`, not `^1.7.4 || ^2.0.0`. The API used here
+ * (`position` · `duration` · `icons` · `toastOptions.unstyled` · the eight
+ * `classNames` keys) exists in both majors, but only v2 is ever installed,
+ * typechecked or tested here — declaring a v1 half nobody exercises would be a
+ * promise this package cannot keep. All three apps that declare `sonner` are
+ * already on `^2.0.7`.
+ *
+ * 🔴 **Consumers must add `sonner` to their own `package.json`.** Do not rely on
+ * a package manager to fill the peer in: `npm install` and bun do, but
+ * **`npm ci` does not** — it installs the lockfile and nothing else, so a
+ * consumer that only bumps the tag and rebuilds in CI gets a tree with no
+ * `sonner` at all. That is not "toasts don't render", it is
+ * `Module not found: Can't resolve 'sonner'` and the whole app fails to build,
+ * because `src/index.ts` re-exports this file and every barrel import reaches
+ * it. yarn 1 and pnpm without `auto-install-peers` behave the same way.
  *
  * Same rule for a monorepo dev import (e.g. Storybook importing this package
  * via `dist`): alias `@mediact/react` to `packages/react/src/index.ts` so both

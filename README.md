@@ -12,6 +12,31 @@ npm install "https://github.com/Mediact-Tech/mediact-react.git#v1.0.2"
 
 > เปลี่ยน tag เป็น version ล่าสุดได้จาก [Releases](https://github.com/Mediact-Tech/mediact-react/releases)
 
+### 🔴 peer dependencies — ต้องประกาศในแอปเอง
+
+```jsonc
+{
+  "dependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19",
+    "sonner": "^2.0.7",      // ทุกแอปต้องมี — barrel export ลากถึงเสมอ
+    "keycloak-js": "^26.0.0" // เฉพาะแอปที่ใช้ auth ของ DS
+  }
+}
+```
+
+**`sonner` ไม่ใช่ของเลือกได้** — `src/index.ts` re-export `Toaster` ⇒ import อะไรก็ตามจาก
+`@mediact/react` ลากไปถึง `sonner` เสมอ ถึงแอปจะไม่ใช้ toast เลยก็ตาม
+
+⚠️ **อย่าพึ่ง package manager เติม peer ให้** — `npm install` กับ `bun` เติมให้ แต่ **`npm ci` ไม่เติม**
+(ติดตั้งตาม lockfile อย่างเดียว) ⇒ แอปที่อัปแค่ tag แล้ว build ใน CI ด้วย `npm ci` จะได้ tree
+ที่ไม่มี `sonner` แล้วพังทั้งแอปด้วย `Module not found: Can't resolve 'sonner'`
+ไม่ใช่แค่ toast ไม่ขึ้น · yarn 1 และ pnpm ที่ไม่เปิด `auto-install-peers` ก็เหมือนกัน
+
+**เหตุผลที่เป็น peer ไม่ใช่ dependency:** `sonner` เก็บคิว toast ไว้ใน module state ⇒ `toast()`
+กับ `<Toaster>` ต้อง resolve ก๊อปปี้เดียวกัน ถ้าแอป pin คนละ major จะได้ก๊อปปี้ซ้อนแล้ว
+singleton แตกเป็นสองก้อน — **toast ไม่ขึ้นเลยโดยไม่มี error**
+
 ---
 
 ## Setup — Next.js Pages Router + Tailwind v4
