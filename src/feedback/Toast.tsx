@@ -28,11 +28,26 @@ const tones = {
 /**
  * Mount once near the app root. All `toast.*` calls render through this.
  *
- * Note for monorepo consumers using a workspace dev import (e.g. Storybook
- * importing `@mediact/react` via the package's `dist`): make sure your dev
- * resolver aliases `@mediact/react` to `packages/react/src/index.ts` so the
- * Toaster and `toast()` call share the same `sonner` module instance. Without
- * this, sonner's singleton state silently desyncs and toasts won't render.
+ * 🔴 `toast()` and `<Toaster>` MUST resolve the same `sonner` module instance.
+ * sonner keeps its queue in module state, so two copies = two queues: the call
+ * enqueues on one, the mounted Toaster listens to the other, and **nothing
+ * renders — no error, no warning**.
+ *
+ * `sonner` is therefore a **peerDependency**, not a dependency (2026-08-31).
+ * While it was a dependency, every consumer pinning a different major got a
+ * nested `node_modules/@mediact/react/node_modules/sonner` and the singleton
+ * split in two. Measured across the four apps: three pin `sonner@^2.0.7` while
+ * this package asked for `^1.7.4` — all three carried the duplicate. None had
+ * hit it yet only because none had adopted this `Toaster`; the first adopter
+ * would have.
+ *
+ * Consumers must have `sonner` in their own `package.json` (npm 7+ and bun
+ * auto-install a missing peer). An app that pins `^1.x` alongside one pinning
+ * `^2.x` still ends up with two copies — align the majors.
+ *
+ * Same rule for a monorepo dev import (e.g. Storybook importing this package
+ * via `dist`): alias `@mediact/react` to `packages/react/src/index.ts` so both
+ * sides share one instance.
  *
  * @example
  * <Toaster position="top-right" />
