@@ -128,6 +128,17 @@ type FloatingFieldShellProps = {
     /** Wrapper className (the outer flex column). */
     containerClassName?: string;
     /** When true, position the rest label near the top (for textareas) instead of vertically centered. */
+    /**
+     * ช่องถูกปิดใช้งานอยู่ — **ใช้เลือกสีพื้นของป้ายลอย ไม่ได้ใช้ปิดการทำงาน**
+     *
+     * 🔴 ป้ายลอยต้องมีพื้นทึบเพื่อ **ตัดเส้นขอบ** ไม่ให้เส้นขีดทับตัวหนังสือ (กล่องป้ายกิน
+     * ตั้งแต่ −6 ถึง +10 ส่วนเส้นขอบอยู่ที่ 0–1 ⇒ ซ้อนกันเสมอ) · แต่ `bg-bg-default` ตายตัว
+     * แปลว่าป้ายจะขาวเสมอ **แม้ช่องจะไม่ขาว** — ตอน `disabled` ช่องเป็น `bg-bg-surface`
+     * ⇒ ป้ายกลายเป็นแถบขาวลอยอยู่บนช่องสีเทา เห็นได้ทุกแอป
+     *
+     * ⚠️ ตัวช่องปิดการทำงานด้วย `disabled` ของ element จริงอยู่แล้ว — prop นี้ไม่ได้ทำแทน
+     */
+    disabled?: boolean;
     multiline?: boolean;
     /** The actual interactive element (input / textarea / button). */
     children: React.ReactNode;
@@ -147,7 +158,7 @@ type FloatingFieldShellProps = {
  *   - applying its own padding (the shell does not enforce the field's internal padding,
  *     but does shift the rest-position label right when `leftAdornment` is provided)
  */
-declare function FloatingFieldShell({ label, hint, error, required, hideLabel, htmlFor, size, floating, focused, hasError: hasErrorProp, leftAdornment, rightAdornment, containerClassName, multiline, reserveMessageSpace, children, }: FloatingFieldShellProps): React.JSX.Element;
+declare function FloatingFieldShell({ label, hint, error, required, hideLabel, htmlFor, size, floating, focused, hasError: hasErrorProp, leftAdornment, rightAdornment, containerClassName, disabled, multiline, reserveMessageSpace, children, }: FloatingFieldShellProps): React.JSX.Element;
 type FieldSkeletonProps = Pick<FloatingFieldShellProps, "label" | "hint" | "required" | "hideLabel" | "size" | "containerClassName" | "multiline" | "reserveMessageSpace" | "leftAdornment" | "rightAdornment"> & {
     /** class รูปทรงของช่อง — ปกติคือ `fieldShapeClasses(...)` ตัวเดียวกับที่ component ใช้ */
     shape?: string;
@@ -2613,11 +2624,38 @@ type ToasterProps = React.ComponentProps<typeof Toaster$1>;
 /**
  * Mount once near the app root. All `toast.*` calls render through this.
  *
- * Note for monorepo consumers using a workspace dev import (e.g. Storybook
- * importing `@mediact/react` via the package's `dist`): make sure your dev
- * resolver aliases `@mediact/react` to `packages/react/src/index.ts` so the
- * Toaster and `toast()` call share the same `sonner` module instance. Without
- * this, sonner's singleton state silently desyncs and toasts won't render.
+ * 🔴 `toast()` and `<Toaster>` MUST resolve the same `sonner` module instance.
+ * sonner keeps its queue in module state, so two copies = two queues: the call
+ * enqueues on one, the mounted Toaster listens to the other, and **nothing
+ * renders — no error, no warning**.
+ *
+ * `sonner` is therefore a **peerDependency**, not a dependency (2026-08-31).
+ * While it was a dependency, every consumer pinning a different major got a
+ * nested `node_modules/@mediact/react/node_modules/sonner` and the singleton
+ * split in two. Measured across the four apps: three pin `sonner@^2.0.7` while
+ * this package asked for `^1.7.4` — all three carried the duplicate. None had
+ * hit it yet only because none had adopted this `Toaster`; the first adopter
+ * would have.
+ *
+ * The declared range is `^2.0.0`, not `^1.7.4 || ^2.0.0`. The API used here
+ * (`position` · `duration` · `icons` · `toastOptions.unstyled` · the eight
+ * `classNames` keys) exists in both majors, but only v2 is ever installed,
+ * typechecked or tested here — declaring a v1 half nobody exercises would be a
+ * promise this package cannot keep. All three apps that declare `sonner` are
+ * already on `^2.0.7`.
+ *
+ * 🔴 **Consumers must add `sonner` to their own `package.json`.** Do not rely on
+ * a package manager to fill the peer in: `npm install` and bun do, but
+ * **`npm ci` does not** — it installs the lockfile and nothing else, so a
+ * consumer that only bumps the tag and rebuilds in CI gets a tree with no
+ * `sonner` at all. That is not "toasts don't render", it is
+ * `Module not found: Can't resolve 'sonner'` and the whole app fails to build,
+ * because `src/index.ts` re-exports this file and every barrel import reaches
+ * it. yarn 1 and pnpm without `auto-install-peers` behave the same way.
+ *
+ * Same rule for a monorepo dev import (e.g. Storybook importing this package
+ * via `dist`): alias `@mediact/react` to `packages/react/src/index.ts` so both
+ * sides share one instance.
  *
  * @example
  * <Toaster position="top-right" />
