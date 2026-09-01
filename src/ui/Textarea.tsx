@@ -139,6 +139,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 
     return (
       <FloatingFieldShell
+        disabled={disabled}
         label={label}
         hint={hintWithCounter}
         error={error}

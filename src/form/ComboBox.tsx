@@ -488,6 +488,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
           }}
         >
           <FloatingFieldShell
+            disabled={disabled}
             label={label}
             hint={hint}
             error={error}
@@ -599,6 +600,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
 
   return (
     <FloatingFieldShell
+      disabled={disabled}
       label={label}
       hint={hint}
       error={error}

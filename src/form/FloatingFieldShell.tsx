@@ -58,6 +58,17 @@ export type FloatingFieldShellProps = {
   /** Wrapper className (the outer flex column). */
   containerClassName?: string;
   /** When true, position the rest label near the top (for textareas) instead of vertically centered. */
+  /**
+   * ช่องถูกปิดใช้งานอยู่ — **ใช้เลือกสีพื้นของป้ายลอย ไม่ได้ใช้ปิดการทำงาน**
+   *
+   * 🔴 ป้ายลอยต้องมีพื้นทึบเพื่อ **ตัดเส้นขอบ** ไม่ให้เส้นขีดทับตัวหนังสือ (กล่องป้ายกิน
+   * ตั้งแต่ −6 ถึง +10 ส่วนเส้นขอบอยู่ที่ 0–1 ⇒ ซ้อนกันเสมอ) · แต่ `bg-bg-default` ตายตัว
+   * แปลว่าป้ายจะขาวเสมอ **แม้ช่องจะไม่ขาว** — ตอน `disabled` ช่องเป็น `bg-bg-surface`
+   * ⇒ ป้ายกลายเป็นแถบขาวลอยอยู่บนช่องสีเทา เห็นได้ทุกแอป
+   *
+   * ⚠️ ตัวช่องปิดการทำงานด้วย `disabled` ของ element จริงอยู่แล้ว — prop นี้ไม่ได้ทำแทน
+   */
+  disabled?: boolean;
   multiline?: boolean;
   /** The actual interactive element (input / textarea / button). */
   children: React.ReactNode;
@@ -98,6 +109,7 @@ export function FloatingFieldShell({
   leftAdornment,
   rightAdornment,
   containerClassName,
+  disabled,
   multiline,
   reserveMessageSpace = true,
   children,
@@ -138,7 +150,28 @@ export function FloatingFieldShell({
               "max-w-[calc(100%-1.5rem)]",
               floating
                 ? cn(
-                    "-top-1.5 left-2 px-1.5 font-medium bg-bg-default",
+                    /* พื้นของป้ายต้องเป็นสีเดียวกับพื้นช่องที่มันวางทับ ไม่ใช่ขาวตายตัว
+                     * — `fieldShapeClasses` ใช้ `bg-bg-default` ตอนปกติ และ
+                     * `disabled:bg-bg-surface` ตอนปิดใช้งาน ⇒ ป้ายเดินตามคู่กัน
+                     *
+                     * 🔴 **ตอนปิดใช้งานต้องเขียนเป็น `var()` พร้อมค่าสำรอง ไม่ใช่คลาส
+                     * `bg-bg-surface` เปล่า ๆ** — `--color-bg-surface` เป็น token ของ
+                     * ชั้น semantic ซึ่ง **แอปที่ใช้ `@mediact/tailwind-preset` ยังไม่มี**
+                     * (preset → `tokens.css` → `@import "./theme.css"` ซึ่งเป็นชุดเก่า
+                     * และไม่ได้ประกาศ token นี้ · ตรวจแล้วใน Storybook ของ DS เอง:
+                     * สตริง `bg-bg-surface` ไม่ปรากฏใน CSS ที่ compile ออกมาเลยแม้แต่ครั้งเดียว)
+                     * ⇒ ถ้าใช้คลาสเปล่า ป้ายจะ **โปร่งใส** แล้วเส้นขอบขีดทับตัวหนังสือ
+                     * ซึ่งแย่กว่าอาการเดิม · `var(…, …)` ทำให้มันถอยไปเป็นสีเดียวกับช่อง
+                     * ในที่ที่ token ยังไม่มี — ซึ่งเป็นที่เดียวกับที่ช่องก็ยังไม่เปลี่ยนสีเช่นกัน
+                     *
+                     * ⚠️ นี่คือเหตุผลที่ไม่มีใครเห็นบั๊กนี้มาก่อน: ใน Storybook ช่อง disabled
+                     * **ไม่ได้เป็นสีเทาเลย** เพราะ `disabled:bg-bg-surface` ก็ไม่ทำงานเหมือนกัน
+                     * ⇒ ป้ายขาวบนช่องขาว มองไม่ออก (เป็นข้อ 3 ใน open decisions ของ repo:
+                     * DS ยังกิน token ชุดเก่าอยู่ ยังไม่ย้ายไป semantic) */
+                    disabled
+                      ? "bg-[var(--color-bg-surface,var(--color-bg-default))]"
+                      : "bg-bg-default",
+                    "-top-1.5 left-2 px-1.5 font-medium",
                     sz.labelTextFloat,
                     hasError
                       ? "text-cherry-red-600"
