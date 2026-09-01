@@ -115,6 +115,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
 
   return (
     <FloatingFieldShell
+      disabled={disabled}
       label={label}
       hint={hint}
       error={error}

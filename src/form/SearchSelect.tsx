@@ -219,6 +219,7 @@ export const SearchSelect = <T,>({
 
   return (
     <FloatingFieldShell
+      disabled={disabled}
       label={label}
       hint={hint}
       error={error}
