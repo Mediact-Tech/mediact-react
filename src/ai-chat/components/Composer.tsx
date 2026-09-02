@@ -3,6 +3,7 @@ import { ArrowUp, Loader2, Mic, Square, Trash2 } from "lucide-react";
 import type { AudioClip, TranscriptionResult } from "../api/types";
 import type { AiChatLabels } from "../types";
 import { useVoiceInput } from "../state/useVoiceInput";
+import { VoiceWaveform } from "./VoiceWaveform";
 import { cn } from "../lib/cn";
 
 export interface ComposerProps {
@@ -113,44 +114,72 @@ export function Composer({
 
   const recording = voice.status === "recording";
   const transcribing = voice.status === "transcribing";
-  const voiceMessage = recording
-    ? `${labels.voiceRecording} · ${formatElapsed(voice.seconds)}`
-    : transcribing
-      ? labels.voiceTranscribing
-      : voice.error === "denied"
-        ? labels.voiceDenied
-        : voice.error === "failed"
-          ? labels.voiceFailed
-          : null;
+  // Only a FAILURE gets a visible line. Recording has its own strip (waveform + clock); transcribing is
+  // the spinner on the mic button, which says it already; a silent clip simply returns to idle — the
+  // owner's call: a sentence for "nothing happened" is noise. Both still go to the live region below for
+  // the user who cannot see the spinner or the strip.
+  const voiceMessage =
+    voice.error === "denied" ? labels.voiceDenied : voice.error === "failed" ? labels.voiceFailed : null;
+  const spokenOnly = transcribing
+    ? labels.voiceTranscribing
+    : voice.notice === "silent"
+      ? labels.voiceSilent
+      : null;
+  const voiceLimitText = labels.voiceLimit.replace("{seconds}", String(voice.limitSeconds));
+  // The last ten seconds turn the clock red: the cap stops the recording by itself, and a user who is
+  // mid-sentence when it does loses the end of what she said.
+  const nearCap = recording && voice.limitSeconds - voice.seconds <= 10;
 
   return (
     <div
       data-slot="ai-chat-composer"
       className="border-t border-border-subtle bg-bg-default px-3.5 py-3"
     >
-      {/* One line, three jobs: mic is live · transcript is on its way · the last attempt failed.
-          `aria-live` because a screen-reader user gets no other signal that recording started. */}
-      {voiceMessage && (
-        <p
-          aria-live="polite"
-          className={cn(
-            /* 🔴 `text-text-body` ไม่ใช่ `text-text-tertiary` — วัดในเบราว์เซอร์: tertiary = rgb(155,155,155)
-             * บนพื้นขาว = **2.78:1** ตกเกณฑ์ 4.5 ของข้อความ · บรรทัดนี้เป็นสถานะที่ต้องอ่านออกจริง
-             * (ไมค์เปิดอยู่ / กำลังแปลง) ไม่ใช่คำใบ้ประดับ · body = 6.99:1 */
-            "mb-2 flex items-center gap-1.5 text-caption",
-            voice.error ? "text-error-red-600" : "text-text-body",
-          )}
+      {/* Recording strip: pulsing dot · clock · live waveform · the cap. The waveform is the point — a
+          timer proves the clock runs, the bars prove the MICROPHONE does (a muted headset shows a
+          counting timer and a flat strip). The words stay for screen readers only: `aria-live`, because
+          nothing else tells that user recording started. */}
+      {recording && (
+        <div
+          data-slot="ai-chat-voice-strip"
+          className="mb-2 flex items-center gap-2.5 rounded-xl bg-bg-subtle px-3 py-1.5"
         >
-          {recording && (
-            <span aria-hidden className="size-2 shrink-0 rounded-full bg-error-red-600" />
-          )}
+          <span
+            aria-hidden
+            className="size-2 shrink-0 rounded-full bg-error-red-600 animate-pulse motion-reduce:animate-none"
+          />
+          <span
+            aria-hidden
+            title={voiceLimitText}
+            className={cn(
+              "shrink-0 text-caption tabular-nums",
+              /* body = 6.99:1 บนพื้นขาว — เวลาที่กำลังเดินต้องอ่านออกจริง ไม่ใช่คำใบ้ประดับ (tertiary ตก 4.5) */
+              nearCap ? "text-error-red-600" : "text-text-body",
+            )}
+          >
+            {formatElapsed(voice.seconds)}
+          </span>
+          <VoiceWaveform stream={voice.stream} className="flex-1" />
+          <span aria-hidden className="shrink-0 text-caption tabular-nums text-text-body">
+            {formatElapsed(voice.limitSeconds)}
+          </span>
+          <span className="sr-only" aria-live="polite">
+            {`${labels.voiceRecording} · ${formatElapsed(voice.seconds)} · ${voiceLimitText}`}
+          </span>
+        </div>
+      )}
+
+      {/* Visible only when the last attempt FAILED — the one moment a sentence earns its place. */}
+      {voiceMessage && (
+        <p aria-live="polite" className="mb-2 flex items-center gap-1.5 text-caption text-error-red-600">
           <span className="min-w-0 flex-1">{voiceMessage}</span>
-          {recording && (
-            <span className="shrink-0 text-text-body">
-              {labels.voiceLimit.replace("{seconds}", String(voice.limitSeconds))}
-            </span>
-          )}
         </p>
+      )}
+      {/* Heard, not seen: "turning speech into text" / "nothing was said" for screen readers. */}
+      {spokenOnly && (
+        <span className="sr-only" aria-live="polite">
+          {spokenOnly}
+        </span>
       )}
 
       {/* 🔴 กล่องเดียว ไม่ใช่ "ช่องพิมพ์ + ปุ่มข้าง ๆ"

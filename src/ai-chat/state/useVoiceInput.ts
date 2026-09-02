@@ -24,6 +24,11 @@ export type VoiceInputErrorReason =
   /** Recording worked; the service did not answer, or answered with nothing usable. */
   | "failed";
 
+/** A non-error outcome the caller may want to mention — cleared when the next recording starts. */
+export type VoiceInputNotice =
+  /** The clip transcribed to nothing: silence, a muted input. The user did nothing wrong. */
+  "silent";
+
 export interface UseVoiceInputOptions {
   /** Usually `session.api.transcribe`. Omit to disable voice entirely (`supported` stays false). */
   transcribe?: (audio: AudioClip, signal?: AbortSignal) => Promise<TranscriptionResult>;
@@ -52,8 +57,16 @@ export interface VoiceInput {
   limitSeconds: number;
   /** Reason of the most recent failure, cleared when a new recording starts. */
   error: VoiceInputErrorReason | null;
+  /** A non-error outcome of the last recording (nothing was said). Never both this and `error`. */
+  notice: VoiceInputNotice | null;
   /** False when the browser cannot record here, or no `transcribe` was given. Hide the control. */
   supported: boolean;
+  /**
+   * The microphone stream while `status === "recording"`, `null` otherwise. Exposed so the composer can
+   * draw a level meter off it (a second, read-only tap) — the recorder still owns it, and the hook still
+   * releases it. Never keep a reference past `status` changing.
+   */
+  stream: MediaStream | null;
   /** Begins recording (asks for permission the first time). No-op unless idle. */
   start: () => void;
   /** Ends recording and transcribes what was captured. */
@@ -87,6 +100,8 @@ export function useVoiceInput({
   const [status, setStatus] = React.useState<VoiceInputStatus>("idle");
   const [seconds, setSeconds] = React.useState(0);
   const [error, setError] = React.useState<VoiceInputErrorReason | null>(null);
+  const [notice, setNotice] = React.useState<VoiceInputNotice | null>(null);
+  const [stream, setStream] = React.useState<MediaStream | null>(null);
 
   const recorderRef = React.useRef<MediaRecorder | null>(null);
   const chunksRef = React.useRef<Blob[]>([]);
@@ -116,6 +131,7 @@ export function useVoiceInput({
   /** Stops the tracks as well as the recorder — leaving them open keeps the browser's mic indicator lit. */
   const teardown = React.useCallback(() => {
     stopTicking();
+    setStream(null);
     const recorder = recorderRef.current;
     recorderRef.current = null;
     if (!recorder) return;
@@ -164,7 +180,13 @@ export function useVoiceInput({
         controller.signal,
       );
       const text = result?.text?.trim();
-      if (!text) throw new Error("empty transcript");
+      if (!text) {
+        // Silence is an outcome, not a failure: the service answered, there was just nothing in the clip.
+        // Shown as plain information — red here told a user who had not spoken that something broke.
+        setNotice("silent");
+        setStatus("idle");
+        return;
+      }
       callbacksRef.current.onText(text);
       setStatus("idle");
     } catch (cause) {
@@ -188,6 +210,7 @@ export function useVoiceInput({
   const start = React.useCallback(() => {
     if (!supported || status !== "idle") return;
     setError(null);
+    setNotice(null);
     void (async () => {
       let stream: MediaStream;
       try {
@@ -225,6 +248,7 @@ export function useVoiceInput({
       // buffer the recorder never got to flush.
       recorder.start(1000);
       setStatus("recording");
+      setStream(stream);
       setSeconds(0);
 
       tickRef.current = setInterval(() => {
@@ -240,7 +264,7 @@ export function useVoiceInput({
   const stop = React.useCallback(() => stopRecorder(false), [stopRecorder]);
   const discard = React.useCallback(() => stopRecorder(true), [stopRecorder]);
 
-  return { status, seconds, limitSeconds: capSeconds, error, supported, start, stop, discard };
+  return { status, seconds, limitSeconds: capSeconds, error, notice, supported, stream, start, stop, discard };
 }
 
 /** `audio/webm;codecs=opus` → `webm`. Anything unrecognised is sent as webm, the majority container. */

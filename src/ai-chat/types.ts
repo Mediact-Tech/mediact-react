@@ -71,6 +71,12 @@ export interface AiChatLabels {
    * accelerator, and a user stuck retrying a mic has lost the composer they already had.
    */
   voiceFailed: string;
+  /**
+   * The recording came back with no words in it (silence, a muted headset). Announced to screen readers
+   * only — on screen the composer just returns to idle; the user did nothing wrong and a sentence about
+   * it is noise. Never styled as an error.
+   */
+  voiceSilent: string;
   /** `{seconds}` = the duration cap, so a user who is cut off knows it was a limit, not a crash. */
   voiceLimit: string;
   newChat: string;

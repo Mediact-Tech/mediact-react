@@ -22,6 +22,7 @@ export const thLabels: AiChatLabels = {
   voiceDenied: "เปิดไมโครโฟนไม่ได้ — อนุญาตสิทธิ์ไมโครโฟนในเบราว์เซอร์ก่อน",
   /* ต้องชี้ทางออกเป็น "พิมพ์แทน" เสมอ — เสียงเป็นแค่ทางลัด คนที่ติดอยู่กับปุ่มไมค์คือคนที่ลืมไปว่ามีช่องพิมพ์อยู่แล้ว */
   voiceFailed: "แปลงเสียงไม่สำเร็จ ลองอัดใหม่หรือพิมพ์แทนได้เลย",
+  voiceSilent: "ไม่ได้ยินเสียงพูดในคลิปนี้ ลองพูดใหม่อีกครั้งได้เลย",
   voiceLimit: "อัดได้ครั้งละไม่เกิน {seconds} วินาที",
   newChat: "แชทใหม่",
   history: "ประวัติแชท",
@@ -102,6 +103,7 @@ export const enLabels: AiChatLabels = {
   voiceTranscribing: "Turning speech into text…",
   voiceDenied: "Cannot open the microphone — allow microphone access in your browser first",
   voiceFailed: "Could not turn that into text. Record again, or just type it.",
+  voiceSilent: "No speech was heard in that recording — try again.",
   voiceLimit: "Recordings stop at {seconds} seconds",
   newChat: "New chat",
   history: "Chat history",

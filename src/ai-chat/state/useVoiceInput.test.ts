@@ -93,6 +93,19 @@ describe("useVoiceInput — เสียงเข้า ข้อความอ
     expect(result.current.status).toBe("idle");
   });
 
+  it("เปิดสตรีมไมค์ให้ผู้เรียกวาดมิเตอร์ระหว่างอัด แล้วปล่อยทันทีที่จบ", async () => {
+    const { result } = renderHook(() => useVoiceInput({ transcribe: transcribeOk(), onText: vi.fn() }));
+    expect(result.current.stream).toBeNull();
+
+    await act(async () => result.current.start());
+    await waitFor(() => expect(result.current.status).toBe("recording"));
+    expect(result.current.stream).toBe(fakeStream);
+
+    await act(async () => result.current.stop());
+    await waitFor(() => expect(result.current.status).toBe("idle"));
+    expect(result.current.stream).toBeNull();
+  });
+
   it("คืนไมโครโฟนทุกครั้งที่จบ — ไม่งั้นไฟไมค์ค้างทั้งแท็บ", async () => {
     const { result } = renderHook(() =>
       useVoiceInput({ transcribe: transcribeOk(), onText: vi.fn() }),
@@ -126,6 +139,28 @@ describe("useVoiceInput — เสียงเข้า ข้อความอ
     await waitFor(() => expect(result.current.error).toBe("denied"));
     expect(result.current.status).toBe("idle");
     expect(onError).toHaveBeenCalled();
+  });
+
+  it("คลิปเงียบ (ถอดได้ข้อความว่าง) → notice 'silent' ไม่ใช่ error และไม่ส่งข้อความว่างให้ผู้เรียก", async () => {
+    const onText = vi.fn();
+    const onError = vi.fn();
+    const { result } = renderHook(() =>
+      useVoiceInput({ transcribe: vi.fn(async () => ({ text: "  ", seconds: 3 })), onText, onError }),
+    );
+    await act(async () => result.current.start());
+    await waitFor(() => expect(result.current.status).toBe("recording"));
+    await act(async () => result.current.stop());
+    await waitFor(() => expect(result.current.status).toBe("idle"));
+
+    expect(result.current.notice).toBe("silent");
+    expect(result.current.error).toBeNull();
+    expect(onText).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+
+    // the next recording starts clean
+    await act(async () => result.current.start());
+    await waitFor(() => expect(result.current.status).toBe("recording"));
+    expect(result.current.notice).toBeNull();
   });
 
   it("ถอดเสียงล้ม → error 'failed' ไม่ใช่ข้อความว่างเงียบ ๆ", async () => {
