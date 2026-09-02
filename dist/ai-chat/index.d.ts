@@ -325,6 +325,12 @@ interface AiChatLabels {
      * accelerator, and a user stuck retrying a mic has lost the composer they already had.
      */
     voiceFailed: string;
+    /**
+     * The recording came back with no words in it (silence, a muted headset). Announced to screen readers
+     * only — on screen the composer just returns to idle; the user did nothing wrong and a sentence about
+     * it is noise. Never styled as an error.
+     */
+    voiceSilent: string;
     /** `{seconds}` = the duration cap, so a user who is cut off knows it was a limit, not a crash. */
     voiceLimit: string;
     newChat: string;
@@ -880,6 +886,10 @@ type VoiceInputErrorReason =
 "denied"
 /** Recording worked; the service did not answer, or answered with nothing usable. */
  | "failed";
+/** A non-error outcome the caller may want to mention — cleared when the next recording starts. */
+type VoiceInputNotice = 
+/** The clip transcribed to nothing: silence, a muted input. The user did nothing wrong. */
+"silent";
 interface UseVoiceInputOptions {
     /** Usually `session.api.transcribe`. Omit to disable voice entirely (`supported` stays false). */
     transcribe?: (audio: AudioClip, signal?: AbortSignal) => Promise<TranscriptionResult>;
@@ -907,8 +917,16 @@ interface VoiceInput {
     limitSeconds: number;
     /** Reason of the most recent failure, cleared when a new recording starts. */
     error: VoiceInputErrorReason | null;
+    /** A non-error outcome of the last recording (nothing was said). Never both this and `error`. */
+    notice: VoiceInputNotice | null;
     /** False when the browser cannot record here, or no `transcribe` was given. Hide the control. */
     supported: boolean;
+    /**
+     * The microphone stream while `status === "recording"`, `null` otherwise. Exposed so the composer can
+     * draw a level meter off it (a second, read-only tap) — the recorder still owns it, and the hook still
+     * releases it. Never keep a reference past `status` changing.
+     */
+    stream: MediaStream | null;
     /** Begins recording (asks for permission the first time). No-op unless idle. */
     start: () => void;
     /** Ends recording and transcribes what was captured. */

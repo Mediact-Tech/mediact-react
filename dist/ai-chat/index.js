@@ -1,5 +1,5 @@
 // src/ai-chat/AiChatWidget.tsx
-import * as React11 from "react";
+import * as React12 from "react";
 
 // src/ai-chat/api/aiChatApi.ts
 var AiChatApiError = class extends Error {
@@ -158,7 +158,7 @@ function resolveTokenProvider(auth, hostGetToken, onError) {
 }
 
 // src/ai-chat/components/ChatDrawer.tsx
-import * as React8 from "react";
+import * as React9 from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import {
   CalendarDays,
@@ -178,7 +178,7 @@ function cn(...inputs) {
 }
 
 // src/ai-chat/components/Composer.tsx
-import * as React2 from "react";
+import * as React3 from "react";
 import { ArrowUp, Loader2, Mic, Square, Trash2 } from "lucide-react";
 
 // src/ai-chat/state/useVoiceInput.ts
@@ -196,6 +196,8 @@ function useVoiceInput({
   const [status, setStatus] = React.useState("idle");
   const [seconds, setSeconds] = React.useState(0);
   const [error, setError] = React.useState(null);
+  const [notice, setNotice] = React.useState(null);
+  const [stream, setStream] = React.useState(null);
   const recorderRef = React.useRef(null);
   const chunksRef = React.useRef([]);
   const discardRef = React.useRef(false);
@@ -213,6 +215,7 @@ function useVoiceInput({
   }, []);
   const teardown = React.useCallback(() => {
     stopTicking();
+    setStream(null);
     const recorder = recorderRef.current;
     recorderRef.current = null;
     if (!recorder) return;
@@ -255,7 +258,11 @@ function useVoiceInput({
         controller.signal
       );
       const text = result?.text?.trim();
-      if (!text) throw new Error("empty transcript");
+      if (!text) {
+        setNotice("silent");
+        setStatus("idle");
+        return;
+      }
       callbacksRef.current.onText(text);
       setStatus("idle");
     } catch (cause) {
@@ -277,10 +284,11 @@ function useVoiceInput({
   const start = React.useCallback(() => {
     if (!supported || status !== "idle") return;
     setError(null);
+    setNotice(null);
     void (async () => {
-      let stream;
+      let stream2;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        stream2 = await navigator.mediaDevices.getUserMedia({
           audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
         });
       } catch (cause) {
@@ -291,12 +299,12 @@ function useVoiceInput({
       const mimeType = CANDIDATE_TYPES.find((type) => MediaRecorder.isTypeSupported?.(type));
       let recorder;
       try {
-        recorder = new MediaRecorder(stream, {
+        recorder = new MediaRecorder(stream2, {
           audioBitsPerSecond: AUDIO_BITS_PER_SECOND,
           ...mimeType ? { mimeType } : {}
         });
       } catch (cause) {
-        stream.getTracks().forEach((track) => track.stop());
+        stream2.getTracks().forEach((track) => track.stop());
         setError("failed");
         callbacksRef.current.onError?.(cause instanceof Error ? cause : new Error(String(cause)));
         return;
@@ -310,6 +318,7 @@ function useVoiceInput({
       recorder.onstop = () => void finish();
       recorder.start(1e3);
       setStatus("recording");
+      setStream(stream2);
       setSeconds(0);
       tickRef.current = setInterval(() => {
         setSeconds((current) => {
@@ -322,7 +331,7 @@ function useVoiceInput({
   }, [capSeconds, finish, status, stopRecorder, supported]);
   const stop = React.useCallback(() => stopRecorder(false), [stopRecorder]);
   const discard = React.useCallback(() => stopRecorder(true), [stopRecorder]);
-  return { status, seconds, limitSeconds: capSeconds, error, supported, start, stop, discard };
+  return { status, seconds, limitSeconds: capSeconds, error, notice, supported, stream, start, stop, discard };
 }
 function formatOf(mimeType) {
   const subtype = mimeType.split(";")[0]?.split("/")[1]?.toLowerCase() ?? "";
@@ -339,8 +348,151 @@ async function toBase64(blob) {
   return btoa(binary);
 }
 
-// src/ai-chat/components/Composer.tsx
+// src/ai-chat/components/VoiceWaveform.tsx
+import * as React2 from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
+function VoiceWaveform({ stream, className }) {
+  const canvasRef = React2.useRef(null);
+  const [state, setState] = React2.useState("idle");
+  React2.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !stream) {
+      setState("idle");
+      return;
+    }
+    const AudioContextCtor = resolveAudioContext();
+    if (!AudioContextCtor) {
+      setState("unsupported");
+      return;
+    }
+    let context;
+    let source;
+    let analyser;
+    try {
+      context = new AudioContextCtor();
+      analyser = context.createAnalyser();
+      analyser.fftSize = FFT_SIZE;
+      analyser.smoothingTimeConstant = 0.5;
+      source = context.createMediaStreamSource(stream);
+      source.connect(analyser);
+    } catch {
+      setState("unsupported");
+      return;
+    }
+    void context.resume?.().catch(() => void 0);
+    setState("live");
+    const samples = new Uint8Array(analyser.fftSize);
+    const levels = [];
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+    const sampleEveryMs = reduceMotion ? 250 : SAMPLE_EVERY_MS;
+    let lastSampleAt = 0;
+    let frame = 0;
+    let disposed = false;
+    const tick = (now) => {
+      if (disposed) return;
+      if (now - lastSampleAt >= sampleEveryMs) {
+        lastSampleAt = now;
+        analyser.getByteTimeDomainData(samples);
+        levels.push(levelOf(samples));
+        if (levels.length > MAX_BARS) levels.shift();
+      }
+      paint(canvas, levels);
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(frame);
+      source.disconnect();
+      void context.close().catch(() => void 0);
+    };
+  }, [stream]);
+  return /* @__PURE__ */ jsxs(
+    "span",
+    {
+      "data-slot": "ai-chat-voice-waveform",
+      "data-state": state,
+      className: cn("relative flex h-7 min-w-0 items-center", className),
+      children: [
+        /* @__PURE__ */ jsx(
+          "canvas",
+          {
+            ref: canvasRef,
+            "aria-hidden": true,
+            className: cn("h-full w-full text-brand-active", state !== "live" && "invisible")
+          }
+        ),
+        state === "unsupported" && /* Nothing to measure here — three quiet dots keep the strip's shape so the row does not collapse. */
+        /* @__PURE__ */ jsxs("span", { "aria-hidden": true, className: "absolute inset-0 flex items-center justify-center gap-1", children: [
+          /* @__PURE__ */ jsx("span", { className: "size-1 rounded-full bg-text-body" }),
+          /* @__PURE__ */ jsx("span", { className: "size-1 rounded-full bg-text-body" }),
+          /* @__PURE__ */ jsx("span", { className: "size-1 rounded-full bg-text-body" })
+        ] })
+      ]
+    }
+  );
+}
+var FFT_SIZE = 512;
+var SAMPLE_EVERY_MS = 60;
+var MAX_BARS = 160;
+var BAR_WIDTH = 3;
+var BAR_GAP = 2;
+var MIN_BAR_HEIGHT = 2;
+function resolveAudioContext() {
+  if (typeof window === "undefined") return void 0;
+  const global = globalThis;
+  return global.AudioContext ?? global.webkitAudioContext;
+}
+function levelOf(samples) {
+  let sum = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const centred = ((samples[i] ?? 128) - 128) / 128;
+    sum += centred * centred;
+  }
+  const rms = Math.sqrt(sum / samples.length);
+  return Math.min(1, Math.pow(rms * 3.2, 0.8));
+}
+function paint(canvas, levels) {
+  let context;
+  try {
+    context = canvas.getContext("2d");
+  } catch {
+    return;
+  }
+  if (!context) return;
+  const dpr = window.devicePixelRatio || 1;
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  if (width === 0 || height === 0) return;
+  const pixelWidth = Math.round(width * dpr);
+  const pixelHeight = Math.round(height * dpr);
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  context.clearRect(0, 0, width, height);
+  context.fillStyle = getComputedStyle(canvas).color;
+  const step = BAR_WIDTH + BAR_GAP;
+  const visible = Math.max(1, Math.floor(width / step));
+  const recent = levels.slice(-visible);
+  let x = width - recent.length * step + BAR_GAP / 2;
+  for (const level of recent) {
+    const barHeight = Math.max(MIN_BAR_HEIGHT, Math.round(level * height));
+    const y = (height - barHeight) / 2;
+    if (typeof context.roundRect === "function") {
+      context.beginPath();
+      context.roundRect(x, y, BAR_WIDTH, barHeight, BAR_WIDTH / 2);
+      context.fill();
+    } else {
+      context.fillRect(x, y, BAR_WIDTH, barHeight);
+    }
+    x += step;
+  }
+}
+
+// src/ai-chat/components/Composer.tsx
+import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 function Composer({
   onSend,
   onCancel,
@@ -352,9 +504,9 @@ function Composer({
   onVoiceError,
   maxRecordingSeconds = 120
 }) {
-  const [value, setValue] = React2.useState("");
-  const textareaRef = React2.useRef(null);
-  const caretRef = React2.useRef(null);
+  const [value, setValue] = React3.useState("");
+  const textareaRef = React3.useRef(null);
+  const caretRef = React3.useRef(null);
   const submit = () => {
     const text = value.trim();
     if (!text || busy || disabled) return;
@@ -362,7 +514,7 @@ function Composer({
     setValue("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
-  const insertTranscript = React2.useCallback((text) => {
+  const insertTranscript = React3.useCallback((text) => {
     const el = textareaRef.current;
     setValue((current) => {
       const start = el?.selectionStart ?? current.length;
@@ -381,7 +533,7 @@ function Composer({
     onError: onVoiceError,
     maxSeconds: maxRecordingSeconds
   });
-  React2.useLayoutEffect(() => {
+  React3.useLayoutEffect(() => {
     const caret = caretRef.current;
     const el = textareaRef.current;
     if (caret === null || !el) return;
@@ -405,32 +557,51 @@ function Composer({
   };
   const recording = voice.status === "recording";
   const transcribing = voice.status === "transcribing";
-  const voiceMessage = recording ? `${labels.voiceRecording} \xB7 ${formatElapsed(voice.seconds)}` : transcribing ? labels.voiceTranscribing : voice.error === "denied" ? labels.voiceDenied : voice.error === "failed" ? labels.voiceFailed : null;
-  return /* @__PURE__ */ jsxs(
+  const voiceMessage = voice.error === "denied" ? labels.voiceDenied : voice.error === "failed" ? labels.voiceFailed : null;
+  const spokenOnly = transcribing ? labels.voiceTranscribing : voice.notice === "silent" ? labels.voiceSilent : null;
+  const voiceLimitText = labels.voiceLimit.replace("{seconds}", String(voice.limitSeconds));
+  const nearCap = recording && voice.limitSeconds - voice.seconds <= 10;
+  return /* @__PURE__ */ jsxs2(
     "div",
     {
       "data-slot": "ai-chat-composer",
       className: "border-t border-border-subtle bg-bg-default px-3.5 py-3",
       children: [
-        voiceMessage && /* @__PURE__ */ jsxs(
-          "p",
+        recording && /* @__PURE__ */ jsxs2(
+          "div",
           {
-            "aria-live": "polite",
-            className: cn(
-              /* 🔴 `text-text-body` ไม่ใช่ `text-text-tertiary` — วัดในเบราว์เซอร์: tertiary = rgb(155,155,155)
-               * บนพื้นขาว = **2.78:1** ตกเกณฑ์ 4.5 ของข้อความ · บรรทัดนี้เป็นสถานะที่ต้องอ่านออกจริง
-               * (ไมค์เปิดอยู่ / กำลังแปลง) ไม่ใช่คำใบ้ประดับ · body = 6.99:1 */
-              "mb-2 flex items-center gap-1.5 text-caption",
-              voice.error ? "text-error-red-600" : "text-text-body"
-            ),
+            "data-slot": "ai-chat-voice-strip",
+            className: "mb-2 flex items-center gap-2.5 rounded-xl bg-bg-subtle px-3 py-1.5",
             children: [
-              recording && /* @__PURE__ */ jsx("span", { "aria-hidden": true, className: "size-2 shrink-0 rounded-full bg-error-red-600" }),
-              /* @__PURE__ */ jsx("span", { className: "min-w-0 flex-1", children: voiceMessage }),
-              recording && /* @__PURE__ */ jsx("span", { className: "shrink-0 text-text-body", children: labels.voiceLimit.replace("{seconds}", String(voice.limitSeconds)) })
+              /* @__PURE__ */ jsx2(
+                "span",
+                {
+                  "aria-hidden": true,
+                  className: "size-2 shrink-0 rounded-full bg-error-red-600 animate-pulse motion-reduce:animate-none"
+                }
+              ),
+              /* @__PURE__ */ jsx2(
+                "span",
+                {
+                  "aria-hidden": true,
+                  title: voiceLimitText,
+                  className: cn(
+                    "shrink-0 text-caption tabular-nums",
+                    /* body = 6.99:1 บนพื้นขาว — เวลาที่กำลังเดินต้องอ่านออกจริง ไม่ใช่คำใบ้ประดับ (tertiary ตก 4.5) */
+                    nearCap ? "text-error-red-600" : "text-text-body"
+                  ),
+                  children: formatElapsed(voice.seconds)
+                }
+              ),
+              /* @__PURE__ */ jsx2(VoiceWaveform, { stream: voice.stream, className: "flex-1" }),
+              /* @__PURE__ */ jsx2("span", { "aria-hidden": true, className: "shrink-0 text-caption tabular-nums text-text-body", children: formatElapsed(voice.limitSeconds) }),
+              /* @__PURE__ */ jsx2("span", { className: "sr-only", "aria-live": "polite", children: `${labels.voiceRecording} \xB7 ${formatElapsed(voice.seconds)} \xB7 ${voiceLimitText}` })
             ]
           }
         ),
-        /* @__PURE__ */ jsxs(
+        voiceMessage && /* @__PURE__ */ jsx2("p", { "aria-live": "polite", className: "mb-2 flex items-center gap-1.5 text-caption text-error-red-600", children: /* @__PURE__ */ jsx2("span", { className: "min-w-0 flex-1", children: voiceMessage }) }),
+        spokenOnly && /* @__PURE__ */ jsx2("span", { className: "sr-only", "aria-live": "polite", children: spokenOnly }),
+        /* @__PURE__ */ jsxs2(
           "div",
           {
             "data-slot": "ai-chat-composer-box",
@@ -439,7 +610,7 @@ function Composer({
               "focus-within:border-brand-active focus-within:bg-bg-default focus-within:ring-1 focus-within:ring-brand-active"
             ),
             children: [
-              /* @__PURE__ */ jsx(
+              /* @__PURE__ */ jsx2(
                 "textarea",
                 {
                   ref: textareaRef,
@@ -459,9 +630,9 @@ function Composer({
                   )
                 }
               ),
-              /* @__PURE__ */ jsxs("div", { className: "mt-1.5 flex items-center justify-between gap-2", children: [
-                /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-0.5", children: [
-                  voice.supported && /* @__PURE__ */ jsx(
+              /* @__PURE__ */ jsxs2("div", { className: "mt-1.5 flex items-center justify-between gap-2", children: [
+                /* @__PURE__ */ jsxs2("div", { className: "flex items-center gap-0.5", children: [
+                  voice.supported && /* @__PURE__ */ jsx2(
                     "button",
                     {
                       type: "button",
@@ -477,10 +648,10 @@ function Composer({
                           "text-text-body hover:bg-overlay-hover hover:text-text-body"
                         )
                       ),
-                      children: transcribing ? /* @__PURE__ */ jsx(Loader2, { className: "size-4 animate-spin" }) : recording ? /* @__PURE__ */ jsx(Square, { className: "size-4 fill-current" }) : /* @__PURE__ */ jsx(Mic, { className: "size-4" })
+                      children: transcribing ? /* @__PURE__ */ jsx2(Loader2, { className: "size-4 animate-spin" }) : recording ? /* @__PURE__ */ jsx2(Square, { className: "size-4 fill-current" }) : /* @__PURE__ */ jsx2(Mic, { className: "size-4" })
                     }
                   ),
-                  recording && /* @__PURE__ */ jsx(
+                  recording && /* @__PURE__ */ jsx2(
                     "button",
                     {
                       type: "button",
@@ -491,11 +662,11 @@ function Composer({
                         "flex size-8 shrink-0 items-center justify-center rounded-full transition-colors cursor-pointer",
                         "text-text-body hover:bg-overlay-hover hover:text-text-body"
                       ),
-                      children: /* @__PURE__ */ jsx(Trash2, { className: "size-4" })
+                      children: /* @__PURE__ */ jsx2(Trash2, { className: "size-4" })
                     }
                   )
                 ] }),
-                /* @__PURE__ */ jsx(
+                /* @__PURE__ */ jsx2(
                   "button",
                   {
                     type: "button",
@@ -512,7 +683,7 @@ function Composer({
                         "bg-brand text-text-black hover:bg-brand-hover hover:text-brand-foreground"
                       )
                     ),
-                    children: busy ? /* @__PURE__ */ jsx(Square, { className: "size-4 fill-current" }) : /* @__PURE__ */ jsx(ArrowUp, { className: "size-4" })
+                    children: busy ? /* @__PURE__ */ jsx2(Square, { className: "size-4 fill-current" }) : /* @__PURE__ */ jsx2(ArrowUp, { className: "size-4" })
                   }
                 )
               ] })
@@ -529,7 +700,7 @@ function formatElapsed(seconds) {
 }
 
 // src/ai-chat/components/ContextMeter.tsx
-import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
 var WARN_AT = 0.8;
 function ContextMeter({ usage, labels, className }) {
   if (!usage || usage.limit <= 0) return null;
@@ -540,7 +711,7 @@ function ContextMeter({ usage, labels, className }) {
     fill(labels.contextTooltip, { used: format(usage.used), limit: format(usage.limit) }),
     usage.trimmed ? labels.contextTrimmed : null
   ].filter(Boolean).join("\n");
-  return /* @__PURE__ */ jsxs2(
+  return /* @__PURE__ */ jsxs3(
     "div",
     {
       "data-slot": "ai-chat-context-meter",
@@ -548,7 +719,7 @@ function ContextMeter({ usage, labels, className }) {
       "aria-label": tooltip,
       className: cn("flex shrink-0 items-center gap-1.5", className),
       children: [
-        /* @__PURE__ */ jsx2("div", { className: "h-1 w-10 overflow-hidden rounded-full bg-gray-200", children: /* @__PURE__ */ jsx2(
+        /* @__PURE__ */ jsx3("div", { className: "h-1 w-10 overflow-hidden rounded-full bg-gray-200", children: /* @__PURE__ */ jsx3(
           "div",
           {
             style: { width: `${Math.min(100, Math.max(2, percent))}%` },
@@ -558,7 +729,7 @@ function ContextMeter({ usage, labels, className }) {
             )
           }
         ) }),
-        /* @__PURE__ */ jsxs2(
+        /* @__PURE__ */ jsxs3(
           "span",
           {
             className: cn(
@@ -586,9 +757,9 @@ function fill(template, values) {
 }
 
 // src/ai-chat/components/ConversationPicker.tsx
-import * as React3 from "react";
+import * as React4 from "react";
 import { Loader2 as Loader22, MessageSquare, Search } from "lucide-react";
-import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
+import { jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
 var LIST_CAP = 100;
 function relativeTime(iso, labels) {
   const date = new Date(iso);
@@ -610,10 +781,10 @@ function startedToday(iso) {
 }
 var displayTitle = (item, labels) => item.title || item.preview || labels.historyUntitled;
 function ConversationPicker({ load, onPick, activeId, labels }) {
-  const [items, setItems] = React3.useState(null);
-  const [error, setError] = React3.useState(null);
-  const [query, setQuery] = React3.useState("");
-  React3.useEffect(() => {
+  const [items, setItems] = React4.useState(null);
+  const [error, setError] = React4.useState(null);
+  const [query, setQuery] = React4.useState("");
+  React4.useEffect(() => {
     let cancelled = false;
     load().then((result) => {
       if (!cancelled) setItems(result);
@@ -624,7 +795,7 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
       cancelled = true;
     };
   }, [load]);
-  const matched = React3.useMemo(() => {
+  const matched = React4.useMemo(() => {
     if (!items) return null;
     const needle = query.trim().toLowerCase();
     if (!needle) return items;
@@ -632,17 +803,17 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
       (item) => `${item.title ?? ""} ${item.preview ?? ""}`.toLowerCase().includes(needle)
     );
   }, [items, query]);
-  const groups = React3.useMemo(() => {
+  const groups = React4.useMemo(() => {
     if (!matched) return null;
     return {
       today: matched.filter((item) => startedToday(item.createdAt)),
       earlier: matched.filter((item) => !startedToday(item.createdAt))
     };
   }, [matched]);
-  return /* @__PURE__ */ jsxs3("div", { "data-slot": "ai-chat-history", className: "flex min-h-0 flex-1 flex-col bg-bg-default", children: [
-    /* @__PURE__ */ jsx3("div", { className: "px-4 pt-3 pb-2", children: /* @__PURE__ */ jsxs3("label", { className: "flex items-center gap-2 rounded-xl border border-border-default bg-bg-subtle px-3 py-2 focus-within:border-brand-active focus-within:bg-bg-default", children: [
-      /* @__PURE__ */ jsx3(Search, { className: "size-4 shrink-0 text-text-tertiary", "aria-hidden": true }),
-      /* @__PURE__ */ jsx3(
+  return /* @__PURE__ */ jsxs4("div", { "data-slot": "ai-chat-history", className: "flex min-h-0 flex-1 flex-col bg-bg-default", children: [
+    /* @__PURE__ */ jsx4("div", { className: "px-4 pt-3 pb-2", children: /* @__PURE__ */ jsxs4("label", { className: "flex items-center gap-2 rounded-xl border border-border-default bg-bg-subtle px-3 py-2 focus-within:border-brand-active focus-within:bg-bg-default", children: [
+      /* @__PURE__ */ jsx4(Search, { className: "size-4 shrink-0 text-text-tertiary", "aria-hidden": true }),
+      /* @__PURE__ */ jsx4(
         "input",
         {
           type: "search",
@@ -654,17 +825,17 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
         }
       )
     ] }) }),
-    error ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-error-red-600", children: error }) : !groups ? /* @__PURE__ */ jsx3("div", { className: "flex flex-1 items-center justify-center", children: /* @__PURE__ */ jsx3(Loader22, { className: "size-4 animate-spin text-text-tertiary" }) }) : items && items.length === 0 ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.emptyHint }) : groups.today.length + groups.earlier.length === 0 ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.historyNoMatch }) : /* @__PURE__ */ jsxs3("ul", { className: "min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2.5 pb-3", children: [
-      groups.today.length > 0 && /* @__PURE__ */ jsx3(GroupHeading, { children: labels.historyToday }),
-      groups.today.map((item) => /* @__PURE__ */ jsx3(Row, { item, activeId, labels, onPick }, item.id)),
-      groups.earlier.length > 0 && /* @__PURE__ */ jsx3(GroupHeading, { children: labels.historyEarlier }),
-      groups.earlier.map((item) => /* @__PURE__ */ jsx3(Row, { item, activeId, labels, onPick }, item.id))
+    error ? /* @__PURE__ */ jsx4("p", { className: "px-4 py-3 text-caption text-error-red-600", children: error }) : !groups ? /* @__PURE__ */ jsx4("div", { className: "flex flex-1 items-center justify-center", children: /* @__PURE__ */ jsx4(Loader22, { className: "size-4 animate-spin text-text-tertiary" }) }) : items && items.length === 0 ? /* @__PURE__ */ jsx4("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.emptyHint }) : groups.today.length + groups.earlier.length === 0 ? /* @__PURE__ */ jsx4("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.historyNoMatch }) : /* @__PURE__ */ jsxs4("ul", { className: "min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2.5 pb-3", children: [
+      groups.today.length > 0 && /* @__PURE__ */ jsx4(GroupHeading, { children: labels.historyToday }),
+      groups.today.map((item) => /* @__PURE__ */ jsx4(Row, { item, activeId, labels, onPick }, item.id)),
+      groups.earlier.length > 0 && /* @__PURE__ */ jsx4(GroupHeading, { children: labels.historyEarlier }),
+      groups.earlier.map((item) => /* @__PURE__ */ jsx4(Row, { item, activeId, labels, onPick }, item.id))
     ] }),
-    items && items.length >= LIST_CAP && /* @__PURE__ */ jsx3("p", { className: "border-t border-border-subtle px-4 py-2 text-[11px] text-text-tertiary", children: labels.historyCapped.replace("{count}", String(items.length)) })
+    items && items.length >= LIST_CAP && /* @__PURE__ */ jsx4("p", { className: "border-t border-border-subtle px-4 py-2 text-[11px] text-text-tertiary", children: labels.historyCapped.replace("{count}", String(items.length)) })
   ] });
 }
 function GroupHeading({ children }) {
-  return /* @__PURE__ */ jsx3(
+  return /* @__PURE__ */ jsx4(
     "li",
     {
       role: "presentation",
@@ -680,7 +851,7 @@ function Row({
   onPick
 }) {
   const active = item.id === activeId;
-  return /* @__PURE__ */ jsx3("li", { children: /* @__PURE__ */ jsxs3(
+  return /* @__PURE__ */ jsx4("li", { children: /* @__PURE__ */ jsxs4(
     "button",
     {
       type: "button",
@@ -691,39 +862,39 @@ function Row({
         active ? "bg-brand-subtle" : "hover:bg-bg-subtle"
       ),
       children: [
-        /* @__PURE__ */ jsx3(
+        /* @__PURE__ */ jsx4(
           "span",
           {
             className: cn(
               "flex size-9 shrink-0 items-center justify-center rounded-xl",
               active ? "bg-brand text-text-black" : "bg-bg-subtle text-text-body"
             ),
-            children: /* @__PURE__ */ jsx3(MessageSquare, { className: "size-4", "aria-hidden": true })
+            children: /* @__PURE__ */ jsx4(MessageSquare, { className: "size-4", "aria-hidden": true })
           }
         ),
-        /* @__PURE__ */ jsxs3("span", { className: "min-w-0 flex-1", children: [
-          /* @__PURE__ */ jsx3("span", { className: "block truncate text-body-sm font-medium text-text-black", children: displayTitle(item, labels) }),
-          item.preview && item.title && /* @__PURE__ */ jsx3("span", { className: "block truncate text-[12px] text-text-tertiary", children: item.preview })
+        /* @__PURE__ */ jsxs4("span", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsx4("span", { className: "block truncate text-body-sm font-medium text-text-black", children: displayTitle(item, labels) }),
+          item.preview && item.title && /* @__PURE__ */ jsx4("span", { className: "block truncate text-[12px] text-text-tertiary", children: item.preview })
         ] }),
-        /* @__PURE__ */ jsx3("span", { className: "shrink-0 text-[11px] text-text-tertiary", children: relativeTime(item.createdAt, labels) })
+        /* @__PURE__ */ jsx4("span", { className: "shrink-0 text-[11px] text-text-tertiary", children: relativeTime(item.createdAt, labels) })
       ]
     }
   ) });
 }
 
 // src/ai-chat/components/MessageList.tsx
-import * as React7 from "react";
+import * as React8 from "react";
 import { Sparkles } from "lucide-react";
 
 // src/ai-chat/components/MessageBubble.tsx
 import { CircleCheck, CircleSlash } from "lucide-react";
 
 // src/ai-chat/components/Markdown.tsx
-import * as React4 from "react";
+import * as React5 from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { ExternalLink, CornerDownRight } from "lucide-react";
-import { Fragment, jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
+import { Fragment, jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
 var hooked = false;
 function ensureLinkHardening() {
   if (hooked || typeof window === "undefined") return;
@@ -744,8 +915,8 @@ function Markdown({
   className,
   labels
 }) {
-  const [choice, setChoice] = React4.useState(null);
-  const html = React4.useMemo(() => {
+  const [choice, setChoice] = React5.useState(null);
+  const html = React5.useMemo(() => {
     if (typeof window === "undefined") return null;
     ensureLinkHardening();
     try {
@@ -772,9 +943,9 @@ function Markdown({
       y: Math.min(originY + EDGE_GAP, window.innerHeight - POPOVER_HEIGHT - EDGE_GAP)
     });
   };
-  if (html === null) return /* @__PURE__ */ jsx4(Fragment, { children: text });
-  return /* @__PURE__ */ jsxs4(Fragment, { children: [
-    /* @__PURE__ */ jsx4(
+  if (html === null) return /* @__PURE__ */ jsx5(Fragment, { children: text });
+  return /* @__PURE__ */ jsxs5(Fragment, { children: [
+    /* @__PURE__ */ jsx5(
       "div",
       {
         onClick,
@@ -799,7 +970,7 @@ function Markdown({
         dangerouslySetInnerHTML: { __html: html }
       }
     ),
-    choice && labels ? /* @__PURE__ */ jsx4(LinkChoicePopover, { choice, labels, onClose: () => setChoice(null) }) : null
+    choice && labels ? /* @__PURE__ */ jsx5(LinkChoicePopover, { choice, labels, onClose: () => setChoice(null) }) : null
   ] });
 }
 function LinkChoicePopover({
@@ -807,8 +978,8 @@ function LinkChoicePopover({
   labels,
   onClose
 }) {
-  const ref = React4.useRef(null);
-  React4.useEffect(() => {
+  const ref = React5.useRef(null);
+  React5.useEffect(() => {
     ref.current?.querySelector("button")?.focus();
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -828,7 +999,7 @@ function LinkChoicePopover({
     else window.location.assign(choice.href);
     onClose();
   };
-  return /* @__PURE__ */ jsxs4(
+  return /* @__PURE__ */ jsxs5(
     "div",
     {
       ref,
@@ -838,19 +1009,19 @@ function LinkChoicePopover({
       style: { left: choice.x, top: choice.y, width: POPOVER_WIDTH },
       className: "fixed z-10 overflow-hidden rounded-lg border border-border-default bg-bg-default py-1 shadow-lg",
       children: [
-        /* @__PURE__ */ jsx4("p", { className: "truncate px-3 pb-1 text-caption text-text-body", children: hostOf(choice.href) }),
-        /* @__PURE__ */ jsx4(
+        /* @__PURE__ */ jsx5("p", { className: "truncate px-3 pb-1 text-caption text-text-body", children: hostOf(choice.href) }),
+        /* @__PURE__ */ jsx5(
           LinkChoiceItem,
           {
-            icon: /* @__PURE__ */ jsx4(CornerDownRight, { className: "size-3.5 shrink-0" }),
+            icon: /* @__PURE__ */ jsx5(CornerDownRight, { className: "size-3.5 shrink-0" }),
             label: labels.linkOpenHere,
             onClick: () => open(false)
           }
         ),
-        /* @__PURE__ */ jsx4(
+        /* @__PURE__ */ jsx5(
           LinkChoiceItem,
           {
-            icon: /* @__PURE__ */ jsx4(ExternalLink, { className: "size-3.5 shrink-0" }),
+            icon: /* @__PURE__ */ jsx5(ExternalLink, { className: "size-3.5 shrink-0" }),
             label: labels.linkOpenNewTab,
             onClick: () => open(true)
           }
@@ -864,7 +1035,7 @@ function LinkChoiceItem({
   label,
   onClick
 }) {
-  return /* @__PURE__ */ jsxs4(
+  return /* @__PURE__ */ jsxs5(
     "button",
     {
       type: "button",
@@ -873,7 +1044,7 @@ function LinkChoiceItem({
       className: "flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-caption text-text-black hover:bg-brand-subtle hover:text-brand-hover",
       children: [
         icon,
-        /* @__PURE__ */ jsx4("span", { className: "truncate", children: label })
+        /* @__PURE__ */ jsx5("span", { className: "truncate", children: label })
       ]
     }
   );
@@ -887,12 +1058,12 @@ function hostOf(href) {
 }
 
 // src/ai-chat/components/ToolTrail.tsx
-import * as React5 from "react";
+import * as React6 from "react";
 import { Check, Loader2 as Loader23, TriangleAlert } from "lucide-react";
-import { jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
+import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
 function ToolTrail({ tools }) {
   if (tools.length === 0) return null;
-  return /* @__PURE__ */ jsx5("ul", { className: "mb-2 flex flex-col gap-1", "data-slot": "ai-chat-tool-trail", children: tools.map((tool, index) => /* @__PURE__ */ jsxs5(
+  return /* @__PURE__ */ jsx6("ul", { className: "mb-2 flex flex-col gap-1", "data-slot": "ai-chat-tool-trail", children: tools.map((tool, index) => /* @__PURE__ */ jsxs6(
     "li",
     {
       className: cn(
@@ -900,22 +1071,22 @@ function ToolTrail({ tools }) {
         tool.status === "error" ? "text-error-red-600" : "text-gray-500"
       ),
       children: [
-        /* @__PURE__ */ jsx5(ToolIcon, { status: tool.status }),
-        /* @__PURE__ */ jsx5("span", { className: cn(tool.status === "done" && "line-through decoration-gray-300"), children: tool.label_th }),
-        tool.status === "start" && /* @__PURE__ */ jsx5(Elapsed, { since: tool.startedAt })
+        /* @__PURE__ */ jsx6(ToolIcon, { status: tool.status }),
+        /* @__PURE__ */ jsx6("span", { className: cn(tool.status === "done" && "line-through decoration-gray-300"), children: tool.label_th }),
+        tool.status === "start" && /* @__PURE__ */ jsx6(Elapsed, { since: tool.startedAt })
       ]
     },
     `${tool.label_th}-${index}`
   )) });
 }
 function Elapsed({ since }) {
-  const [seconds, setSeconds] = React5.useState(() => elapsedSeconds(since));
-  React5.useEffect(() => {
+  const [seconds, setSeconds] = React6.useState(() => elapsedSeconds(since));
+  React6.useEffect(() => {
     const timer = setInterval(() => setSeconds(elapsedSeconds(since)), 1e3);
     return () => clearInterval(timer);
   }, [since]);
   if (seconds < 3) return null;
-  return /* @__PURE__ */ jsxs5("span", { className: "tabular-nums opacity-60", children: [
+  return /* @__PURE__ */ jsxs6("span", { className: "tabular-nums opacity-60", children: [
     "(",
     seconds,
     " \u0E27\u0E34)"
@@ -923,15 +1094,15 @@ function Elapsed({ since }) {
 }
 var elapsedSeconds = (since) => Math.floor((Date.now() - since) / 1e3);
 function ToolIcon({ status }) {
-  if (status === "start") return /* @__PURE__ */ jsx5(Loader23, { className: "size-3.5 shrink-0 animate-spin" });
-  if (status === "error") return /* @__PURE__ */ jsx5(TriangleAlert, { className: "size-3.5 shrink-0" });
-  return /* @__PURE__ */ jsx5(Check, { className: "size-3.5 shrink-0 text-success-green-600" });
+  if (status === "start") return /* @__PURE__ */ jsx6(Loader23, { className: "size-3.5 shrink-0 animate-spin" });
+  if (status === "error") return /* @__PURE__ */ jsx6(TriangleAlert, { className: "size-3.5 shrink-0" });
+  return /* @__PURE__ */ jsx6(Check, { className: "size-3.5 shrink-0 text-success-green-600" });
 }
 
 // src/ai-chat/components/WidgetRenderer.tsx
-import * as React6 from "react";
+import * as React7 from "react";
 import { CircleAlert, Loader2 as Loader24, TriangleAlert as TriangleAlert2 } from "lucide-react";
-import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
+import { jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
 function WidgetRenderer({
   widget,
   onAction,
@@ -942,7 +1113,7 @@ function WidgetRenderer({
 }) {
   switch (widget.type) {
     case "confirm":
-      return /* @__PURE__ */ jsx6(
+      return /* @__PURE__ */ jsx7(
         ConfirmCard,
         {
           payload: widget.payload,
@@ -954,7 +1125,7 @@ function WidgetRenderer({
         }
       );
     case "error_card":
-      return /* @__PURE__ */ jsx6(
+      return /* @__PURE__ */ jsx7(
         ErrorCard,
         {
           payload: widget.payload,
@@ -964,7 +1135,7 @@ function WidgetRenderer({
         }
       );
     case "staff_picker":
-      return /* @__PURE__ */ jsx6(
+      return /* @__PURE__ */ jsx7(
         StaffPicker,
         {
           payload: widget.payload,
@@ -974,11 +1145,11 @@ function WidgetRenderer({
         }
       );
     case "summary_stats":
-      return /* @__PURE__ */ jsx6(SummaryStats, { payload: widget.payload });
+      return /* @__PURE__ */ jsx7(SummaryStats, { payload: widget.payload });
     case "schedule_diff":
-      return /* @__PURE__ */ jsx6(ScheduleDiff, { payload: widget.payload });
+      return /* @__PURE__ */ jsx7(ScheduleDiff, { payload: widget.payload });
     default:
-      return /* @__PURE__ */ jsx6(Frame, { children: /* @__PURE__ */ jsxs6("p", { className: "text-caption text-gray-500", children: [
+      return /* @__PURE__ */ jsx7(Frame, { children: /* @__PURE__ */ jsxs7("p", { className: "text-caption text-gray-500", children: [
         "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E1B\u0E23\u0E30\u0E01\u0E2D\u0E1A (",
         widget.type,
         ")"
@@ -986,7 +1157,7 @@ function WidgetRenderer({
   }
 }
 function Frame({ children, className }) {
-  return /* @__PURE__ */ jsx6(
+  return /* @__PURE__ */ jsx7(
     "div",
     {
       "data-slot": "ai-chat-widget",
@@ -1002,7 +1173,7 @@ function ActionButton({
   disabled,
   loading
 }) {
-  return /* @__PURE__ */ jsxs6(
+  return /* @__PURE__ */ jsxs7(
     "button",
     {
       type: "button",
@@ -1018,29 +1189,29 @@ function ActionButton({
         variant === "primary" ? "bg-brand text-brand-foreground hover:bg-brand-hover" : "border border-brand bg-white text-brand hover:bg-brand-subtle"
       ),
       children: [
-        loading && /* @__PURE__ */ jsx6(Loader24, { "aria-hidden": true, className: "size-3.5 animate-spin" }),
+        loading && /* @__PURE__ */ jsx7(Loader24, { "aria-hidden": true, className: "size-3.5 animate-spin" }),
         children
       ]
     }
   );
 }
 function WaitingRow({ note }) {
-  return /* @__PURE__ */ jsxs6(
+  return /* @__PURE__ */ jsxs7(
     "p",
     {
       "data-slot": "ai-chat-widget-waiting",
       "aria-live": "polite",
       className: "mt-3 flex items-center gap-1.5 text-caption text-text-body",
       children: [
-        /* @__PURE__ */ jsx6(Loader24, { "aria-hidden": true, className: "size-3.5 shrink-0 animate-spin" }),
+        /* @__PURE__ */ jsx7(Loader24, { "aria-hidden": true, className: "size-3.5 shrink-0 animate-spin" }),
         note
       ]
     }
   );
 }
 function usePressed(disabled) {
-  const [pressed, setPressed] = React6.useState(null);
-  React6.useEffect(() => {
+  const [pressed, setPressed] = React7.useState(null);
+  React7.useEffect(() => {
     if (!disabled) setPressed(null);
   }, [disabled]);
   return [pressed, setPressed];
@@ -1059,11 +1230,11 @@ function ConfirmCard({
     setPressed(label);
     onAction(label);
   };
-  return /* @__PURE__ */ jsxs6(Frame, { className: superseded ? "opacity-70" : void 0, children: [
-    /* @__PURE__ */ jsx6("p", { className: "text-body-sm font-semibold text-black", children: payload.title_th }),
-    /* @__PURE__ */ jsx6("p", { className: "mt-1 whitespace-pre-wrap text-body-sm text-gray-600", children: payload.summary_th }),
-    superseded ? /* @__PURE__ */ jsx6("p", { className: "mt-2 text-caption text-text-tertiary", "data-slot": "ai-chat-superseded", children: supersededNote }) : waiting ? /* @__PURE__ */ jsx6(WaitingRow, { note: waitingNote }) : /* @__PURE__ */ jsxs6("div", { className: "mt-3 flex gap-2", children: [
-      /* @__PURE__ */ jsx6(
+  return /* @__PURE__ */ jsxs7(Frame, { className: superseded ? "opacity-70" : void 0, children: [
+    /* @__PURE__ */ jsx7("p", { className: "text-body-sm font-semibold text-black", children: payload.title_th }),
+    /* @__PURE__ */ jsx7("p", { className: "mt-1 whitespace-pre-wrap text-body-sm text-gray-600", children: payload.summary_th }),
+    superseded ? /* @__PURE__ */ jsx7("p", { className: "mt-2 text-caption text-text-tertiary", "data-slot": "ai-chat-superseded", children: supersededNote }) : waiting ? /* @__PURE__ */ jsx7(WaitingRow, { note: waitingNote }) : /* @__PURE__ */ jsxs7("div", { className: "mt-3 flex gap-2", children: [
+      /* @__PURE__ */ jsx7(
         ActionButton,
         {
           onClick: () => answer(payload.confirmLabel),
@@ -1072,7 +1243,7 @@ function ConfirmCard({
           children: payload.confirmLabel
         }
       ),
-      /* @__PURE__ */ jsx6(
+      /* @__PURE__ */ jsx7(
         ActionButton,
         {
           variant: "secondary",
@@ -1094,25 +1265,25 @@ function ErrorCard({
   const [pressed, setPressed] = usePressed(disabled);
   const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
   const isError = payload.severity === "error";
-  return /* @__PURE__ */ jsx6(
+  return /* @__PURE__ */ jsx7(
     Frame,
     {
       className: isError ? "border-error-red-100 bg-error-red-50" : "border-warning-yellow-200 bg-warning-yellow-50",
-      children: /* @__PURE__ */ jsxs6("div", { className: "flex items-start gap-2", children: [
-        isError ? /* @__PURE__ */ jsx6(CircleAlert, { className: "mt-0.5 size-4 shrink-0 text-error-red-600" }) : /* @__PURE__ */ jsx6(TriangleAlert2, { className: "mt-0.5 size-4 shrink-0 text-warning-normal" }),
-        /* @__PURE__ */ jsxs6("div", { className: "min-w-0 flex-1", children: [
-          /* @__PURE__ */ jsxs6("p", { className: "text-body-sm font-semibold text-black", children: [
+      children: /* @__PURE__ */ jsxs7("div", { className: "flex items-start gap-2", children: [
+        isError ? /* @__PURE__ */ jsx7(CircleAlert, { className: "mt-0.5 size-4 shrink-0 text-error-red-600" }) : /* @__PURE__ */ jsx7(TriangleAlert2, { className: "mt-0.5 size-4 shrink-0 text-warning-normal" }),
+        /* @__PURE__ */ jsxs7("div", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsxs7("p", { className: "text-body-sm font-semibold text-black", children: [
             payload.code,
             " \u2014 ",
             payload.message_th
           ] }),
-          payload.location && /* @__PURE__ */ jsxs6("p", { className: "mt-1 text-caption text-gray-600", children: [
+          payload.location && /* @__PURE__ */ jsxs7("p", { className: "mt-1 text-caption text-gray-600", children: [
             payload.location.date,
             " \xB7 \u0E40\u0E27\u0E23 ",
             payload.location.shiftType
           ] }),
-          payload.fixActions.length > 0 && waiting && /* @__PURE__ */ jsx6(WaitingRow, { note: waitingNote }),
-          payload.fixActions.length > 0 && !waiting && /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-wrap gap-2", children: payload.fixActions.map((fix) => /* @__PURE__ */ jsx6(
+          payload.fixActions.length > 0 && waiting && /* @__PURE__ */ jsx7(WaitingRow, { note: waitingNote }),
+          payload.fixActions.length > 0 && !waiting && /* @__PURE__ */ jsx7("div", { className: "mt-2 flex flex-wrap gap-2", children: payload.fixActions.map((fix) => /* @__PURE__ */ jsx7(
             ActionButton,
             {
               variant: "secondary",
@@ -1139,11 +1310,11 @@ function StaffPicker({
 }) {
   const [pressed, setPressed] = usePressed(disabled);
   const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
-  return /* @__PURE__ */ jsxs6(Frame, { children: [
-    /* @__PURE__ */ jsx6("p", { className: "text-body-sm text-gray-700", children: payload.prompt_th }),
-    /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-col gap-1", children: payload.candidates.map((candidate) => {
+  return /* @__PURE__ */ jsxs7(Frame, { children: [
+    /* @__PURE__ */ jsx7("p", { className: "text-body-sm text-gray-700", children: payload.prompt_th }),
+    /* @__PURE__ */ jsx7("div", { className: "mt-2 flex flex-col gap-1", children: payload.candidates.map((candidate) => {
       const busy = Boolean(disabled) && pressed === candidate.displayName;
-      return /* @__PURE__ */ jsxs6(
+      return /* @__PURE__ */ jsxs7(
         "button",
         {
           type: "button",
@@ -1159,23 +1330,23 @@ function StaffPicker({
             busy && "disabled:opacity-100 border-brand bg-brand-subtle"
           ),
           children: [
-            busy && /* @__PURE__ */ jsx6(Loader24, { "aria-hidden": true, className: "size-3.5 shrink-0 animate-spin text-brand" }),
-            /* @__PURE__ */ jsx6("span", { className: "text-body-sm font-medium text-black", children: candidate.displayName }),
-            candidate.subUnit && /* @__PURE__ */ jsx6("span", { className: "text-caption text-gray-500", children: candidate.subUnit }),
-            candidate.hint && /* @__PURE__ */ jsx6("span", { className: "text-caption text-gray-400", children: candidate.hint })
+            busy && /* @__PURE__ */ jsx7(Loader24, { "aria-hidden": true, className: "size-3.5 shrink-0 animate-spin text-brand" }),
+            /* @__PURE__ */ jsx7("span", { className: "text-body-sm font-medium text-black", children: candidate.displayName }),
+            candidate.subUnit && /* @__PURE__ */ jsx7("span", { className: "text-caption text-gray-500", children: candidate.subUnit }),
+            candidate.hint && /* @__PURE__ */ jsx7("span", { className: "text-caption text-gray-400", children: candidate.hint })
           ]
         },
         candidate.userId
       );
     }) }),
-    waiting && /* @__PURE__ */ jsx6(WaitingRow, { note: waitingNote })
+    waiting && /* @__PURE__ */ jsx7(WaitingRow, { note: waitingNote })
   ] });
 }
 function SummaryStats({ payload }) {
-  return /* @__PURE__ */ jsxs6(Frame, { children: [
-    /* @__PURE__ */ jsx6("dl", { className: "grid grid-cols-2 gap-2", children: payload.stats.map((stat) => /* @__PURE__ */ jsxs6("div", { className: "rounded-sm bg-gray-50 px-2 py-1.5", children: [
-      /* @__PURE__ */ jsx6("dt", { className: "text-caption text-gray-500", children: stat.label_th }),
-      /* @__PURE__ */ jsx6(
+  return /* @__PURE__ */ jsxs7(Frame, { children: [
+    /* @__PURE__ */ jsx7("dl", { className: "grid grid-cols-2 gap-2", children: payload.stats.map((stat) => /* @__PURE__ */ jsxs7("div", { className: "rounded-sm bg-gray-50 px-2 py-1.5", children: [
+      /* @__PURE__ */ jsx7("dt", { className: "text-caption text-gray-500", children: stat.label_th }),
+      /* @__PURE__ */ jsx7(
         "dd",
         {
           className: cn(
@@ -1188,15 +1359,15 @@ function SummaryStats({ payload }) {
         }
       )
     ] }, stat.label_th)) }),
-    payload.warnings_th.length > 0 && /* @__PURE__ */ jsx6("ul", { className: "mt-2 flex flex-col gap-1", children: payload.warnings_th.map((warning) => /* @__PURE__ */ jsxs6("li", { className: "text-caption text-warning-normal", children: [
+    payload.warnings_th.length > 0 && /* @__PURE__ */ jsx7("ul", { className: "mt-2 flex flex-col gap-1", children: payload.warnings_th.map((warning) => /* @__PURE__ */ jsxs7("li", { className: "text-caption text-warning-normal", children: [
       "\u2022 ",
       warning
     ] }, warning)) })
   ] });
 }
 function ScheduleDiff({ payload }) {
-  return /* @__PURE__ */ jsxs6(Frame, { className: "overflow-x-auto", children: [
-    /* @__PURE__ */ jsxs6("p", { className: "mb-2 text-caption text-gray-500", children: [
+  return /* @__PURE__ */ jsxs7(Frame, { className: "overflow-x-auto", children: [
+    /* @__PURE__ */ jsxs7("p", { className: "mb-2 text-caption text-gray-500", children: [
       "\u0E15\u0E32\u0E23\u0E32\u0E07\u0E40\u0E27\u0E23 #",
       payload.scheduleId,
       " \xB7 \u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E0A\u0E31\u0E19 ",
@@ -1205,34 +1376,34 @@ function ScheduleDiff({ payload }) {
       payload.changes.length,
       " \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23"
     ] }),
-    /* @__PURE__ */ jsx6("table", { className: "w-full border-collapse text-body-sm", children: /* @__PURE__ */ jsx6("tbody", { children: payload.changes.map((change, index) => /* @__PURE__ */ jsxs6("tr", { className: "border-b border-border-subtle", children: [
-      /* @__PURE__ */ jsx6("td", { className: "py-1 pr-2 whitespace-nowrap text-gray-600", children: change.date }),
-      /* @__PURE__ */ jsx6("td", { className: "py-1 pr-2 text-gray-400 line-through", children: change.before ?? "\u2014" }),
-      /* @__PURE__ */ jsx6("td", { className: "py-1 font-medium text-black", children: change.after ?? "\u2014" })
+    /* @__PURE__ */ jsx7("table", { className: "w-full border-collapse text-body-sm", children: /* @__PURE__ */ jsx7("tbody", { children: payload.changes.map((change, index) => /* @__PURE__ */ jsxs7("tr", { className: "border-b border-border-subtle", children: [
+      /* @__PURE__ */ jsx7("td", { className: "py-1 pr-2 whitespace-nowrap text-gray-600", children: change.date }),
+      /* @__PURE__ */ jsx7("td", { className: "py-1 pr-2 text-gray-400 line-through", children: change.before ?? "\u2014" }),
+      /* @__PURE__ */ jsx7("td", { className: "py-1 font-medium text-black", children: change.after ?? "\u2014" })
     ] }, `${change.date}-${change.userId}-${index}`)) }) })
   ] });
 }
 
 // src/ai-chat/components/MessageBubble.tsx
-import { jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
+import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
 function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
   if (message.role === "system") {
-    return /* @__PURE__ */ jsxs7("div", { className: "my-2 flex items-center gap-2", "data-slot": "ai-chat-divider", children: [
-      /* @__PURE__ */ jsx7("span", { className: "h-px flex-1 bg-border-subtle" }),
-      /* @__PURE__ */ jsx7("span", { className: "text-[11px] text-text-tertiary", children: message.content }),
-      /* @__PURE__ */ jsx7("span", { className: "h-px flex-1 bg-border-subtle" })
+    return /* @__PURE__ */ jsxs8("div", { className: "my-2 flex items-center gap-2", "data-slot": "ai-chat-divider", children: [
+      /* @__PURE__ */ jsx8("span", { className: "h-px flex-1 bg-border-subtle" }),
+      /* @__PURE__ */ jsx8("span", { className: "text-[11px] text-text-tertiary", children: message.content }),
+      /* @__PURE__ */ jsx8("span", { className: "h-px flex-1 bg-border-subtle" })
     ] });
   }
   const isUser = message.role === "user";
   const lastConfirm = lastConfirmIndex(message.widgets ?? []);
-  return /* @__PURE__ */ jsx7(
+  return /* @__PURE__ */ jsx8(
     "div",
     {
       "data-slot": "ai-chat-message",
       "data-role": message.role,
       className: cn("flex w-full", isUser ? "justify-end" : "justify-start"),
-      children: /* @__PURE__ */ jsxs7("div", { className: cn(isUser ? "flex max-w-[85%] flex-col items-end" : "w-full min-w-0"), children: [
-        /* @__PURE__ */ jsx7(
+      children: /* @__PURE__ */ jsxs8("div", { className: cn(isUser ? "flex max-w-[85%] flex-col items-end" : "w-full min-w-0"), children: [
+        /* @__PURE__ */ jsx8(
           "span",
           {
             className: cn(
@@ -1242,8 +1413,8 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
             children: isUser ? labels.you : labels.assistant
           }
         ),
-        !isUser && message.tools && /* @__PURE__ */ jsx7(ToolTrail, { tools: message.tools }),
-        (message.content || !isUser) && /* @__PURE__ */ jsx7(
+        !isUser && message.tools && /* @__PURE__ */ jsx8(ToolTrail, { tools: message.tools }),
+        (message.content || !isUser) && /* @__PURE__ */ jsx8(
           "div",
           {
             className: cn(
@@ -1269,10 +1440,10 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
                 "text-text-black"
               )
             ),
-            children: isUser ? message.content : message.content ? /* @__PURE__ */ jsx7(Markdown, { text: message.content, labels }) : message.streaming ? /* @__PURE__ */ jsx7(TypingDots, { label: labels.thinking }) : null
+            children: isUser ? message.content : message.content ? /* @__PURE__ */ jsx8(Markdown, { text: message.content, labels }) : message.streaming ? /* @__PURE__ */ jsx8(TypingDots, { label: labels.thinking }) : null
           }
         ),
-        message.widgets?.map((widget, index) => /* @__PURE__ */ jsx7(
+        message.widgets?.map((widget, index) => /* @__PURE__ */ jsx8(
           WidgetRenderer,
           {
             widget,
@@ -1284,7 +1455,7 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
           },
           `${widget.type}-${index}`
         )),
-        message.outcome && /* @__PURE__ */ jsx7(OutcomeBadge, { outcome: message.outcome, labels })
+        message.outcome && /* @__PURE__ */ jsx8(OutcomeBadge, { outcome: message.outcome, labels })
       ] })
     }
   );
@@ -1294,7 +1465,7 @@ function OutcomeBadge({
   labels
 }) {
   if (outcome.committed === void 0) return null;
-  return /* @__PURE__ */ jsxs7(
+  return /* @__PURE__ */ jsxs8(
     "span",
     {
       className: cn(
@@ -1302,21 +1473,21 @@ function OutcomeBadge({
         outcome.committed ? "bg-success-green-background-50 text-success-green-800" : "bg-overlay-hover text-text-body"
       ),
       children: [
-        outcome.committed ? /* @__PURE__ */ jsx7(CircleCheck, { className: "size-3" }) : /* @__PURE__ */ jsx7(CircleSlash, { className: "size-3" }),
+        outcome.committed ? /* @__PURE__ */ jsx8(CircleCheck, { className: "size-3" }) : /* @__PURE__ */ jsx8(CircleSlash, { className: "size-3" }),
         outcome.committed ? labels.committed : labels.notCommitted
       ]
     }
   );
 }
 function TypingDots({ label }) {
-  return /* @__PURE__ */ jsxs7("span", { className: "flex items-center gap-1 text-text-tertiary", "aria-label": label, children: [
-    /* @__PURE__ */ jsx7(Dot, { delay: "0ms" }),
-    /* @__PURE__ */ jsx7(Dot, { delay: "150ms" }),
-    /* @__PURE__ */ jsx7(Dot, { delay: "300ms" })
+  return /* @__PURE__ */ jsxs8("span", { className: "flex items-center gap-1 text-text-tertiary", "aria-label": label, children: [
+    /* @__PURE__ */ jsx8(Dot, { delay: "0ms" }),
+    /* @__PURE__ */ jsx8(Dot, { delay: "150ms" }),
+    /* @__PURE__ */ jsx8(Dot, { delay: "300ms" })
   ] });
 }
 function Dot({ delay }) {
-  return /* @__PURE__ */ jsx7(
+  return /* @__PURE__ */ jsx8(
     "span",
     {
       className: "inline-block size-1.5 animate-bounce rounded-full bg-current",
@@ -1332,7 +1503,7 @@ function lastConfirmIndex(widgets) {
 }
 
 // src/ai-chat/components/MessageList.tsx
-import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
+import { jsx as jsx9, jsxs as jsxs9 } from "react/jsx-runtime";
 function MessageList({
   messages,
   labels,
@@ -1340,16 +1511,16 @@ function MessageList({
   busy,
   suggestions
 }) {
-  const endRef = React7.useRef(null);
-  React7.useEffect(() => {
+  const endRef = React8.useRef(null);
+  React8.useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
   if (messages.length === 0) {
-    return /* @__PURE__ */ jsxs8("div", { className: "flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center", children: [
-      /* @__PURE__ */ jsx8(Sparkles, { className: "size-8 text-brand-active" }),
-      /* @__PURE__ */ jsx8("p", { className: "text-body-sm font-semibold text-text-black", children: labels.emptyTitle }),
-      /* @__PURE__ */ jsx8("p", { className: "text-caption text-text-body", children: labels.emptyHint }),
-      suggestions && suggestions.length > 0 && /* @__PURE__ */ jsx8("div", { className: "mt-4 flex w-full flex-col gap-2", children: suggestions.map((suggestion) => /* @__PURE__ */ jsx8(
+    return /* @__PURE__ */ jsxs9("div", { className: "flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center", children: [
+      /* @__PURE__ */ jsx9(Sparkles, { className: "size-8 text-brand-active" }),
+      /* @__PURE__ */ jsx9("p", { className: "text-body-sm font-semibold text-text-black", children: labels.emptyTitle }),
+      /* @__PURE__ */ jsx9("p", { className: "text-caption text-text-body", children: labels.emptyHint }),
+      suggestions && suggestions.length > 0 && /* @__PURE__ */ jsx9("div", { className: "mt-4 flex w-full flex-col gap-2", children: suggestions.map((suggestion) => /* @__PURE__ */ jsx9(
         "button",
         {
           type: "button",
@@ -1366,13 +1537,13 @@ function MessageList({
       )) })
     ] });
   }
-  return /* @__PURE__ */ jsxs8(
+  return /* @__PURE__ */ jsxs9(
     "div",
     {
       "data-slot": "ai-chat-messages",
       className: "flex flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-4",
       children: [
-        messages.map((message, index) => /* @__PURE__ */ jsx8(
+        messages.map((message, index) => /* @__PURE__ */ jsx9(
           MessageBubble,
           {
             message,
@@ -1382,14 +1553,14 @@ function MessageList({
           },
           message.id
         )),
-        /* @__PURE__ */ jsx8("div", { ref: endRef })
+        /* @__PURE__ */ jsx9("div", { ref: endRef })
       ]
     }
   );
 }
 
 // src/ai-chat/components/ChatDrawer.tsx
-import { Fragment as Fragment2, jsx as jsx9, jsxs as jsxs9 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx10, jsxs as jsxs10 } from "react/jsx-runtime";
 function ChatDrawer(props) {
   const {
     open,
@@ -1413,10 +1584,10 @@ function ChatDrawer(props) {
     contextUsage,
     suggestions
   } = props;
-  const [historyOpen, setHistoryOpen] = React8.useState(false);
+  const [historyOpen, setHistoryOpen] = React9.useState(false);
   const busy = status === "sending" || status === "streaming";
   const starting = status === "starting";
-  return /* @__PURE__ */ jsx9(RadixDialog.Root, { open, onOpenChange, modal: false, children: /* @__PURE__ */ jsx9(RadixDialog.Portal, { children: /* @__PURE__ */ jsxs9(
+  return /* @__PURE__ */ jsx10(RadixDialog.Root, { open, onOpenChange, modal: false, children: /* @__PURE__ */ jsx10(RadixDialog.Portal, { children: /* @__PURE__ */ jsxs10(
     RadixDialog.Content,
     {
       "data-slot": "ai-chat-drawer",
@@ -1434,26 +1605,26 @@ function ChatDrawer(props) {
         position === "bottom-left" ? "data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left" : "data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right"
       ),
       children: [
-        /* @__PURE__ */ jsxs9("header", { className: "flex items-center gap-2 border-b border-border-subtle bg-bg-default px-4 py-3", children: [
-          historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.historyBack, onClick: () => setHistoryOpen(false), children: /* @__PURE__ */ jsx9(ChevronLeft, { className: "size-4" }) }),
-          /* @__PURE__ */ jsxs9("div", { className: "min-w-0 flex-1", children: [
-            /* @__PURE__ */ jsx9(RadixDialog.Title, { className: "truncate text-body-sm font-semibold text-text-black", children: historyOpen ? labels.historyTitle : labels.title }),
-            !historyOpen && mode === "schedule" ? /* @__PURE__ */ jsxs9("p", { className: "mt-0.5 flex min-w-0 items-center gap-1 truncate text-caption font-medium text-brand", children: [
-              /* @__PURE__ */ jsx9(CalendarDays, { className: "size-3 shrink-0", "aria-hidden": true }),
+        /* @__PURE__ */ jsxs10("header", { className: "flex items-center gap-2 border-b border-border-subtle bg-bg-default px-4 py-3", children: [
+          historyOpen && /* @__PURE__ */ jsx10(IconButton, { label: labels.historyBack, onClick: () => setHistoryOpen(false), children: /* @__PURE__ */ jsx10(ChevronLeft, { className: "size-4" }) }),
+          /* @__PURE__ */ jsxs10("div", { className: "min-w-0 flex-1", children: [
+            /* @__PURE__ */ jsx10(RadixDialog.Title, { className: "truncate text-body-sm font-semibold text-text-black", children: historyOpen ? labels.historyTitle : labels.title }),
+            !historyOpen && mode === "schedule" ? /* @__PURE__ */ jsxs10("p", { className: "mt-0.5 flex min-w-0 items-center gap-1 truncate text-caption font-medium text-brand", children: [
+              /* @__PURE__ */ jsx10(CalendarDays, { className: "size-3 shrink-0", "aria-hidden": true }),
               labels.scheduleMode
             ] }) : !historyOpen ? (
               /* คำบรรยายมีเฉพาะหน้าแชท — ในหน้าประวัติ หัวข้อบอกตัวเองครบแล้ว
                  และแถวรายการต้องการความสูงมากกว่าคำอธิบายซ้ำ */
-              /* @__PURE__ */ jsx9("p", { className: "truncate text-caption text-text-body", children: labels.subtitle })
+              /* @__PURE__ */ jsx10("p", { className: "truncate text-caption text-text-body", children: labels.subtitle })
             ) : null
           ] }),
-          !historyOpen && /* @__PURE__ */ jsx9(ContextMeter, { usage: contextUsage ?? null, labels, className: "mr-1" }),
-          !historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.history, onClick: () => setHistoryOpen(true), children: /* @__PURE__ */ jsx9(History, { className: "size-4" }) }),
-          /* @__PURE__ */ jsx9(IconButton, { label: labels.newChat, onClick: onNewChat, children: /* @__PURE__ */ jsx9(Plus, { className: "size-4" }) }),
-          historyOpen && /* @__PURE__ */ jsx9(IconButton, { label: labels.historyClose, onClick: () => setHistoryOpen(false), children: /* @__PURE__ */ jsx9(X, { className: "size-4" }) }),
-          !historyOpen && /* @__PURE__ */ jsx9(RadixDialog.Close, { asChild: true, children: /* @__PURE__ */ jsx9(IconButton, { label: labels.minimize, children: position === "bottom-left" ? /* @__PURE__ */ jsx9(ChevronsLeft, { className: "size-4" }) : /* @__PURE__ */ jsx9(ChevronsRight, { className: "size-4" }) }) })
+          !historyOpen && /* @__PURE__ */ jsx10(ContextMeter, { usage: contextUsage ?? null, labels, className: "mr-1" }),
+          !historyOpen && /* @__PURE__ */ jsx10(IconButton, { label: labels.history, onClick: () => setHistoryOpen(true), children: /* @__PURE__ */ jsx10(History, { className: "size-4" }) }),
+          /* @__PURE__ */ jsx10(IconButton, { label: labels.newChat, onClick: onNewChat, children: /* @__PURE__ */ jsx10(Plus, { className: "size-4" }) }),
+          historyOpen && /* @__PURE__ */ jsx10(IconButton, { label: labels.historyClose, onClick: () => setHistoryOpen(false), children: /* @__PURE__ */ jsx10(X, { className: "size-4" }) }),
+          !historyOpen && /* @__PURE__ */ jsx10(RadixDialog.Close, { asChild: true, children: /* @__PURE__ */ jsx10(IconButton, { label: labels.minimize, children: position === "bottom-left" ? /* @__PURE__ */ jsx10(ChevronsLeft, { className: "size-4" }) : /* @__PURE__ */ jsx10(ChevronsRight, { className: "size-4" }) }) })
         ] }),
-        historyOpen ? /* @__PURE__ */ jsx9(
+        historyOpen ? /* @__PURE__ */ jsx10(
           ConversationPicker,
           {
             load: loadConversations,
@@ -1464,8 +1635,8 @@ function ChatDrawer(props) {
               onPickConversation(id);
             }
           }
-        ) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
-          /* @__PURE__ */ jsx9(
+        ) : /* @__PURE__ */ jsxs10(Fragment2, { children: [
+          /* @__PURE__ */ jsx10(
             StatusBar,
             {
               status,
@@ -1475,7 +1646,7 @@ function ChatDrawer(props) {
               onRetry
             }
           ),
-          /* @__PURE__ */ jsx9(
+          /* @__PURE__ */ jsx10(
             MessageList,
             {
               messages,
@@ -1485,7 +1656,7 @@ function ChatDrawer(props) {
               onWidgetAction: onSend
             }
           ),
-          /* @__PURE__ */ jsx9(
+          /* @__PURE__ */ jsx10(
             Composer,
             {
               onSend,
@@ -1511,12 +1682,12 @@ function StatusBar({
   onRetry
 }) {
   if (status === "error") {
-    return /* @__PURE__ */ jsxs9("div", { className: "flex items-center gap-2 bg-error-red-50 px-4 py-2 text-caption text-error-red-800", children: [
-      /* @__PURE__ */ jsxs9("span", { className: "min-w-0 flex-1", children: [
+    return /* @__PURE__ */ jsxs10("div", { className: "flex items-center gap-2 bg-error-red-50 px-4 py-2 text-caption text-error-red-800", children: [
+      /* @__PURE__ */ jsxs10("span", { className: "min-w-0 flex-1", children: [
         error,
-        transportStatus === "connecting" && /* @__PURE__ */ jsx9("span", { className: "mt-0.5 block text-error-red-800/70", children: labels.reconnecting })
+        transportStatus === "connecting" && /* @__PURE__ */ jsx10("span", { className: "mt-0.5 block text-error-red-800/70", children: labels.reconnecting })
       ] }),
-      /* @__PURE__ */ jsx9(
+      /* @__PURE__ */ jsx10(
         "button",
         {
           type: "button",
@@ -1528,12 +1699,12 @@ function StatusBar({
     ] });
   }
   if (status === "starting" || transportStatus === "connecting") {
-    return /* @__PURE__ */ jsx9("div", { className: "bg-brand-subtle px-4 py-1.5 text-caption text-brand", children: labels.connecting });
+    return /* @__PURE__ */ jsx10("div", { className: "bg-brand-subtle px-4 py-1.5 text-caption text-brand", children: labels.connecting });
   }
   if (transportStatus === "disconnected") {
-    return /* @__PURE__ */ jsxs9("div", { className: "flex items-center gap-2 bg-overlay-hover px-4 py-1.5 text-caption text-text-body", children: [
-      /* @__PURE__ */ jsx9("span", { className: "min-w-0 flex-1 truncate", children: labels.disconnected }),
-      /* @__PURE__ */ jsx9(
+    return /* @__PURE__ */ jsxs10("div", { className: "flex items-center gap-2 bg-overlay-hover px-4 py-1.5 text-caption text-text-body", children: [
+      /* @__PURE__ */ jsx10("span", { className: "min-w-0 flex-1 truncate", children: labels.disconnected }),
+      /* @__PURE__ */ jsx10(
         "button",
         {
           type: "button",
@@ -1546,8 +1717,8 @@ function StatusBar({
   }
   return null;
 }
-var IconButton = React8.forwardRef(function IconButton2({ label, onClick, active, children, ...props }, ref) {
-  return /* @__PURE__ */ jsx9(
+var IconButton = React9.forwardRef(function IconButton2({ label, onClick, active, children, ...props }, ref) {
+  return /* @__PURE__ */ jsx10(
     "button",
     {
       ref,
@@ -1570,9 +1741,9 @@ var IconButton = React8.forwardRef(function IconButton2({ label, onClick, active
 });
 
 // src/ai-chat/components/FloatingButton.tsx
-import * as React9 from "react";
+import * as React10 from "react";
 import { ChevronsLeft as ChevronsLeft2, ChevronsRight as ChevronsRight2, Sparkles as Sparkles2 } from "lucide-react";
-import { jsx as jsx10 } from "react/jsx-runtime";
+import { jsx as jsx11 } from "react/jsx-runtime";
 var EDGE_MARGIN = 8;
 var BUTTON_SIZE = 56;
 var DRAG_THRESHOLD = 4;
@@ -1589,16 +1760,16 @@ var readStoredY = () => {
     return null;
   }
 };
-var FloatingButton = React9.forwardRef(
+var FloatingButton = React10.forwardRef(
   function FloatingButton2({ open, onClick, label, position = "bottom-right", draggable = true, className }, ref) {
-    const [top, setTop] = React9.useState(null);
-    const [dragPoint, setDragPoint] = React9.useState(null);
-    const [viewportWidth, setViewportWidth] = React9.useState(null);
-    const [edgeGap, setEdgeGap] = React9.useState(FALLBACK_EDGE_GAP);
-    const node = React9.useRef(null);
-    const grab = React9.useRef({ x: 0, y: 0 });
-    const moved = React9.useRef(false);
-    const attachRef = React9.useCallback(
+    const [top, setTop] = React10.useState(null);
+    const [dragPoint, setDragPoint] = React10.useState(null);
+    const [viewportWidth, setViewportWidth] = React10.useState(null);
+    const [edgeGap, setEdgeGap] = React10.useState(FALLBACK_EDGE_GAP);
+    const node = React10.useRef(null);
+    const grab = React10.useRef({ x: 0, y: 0 });
+    const moved = React10.useRef(false);
+    const attachRef = React10.useCallback(
       (element) => {
         node.current = element;
         if (typeof ref === "function") ref(element);
@@ -1606,7 +1777,7 @@ var FloatingButton = React9.forwardRef(
       },
       [ref]
     );
-    React9.useEffect(() => {
+    React10.useEffect(() => {
       if (!draggable) return;
       setViewportWidth(window.innerWidth);
       const rect = node.current?.getBoundingClientRect();
@@ -1616,7 +1787,7 @@ var FloatingButton = React9.forwardRef(
       }
       setTop(readStoredY());
     }, [draggable, position]);
-    React9.useEffect(() => {
+    React10.useEffect(() => {
       if (!draggable) return;
       const onResize = () => {
         setViewportWidth(window.innerWidth);
@@ -1662,7 +1833,7 @@ var FloatingButton = React9.forwardRef(
       insetInlineStart: position === "bottom-left" ? offset : void 0,
       insetBlockEnd: offset
     };
-    return /* @__PURE__ */ jsx10(
+    return /* @__PURE__ */ jsx11(
       "button",
       {
         ref: attachRef,
@@ -1704,8 +1875,8 @@ var FloatingButton = React9.forwardRef(
         children: open ? (
           // Matches the drawer's own header button: the same collapse chevron, pointing at the same edge.
           // Two different glyphs for one action taught two different meanings — and an ✕ taught the wrong one.
-          position === "bottom-left" ? /* @__PURE__ */ jsx10(ChevronsLeft2, { className: "size-6" }) : /* @__PURE__ */ jsx10(ChevronsRight2, { className: "size-6" })
-        ) : /* @__PURE__ */ jsx10(Sparkles2, { className: "size-6 shrink-0 transition-transform group-hover:scale-110" })
+          position === "bottom-left" ? /* @__PURE__ */ jsx11(ChevronsLeft2, { className: "size-6" }) : /* @__PURE__ */ jsx11(ChevronsRight2, { className: "size-6" })
+        ) : /* @__PURE__ */ jsx11(Sparkles2, { className: "size-6 shrink-0 transition-transform group-hover:scale-110" })
       }
     );
   }
@@ -1728,6 +1899,7 @@ var thLabels = {
   voiceDenied: "\u0E40\u0E1B\u0E34\u0E14\u0E44\u0E21\u0E42\u0E04\u0E23\u0E42\u0E1F\u0E19\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49 \u2014 \u0E2D\u0E19\u0E38\u0E0D\u0E32\u0E15\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E44\u0E21\u0E42\u0E04\u0E23\u0E42\u0E1F\u0E19\u0E43\u0E19\u0E40\u0E1A\u0E23\u0E32\u0E27\u0E4C\u0E40\u0E0B\u0E2D\u0E23\u0E4C\u0E01\u0E48\u0E2D\u0E19",
   /* ต้องชี้ทางออกเป็น "พิมพ์แทน" เสมอ — เสียงเป็นแค่ทางลัด คนที่ติดอยู่กับปุ่มไมค์คือคนที่ลืมไปว่ามีช่องพิมพ์อยู่แล้ว */
   voiceFailed: "\u0E41\u0E1B\u0E25\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08 \u0E25\u0E2D\u0E07\u0E2D\u0E31\u0E14\u0E43\u0E2B\u0E21\u0E48\u0E2B\u0E23\u0E37\u0E2D\u0E1E\u0E34\u0E21\u0E1E\u0E4C\u0E41\u0E17\u0E19\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22",
+  voiceSilent: "\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E22\u0E34\u0E19\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E1E\u0E39\u0E14\u0E43\u0E19\u0E04\u0E25\u0E34\u0E1B\u0E19\u0E35\u0E49 \u0E25\u0E2D\u0E07\u0E1E\u0E39\u0E14\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22",
   voiceLimit: "\u0E2D\u0E31\u0E14\u0E44\u0E14\u0E49\u0E04\u0E23\u0E31\u0E49\u0E07\u0E25\u0E30\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19 {seconds} \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35",
   newChat: "\u0E41\u0E0A\u0E17\u0E43\u0E2B\u0E21\u0E48",
   history: "\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u0E41\u0E0A\u0E17",
@@ -1799,6 +1971,7 @@ var enLabels = {
   voiceTranscribing: "Turning speech into text\u2026",
   voiceDenied: "Cannot open the microphone \u2014 allow microphone access in your browser first",
   voiceFailed: "Could not turn that into text. Record again, or just type it.",
+  voiceSilent: "No speech was heard in that recording \u2014 try again.",
   voiceLimit: "Recordings stop at {seconds} seconds",
   newChat: "New chat",
   history: "Chat history",
@@ -1883,7 +2056,7 @@ function openAiChat(detail = {}) {
 }
 
 // src/ai-chat/state/useAiChatSession.ts
-import * as React10 from "react";
+import * as React11 from "react";
 
 // src/ai-chat/lib/sentinels.ts
 var ENTER_MODE = /\[\[ENTER_MODE:([^\]]+)\]\]/;
@@ -2319,10 +2492,10 @@ var assistantNote = (text) => ({
   content: text
 });
 function useAiChatSession(config) {
-  const [state, dispatch] = React10.useReducer(reducer, initialState);
-  const configRef = React10.useRef(config);
+  const [state, dispatch] = React11.useReducer(reducer, initialState);
+  const configRef = React11.useRef(config);
   configRef.current = config;
-  const api = React10.useMemo(
+  const api = React11.useMemo(
     () => createAiChatApi({
       baseUrl: config.baseUrl,
       getToken: () => configRef.current.getToken(),
@@ -2330,29 +2503,29 @@ function useAiChatSession(config) {
     }),
     [config.baseUrl, config.fetchImpl]
   );
-  const labels = React10.useMemo(() => resolveLabels(config.labels), [config.labels]);
-  const labelsRef = React10.useRef(labels);
+  const labels = React11.useMemo(() => resolveLabels(config.labels), [config.labels]);
+  const labelsRef = React11.useRef(labels);
   labelsRef.current = labels;
-  const transportRef = React10.useRef(null);
-  const startingRef = React10.useRef(null);
-  const startRef = React10.useRef(null);
-  const stateRef = React10.useRef(state);
+  const transportRef = React11.useRef(null);
+  const startingRef = React11.useRef(null);
+  const startRef = React11.useRef(null);
+  const stateRef = React11.useRef(state);
   stateRef.current = state;
-  const streamRef = React10.useRef("");
+  const streamRef = React11.useRef("");
   const storageKey = `mediact-ai-chat:conversation:${config.baseUrl}`;
-  const reportError = React10.useCallback((error, fallback) => {
+  const reportError = React11.useCallback((error, fallback) => {
     const err = error instanceof Error ? error : new Error(fallback);
     turnRef.current = null;
     configRef.current.onError?.(err);
     dispatch({ type: "error", message: err.message || fallback });
   }, []);
-  const unackedTimerRef = React10.useRef(null);
-  const clearUnackedGrace = React10.useCallback(() => {
+  const unackedTimerRef = React11.useRef(null);
+  const clearUnackedGrace = React11.useCallback(() => {
     if (!unackedTimerRef.current) return;
     clearTimeout(unackedTimerRef.current);
     unackedTimerRef.current = null;
   }, []);
-  const armUnackedGrace = React10.useCallback(() => {
+  const armUnackedGrace = React11.useCallback(() => {
     clearUnackedGrace();
     unackedTimerRef.current = setTimeout(() => {
       unackedTimerRef.current = null;
@@ -2360,9 +2533,9 @@ function useAiChatSession(config) {
       dispatch({ type: "error", message: UNACKED_EXPIRED_TEXT });
     }, UNACKED_GRACE_MS);
   }, [clearUnackedGrace]);
-  React10.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
-  const turnRef = React10.useRef(null);
-  const adoptTurn = React10.useCallback(
+  React11.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
+  const turnRef = React11.useRef(null);
+  const adoptTurn = React11.useCallback(
     (turnId) => {
       const current = turnRef.current;
       if (current && (!turnId || current.id === null || current.id === turnId)) {
@@ -2375,12 +2548,12 @@ function useAiChatSession(config) {
     },
     []
   );
-  const isOwnTurn = React10.useCallback((turnId) => {
+  const isOwnTurn = React11.useCallback((turnId) => {
     const current = turnRef.current;
     if (!current?.own) return false;
     return !turnId || current.id === null || current.id === turnId;
   }, []);
-  const handleEvent = React10.useCallback(
+  const handleEvent = React11.useCallback(
     (event) => {
       if (event.event === "user_turn") {
         if (!isOwnTurn(event.turnId)) {
@@ -2414,7 +2587,7 @@ function useAiChatSession(config) {
     },
     [adoptTurn, isOwnTurn, clearUnackedGrace]
   );
-  const start = React10.useCallback(
+  const start = React11.useCallback(
     async (conversationId) => {
       if (transportRef.current && !conversationId) return;
       if (startingRef.current) return startingRef.current;
@@ -2475,7 +2648,7 @@ function useAiChatSession(config) {
     [api, handleEvent, reportError, storageKey]
   );
   startRef.current = start;
-  const send = React10.useCallback(
+  const send = React11.useCallback(
     async (text) => {
       const trimmed = text.trim();
       if (!trimmed) return;
@@ -2518,7 +2691,7 @@ function useAiChatSession(config) {
     },
     [state.conversationId, state.mode, state.scheduleSeed, reportError, armUnackedGrace]
   );
-  const cancel = React10.useCallback(async () => {
+  const cancel = React11.useCallback(async () => {
     const runId = state.activeRunId;
     if (!runId) return;
     try {
@@ -2529,7 +2702,7 @@ function useAiChatSession(config) {
       );
     }
   }, [api, state.activeRunId]);
-  const newConversation = React10.useCallback(() => {
+  const newConversation = React11.useCallback(() => {
     transportRef.current?.disconnect();
     transportRef.current = null;
     streamRef.current = "";
@@ -2537,7 +2710,7 @@ function useAiChatSession(config) {
     writeStored(storageKey, null);
     dispatch({ type: "reset" });
   }, [storageKey]);
-  const setMode = React10.useCallback((mode, seed) => {
+  const setMode = React11.useCallback((mode, seed) => {
     const effectiveSeed = seed ?? stateRef.current.scheduleSeed;
     dispatch({
       type: "set_mode",
@@ -2546,8 +2719,8 @@ function useAiChatSession(config) {
       greeting: buildScheduleGreeting(labelsRef.current, effectiveSeed)
     });
   }, []);
-  const listConversations = React10.useCallback(() => api.listConversations(), [api]);
-  React10.useEffect(() => {
+  const listConversations = React11.useCallback(() => api.listConversations(), [api]);
+  React11.useEffect(() => {
     return () => {
       transportRef.current?.disconnect();
       transportRef.current = null;
@@ -2603,7 +2776,7 @@ function writeStored(key, value) {
 }
 
 // src/ai-chat/AiChatWidget.tsx
-import { Fragment as Fragment3, jsx as jsx11, jsxs as jsxs10 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx12, jsxs as jsxs11 } from "react/jsx-runtime";
 var SUGGESTIONS_BY_LOCALE = {
   th: [
     "\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48 6 \u0E43\u0E04\u0E23\u0E02\u0E36\u0E49\u0E19\u0E40\u0E27\u0E23\u0E40\u0E0A\u0E49\u0E32\u0E1A\u0E49\u0E32\u0E07",
@@ -2624,32 +2797,32 @@ function AiChatWidget({
   className,
   ...config
 }) {
-  const [uncontrolledOpen, setUncontrolledOpen] = React11.useState(defaultOpen);
+  const [uncontrolledOpen, setUncontrolledOpen] = React12.useState(defaultOpen);
   const isControlled = controlledOpen !== void 0;
   const open = isControlled ? controlledOpen : uncontrolledOpen;
-  const setOpen = React11.useCallback(
+  const setOpen = React12.useCallback(
     (next) => {
       if (!isControlled) setUncontrolledOpen(next);
       onOpenChange?.(next);
     },
     [isControlled, onOpenChange]
   );
-  const getToken = React11.useMemo(
+  const getToken = React12.useMemo(
     () => resolveTokenProvider(config.auth, config.getToken, config.onError),
     [config.auth, config.getToken, config.onError]
   );
-  const session = useAiChatSession(React11.useMemo(() => ({ ...config, getToken }), [config, getToken]));
+  const session = useAiChatSession(React12.useMemo(() => ({ ...config, getToken }), [config, getToken]));
   const locale = config.locale ?? "th";
-  const labels = React11.useMemo(() => resolveLabels(config.labels, locale), [config.labels, locale]);
+  const labels = React12.useMemo(() => resolveLabels(config.labels, locale), [config.labels, locale]);
   const position = config.position ?? "bottom-right";
   const suggestions = config.suggestions ?? SUGGESTIONS_BY_LOCALE[locale] ?? SUGGESTIONS_BY_LOCALE.th;
   const { setMode } = session;
-  React11.useEffect(() => {
+  React12.useEffect(() => {
     if (config.mode) setMode(config.mode);
   }, [config.mode, setMode]);
-  const [sttMissing, setSttMissing] = React11.useState(false);
+  const [sttMissing, setSttMissing] = React12.useState(false);
   const { api } = session;
-  const transcribe = React11.useCallback(
+  const transcribe = React12.useCallback(
     async (audio, signal) => {
       try {
         return await api.transcribe(audio, signal);
@@ -2663,11 +2836,11 @@ function AiChatWidget({
     [api]
   );
   const voiceEnabled = (config.voiceInput ?? true) && !sttMissing;
-  React11.useEffect(() => {
+  React12.useEffect(() => {
     if (open) void session.start();
   }, [open, session.start]);
-  const [hostRequest, setHostRequest] = React11.useState(null);
-  React11.useEffect(() => {
+  const [hostRequest, setHostRequest] = React12.useState(null);
+  React12.useEffect(() => {
     const onOpen = (event) => {
       event.preventDefault();
       const detail = event.detail ?? {};
@@ -2679,7 +2852,7 @@ function AiChatWidget({
   }, [setOpen]);
   const { status: sessionStatus, mode: sessionMode } = session.state;
   const { setMode: sessionSetMode, send: sessionSend } = session;
-  React11.useEffect(() => {
+  React12.useEffect(() => {
     if (!hostRequest?.message) return;
     if (sessionStatus === "error") {
       setHostRequest(null);
@@ -2693,23 +2866,23 @@ function AiChatWidget({
     setHostRequest(null);
     void sessionSend(hostRequest.message);
   }, [hostRequest, sessionStatus, sessionMode, sessionSetMode, sessionSend]);
-  const handleSend = React11.useCallback(
+  const handleSend = React12.useCallback(
     (text) => {
       void session.send(text);
     },
     [session.send]
   );
-  const handlePickConversation = React11.useCallback(
+  const handlePickConversation = React12.useCallback(
     (conversationId) => {
       void session.start(conversationId);
     },
     [session.start]
   );
-  const handleNewChat = React11.useCallback(() => {
+  const handleNewChat = React12.useCallback(() => {
     session.newConversation();
     void session.start();
   }, [session.newConversation, session.start]);
-  const handleRetry = React11.useCallback(() => {
+  const handleRetry = React12.useCallback(() => {
     const current = session.state.conversationId;
     if (current) {
       void session.start(current);
@@ -2718,8 +2891,8 @@ function AiChatWidget({
     session.newConversation();
     void session.start();
   }, [session.state.conversationId, session.newConversation, session.start]);
-  return /* @__PURE__ */ jsxs10(Fragment3, { children: [
-    !hideLauncher && /* @__PURE__ */ jsx11(
+  return /* @__PURE__ */ jsxs11(Fragment3, { children: [
+    !hideLauncher && /* @__PURE__ */ jsx12(
       FloatingButton,
       {
         open,
@@ -2729,7 +2902,7 @@ function AiChatWidget({
         className
       }
     ),
-    /* @__PURE__ */ jsx11(
+    /* @__PURE__ */ jsx12(
       ChatDrawer,
       {
         open,
