@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { WidgetRenderer } from "./WidgetRenderer";
 import { MessageList } from "./MessageList";
 import { defaultLabels } from "../labels";
@@ -143,5 +143,125 @@ describe("WidgetRenderer — superseded confirm", () => {
 
     screen.getByRole("button", { name: "ยืนยัน" }).click();
     expect(onAction).toHaveBeenCalledWith("ยืนยัน");
+  });
+});
+
+/**
+ * 🔴 "กำลังทำให้อยู่" ต้องแยกออกจาก "กดไม่ได้"
+ *
+ * เดิมทั้งสองสถานะหน้าตาเหมือนกันเป๊ะ (จาง 40%) — ผู้ใช้กดยืนยันแล้วการ์ดจางลง แยกไม่ออกว่าระบบรับไปทำแล้ว
+ * หรือปุ่มถูกล็อกเพราะเทิร์นอื่นค้างอยู่ · กติกาเดียวกับ `Button` ของ DS: `loading` คงป้ายไว้ ไม่จาง
+ */
+describe("WidgetRenderer — confirm ตอนกำลังทำงาน", () => {
+  const renderCard = (disabled: boolean, onAction = vi.fn()) =>
+    render(<WidgetRenderer widget={card} onAction={onAction} disabled={disabled} />);
+
+  it("ปุ่มที่ถูกกดขึ้น aria-busy ส่วนปุ่มอีกข้างแค่ถูกล็อก", () => {
+    const onAction = vi.fn();
+    const view = renderCard(false, onAction);
+    act(() => screen.getByRole("button", { name: /ยืนยัน/ }).click());
+    view.rerender(<WidgetRenderer widget={card} onAction={onAction} disabled />);
+
+    expect(screen.getByRole("button", { name: /ยืนยัน/ }).getAttribute("aria-busy")).toBe("true");
+    expect(screen.getByRole("button", { name: "ยกเลิก" }).getAttribute("aria-busy")).toBeNull();
+  });
+
+  it("การ์ดที่ไม่ได้ถูกกด ไม่ขึ้นสถานะกำลังทำงาน แม้จะถูกล็อกพร้อมกัน", () => {
+    renderCard(true);
+    expect(screen.getByRole("button", { name: "ยืนยัน" }).getAttribute("aria-busy")).toBeNull();
+    expect(screen.getByRole("button", { name: "ยกเลิก" }).getAttribute("aria-busy")).toBeNull();
+  });
+
+  it("รอบจบแล้วเลิกหมุน — ไม่ค้างเป็น spinner ถาวร", () => {
+    const onAction = vi.fn();
+    const view = renderCard(false, onAction);
+    act(() => screen.getByRole("button", { name: /ยืนยัน/ }).click());
+    view.rerender(<WidgetRenderer widget={card} onAction={onAction} disabled />);
+    view.rerender(<WidgetRenderer widget={card} onAction={onAction} disabled={false} />);
+
+    expect(screen.getByRole("button", { name: "ยืนยัน" }).getAttribute("aria-busy")).toBeNull();
+  });
+
+  /* 🔴 เคสที่ตัวเลือก `Boolean(disabled) && …` ตัวเดียวจับไม่ได้ — รอบใหม่ที่ผู้ใช้ไม่ได้กดการ์ดนี้
+     ถ้าไม่ล้างความจำว่า "เคยกดปุ่มไหน" การ์ดเก่าจะขึ้น spinner ให้เทิร์นที่ไม่ใช่ของมัน */
+  it("รอบถัดไปที่ผู้ใช้ไม่ได้กดการ์ดนี้ ต้องไม่กลับมาหมุนอีก", () => {
+    const onAction = vi.fn();
+    const view = renderCard(false, onAction);
+    act(() => screen.getByRole("button", { name: /ยืนยัน/ }).click());
+    view.rerender(<WidgetRenderer widget={card} onAction={onAction} disabled />);
+    view.rerender(<WidgetRenderer widget={card} onAction={onAction} disabled={false} />);
+    // ผู้ใช้พิมพ์คำถามใหม่เอง ไม่ได้แตะการ์ดนี้ → ล็อกทุกการ์ดอีกครั้ง
+    view.rerender(<WidgetRenderer widget={card} onAction={onAction} disabled />);
+
+    expect(screen.getByRole("button", { name: "ยืนยัน" }).getAttribute("aria-busy")).toBeNull();
+  });
+
+  it("ปุ่มที่กำลังทำงานยังอ่านป้ายเดิมได้ — ห้ามแทนที่ด้วย spinner เปล่า", () => {
+    const onAction = vi.fn();
+    const view = renderCard(false, onAction);
+    act(() => screen.getByRole("button", { name: /ยืนยัน/ }).click());
+    view.rerender(<WidgetRenderer widget={card} onAction={onAction} disabled />);
+
+    expect(screen.getByRole("button", { name: /ยืนยัน/ }).textContent).toContain("ยืนยัน");
+  });
+});
+
+/**
+ * 🔴 ล็อกเพราะเทิร์นอื่น = **ไม่มีปุ่ม** ไม่ใช่ปุ่มจาง
+ *
+ * ปุ่มจางที่ไม่มีคำอธิบายตอบไม่ได้ว่า "รอแป๊บ" หรือ "อันนี้ตายแล้ว" ผู้ใช้จึงกดซ้ำเพื่อทดสอบ
+ * — ซึ่งเป็นสิ่งเดียวที่การปิดปุ่มพยายามจะห้าม
+ */
+describe("WidgetRenderer — confirm ตอนถูกล็อกด้วยเทิร์นอื่น", () => {
+  const waitingNote = defaultLabels.cardWaiting;
+
+  it("ไม่มีปุ่มให้กดเลย และบอกว่าต้องรอ", () => {
+    render(<WidgetRenderer widget={card} onAction={vi.fn()} disabled waitingNote={waitingNote} />);
+
+    expect(screen.queryByRole("button", { name: "ยืนยัน" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "ยกเลิก" })).toBeNull();
+    expect(screen.getByText(waitingNote)).toBeTruthy();
+  });
+
+  it("การ์ดที่ผู้ใช้กดเอง ปุ่มต้องยังอยู่ — ต้องเห็นว่าตัวเองกดอะไรไป", () => {
+    const onAction = vi.fn();
+    const view = render(
+      <WidgetRenderer widget={card} onAction={onAction} waitingNote={waitingNote} />,
+    );
+    act(() => screen.getByRole("button", { name: /ยืนยัน/ }).click());
+    view.rerender(
+      <WidgetRenderer widget={card} onAction={onAction} disabled waitingNote={waitingNote} />,
+    );
+
+    expect(screen.getByRole("button", { name: /ยืนยัน/ }).getAttribute("aria-busy")).toBe("true");
+    expect(screen.queryByText(waitingNote)).toBeNull();
+  });
+
+  it("รอบจบแล้วปุ่มกลับมา", () => {
+    const view = render(
+      <WidgetRenderer widget={card} onAction={vi.fn()} disabled waitingNote={waitingNote} />,
+    );
+    view.rerender(<WidgetRenderer widget={card} onAction={vi.fn()} waitingNote={waitingNote} />);
+
+    expect(screen.getByRole("button", { name: "ยืนยัน" })).toBeTruthy();
+    expect(screen.queryByText(waitingNote)).toBeNull();
+  });
+
+  /* ถูกแทนที่แล้ว = จบถาวร · รอ = ชั่วคราว — สองอย่างนี้ต้องไม่โผล่พร้อมกัน ไม่งั้นการ์ดบอกทั้ง
+     "รอสักครู่" และ "อันนี้ใช้ไม่ได้แล้ว" ในเวลาเดียวกัน */
+  it("การ์ดที่ถูกแทนที่แล้ว ไม่ขึ้นข้อความรอ", () => {
+    render(
+      <WidgetRenderer
+        widget={card}
+        onAction={vi.fn()}
+        disabled
+        superseded
+        supersededNote={defaultLabels.cardSuperseded}
+        waitingNote={waitingNote}
+      />,
+    );
+
+    expect(screen.getByText(defaultLabels.cardSuperseded)).toBeTruthy();
+    expect(screen.queryByText(waitingNote)).toBeNull();
   });
 });

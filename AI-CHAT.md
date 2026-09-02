@@ -171,6 +171,7 @@ getToken={async () => {
 | `showModeToggle` | `boolean` | `false` | โชว์ปุ่มสลับโหมดในหัว drawer (ถ้า agent สลับเองผ่าน `[[ENTER_MODE]]` แถบจะโผล่อัตโนมัติแม้ตั้ง `false`) |
 | `suggestions` | `string[]` | คำถามตัวอย่างเรื่องเวร | ปุ่มคำถามตัวอย่างในหน้าว่าง กดแล้วส่งเลย |
 | `position` | `"bottom-right" \| "bottom-left"` | `"bottom-right"` | มุมที่ปุ่มลอยอยู่ |
+| `voiceInput` | `boolean` | `true` | ปุ่มไมโครโฟนในช่องพิมพ์ — [เสียงเป็นข้อความ](#เสียงเป็นข้อความ-voice-input) |
 | `labels` | `Partial<AiChatLabels>` | ไทย | ทับข้อความทีละคำได้ (`launcher` = ข้อความบนปุ่มลอย) |
 | `open` / `defaultOpen` / `onOpenChange` | | | คุมสถานะเปิด/ปิดเองได้ (controlled) |
 | `hideLauncher` | `boolean` | `false` | ซ่อนปุ่มลอย เมื่ออยากเปิด drawer จากปุ่มของแอปเอง |
@@ -256,6 +257,7 @@ drawer เป็นแบบ **non-modal** โดยตั้งใจ — ค�
 | REST | `GET /v2/ai/conversations/:id/messages` | โหลด transcript ตอน resume |
 | REST | `POST /v2/ai/transport/subscribe` | ขอ `wsUrl` + ชื่อ channel |
 | REST | `POST /v2/ai/chat/runs/:runId/cancel` | ยกเลิก run ที่กำลังทำงาน |
+| REST | `POST /v2/ai/stt` | เสียง → ข้อความ (ไม่ใช่ทางส่ง turn — ดูด้านล่าง) |
 | WS | `chat.send` (Centrifugo RPC) | **ส่ง turn — ทางเดียวเท่านั้น ไม่มี HTTP fallback** |
 | WS | `chat:{id}` / `task:{id}` | รับ event กลับ |
 
@@ -276,6 +278,43 @@ drawer เป็นแบบ **non-modal** โดยตั้งใจ — ค�
 | resume | ต้อง re-derive โหมดจาก transcript (ENTER ล่าสุดที่ยังไม่ถูก EXIT ยกเลิก) | reload กลางโหมดจัดเวรแล้วหลุดกลับโหมดผู้ช่วยเงียบๆ |
 | token บน WS | JWT ถูก **pin ที่ connection** ไม่ใช่ต่อ request | refresh token แล้วไม่ reconnect = เทิร์นถัดไปยิง revise-api ด้วย token หมดอายุ (ดู [Token refresh](#token-refresh--สิ่งที่-host-ต้องรู้)) |
 | คำตอบเป็น markdown | ตาราง/บุลเล็ต/ตัวหนา | ถ้า render เป็น plain text ตารางเวรจะกลายเป็นกำแพง `|` |
+
+---
+
+## เสียงเป็นข้อความ (voice input)
+
+ปุ่มไมค์ในช่องพิมพ์ อัดเสียง → ส่งให้ ai-service ถอด → **ข้อความลงช่องพิมพ์ ไม่ส่งเป็น turn เอง**
+
+🔴 **ไม่ส่งอัตโนมัติโดยตั้งใจ** — วัดกับ endpoint จริงแล้ว การถอดเสียงไทยเพี้ยนที่คำเฉพาะเสมอ
+(`worktree` ออกมาเป็น *"เวิร์กทรี"* ที่ wav 16 kHz และเป็น *"Web3"* ที่ opus 24 kbps · `TA1` เป็น *"ที่ A1"*)
+ถ้าส่งเลย ผู้ใช้จะได้คำตอบของคำถามที่ตัวเองไม่ได้ถาม โดยไม่มีใครเคยเห็นข้อความนั้น
+
+**สัญญากับ ai-service**
+
+```jsonc
+// POST /v2/ai/stt   (Bearer = Keycloak token เดียวกับ REST เส้นอื่น)
+{ "audio": { "data": "<base64 ของไฟล์ ไม่มี data: นำหน้า>", "format": "webm" } }
+
+// ตอบกลับ (ห่อ envelope ปกติ)
+{ "status": "0000", "data": { "text": "วันที่ 6 ใครเวรเช้า", "seconds": 8 } }
+```
+
+`format` = `webm` (Chrome/Firefox) · `mp4` (Safari) · `wav`
+
+**ปุ่มจะไม่โผล่เลย** เมื่อ ① host ตั้ง `voiceInput={false}` ② เบราว์เซอร์อัดไม่ได้ —
+`navigator.mediaDevices` เป็น `undefined` นอก secure context (http ธรรมดา ยกเว้น localhost) ไม่มี error ไม่มี prompt
+③ service ตอบ `404`/`501` ที่ `/v2/ai/stt` (ยังไม่ deploy ใน env นั้น) — ครั้งแรกที่เจอ ปุ่มจะเลิกแสดงทั้ง session
+แทนที่จะล้มซ้ำใต้นิ้วผู้ใช้ทุกครั้ง
+
+**เพดานเวลา 120 วินาที** (`maxRecordingSeconds` ที่ `Composer`) — เป็น**งบขนาด ไม่ใช่ค่าความชอบ**:
+ai-service ตั้ง `bodyLimit: 1 MB` และ base64 บวม 33% ⇒ ที่ 32 kbps 120 วิ ≈ 640 KB
+ขยับเลขนี้โดยไม่ขยับ `bodyLimit` = ผู้ใช้พูดจนจบแล้วเพิ่งรู้ว่าคำขอถูกปฏิเสธ
+
+**bitrate 32 kbps ไม่ใช่ค่า default ของเบราว์เซอร์** — วัดกับประโยคไทยประโยคเดียวกัน: 24 kbps ทำให้ `worktree`
+กลายเป็น `Web3` ส่วน 32 kbps ไม่เป็น · สูงกว่า ~48 kbps ความแม่นไม่ขึ้นแล้ว มีแต่ไฟล์โต
+
+host ที่ประกอบช่องพิมพ์เอง ใช้ `useVoiceInput` ได้ตรงๆ (คืน `status` · `seconds` · `error` · `supported` ·
+`start`/`stop`/`discard`) — hook คืนสตริงไม่ได้แปลไว้ ผู้เรียกแม็ปเป็นคำของตัวเอง
 
 ---
 

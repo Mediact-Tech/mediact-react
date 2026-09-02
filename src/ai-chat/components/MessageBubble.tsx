@@ -103,6 +103,7 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
             disabled={widgetsDisabled}
             superseded={widget.type === "confirm" && index !== lastConfirm}
             supersededNote={labels.cardSuperseded}
+            waitingNote={labels.cardWaiting}
           />
         ))}
 

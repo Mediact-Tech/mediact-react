@@ -1,4 +1,6 @@
 import * as React from "react";
+import { AiChatApiError } from "./api/aiChatApi";
+import type { AudioClip } from "./api/types";
 import { resolveTokenProvider } from "./auth/selfAuth";
 import { ChatDrawer } from "./components/ChatDrawer";
 import { FloatingButton } from "./components/FloatingButton";
@@ -82,6 +84,28 @@ export function AiChatWidget({
   React.useEffect(() => {
     if (config.mode) setMode(config.mode);
   }, [config.mode, setMode]);
+
+  /**
+   * Voice input is optional on BOTH sides: the host can switch it off, and the service may not expose
+   * `/v2/ai/stt` in this environment yet. A 404/501 is a permanent answer for this session, so the mic
+   * retires after the first attempt instead of failing again under the user's finger every time.
+   */
+  const [sttMissing, setSttMissing] = React.useState(false);
+  const { api } = session;
+  const transcribe = React.useCallback(
+    async (audio: AudioClip, signal?: AbortSignal) => {
+      try {
+        return await api.transcribe(audio, signal);
+      } catch (cause) {
+        if (cause instanceof AiChatApiError && (cause.status === 404 || cause.status === 501)) {
+          setSttMissing(true);
+        }
+        throw cause;
+      }
+    },
+    [api],
+  );
+  const voiceEnabled = (config.voiceInput ?? true) && !sttMissing;
 
   // Lazy connect: the socket opens the first time the drawer is opened, not on mount.
   React.useEffect(() => {
@@ -184,6 +208,8 @@ export function AiChatWidget({
         suggestions={suggestions}
         onSend={handleSend}
         onCancel={() => void session.cancel()}
+        onTranscribe={voiceEnabled ? transcribe : undefined}
+        onVoiceError={config.onError}
         onNewChat={handleNewChat}
         onPickConversation={handlePickConversation}
         onRetry={handleRetry}

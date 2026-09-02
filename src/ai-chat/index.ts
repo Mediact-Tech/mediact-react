@@ -45,6 +45,15 @@ export {
   type ScheduleSeed,
 } from "./lib/sentinels";
 
+// Microphone → text, for a host that builds its own composer
+export {
+  useVoiceInput,
+  type VoiceInput,
+  type VoiceInputStatus,
+  type VoiceInputErrorReason,
+  type UseVoiceInputOptions,
+} from "./state/useVoiceInput";
+
 // Session engine — drive the transport yourself (e.g. mount the chat inside a page, not a drawer)
 export { useAiChatSession, type AiChatSession, type AiChatSessionConfig } from "./state/useAiChatSession";
 // Self-auth — usable on its own when a host drives the session directly

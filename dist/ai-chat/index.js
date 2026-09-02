@@ -1,5 +1,80 @@
 // src/ai-chat/AiChatWidget.tsx
-import * as React9 from "react";
+import * as React11 from "react";
+
+// src/ai-chat/api/aiChatApi.ts
+var AiChatApiError = class extends Error {
+  constructor(message, status, body) {
+    super(message);
+    this.status = status;
+    this.body = body;
+    this.name = "AiChatApiError";
+  }
+  status;
+  body;
+};
+function createAiChatApi(config) {
+  const base = config.baseUrl.replace(/\/+$/, "");
+  const doFetch = config.fetchImpl ?? globalThis.fetch;
+  async function request(path, init) {
+    const token = await config.getToken();
+    const response = await doFetch(`${base}${path}`, {
+      method: init.method,
+      signal: init.signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...init.body !== void 0 ? { "Content-Type": "application/json" } : {}
+      },
+      body: init.body !== void 0 ? JSON.stringify(init.body) : void 0
+    });
+    const body = response.status === 204 ? null : await response.text().then(safeJsonParse);
+    if (!response.ok) {
+      throw new AiChatApiError(messageOf(body) ?? `ai-service ${init.method} ${path} \u2192 ${response.status}`, response.status, body);
+    }
+    return unwrap(body);
+  }
+  return {
+    createConversation: (title, signal) => request("/v2/ai/conversations", {
+      method: "POST",
+      body: title ? { title } : {},
+      signal
+    }),
+    listConversations: (signal) => request("/v2/ai/conversations", { method: "GET", signal }),
+    getMessages: (conversationId, signal) => request(
+      `/v2/ai/conversations/${encodeURIComponent(conversationId)}/messages`,
+      { method: "GET", signal }
+    ),
+    connectInfo: (conversationId, signal) => request("/v2/ai/transport/subscribe", {
+      method: "POST",
+      body: { conversationId },
+      signal
+    }),
+    cancelRun: (runId, signal) => request(`/v2/ai/chat/runs/${encodeURIComponent(runId)}/cancel`, {
+      method: "POST",
+      signal
+    }),
+    transcribe: (audio, signal) => request("/v2/ai/stt", { method: "POST", body: { audio }, signal })
+  };
+}
+function safeJsonParse(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+function unwrap(body) {
+  if (body && typeof body === "object" && "data" in body && "status" in body) {
+    return body.data;
+  }
+  return body;
+}
+function messageOf(body) {
+  if (!body || typeof body !== "object") return null;
+  const envelope = body;
+  if (typeof envelope.message === "string" && envelope.message) return envelope.message;
+  if (typeof envelope.data?.message === "string" && envelope.data.message) return envelope.data.message;
+  return null;
+}
 
 // src/ai-chat/auth/selfAuth.ts
 var DEFAULT_CLIENT_ID = "mediact-ai-assistant";
@@ -83,7 +158,7 @@ function resolveTokenProvider(auth, hostGetToken, onError) {
 }
 
 // src/ai-chat/components/ChatDrawer.tsx
-import * as React6 from "react";
+import * as React8 from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import {
   CalendarDays,
@@ -103,8 +178,168 @@ function cn(...inputs) {
 }
 
 // src/ai-chat/components/Composer.tsx
+import * as React2 from "react";
+import { ArrowUp, Loader2, Mic, Square, Trash2 } from "lucide-react";
+
+// src/ai-chat/state/useVoiceInput.ts
 import * as React from "react";
-import { Send, Square } from "lucide-react";
+var AUDIO_BITS_PER_SECOND = 32e3;
+var CANDIDATE_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/wav"];
+var MAX_SECONDS_CEILING = 120;
+function useVoiceInput({
+  transcribe,
+  onText,
+  onError,
+  maxSeconds = MAX_SECONDS_CEILING
+}) {
+  const capSeconds = Math.min(Math.max(1, Math.floor(maxSeconds)), MAX_SECONDS_CEILING);
+  const [status, setStatus] = React.useState("idle");
+  const [seconds, setSeconds] = React.useState(0);
+  const [error, setError] = React.useState(null);
+  const recorderRef = React.useRef(null);
+  const chunksRef = React.useRef([]);
+  const discardRef = React.useRef(false);
+  const abortRef = React.useRef(null);
+  const tickRef = React.useRef(null);
+  const callbacksRef = React.useRef({ transcribe, onText, onError });
+  callbacksRef.current = { transcribe, onText, onError };
+  const supported = React.useMemo(
+    () => Boolean(transcribe) && typeof window !== "undefined" && typeof MediaRecorder !== "undefined" && Boolean(navigator.mediaDevices?.getUserMedia),
+    [transcribe]
+  );
+  const stopTicking = React.useCallback(() => {
+    if (tickRef.current !== null) clearInterval(tickRef.current);
+    tickRef.current = null;
+  }, []);
+  const teardown = React.useCallback(() => {
+    stopTicking();
+    const recorder = recorderRef.current;
+    recorderRef.current = null;
+    if (!recorder) return;
+    recorder.stream.getTracks().forEach((track) => track.stop());
+  }, [stopTicking]);
+  React.useEffect(
+    () => () => {
+      abortRef.current?.abort();
+      const recorder = recorderRef.current;
+      if (recorder && recorder.state !== "inactive") {
+        discardRef.current = true;
+        recorder.stop();
+      }
+      teardown();
+    },
+    [teardown]
+  );
+  const finish = React.useCallback(async () => {
+    const chunks = chunksRef.current;
+    chunksRef.current = [];
+    const mimeType = recorderRef.current?.mimeType ?? CANDIDATE_TYPES[0];
+    teardown();
+    if (discardRef.current) {
+      setStatus("idle");
+      setSeconds(0);
+      return;
+    }
+    const blob = new Blob(chunks, { type: mimeType });
+    if (blob.size < 1024) {
+      setStatus("idle");
+      setSeconds(0);
+      return;
+    }
+    setStatus("transcribing");
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const result = await callbacksRef.current.transcribe?.(
+        { data: await toBase64(blob), format: formatOf(mimeType) },
+        controller.signal
+      );
+      const text = result?.text?.trim();
+      if (!text) throw new Error("empty transcript");
+      callbacksRef.current.onText(text);
+      setStatus("idle");
+    } catch (cause) {
+      if (controller.signal.aborted) return;
+      setError("failed");
+      setStatus("idle");
+      callbacksRef.current.onError?.(cause instanceof Error ? cause : new Error(String(cause)));
+    } finally {
+      abortRef.current = null;
+      setSeconds(0);
+    }
+  }, [teardown]);
+  const stopRecorder = React.useCallback((discard2) => {
+    const recorder = recorderRef.current;
+    if (!recorder || recorder.state === "inactive") return;
+    discardRef.current = discard2;
+    recorder.stop();
+  }, []);
+  const start = React.useCallback(() => {
+    if (!supported || status !== "idle") return;
+    setError(null);
+    void (async () => {
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
+        });
+      } catch (cause) {
+        setError("denied");
+        callbacksRef.current.onError?.(cause instanceof Error ? cause : new Error(String(cause)));
+        return;
+      }
+      const mimeType = CANDIDATE_TYPES.find((type) => MediaRecorder.isTypeSupported?.(type));
+      let recorder;
+      try {
+        recorder = new MediaRecorder(stream, {
+          audioBitsPerSecond: AUDIO_BITS_PER_SECOND,
+          ...mimeType ? { mimeType } : {}
+        });
+      } catch (cause) {
+        stream.getTracks().forEach((track) => track.stop());
+        setError("failed");
+        callbacksRef.current.onError?.(cause instanceof Error ? cause : new Error(String(cause)));
+        return;
+      }
+      chunksRef.current = [];
+      discardRef.current = false;
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => void finish();
+      recorder.start(1e3);
+      setStatus("recording");
+      setSeconds(0);
+      tickRef.current = setInterval(() => {
+        setSeconds((current) => {
+          const next = current + 1;
+          if (next >= capSeconds) stopRecorder(false);
+          return next;
+        });
+      }, 1e3);
+    })();
+  }, [capSeconds, finish, status, stopRecorder, supported]);
+  const stop = React.useCallback(() => stopRecorder(false), [stopRecorder]);
+  const discard = React.useCallback(() => stopRecorder(true), [stopRecorder]);
+  return { status, seconds, limitSeconds: capSeconds, error, supported, start, stop, discard };
+}
+function formatOf(mimeType) {
+  const subtype = mimeType.split(";")[0]?.split("/")[1]?.toLowerCase() ?? "";
+  if (subtype === "mp4" || subtype === "m4a" || subtype === "x-m4a") return "mp4";
+  if (subtype === "wav" || subtype === "wave" || subtype === "x-wav") return "wav";
+  return "webm";
+}
+async function toBase64(blob) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 32768) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
+  }
+  return btoa(binary);
+}
+
+// src/ai-chat/components/Composer.tsx
 import { jsx, jsxs } from "react/jsx-runtime";
 function Composer({
   onSend,
@@ -112,10 +347,14 @@ function Composer({
   busy,
   disabled,
   labels,
-  placeholder = labels.placeholder
+  placeholder = labels.placeholder,
+  onTranscribe,
+  onVoiceError,
+  maxRecordingSeconds = 120
 }) {
-  const [value, setValue] = React.useState("");
-  const textareaRef = React.useRef(null);
+  const [value, setValue] = React2.useState("");
+  const textareaRef = React2.useRef(null);
+  const caretRef = React2.useRef(null);
   const submit = () => {
     const text = value.trim();
     if (!text || busy || disabled) return;
@@ -123,6 +362,35 @@ function Composer({
     setValue("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
+  const insertTranscript = React2.useCallback((text) => {
+    const el = textareaRef.current;
+    setValue((current) => {
+      const start = el?.selectionStart ?? current.length;
+      const end = el?.selectionEnd ?? current.length;
+      const before = current.slice(0, start);
+      const after = current.slice(end);
+      const lead = before && !/\s$/.test(before) ? " " : "";
+      const next = `${before}${lead}${text}${after}`;
+      caretRef.current = before.length + lead.length + text.length;
+      return next;
+    });
+  }, []);
+  const voice = useVoiceInput({
+    transcribe: onTranscribe,
+    onText: insertTranscript,
+    onError: onVoiceError,
+    maxSeconds: maxRecordingSeconds
+  });
+  React2.useLayoutEffect(() => {
+    const caret = caretRef.current;
+    const el = textareaRef.current;
+    if (caret === null || !el) return;
+    caretRef.current = null;
+    el.focus();
+    el.setSelectionRange(caret, caret);
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [value]);
   const handleKeyDown = (event) => {
     if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
@@ -135,58 +403,129 @@ function Composer({
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   };
+  const recording = voice.status === "recording";
+  const transcribing = voice.status === "transcribing";
+  const voiceMessage = recording ? `${labels.voiceRecording} \xB7 ${formatElapsed(voice.seconds)}` : transcribing ? labels.voiceTranscribing : voice.error === "denied" ? labels.voiceDenied : voice.error === "failed" ? labels.voiceFailed : null;
   return /* @__PURE__ */ jsxs(
     "div",
     {
       "data-slot": "ai-chat-composer",
-      className: "flex items-end gap-2 border-t border-border-subtle bg-bg-default px-3.5 py-3",
+      className: "border-t border-border-subtle bg-bg-default px-3.5 py-3",
       children: [
-        /* @__PURE__ */ jsx(
-          "textarea",
+        voiceMessage && /* @__PURE__ */ jsxs(
+          "p",
           {
-            ref: textareaRef,
-            rows: 1,
-            value,
-            onChange: autoGrow,
-            onKeyDown: handleKeyDown,
-            disabled,
-            placeholder,
-            "aria-label": placeholder,
+            "aria-live": "polite",
             className: cn(
-              /* แคปซูล ไม่ใช่สี่เหลี่ยม — ช่องพิมพ์เป็นของชิ้นเดียวในแผงที่รับคำสั่งอิสระ ทรงต่างจากการ์ด
-               * และตารางรอบตัวจึงหาเจอเร็วกว่า · `rounded-3xl` แทน `rounded-full` เพราะช่องนี้ยืดได้ถึง 40
-               * เมื่อพิมพ์หลายบรรทัด — วงกลมเต็มจะบวมเป็นแคปซูลสูงที่มุมโค้งกินตัวหนังสือ
-               * พื้น `bg-bg-subtle` แทนขาว: แถบล่างเป็นพื้นขาวอยู่แล้ว ช่องขาวบนขาวต้องพึ่งเส้นขอบอย่างเดียว */
-              "max-h-40 min-h-9 flex-1 resize-none rounded-3xl border border-border-default bg-bg-subtle px-4 py-2 text-body-sm",
-              "outline-none placeholder:text-text-tertiary",
-              "focus-visible:border-brand-active focus-visible:bg-bg-default focus-visible:ring-1 focus-visible:ring-brand-active",
-              "disabled:bg-bg-subtle disabled:text-text-tertiary"
-            )
+              /* 🔴 `text-text-body` ไม่ใช่ `text-text-tertiary` — วัดในเบราว์เซอร์: tertiary = rgb(155,155,155)
+               * บนพื้นขาว = **2.78:1** ตกเกณฑ์ 4.5 ของข้อความ · บรรทัดนี้เป็นสถานะที่ต้องอ่านออกจริง
+               * (ไมค์เปิดอยู่ / กำลังแปลง) ไม่ใช่คำใบ้ประดับ · body = 6.99:1 */
+              "mb-2 flex items-center gap-1.5 text-caption",
+              voice.error ? "text-error-red-600" : "text-text-body"
+            ),
+            children: [
+              recording && /* @__PURE__ */ jsx("span", { "aria-hidden": true, className: "size-2 shrink-0 rounded-full bg-error-red-600" }),
+              /* @__PURE__ */ jsx("span", { className: "min-w-0 flex-1", children: voiceMessage }),
+              recording && /* @__PURE__ */ jsx("span", { className: "shrink-0 text-text-body", children: labels.voiceLimit.replace("{seconds}", String(voice.limitSeconds)) })
+            ]
           }
         ),
-        /* @__PURE__ */ jsx(
-          "button",
+        /* @__PURE__ */ jsxs(
+          "div",
           {
-            type: "button",
-            onClick: busy ? onCancel : submit,
-            disabled: disabled || !busy && !value.trim(),
-            "aria-label": busy ? labels.cancel : labels.send,
+            "data-slot": "ai-chat-composer-box",
             className: cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors cursor-pointer",
-              "disabled:pointer-events-none disabled:opacity-40",
-              busy ? "bg-overlay-hover text-text-body hover:bg-overlay-press" : (
-                /* ไอคอนดำหมึกบนมิ้นต์ ไม่ใช่ขาว — เหตุผลเดียวกับฟองของผู้ใช้ (ขาวบนมิ้นต์ = 1.93:1)
-                 * ไอคอนไม่ใช่ข้อความก็จริง แต่เกณฑ์ 3:1 ของ non-text ก็ยังไม่ผ่านอยู่ดี
-                 * hover เป็น `brand-hover` ซึ่งเข้มพอให้กลับไปใช้ตัวขาวได้ */
-                "bg-brand text-text-black hover:bg-brand-hover hover:text-brand-foreground"
-              )
+              "rounded-2xl border border-border-default bg-bg-subtle px-3.5 pt-3 pb-2.5 transition-colors",
+              "focus-within:border-brand-active focus-within:bg-bg-default focus-within:ring-1 focus-within:ring-brand-active"
             ),
-            children: busy ? /* @__PURE__ */ jsx(Square, { className: "size-4 fill-current" }) : /* @__PURE__ */ jsx(Send, { className: "size-4" })
+            children: [
+              /* @__PURE__ */ jsx(
+                "textarea",
+                {
+                  ref: textareaRef,
+                  rows: 2,
+                  value,
+                  onChange: autoGrow,
+                  onKeyDown: handleKeyDown,
+                  disabled,
+                  placeholder,
+                  "aria-label": placeholder,
+                  className: cn(
+                    /* ไม่มีขอบ ไม่มีพื้นของตัวเอง — กรอบข้างนอกเป็นเจ้าของรูปทรง ถ้าช่องนี้มีขอบด้วยจะกลายเป็นกล่องซ้อนกล่อง
+                     * `field-sizing-content` ไม่ใช้: Safari ยังไม่รองรับ ⇒ ความสูงยังคุมด้วย scrollHeight ใน `autoGrow` */
+                    "block max-h-40 w-full resize-none border-0 bg-transparent p-0 text-body-sm",
+                    "outline-none placeholder:text-text-tertiary",
+                    "disabled:text-text-tertiary"
+                  )
+                }
+              ),
+              /* @__PURE__ */ jsxs("div", { className: "mt-1.5 flex items-center justify-between gap-2", children: [
+                /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-0.5", children: [
+                  voice.supported && /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: recording ? voice.stop : voice.start,
+                      disabled: disabled || transcribing,
+                      "aria-label": recording ? labels.voiceStop : labels.voiceStart,
+                      title: recording ? labels.voiceStop : labels.voiceStart,
+                      className: cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-full transition-colors cursor-pointer",
+                        "disabled:pointer-events-none disabled:opacity-40",
+                        recording ? "bg-error-red-50 text-error-red-600 hover:bg-error-red-100" : (
+                          /* ไอคอนของ control ที่กดได้ต้องได้ 3:1 ตามเกณฑ์ non-text — tertiary วัดได้ 2.78 */
+                          "text-text-body hover:bg-overlay-hover hover:text-text-body"
+                        )
+                      ),
+                      children: transcribing ? /* @__PURE__ */ jsx(Loader2, { className: "size-4 animate-spin" }) : recording ? /* @__PURE__ */ jsx(Square, { className: "size-4 fill-current" }) : /* @__PURE__ */ jsx(Mic, { className: "size-4" })
+                    }
+                  ),
+                  recording && /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: voice.discard,
+                      "aria-label": labels.voiceDiscard,
+                      title: labels.voiceDiscard,
+                      className: cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-full transition-colors cursor-pointer",
+                        "text-text-body hover:bg-overlay-hover hover:text-text-body"
+                      ),
+                      children: /* @__PURE__ */ jsx(Trash2, { className: "size-4" })
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: busy ? onCancel : submit,
+                    disabled: disabled || !busy && !value.trim(),
+                    "aria-label": busy ? labels.cancel : labels.send,
+                    className: cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-full transition-colors cursor-pointer",
+                      "disabled:pointer-events-none disabled:opacity-40",
+                      busy ? "bg-overlay-hover text-text-body hover:bg-overlay-press" : (
+                        /* ไอคอนดำหมึกบนมิ้นต์ ไม่ใช่ขาว — เหตุผลเดียวกับฟองของผู้ใช้ (ขาวบนมิ้นต์ = 1.93:1)
+                         * ไอคอนไม่ใช่ข้อความก็จริง แต่เกณฑ์ 3:1 ของ non-text ก็ยังไม่ผ่านอยู่ดี
+                         * hover เป็น `brand-hover` ซึ่งเข้มพอให้กลับไปใช้ตัวขาวได้ */
+                        "bg-brand text-text-black hover:bg-brand-hover hover:text-brand-foreground"
+                      )
+                    ),
+                    children: busy ? /* @__PURE__ */ jsx(Square, { className: "size-4 fill-current" }) : /* @__PURE__ */ jsx(ArrowUp, { className: "size-4" })
+                  }
+                )
+              ] })
+            ]
           }
         )
       ]
     }
   );
+}
+function formatElapsed(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 // src/ai-chat/components/ContextMeter.tsx
@@ -247,8 +586,8 @@ function fill(template, values) {
 }
 
 // src/ai-chat/components/ConversationPicker.tsx
-import * as React2 from "react";
-import { Loader2, MessageSquare, Search } from "lucide-react";
+import * as React3 from "react";
+import { Loader2 as Loader22, MessageSquare, Search } from "lucide-react";
 import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
 var LIST_CAP = 100;
 function relativeTime(iso, labels) {
@@ -271,10 +610,10 @@ function startedToday(iso) {
 }
 var displayTitle = (item, labels) => item.title || item.preview || labels.historyUntitled;
 function ConversationPicker({ load, onPick, activeId, labels }) {
-  const [items, setItems] = React2.useState(null);
-  const [error, setError] = React2.useState(null);
-  const [query, setQuery] = React2.useState("");
-  React2.useEffect(() => {
+  const [items, setItems] = React3.useState(null);
+  const [error, setError] = React3.useState(null);
+  const [query, setQuery] = React3.useState("");
+  React3.useEffect(() => {
     let cancelled = false;
     load().then((result) => {
       if (!cancelled) setItems(result);
@@ -285,7 +624,7 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
       cancelled = true;
     };
   }, [load]);
-  const matched = React2.useMemo(() => {
+  const matched = React3.useMemo(() => {
     if (!items) return null;
     const needle = query.trim().toLowerCase();
     if (!needle) return items;
@@ -293,7 +632,7 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
       (item) => `${item.title ?? ""} ${item.preview ?? ""}`.toLowerCase().includes(needle)
     );
   }, [items, query]);
-  const groups = React2.useMemo(() => {
+  const groups = React3.useMemo(() => {
     if (!matched) return null;
     return {
       today: matched.filter((item) => startedToday(item.createdAt)),
@@ -315,7 +654,7 @@ function ConversationPicker({ load, onPick, activeId, labels }) {
         }
       )
     ] }) }),
-    error ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-error-red-600", children: error }) : !groups ? /* @__PURE__ */ jsx3("div", { className: "flex flex-1 items-center justify-center", children: /* @__PURE__ */ jsx3(Loader2, { className: "size-4 animate-spin text-text-tertiary" }) }) : items && items.length === 0 ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.emptyHint }) : groups.today.length + groups.earlier.length === 0 ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.historyNoMatch }) : /* @__PURE__ */ jsxs3("ul", { className: "min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2.5 pb-3", children: [
+    error ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-error-red-600", children: error }) : !groups ? /* @__PURE__ */ jsx3("div", { className: "flex flex-1 items-center justify-center", children: /* @__PURE__ */ jsx3(Loader22, { className: "size-4 animate-spin text-text-tertiary" }) }) : items && items.length === 0 ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.emptyHint }) : groups.today.length + groups.earlier.length === 0 ? /* @__PURE__ */ jsx3("p", { className: "px-4 py-3 text-caption text-text-body", children: labels.historyNoMatch }) : /* @__PURE__ */ jsxs3("ul", { className: "min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2.5 pb-3", children: [
       groups.today.length > 0 && /* @__PURE__ */ jsx3(GroupHeading, { children: labels.historyToday }),
       groups.today.map((item) => /* @__PURE__ */ jsx3(Row, { item, activeId, labels, onPick }, item.id)),
       groups.earlier.length > 0 && /* @__PURE__ */ jsx3(GroupHeading, { children: labels.historyEarlier }),
@@ -373,14 +712,14 @@ function Row({
 }
 
 // src/ai-chat/components/MessageList.tsx
-import * as React5 from "react";
+import * as React7 from "react";
 import { Sparkles } from "lucide-react";
 
 // src/ai-chat/components/MessageBubble.tsx
 import { CircleCheck, CircleSlash } from "lucide-react";
 
 // src/ai-chat/components/Markdown.tsx
-import * as React3 from "react";
+import * as React4 from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { ExternalLink, CornerDownRight } from "lucide-react";
@@ -405,8 +744,8 @@ function Markdown({
   className,
   labels
 }) {
-  const [choice, setChoice] = React3.useState(null);
-  const html = React3.useMemo(() => {
+  const [choice, setChoice] = React4.useState(null);
+  const html = React4.useMemo(() => {
     if (typeof window === "undefined") return null;
     ensureLinkHardening();
     try {
@@ -468,8 +807,8 @@ function LinkChoicePopover({
   labels,
   onClose
 }) {
-  const ref = React3.useRef(null);
-  React3.useEffect(() => {
+  const ref = React4.useRef(null);
+  React4.useEffect(() => {
     ref.current?.querySelector("button")?.focus();
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -548,8 +887,8 @@ function hostOf(href) {
 }
 
 // src/ai-chat/components/ToolTrail.tsx
-import * as React4 from "react";
-import { Check, Loader2 as Loader22, TriangleAlert } from "lucide-react";
+import * as React5 from "react";
+import { Check, Loader2 as Loader23, TriangleAlert } from "lucide-react";
 import { jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
 function ToolTrail({ tools }) {
   if (tools.length === 0) return null;
@@ -570,8 +909,8 @@ function ToolTrail({ tools }) {
   )) });
 }
 function Elapsed({ since }) {
-  const [seconds, setSeconds] = React4.useState(() => elapsedSeconds(since));
-  React4.useEffect(() => {
+  const [seconds, setSeconds] = React5.useState(() => elapsedSeconds(since));
+  React5.useEffect(() => {
     const timer = setInterval(() => setSeconds(elapsedSeconds(since)), 1e3);
     return () => clearInterval(timer);
   }, [since]);
@@ -584,22 +923,56 @@ function Elapsed({ since }) {
 }
 var elapsedSeconds = (since) => Math.floor((Date.now() - since) / 1e3);
 function ToolIcon({ status }) {
-  if (status === "start") return /* @__PURE__ */ jsx5(Loader22, { className: "size-3.5 shrink-0 animate-spin" });
+  if (status === "start") return /* @__PURE__ */ jsx5(Loader23, { className: "size-3.5 shrink-0 animate-spin" });
   if (status === "error") return /* @__PURE__ */ jsx5(TriangleAlert, { className: "size-3.5 shrink-0" });
   return /* @__PURE__ */ jsx5(Check, { className: "size-3.5 shrink-0 text-success-green-600" });
 }
 
 // src/ai-chat/components/WidgetRenderer.tsx
-import { CircleAlert, TriangleAlert as TriangleAlert2 } from "lucide-react";
+import * as React6 from "react";
+import { CircleAlert, Loader2 as Loader24, TriangleAlert as TriangleAlert2 } from "lucide-react";
 import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
-function WidgetRenderer({ widget, onAction, disabled }) {
+function WidgetRenderer({
+  widget,
+  onAction,
+  disabled,
+  superseded,
+  supersededNote,
+  waitingNote
+}) {
   switch (widget.type) {
     case "confirm":
-      return /* @__PURE__ */ jsx6(ConfirmCard, { payload: widget.payload, onAction, disabled });
+      return /* @__PURE__ */ jsx6(
+        ConfirmCard,
+        {
+          payload: widget.payload,
+          onAction,
+          disabled,
+          superseded,
+          supersededNote,
+          waitingNote
+        }
+      );
     case "error_card":
-      return /* @__PURE__ */ jsx6(ErrorCard, { payload: widget.payload, onAction, disabled });
+      return /* @__PURE__ */ jsx6(
+        ErrorCard,
+        {
+          payload: widget.payload,
+          onAction,
+          disabled,
+          waitingNote
+        }
+      );
     case "staff_picker":
-      return /* @__PURE__ */ jsx6(StaffPicker, { payload: widget.payload, onAction, disabled });
+      return /* @__PURE__ */ jsx6(
+        StaffPicker,
+        {
+          payload: widget.payload,
+          onAction,
+          disabled,
+          waitingNote
+        }
+      );
     case "summary_stats":
       return /* @__PURE__ */ jsx6(SummaryStats, { payload: widget.payload });
     case "schedule_diff":
@@ -626,39 +999,86 @@ function ActionButton({
   children,
   onClick,
   variant = "primary",
-  disabled
+  disabled,
+  loading
 }) {
-  return /* @__PURE__ */ jsx6(
+  return /* @__PURE__ */ jsxs6(
     "button",
     {
       type: "button",
       onClick,
-      disabled,
+      disabled: disabled || loading,
+      "aria-busy": loading || void 0,
       className: cn(
-        "h-8 rounded-sm px-3 text-body-sm font-semibold transition-colors cursor-pointer",
+        "inline-flex h-8 items-center gap-1.5 rounded-sm px-3 text-body-sm font-semibold transition-colors cursor-pointer",
         "disabled:pointer-events-none disabled:opacity-40",
+        /* ปุ่มที่กำลังทำงานต้อง **ไม่จาง** — จางแล้วอ่านว่า "กดไม่ได้" ซึ่งเป็นคนละเรื่องกับ "กำลังทำให้อยู่"
+         * `disabled:opacity-100` ชนะกฎบนได้เพราะเป็น variant เดียวกันแต่มาทีหลัง */
+        loading && "disabled:opacity-100 disabled:cursor-progress",
         variant === "primary" ? "bg-brand text-brand-foreground hover:bg-brand-hover" : "border border-brand bg-white text-brand hover:bg-brand-subtle"
       ),
-      children
+      children: [
+        loading && /* @__PURE__ */ jsx6(Loader24, { "aria-hidden": true, className: "size-3.5 animate-spin" }),
+        children
+      ]
     }
   );
+}
+function WaitingRow({ note }) {
+  return /* @__PURE__ */ jsxs6(
+    "p",
+    {
+      "data-slot": "ai-chat-widget-waiting",
+      "aria-live": "polite",
+      className: "mt-3 flex items-center gap-1.5 text-caption text-text-body",
+      children: [
+        /* @__PURE__ */ jsx6(Loader24, { "aria-hidden": true, className: "size-3.5 shrink-0 animate-spin" }),
+        note
+      ]
+    }
+  );
+}
+function usePressed(disabled) {
+  const [pressed, setPressed] = React6.useState(null);
+  React6.useEffect(() => {
+    if (!disabled) setPressed(null);
+  }, [disabled]);
+  return [pressed, setPressed];
 }
 function ConfirmCard({
   payload,
   onAction,
-  disabled
+  disabled,
+  superseded,
+  supersededNote,
+  waitingNote
 }) {
-  return /* @__PURE__ */ jsxs6(Frame, { children: [
+  const [pressed, setPressed] = usePressed(disabled);
+  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
+  const answer = (label) => {
+    setPressed(label);
+    onAction(label);
+  };
+  return /* @__PURE__ */ jsxs6(Frame, { className: superseded ? "opacity-70" : void 0, children: [
     /* @__PURE__ */ jsx6("p", { className: "text-body-sm font-semibold text-black", children: payload.title_th }),
     /* @__PURE__ */ jsx6("p", { className: "mt-1 whitespace-pre-wrap text-body-sm text-gray-600", children: payload.summary_th }),
-    /* @__PURE__ */ jsxs6("div", { className: "mt-3 flex gap-2", children: [
-      /* @__PURE__ */ jsx6(ActionButton, { onClick: () => onAction(payload.confirmLabel), disabled, children: payload.confirmLabel }),
+    superseded ? /* @__PURE__ */ jsx6("p", { className: "mt-2 text-caption text-text-tertiary", "data-slot": "ai-chat-superseded", children: supersededNote }) : waiting ? /* @__PURE__ */ jsx6(WaitingRow, { note: waitingNote }) : /* @__PURE__ */ jsxs6("div", { className: "mt-3 flex gap-2", children: [
+      /* @__PURE__ */ jsx6(
+        ActionButton,
+        {
+          onClick: () => answer(payload.confirmLabel),
+          disabled,
+          loading: Boolean(disabled) && pressed === payload.confirmLabel,
+          children: payload.confirmLabel
+        }
+      ),
       /* @__PURE__ */ jsx6(
         ActionButton,
         {
           variant: "secondary",
-          onClick: () => onAction(payload.cancelLabel),
+          onClick: () => answer(payload.cancelLabel),
           disabled,
+          loading: Boolean(disabled) && pressed === payload.cancelLabel,
           children: payload.cancelLabel
         }
       )
@@ -668,8 +1088,11 @@ function ConfirmCard({
 function ErrorCard({
   payload,
   onAction,
-  disabled
+  disabled,
+  waitingNote
 }) {
+  const [pressed, setPressed] = usePressed(disabled);
+  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
   const isError = payload.severity === "error";
   return /* @__PURE__ */ jsx6(
     Frame,
@@ -688,12 +1111,17 @@ function ErrorCard({
             " \xB7 \u0E40\u0E27\u0E23 ",
             payload.location.shiftType
           ] }),
-          payload.fixActions.length > 0 && /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-wrap gap-2", children: payload.fixActions.map((fix) => /* @__PURE__ */ jsx6(
+          payload.fixActions.length > 0 && waiting && /* @__PURE__ */ jsx6(WaitingRow, { note: waitingNote }),
+          payload.fixActions.length > 0 && !waiting && /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-wrap gap-2", children: payload.fixActions.map((fix) => /* @__PURE__ */ jsx6(
             ActionButton,
             {
               variant: "secondary",
-              onClick: () => onAction(fix.label_th),
+              onClick: () => {
+                setPressed(fix.label_th);
+                onAction(fix.label_th);
+              },
               disabled,
+              loading: Boolean(disabled) && pressed === fix.label_th,
               children: fix.label_th
             },
             fix.opRef
@@ -706,28 +1134,41 @@ function ErrorCard({
 function StaffPicker({
   payload,
   onAction,
-  disabled
+  disabled,
+  waitingNote
 }) {
+  const [pressed, setPressed] = usePressed(disabled);
+  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
   return /* @__PURE__ */ jsxs6(Frame, { children: [
     /* @__PURE__ */ jsx6("p", { className: "text-body-sm text-gray-700", children: payload.prompt_th }),
-    /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-col gap-1", children: payload.candidates.map((candidate) => /* @__PURE__ */ jsxs6(
-      "button",
-      {
-        type: "button",
-        disabled,
-        onClick: () => onAction(candidate.displayName),
-        className: cn(
-          "flex items-baseline gap-2 rounded-sm border border-border-subtle px-2 py-1.5 text-left",
-          "hover:bg-brand-subtle disabled:pointer-events-none disabled:opacity-40 cursor-pointer"
-        ),
-        children: [
-          /* @__PURE__ */ jsx6("span", { className: "text-body-sm font-medium text-black", children: candidate.displayName }),
-          candidate.subUnit && /* @__PURE__ */ jsx6("span", { className: "text-caption text-gray-500", children: candidate.subUnit }),
-          candidate.hint && /* @__PURE__ */ jsx6("span", { className: "text-caption text-gray-400", children: candidate.hint })
-        ]
-      },
-      candidate.userId
-    )) })
+    /* @__PURE__ */ jsx6("div", { className: "mt-2 flex flex-col gap-1", children: payload.candidates.map((candidate) => {
+      const busy = Boolean(disabled) && pressed === candidate.displayName;
+      return /* @__PURE__ */ jsxs6(
+        "button",
+        {
+          type: "button",
+          disabled,
+          "aria-busy": busy || void 0,
+          onClick: () => {
+            setPressed(candidate.displayName);
+            onAction(candidate.displayName);
+          },
+          className: cn(
+            "flex items-baseline gap-2 rounded-sm border border-border-subtle px-2 py-1.5 text-left",
+            "hover:bg-brand-subtle disabled:pointer-events-none disabled:opacity-40 cursor-pointer",
+            busy && "disabled:opacity-100 border-brand bg-brand-subtle"
+          ),
+          children: [
+            busy && /* @__PURE__ */ jsx6(Loader24, { "aria-hidden": true, className: "size-3.5 shrink-0 animate-spin text-brand" }),
+            /* @__PURE__ */ jsx6("span", { className: "text-body-sm font-medium text-black", children: candidate.displayName }),
+            candidate.subUnit && /* @__PURE__ */ jsx6("span", { className: "text-caption text-gray-500", children: candidate.subUnit }),
+            candidate.hint && /* @__PURE__ */ jsx6("span", { className: "text-caption text-gray-400", children: candidate.hint })
+          ]
+        },
+        candidate.userId
+      );
+    }) }),
+    waiting && /* @__PURE__ */ jsx6(WaitingRow, { note: waitingNote })
   ] });
 }
 function SummaryStats({ payload }) {
@@ -783,6 +1224,7 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
     ] });
   }
   const isUser = message.role === "user";
+  const lastConfirm = lastConfirmIndex(message.widgets ?? []);
   return /* @__PURE__ */ jsx7(
     "div",
     {
@@ -835,7 +1277,10 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
           {
             widget,
             onAction: onWidgetAction,
-            disabled: widgetsDisabled
+            disabled: widgetsDisabled,
+            superseded: widget.type === "confirm" && index !== lastConfirm,
+            supersededNote: labels.cardSuperseded,
+            waitingNote: labels.cardWaiting
           },
           `${widget.type}-${index}`
         )),
@@ -879,6 +1324,12 @@ function Dot({ delay }) {
     }
   );
 }
+function lastConfirmIndex(widgets) {
+  for (let index = widgets.length - 1; index >= 0; index -= 1) {
+    if (widgets[index]?.type === "confirm") return index;
+  }
+  return -1;
+}
 
 // src/ai-chat/components/MessageList.tsx
 import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
@@ -889,8 +1340,8 @@ function MessageList({
   busy,
   suggestions
 }) {
-  const endRef = React5.useRef(null);
-  React5.useEffect(() => {
+  const endRef = React7.useRef(null);
+  React7.useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
   if (messages.length === 0) {
@@ -951,6 +1402,8 @@ function ChatDrawer(props) {
     position,
     onSend,
     onCancel,
+    onTranscribe,
+    onVoiceError,
     onNewChat,
     onPickConversation,
     onRetry,
@@ -960,7 +1413,7 @@ function ChatDrawer(props) {
     contextUsage,
     suggestions
   } = props;
-  const [historyOpen, setHistoryOpen] = React6.useState(false);
+  const [historyOpen, setHistoryOpen] = React8.useState(false);
   const busy = status === "sending" || status === "streaming";
   const starting = status === "starting";
   return /* @__PURE__ */ jsx9(RadixDialog.Root, { open, onOpenChange, modal: false, children: /* @__PURE__ */ jsx9(RadixDialog.Portal, { children: /* @__PURE__ */ jsxs9(
@@ -1040,7 +1493,9 @@ function ChatDrawer(props) {
               busy,
               disabled: starting || status === "error",
               labels,
-              placeholder: mode === "schedule" ? labels.placeholderSchedule : labels.placeholder
+              placeholder: mode === "schedule" ? labels.placeholderSchedule : labels.placeholder,
+              onTranscribe,
+              onVoiceError
             }
           )
         ] })
@@ -1091,7 +1546,7 @@ function StatusBar({
   }
   return null;
 }
-var IconButton = React6.forwardRef(function IconButton2({ label, onClick, active, children, ...props }, ref) {
+var IconButton = React8.forwardRef(function IconButton2({ label, onClick, active, children, ...props }, ref) {
   return /* @__PURE__ */ jsx9(
     "button",
     {
@@ -1115,7 +1570,7 @@ var IconButton = React6.forwardRef(function IconButton2({ label, onClick, active
 });
 
 // src/ai-chat/components/FloatingButton.tsx
-import * as React7 from "react";
+import * as React9 from "react";
 import { ChevronsLeft as ChevronsLeft2, ChevronsRight as ChevronsRight2, Sparkles as Sparkles2 } from "lucide-react";
 import { jsx as jsx10 } from "react/jsx-runtime";
 var EDGE_MARGIN = 8;
@@ -1134,16 +1589,16 @@ var readStoredY = () => {
     return null;
   }
 };
-var FloatingButton = React7.forwardRef(
+var FloatingButton = React9.forwardRef(
   function FloatingButton2({ open, onClick, label, position = "bottom-right", draggable = true, className }, ref) {
-    const [top, setTop] = React7.useState(null);
-    const [dragPoint, setDragPoint] = React7.useState(null);
-    const [viewportWidth, setViewportWidth] = React7.useState(null);
-    const [edgeGap, setEdgeGap] = React7.useState(FALLBACK_EDGE_GAP);
-    const node = React7.useRef(null);
-    const grab = React7.useRef({ x: 0, y: 0 });
-    const moved = React7.useRef(false);
-    const attachRef = React7.useCallback(
+    const [top, setTop] = React9.useState(null);
+    const [dragPoint, setDragPoint] = React9.useState(null);
+    const [viewportWidth, setViewportWidth] = React9.useState(null);
+    const [edgeGap, setEdgeGap] = React9.useState(FALLBACK_EDGE_GAP);
+    const node = React9.useRef(null);
+    const grab = React9.useRef({ x: 0, y: 0 });
+    const moved = React9.useRef(false);
+    const attachRef = React9.useCallback(
       (element) => {
         node.current = element;
         if (typeof ref === "function") ref(element);
@@ -1151,7 +1606,7 @@ var FloatingButton = React7.forwardRef(
       },
       [ref]
     );
-    React7.useEffect(() => {
+    React9.useEffect(() => {
       if (!draggable) return;
       setViewportWidth(window.innerWidth);
       const rect = node.current?.getBoundingClientRect();
@@ -1161,7 +1616,7 @@ var FloatingButton = React7.forwardRef(
       }
       setTop(readStoredY());
     }, [draggable, position]);
-    React7.useEffect(() => {
+    React9.useEffect(() => {
       if (!draggable) return;
       const onResize = () => {
         setViewportWidth(window.innerWidth);
@@ -1265,6 +1720,15 @@ var thLabels = {
   placeholderSchedule: '\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23 \u2014 \u0E1E\u0E34\u0E21\u0E1E\u0E4C "\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23\u0E40\u0E25\u0E22" \u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E30\u0E1A\u0E38\u0E41\u0E1C\u0E19\u0E01/\u0E40\u0E14\u0E37\u0E2D\u0E19\u2026',
   send: "\u0E2A\u0E48\u0E07",
   cancel: "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01",
+  voiceStart: "\u0E1E\u0E39\u0E14\u0E41\u0E17\u0E19\u0E1E\u0E34\u0E21\u0E1E\u0E4C",
+  voiceStop: "\u0E2B\u0E22\u0E38\u0E14\u0E2D\u0E31\u0E14\u0E40\u0E2A\u0E35\u0E22\u0E07",
+  voiceDiscard: "\u0E17\u0E34\u0E49\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E17\u0E35\u0E48\u0E2D\u0E31\u0E14\u0E44\u0E27\u0E49",
+  voiceRecording: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E31\u0E14\u0E40\u0E2A\u0E35\u0E22\u0E07",
+  voiceTranscribing: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E41\u0E1B\u0E25\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u2026",
+  voiceDenied: "\u0E40\u0E1B\u0E34\u0E14\u0E44\u0E21\u0E42\u0E04\u0E23\u0E42\u0E1F\u0E19\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49 \u2014 \u0E2D\u0E19\u0E38\u0E0D\u0E32\u0E15\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E44\u0E21\u0E42\u0E04\u0E23\u0E42\u0E1F\u0E19\u0E43\u0E19\u0E40\u0E1A\u0E23\u0E32\u0E27\u0E4C\u0E40\u0E0B\u0E2D\u0E23\u0E4C\u0E01\u0E48\u0E2D\u0E19",
+  /* ต้องชี้ทางออกเป็น "พิมพ์แทน" เสมอ — เสียงเป็นแค่ทางลัด คนที่ติดอยู่กับปุ่มไมค์คือคนที่ลืมไปว่ามีช่องพิมพ์อยู่แล้ว */
+  voiceFailed: "\u0E41\u0E1B\u0E25\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08 \u0E25\u0E2D\u0E07\u0E2D\u0E31\u0E14\u0E43\u0E2B\u0E21\u0E48\u0E2B\u0E23\u0E37\u0E2D\u0E1E\u0E34\u0E21\u0E1E\u0E4C\u0E41\u0E17\u0E19\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22",
+  voiceLimit: "\u0E2D\u0E31\u0E14\u0E44\u0E14\u0E49\u0E04\u0E23\u0E31\u0E49\u0E07\u0E25\u0E30\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19 {seconds} \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35",
   newChat: "\u0E41\u0E0A\u0E17\u0E43\u0E2B\u0E21\u0E48",
   history: "\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u0E41\u0E0A\u0E17",
   emptyTitle: "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E16\u0E32\u0E21\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22",
@@ -1276,6 +1740,8 @@ var thLabels = {
   minimize: "\u0E22\u0E48\u0E2D\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07\u0E41\u0E0A\u0E17 (\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E22\u0E31\u0E07\u0E2D\u0E22\u0E39\u0E48)",
   committed: "\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E41\u0E25\u0E49\u0E27",
   notCommitted: "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01",
+  cardSuperseded: "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E19\u0E35\u0E49\u0E16\u0E39\u0E01\u0E41\u0E17\u0E19\u0E17\u0E35\u0E48\u0E14\u0E49\u0E27\u0E22\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E43\u0E2B\u0E21\u0E48\u0E01\u0E27\u0E48\u0E32\u0E41\u0E25\u0E49\u0E27",
+  cardWaiting: "\u0E23\u0E2D\u0E43\u0E2B\u0E49\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E2A\u0E23\u0E47\u0E08\u0E01\u0E48\u0E2D\u0E19\u2026",
   thinking: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E04\u0E34\u0E14\u2026",
   scheduleMode: "\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23",
   assistantMode: "\u0E42\u0E2B\u0E21\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22",
@@ -1326,6 +1792,14 @@ var enLabels = {
   placeholderSchedule: 'Scheduling mode \u2014 type "generate the roster", or name a department/month\u2026',
   send: "Send",
   cancel: "Cancel",
+  voiceStart: "Speak instead of typing",
+  voiceStop: "Stop recording",
+  voiceDiscard: "Discard this recording",
+  voiceRecording: "Recording",
+  voiceTranscribing: "Turning speech into text\u2026",
+  voiceDenied: "Cannot open the microphone \u2014 allow microphone access in your browser first",
+  voiceFailed: "Could not turn that into text. Record again, or just type it.",
+  voiceLimit: "Recordings stop at {seconds} seconds",
   newChat: "New chat",
   history: "Chat history",
   emptyTitle: "Ask away",
@@ -1337,6 +1811,8 @@ var enLabels = {
   minimize: "Minimise the chat (the conversation is kept)",
   committed: "Saved",
   notCommitted: "Not saved yet",
+  cardSuperseded: "Replaced by a newer item",
+  cardWaiting: "Waiting for the current request to finish\u2026",
   thinking: "Thinking\u2026",
   scheduleMode: "Scheduling mode",
   assistantMode: "Assistant mode",
@@ -1407,81 +1883,7 @@ function openAiChat(detail = {}) {
 }
 
 // src/ai-chat/state/useAiChatSession.ts
-import * as React8 from "react";
-
-// src/ai-chat/api/aiChatApi.ts
-var AiChatApiError = class extends Error {
-  constructor(message, status, body) {
-    super(message);
-    this.status = status;
-    this.body = body;
-    this.name = "AiChatApiError";
-  }
-  status;
-  body;
-};
-function createAiChatApi(config) {
-  const base = config.baseUrl.replace(/\/+$/, "");
-  const doFetch = config.fetchImpl ?? globalThis.fetch;
-  async function request(path, init) {
-    const token = await config.getToken();
-    const response = await doFetch(`${base}${path}`, {
-      method: init.method,
-      signal: init.signal,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...init.body !== void 0 ? { "Content-Type": "application/json" } : {}
-      },
-      body: init.body !== void 0 ? JSON.stringify(init.body) : void 0
-    });
-    const body = response.status === 204 ? null : await response.text().then(safeJsonParse);
-    if (!response.ok) {
-      throw new AiChatApiError(messageOf(body) ?? `ai-service ${init.method} ${path} \u2192 ${response.status}`, response.status, body);
-    }
-    return unwrap(body);
-  }
-  return {
-    createConversation: (title, signal) => request("/v2/ai/conversations", {
-      method: "POST",
-      body: title ? { title } : {},
-      signal
-    }),
-    listConversations: (signal) => request("/v2/ai/conversations", { method: "GET", signal }),
-    getMessages: (conversationId, signal) => request(
-      `/v2/ai/conversations/${encodeURIComponent(conversationId)}/messages`,
-      { method: "GET", signal }
-    ),
-    connectInfo: (conversationId, signal) => request("/v2/ai/transport/subscribe", {
-      method: "POST",
-      body: { conversationId },
-      signal
-    }),
-    cancelRun: (runId, signal) => request(`/v2/ai/chat/runs/${encodeURIComponent(runId)}/cancel`, {
-      method: "POST",
-      signal
-    })
-  };
-}
-function safeJsonParse(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
-}
-function unwrap(body) {
-  if (body && typeof body === "object" && "data" in body && "status" in body) {
-    return body.data;
-  }
-  return body;
-}
-function messageOf(body) {
-  if (!body || typeof body !== "object") return null;
-  const envelope = body;
-  if (typeof envelope.message === "string" && envelope.message) return envelope.message;
-  if (typeof envelope.data?.message === "string" && envelope.data.message) return envelope.data.message;
-  return null;
-}
+import * as React10 from "react";
 
 // src/ai-chat/lib/sentinels.ts
 var ENTER_MODE = /\[\[ENTER_MODE:([^\]]+)\]\]/;
@@ -1917,10 +2319,10 @@ var assistantNote = (text) => ({
   content: text
 });
 function useAiChatSession(config) {
-  const [state, dispatch] = React8.useReducer(reducer, initialState);
-  const configRef = React8.useRef(config);
+  const [state, dispatch] = React10.useReducer(reducer, initialState);
+  const configRef = React10.useRef(config);
   configRef.current = config;
-  const api = React8.useMemo(
+  const api = React10.useMemo(
     () => createAiChatApi({
       baseUrl: config.baseUrl,
       getToken: () => configRef.current.getToken(),
@@ -1928,29 +2330,29 @@ function useAiChatSession(config) {
     }),
     [config.baseUrl, config.fetchImpl]
   );
-  const labels = React8.useMemo(() => resolveLabels(config.labels), [config.labels]);
-  const labelsRef = React8.useRef(labels);
+  const labels = React10.useMemo(() => resolveLabels(config.labels), [config.labels]);
+  const labelsRef = React10.useRef(labels);
   labelsRef.current = labels;
-  const transportRef = React8.useRef(null);
-  const startingRef = React8.useRef(null);
-  const startRef = React8.useRef(null);
-  const stateRef = React8.useRef(state);
+  const transportRef = React10.useRef(null);
+  const startingRef = React10.useRef(null);
+  const startRef = React10.useRef(null);
+  const stateRef = React10.useRef(state);
   stateRef.current = state;
-  const streamRef = React8.useRef("");
+  const streamRef = React10.useRef("");
   const storageKey = `mediact-ai-chat:conversation:${config.baseUrl}`;
-  const reportError = React8.useCallback((error, fallback) => {
+  const reportError = React10.useCallback((error, fallback) => {
     const err = error instanceof Error ? error : new Error(fallback);
     turnRef.current = null;
     configRef.current.onError?.(err);
     dispatch({ type: "error", message: err.message || fallback });
   }, []);
-  const unackedTimerRef = React8.useRef(null);
-  const clearUnackedGrace = React8.useCallback(() => {
+  const unackedTimerRef = React10.useRef(null);
+  const clearUnackedGrace = React10.useCallback(() => {
     if (!unackedTimerRef.current) return;
     clearTimeout(unackedTimerRef.current);
     unackedTimerRef.current = null;
   }, []);
-  const armUnackedGrace = React8.useCallback(() => {
+  const armUnackedGrace = React10.useCallback(() => {
     clearUnackedGrace();
     unackedTimerRef.current = setTimeout(() => {
       unackedTimerRef.current = null;
@@ -1958,9 +2360,9 @@ function useAiChatSession(config) {
       dispatch({ type: "error", message: UNACKED_EXPIRED_TEXT });
     }, UNACKED_GRACE_MS);
   }, [clearUnackedGrace]);
-  React8.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
-  const turnRef = React8.useRef(null);
-  const adoptTurn = React8.useCallback(
+  React10.useEffect(() => clearUnackedGrace, [clearUnackedGrace]);
+  const turnRef = React10.useRef(null);
+  const adoptTurn = React10.useCallback(
     (turnId) => {
       const current = turnRef.current;
       if (current && (!turnId || current.id === null || current.id === turnId)) {
@@ -1973,12 +2375,12 @@ function useAiChatSession(config) {
     },
     []
   );
-  const isOwnTurn = React8.useCallback((turnId) => {
+  const isOwnTurn = React10.useCallback((turnId) => {
     const current = turnRef.current;
     if (!current?.own) return false;
     return !turnId || current.id === null || current.id === turnId;
   }, []);
-  const handleEvent = React8.useCallback(
+  const handleEvent = React10.useCallback(
     (event) => {
       if (event.event === "user_turn") {
         if (!isOwnTurn(event.turnId)) {
@@ -2012,7 +2414,7 @@ function useAiChatSession(config) {
     },
     [adoptTurn, isOwnTurn, clearUnackedGrace]
   );
-  const start = React8.useCallback(
+  const start = React10.useCallback(
     async (conversationId) => {
       if (transportRef.current && !conversationId) return;
       if (startingRef.current) return startingRef.current;
@@ -2073,7 +2475,7 @@ function useAiChatSession(config) {
     [api, handleEvent, reportError, storageKey]
   );
   startRef.current = start;
-  const send = React8.useCallback(
+  const send = React10.useCallback(
     async (text) => {
       const trimmed = text.trim();
       if (!trimmed) return;
@@ -2116,7 +2518,7 @@ function useAiChatSession(config) {
     },
     [state.conversationId, state.mode, state.scheduleSeed, reportError, armUnackedGrace]
   );
-  const cancel = React8.useCallback(async () => {
+  const cancel = React10.useCallback(async () => {
     const runId = state.activeRunId;
     if (!runId) return;
     try {
@@ -2127,7 +2529,7 @@ function useAiChatSession(config) {
       );
     }
   }, [api, state.activeRunId]);
-  const newConversation = React8.useCallback(() => {
+  const newConversation = React10.useCallback(() => {
     transportRef.current?.disconnect();
     transportRef.current = null;
     streamRef.current = "";
@@ -2135,7 +2537,7 @@ function useAiChatSession(config) {
     writeStored(storageKey, null);
     dispatch({ type: "reset" });
   }, [storageKey]);
-  const setMode = React8.useCallback((mode, seed) => {
+  const setMode = React10.useCallback((mode, seed) => {
     const effectiveSeed = seed ?? stateRef.current.scheduleSeed;
     dispatch({
       type: "set_mode",
@@ -2144,8 +2546,8 @@ function useAiChatSession(config) {
       greeting: buildScheduleGreeting(labelsRef.current, effectiveSeed)
     });
   }, []);
-  const listConversations = React8.useCallback(() => api.listConversations(), [api]);
-  React8.useEffect(() => {
+  const listConversations = React10.useCallback(() => api.listConversations(), [api]);
+  React10.useEffect(() => {
     return () => {
       transportRef.current?.disconnect();
       transportRef.current = null;
@@ -2222,34 +2624,50 @@ function AiChatWidget({
   className,
   ...config
 }) {
-  const [uncontrolledOpen, setUncontrolledOpen] = React9.useState(defaultOpen);
+  const [uncontrolledOpen, setUncontrolledOpen] = React11.useState(defaultOpen);
   const isControlled = controlledOpen !== void 0;
   const open = isControlled ? controlledOpen : uncontrolledOpen;
-  const setOpen = React9.useCallback(
+  const setOpen = React11.useCallback(
     (next) => {
       if (!isControlled) setUncontrolledOpen(next);
       onOpenChange?.(next);
     },
     [isControlled, onOpenChange]
   );
-  const getToken = React9.useMemo(
+  const getToken = React11.useMemo(
     () => resolveTokenProvider(config.auth, config.getToken, config.onError),
     [config.auth, config.getToken, config.onError]
   );
-  const session = useAiChatSession(React9.useMemo(() => ({ ...config, getToken }), [config, getToken]));
+  const session = useAiChatSession(React11.useMemo(() => ({ ...config, getToken }), [config, getToken]));
   const locale = config.locale ?? "th";
-  const labels = React9.useMemo(() => resolveLabels(config.labels, locale), [config.labels, locale]);
+  const labels = React11.useMemo(() => resolveLabels(config.labels, locale), [config.labels, locale]);
   const position = config.position ?? "bottom-right";
   const suggestions = config.suggestions ?? SUGGESTIONS_BY_LOCALE[locale] ?? SUGGESTIONS_BY_LOCALE.th;
   const { setMode } = session;
-  React9.useEffect(() => {
+  React11.useEffect(() => {
     if (config.mode) setMode(config.mode);
   }, [config.mode, setMode]);
-  React9.useEffect(() => {
+  const [sttMissing, setSttMissing] = React11.useState(false);
+  const { api } = session;
+  const transcribe = React11.useCallback(
+    async (audio, signal) => {
+      try {
+        return await api.transcribe(audio, signal);
+      } catch (cause) {
+        if (cause instanceof AiChatApiError && (cause.status === 404 || cause.status === 501)) {
+          setSttMissing(true);
+        }
+        throw cause;
+      }
+    },
+    [api]
+  );
+  const voiceEnabled = (config.voiceInput ?? true) && !sttMissing;
+  React11.useEffect(() => {
     if (open) void session.start();
   }, [open, session.start]);
-  const [hostRequest, setHostRequest] = React9.useState(null);
-  React9.useEffect(() => {
+  const [hostRequest, setHostRequest] = React11.useState(null);
+  React11.useEffect(() => {
     const onOpen = (event) => {
       event.preventDefault();
       const detail = event.detail ?? {};
@@ -2261,7 +2679,7 @@ function AiChatWidget({
   }, [setOpen]);
   const { status: sessionStatus, mode: sessionMode } = session.state;
   const { setMode: sessionSetMode, send: sessionSend } = session;
-  React9.useEffect(() => {
+  React11.useEffect(() => {
     if (!hostRequest?.message) return;
     if (sessionStatus === "error") {
       setHostRequest(null);
@@ -2275,23 +2693,23 @@ function AiChatWidget({
     setHostRequest(null);
     void sessionSend(hostRequest.message);
   }, [hostRequest, sessionStatus, sessionMode, sessionSetMode, sessionSend]);
-  const handleSend = React9.useCallback(
+  const handleSend = React11.useCallback(
     (text) => {
       void session.send(text);
     },
     [session.send]
   );
-  const handlePickConversation = React9.useCallback(
+  const handlePickConversation = React11.useCallback(
     (conversationId) => {
       void session.start(conversationId);
     },
     [session.start]
   );
-  const handleNewChat = React9.useCallback(() => {
+  const handleNewChat = React11.useCallback(() => {
     session.newConversation();
     void session.start();
   }, [session.newConversation, session.start]);
-  const handleRetry = React9.useCallback(() => {
+  const handleRetry = React11.useCallback(() => {
     const current = session.state.conversationId;
     if (current) {
       void session.start(current);
@@ -2328,6 +2746,8 @@ function AiChatWidget({
         suggestions,
         onSend: handleSend,
         onCancel: () => void session.cancel(),
+        onTranscribe: voiceEnabled ? transcribe : void 0,
+        onVoiceError: config.onError,
         onNewChat: handleNewChat,
         onPickConversation: handlePickConversation,
         onRetry: handleRetry,
@@ -2367,6 +2787,7 @@ export {
   seedScope,
   stripSentinels,
   thLabels,
-  useAiChatSession
+  useAiChatSession,
+  useVoiceInput
 };
 //# sourceMappingURL=index.js.map

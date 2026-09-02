@@ -266,3 +266,31 @@ export type ChatEvent =
   | ({ event: "proposal"; payload: ProposalPayload } & TurnStamp)
   | ({ event: "task_state"; payload: TaskStatePayload } & TurnStamp)
   | ({ event: "done"; payload: DonePayload } & TurnStamp);
+
+/**
+ * Container the browser recorded in. The service passes it to the transcription model, which needs to be
+ * told the container — it does not sniff. Chrome/Firefox produce `webm` (opus inside), Safari `mp4`.
+ */
+export type AudioFormat = "webm" | "mp4" | "wav";
+
+/** One recording on its way to `POST /v2/ai/stt` — base64 because the REST path is JSON, not multipart. */
+export interface AudioClip {
+  /** Base64 of the raw container bytes, no `data:` prefix. */
+  data: string;
+  format: AudioFormat;
+}
+
+/**
+ * What speech-to-text gives back.
+ *
+ * `seconds` is what the upstream billed for this clip — optional, and nothing in the UI depends on it.
+ *
+ * 🔴 No cost field on purpose: metering voice spend belongs with the accounting the agent loop already
+ * does (`budget.domain` on the service), not on a per-response field the browser reads. Adding it here
+ * would put a number in front of the user that nobody agreed to show, and make the widget the second
+ * place cost is computed.
+ */
+export interface TranscriptionResult {
+  text: string;
+  seconds?: number;
+}

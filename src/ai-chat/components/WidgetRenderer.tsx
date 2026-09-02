@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CircleAlert, TriangleAlert } from "lucide-react";
+import { CircleAlert, Loader2, TriangleAlert } from "lucide-react";
 import type {
   ConfirmWidget,
   ErrorCardWidget,
@@ -32,9 +32,25 @@ export interface WidgetRendererProps {
   superseded?: boolean;
   /** The caption shown in place of the buttons when `superseded` (labels.cardSuperseded). */
   supersededNote?: string;
+  /**
+   * Shown in place of the buttons while ANOTHER turn is running and this card was never pressed
+   * (labels.cardWaiting).
+   *
+   * 🔴 Dimmed buttons alone were unreadable: "the system is busy, wait" and "this card is dead" looked
+   * identical, so the reflex is to press again to find out which. Removing the buttons and saying what is
+   * happening answers the question the greying-out only raised.
+   */
+  waitingNote?: string;
 }
 
-export function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote }: WidgetRendererProps) {
+export function WidgetRenderer({
+  widget,
+  onAction,
+  disabled,
+  superseded,
+  supersededNote,
+  waitingNote,
+}: WidgetRendererProps) {
   switch (widget.type) {
     case "confirm":
       return (
@@ -44,12 +60,27 @@ export function WidgetRenderer({ widget, onAction, disabled, superseded, superse
           disabled={disabled}
           superseded={superseded}
           supersededNote={supersededNote}
+          waitingNote={waitingNote}
         />
       );
     case "error_card":
-      return <ErrorCard payload={widget.payload as ErrorCardWidget} onAction={onAction} disabled={disabled} />;
+      return (
+        <ErrorCard
+          payload={widget.payload as ErrorCardWidget}
+          onAction={onAction}
+          disabled={disabled}
+          waitingNote={waitingNote}
+        />
+      );
     case "staff_picker":
-      return <StaffPicker payload={widget.payload as StaffPickerWidget} onAction={onAction} disabled={disabled} />;
+      return (
+        <StaffPicker
+          payload={widget.payload as StaffPickerWidget}
+          onAction={onAction}
+          disabled={disabled}
+          waitingNote={waitingNote}
+        />
+      );
     case "summary_stats":
       return <SummaryStats payload={widget.payload as SummaryStatsWidget} />;
     case "schedule_diff":
@@ -76,33 +107,78 @@ function Frame({ children, className }: { children: React.ReactNode; className?:
   );
 }
 
+/**
+ * 🔴 `loading` and `disabled` are different states on purpose (the same split `Button` makes).
+ *
+ * The card used to answer a press by going 40% grey — identical to the state it wears when some OTHER
+ * turn is in flight and this card was never touched. Two opposite meanings, one appearance: "we are
+ * working on what you asked" and "you may not press this". The button the user actually pressed now
+ * keeps full opacity, keeps its label, and grows a spinner; only its siblings dim.
+ */
 function ActionButton({
   children,
   onClick,
   variant = "primary",
   disabled,
+  loading,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   variant?: "primary" | "secondary";
   disabled?: boolean;
+  loading?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={cn(
-        "h-8 rounded-sm px-3 text-body-sm font-semibold transition-colors cursor-pointer",
+        "inline-flex h-8 items-center gap-1.5 rounded-sm px-3 text-body-sm font-semibold transition-colors cursor-pointer",
         "disabled:pointer-events-none disabled:opacity-40",
+        /* ปุ่มที่กำลังทำงานต้อง **ไม่จาง** — จางแล้วอ่านว่า "กดไม่ได้" ซึ่งเป็นคนละเรื่องกับ "กำลังทำให้อยู่"
+         * `disabled:opacity-100` ชนะกฎบนได้เพราะเป็น variant เดียวกันแต่มาทีหลัง */
+        loading && "disabled:opacity-100 disabled:cursor-progress",
         variant === "primary"
           ? "bg-brand text-brand-foreground hover:bg-brand-hover"
           : "border border-brand bg-white text-brand hover:bg-brand-subtle",
       )}
     >
+      {loading && <Loader2 aria-hidden className="size-3.5 animate-spin" />}
       {children}
     </button>
   );
+}
+
+/**
+ * Which button on THIS card was pressed, until the run it started finishes.
+ *
+ * Local on purpose: `disabled` arrives as "a turn is in flight", which is true for every card on screen,
+ * including ones from ten minutes ago. Only the card that was clicked may claim to be working — otherwise
+ * the whole transcript sprouts spinners for one press.
+ */
+/** สปินเนอร์ + คำอธิบาย ที่ขึ้นแทนแถวปุ่มระหว่างรอเทิร์นอื่น */
+function WaitingRow({ note }: { note: string }) {
+  return (
+    <p
+      data-slot="ai-chat-widget-waiting"
+      aria-live="polite"
+      className="mt-3 flex items-center gap-1.5 text-caption text-text-body"
+    >
+      <Loader2 aria-hidden className="size-3.5 shrink-0 animate-spin" />
+      {note}
+    </p>
+  );
+}
+
+function usePressed(disabled?: boolean) {
+  const [pressed, setPressed] = React.useState<string | null>(null);
+  // The run ended (or the card was re-enabled) — drop the claim, or a finished card keeps spinning.
+  React.useEffect(() => {
+    if (!disabled) setPressed(null);
+  }, [disabled]);
+  return [pressed, setPressed] as const;
 }
 
 function ConfirmCard({
@@ -111,13 +187,24 @@ function ConfirmCard({
   disabled,
   superseded,
   supersededNote,
+  waitingNote,
 }: {
   payload: ConfirmWidget;
   onAction: (reply: string) => void;
   disabled?: boolean;
   superseded?: boolean;
   supersededNote?: string;
+  waitingNote?: string;
 }) {
+  const [pressed, setPressed] = usePressed(disabled);
+  /* ล็อกอยู่ และการ์ดใบนี้ไม่ใช่ต้นเหตุ ⇒ ไม่มีปุ่มให้กด มีแต่คำบอกว่าต้องรอ
+     ⛔ ถ้าเป็นการ์ดที่ผู้ใช้เพิ่งกดเอง ปุ่มต้องอยู่ต่อ — คนต้องเห็นว่าตัวเองกดปุ่มไหนไป */
+  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
+  const answer = (label: string) => {
+    setPressed(label);
+    onAction(label);
+  };
+
   return (
     <Frame className={superseded ? "opacity-70" : undefined}>
       <p className="text-body-sm font-semibold text-black">{payload.title_th}</p>
@@ -126,15 +213,22 @@ function ConfirmCard({
         <p className="mt-2 text-caption text-text-tertiary" data-slot="ai-chat-superseded">
           {supersededNote}
         </p>
+      ) : waiting ? (
+        <WaitingRow note={waitingNote!} />
       ) : (
         <div className="mt-3 flex gap-2">
-          <ActionButton onClick={() => onAction(payload.confirmLabel)} disabled={disabled}>
+          <ActionButton
+            onClick={() => answer(payload.confirmLabel)}
+            disabled={disabled}
+            loading={Boolean(disabled) && pressed === payload.confirmLabel}
+          >
             {payload.confirmLabel}
           </ActionButton>
           <ActionButton
             variant="secondary"
-            onClick={() => onAction(payload.cancelLabel)}
+            onClick={() => answer(payload.cancelLabel)}
             disabled={disabled}
+            loading={Boolean(disabled) && pressed === payload.cancelLabel}
           >
             {payload.cancelLabel}
           </ActionButton>
@@ -148,11 +242,15 @@ function ErrorCard({
   payload,
   onAction,
   disabled,
+  waitingNote,
 }: {
   payload: ErrorCardWidget;
   onAction: (reply: string) => void;
   disabled?: boolean;
+  waitingNote?: string;
 }) {
+  const [pressed, setPressed] = usePressed(disabled);
+  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
   const isError = payload.severity === "error";
   return (
     <Frame
@@ -177,14 +275,19 @@ function ErrorCard({
               {payload.location.date} · เวร {payload.location.shiftType}
             </p>
           )}
-          {payload.fixActions.length > 0 && (
+          {payload.fixActions.length > 0 && waiting && <WaitingRow note={waitingNote!} />}
+          {payload.fixActions.length > 0 && !waiting && (
             <div className="mt-2 flex flex-wrap gap-2">
               {payload.fixActions.map((fix) => (
                 <ActionButton
                   key={fix.opRef}
                   variant="secondary"
-                  onClick={() => onAction(fix.label_th)}
+                  onClick={() => {
+                    setPressed(fix.label_th);
+                    onAction(fix.label_th);
+                  }}
                   disabled={disabled}
+                  loading={Boolean(disabled) && pressed === fix.label_th}
                 >
                   {fix.label_th}
                 </ActionButton>
@@ -201,32 +304,48 @@ function StaffPicker({
   payload,
   onAction,
   disabled,
+  waitingNote,
 }: {
   payload: StaffPickerWidget;
   onAction: (reply: string) => void;
   disabled?: boolean;
+  waitingNote?: string;
 }) {
+  const [pressed, setPressed] = usePressed(disabled);
+  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
   return (
     <Frame>
       <p className="text-body-sm text-gray-700">{payload.prompt_th}</p>
       <div className="mt-2 flex flex-col gap-1">
-        {payload.candidates.map((candidate) => (
+        {payload.candidates.map((candidate) => {
+          const busy = Boolean(disabled) && pressed === candidate.displayName;
+          return (
           <button
             key={candidate.userId}
             type="button"
             disabled={disabled}
-            onClick={() => onAction(candidate.displayName)}
+            aria-busy={busy || undefined}
+            onClick={() => {
+              setPressed(candidate.displayName);
+              onAction(candidate.displayName);
+            }}
             className={cn(
               "flex items-baseline gap-2 rounded-sm border border-border-subtle px-2 py-1.5 text-left",
               "hover:bg-brand-subtle disabled:pointer-events-none disabled:opacity-40 cursor-pointer",
+              busy && "disabled:opacity-100 border-brand bg-brand-subtle",
             )}
           >
+            {busy && <Loader2 aria-hidden className="size-3.5 shrink-0 animate-spin text-brand" />}
             <span className="text-body-sm font-medium text-black">{candidate.displayName}</span>
             {candidate.subUnit && <span className="text-caption text-gray-500">{candidate.subUnit}</span>}
             {candidate.hint && <span className="text-caption text-gray-400">{candidate.hint}</span>}
           </button>
-        ))}
+          );
+        })}
       </div>
+      {/* รายชื่อคือ "เนื้อหา" ไม่ใช่ปุ่มล้วน — ซ่อนทิ้งแล้วผู้ใช้อ่านไม่ได้ว่ามีใครให้เลือกบ้าง
+          ⇒ คงรายการไว้ (จางตามปกติ) แล้วเติมบรรทัดบอกว่าต้องรอ */}
+      {waiting && <WaitingRow note={waitingNote!} />}
     </Frame>
   );
 }

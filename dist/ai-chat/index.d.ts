@@ -1,3 +1,4 @@
+import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as React from 'react';
 import { ClassValue } from 'clsx';
 
@@ -245,6 +246,31 @@ type ChatEvent = ({
     event: "done";
     payload: DonePayload;
 } & TurnStamp);
+/**
+ * Container the browser recorded in. The service passes it to the transcription model, which needs to be
+ * told the container — it does not sniff. Chrome/Firefox produce `webm` (opus inside), Safari `mp4`.
+ */
+type AudioFormat = "webm" | "mp4" | "wav";
+/** One recording on its way to `POST /v2/ai/stt` — base64 because the REST path is JSON, not multipart. */
+interface AudioClip {
+    /** Base64 of the raw container bytes, no `data:` prefix. */
+    data: string;
+    format: AudioFormat;
+}
+/**
+ * What speech-to-text gives back.
+ *
+ * `seconds` is what the upstream billed for this clip — optional, and nothing in the UI depends on it.
+ *
+ * 🔴 No cost field on purpose: metering voice spend belongs with the accounting the agent loop already
+ * does (`budget.domain` on the service), not on a per-response field the browser reads. Adding it here
+ * would put a number in front of the user that nobody agreed to show, and make the widget the second
+ * place cost is computed.
+ */
+interface TranscriptionResult {
+    text: string;
+    seconds?: number;
+}
 
 /** A tool call plus when the client first saw it — the elapsed counter is rendered from this. */
 interface ToolCallEntry extends ToolCallPayload {
@@ -285,6 +311,23 @@ interface AiChatLabels {
     placeholderSchedule: string;
     send: string;
     cancel: string;
+    /** Tooltip of the microphone button — says what it does, not what it is. */
+    voiceStart: string;
+    voiceStop: string;
+    /** Throw the recording away without uploading it. */
+    voiceDiscard: string;
+    /** Status line while the mic is live. Sits next to the running timer. */
+    voiceRecording: string;
+    voiceTranscribing: string;
+    /** The browser prompt was denied, or there is no microphone. */
+    voiceDenied: string;
+    /**
+     * Recording worked, the transcript did not arrive. Must point at typing as the way out — voice is an
+     * accelerator, and a user stuck retrying a mic has lost the composer they already had.
+     */
+    voiceFailed: string;
+    /** `{seconds}` = the duration cap, so a user who is cut off knows it was a limit, not a crash. */
+    voiceLimit: string;
     newChat: string;
     history: string;
     emptyTitle: string;
@@ -304,6 +347,19 @@ interface AiChatLabels {
     minimize: string;
     committed: string;
     notCommitted: string;
+    /**
+     * Caption on a confirm card that a NEWER confirm card in the same turn has replaced. The service keeps
+     * exactly one pending proposal per conversation (staging supersedes), so only the newest card can be
+     * answered — the older ones keep their summary as a record, with this line where their buttons were.
+     */
+    cardSuperseded: string;
+    /**
+     * แทนที่ปุ่มของการ์ดข้อเสนอ ระหว่างที่เทิร์นอื่นกำลังทำงานอยู่ (การ์ดนี้ยังไม่ถูกกด)
+     *
+     * 🔴 ต้องบอกว่า *ต้องรอ* ไม่ใช่แค่ปิดปุ่มไว้เฉย ๆ — ปุ่มจาง ๆ ที่ไม่มีคำอธิบายอ่านได้ว่า "พัง" พอ ๆ กับ
+     * "รอสักครู่" และผู้ใช้จะกดซ้ำเพื่อทดสอบว่ามันตายจริงไหม
+     */
+    cardWaiting: string;
     thinking: string;
     scheduleMode: string;
     /**
@@ -437,6 +493,14 @@ interface AiChatConfig {
      * language the user happened to start in.
      */
     locale?: AiChatLocale;
+    /**
+     * Microphone → text in the composer. Default true.
+     *
+     * Turning it off is a host decision (a kiosk with no mic, a policy about recording); the widget hides
+     * the button on its own when the browser cannot record — plain http, no `MediaRecorder` — or when the
+     * service has no `/v2/ai/stt`.
+     */
+    voiceInput?: boolean;
     labels?: Partial<AiChatLabels>;
     /** Surfaced for host-side logging/monitoring — the widget renders its own error state regardless. */
     onError?: (error: Error) => void;
@@ -461,7 +525,7 @@ interface AiChatWidgetProps extends AiChatConfig {
  * the host arrives as props (`baseUrl`, `getToken`, `scope`), so it stays free of any app's
  * auth wiring, HTTP client or router.
  */
-declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): React.JSX.Element;
+declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): react_jsx_runtime.JSX.Element;
 
 /**
  * Host → widget bridge. The drawer is mounted ONCE at the app root, but the moments that want to
@@ -589,6 +653,10 @@ interface ChatDrawerProps {
     position: "bottom-right" | "bottom-left";
     onSend: (text: string) => void;
     onCancel: () => void;
+    /** Speech-to-text for the composer. Omitted = no microphone button (see `ComposerProps`). */
+    onTranscribe?: (audio: AudioClip, signal?: AbortSignal) => Promise<TranscriptionResult>;
+    /** Microphone/transcription failures, for host logging. The composer shows its own message. */
+    onVoiceError?: (error: Error) => void;
     onNewChat: () => void;
     onPickConversation: (conversationId: string) => void;
     onRetry: () => void;
@@ -611,7 +679,7 @@ interface ChatDrawerProps {
  * kept alive): the assistant answers questions about the page behind it, so covering that
  * page — or stealing its scroll and focus — would defeat the point.
  */
-declare function ChatDrawer(props: ChatDrawerProps): React.JSX.Element;
+declare function ChatDrawer(props: ChatDrawerProps): react_jsx_runtime.JSX.Element;
 
 interface FloatingButtonProps {
     open: boolean;
@@ -665,7 +733,7 @@ interface MessageListProps {
     /** Example questions shown on the empty state — tapping one sends it. */
     suggestions?: string[];
 }
-declare function MessageList({ messages, labels, onWidgetAction, busy, suggestions, }: MessageListProps): React.JSX.Element;
+declare function MessageList({ messages, labels, onWidgetAction, busy, suggestions, }: MessageListProps): react_jsx_runtime.JSX.Element;
 
 interface MessageBubbleProps {
     message: ChatMessage;
@@ -678,7 +746,7 @@ interface MessageBubbleProps {
      */
     widgetsDisabled?: boolean;
 }
-declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): React.JSX.Element;
+declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): react_jsx_runtime.JSX.Element;
 
 interface ComposerProps {
     onSend: (text: string) => void;
@@ -689,8 +757,20 @@ interface ComposerProps {
     labels: AiChatLabels;
     /** Overrides the default hint (scheduling mode accepts different input). */
     placeholder?: string;
+    /**
+     * Speech-to-text. Usually `session.api.transcribe`. Omitted (or unsupported browser) hides the mic
+     * entirely — a control that can only fail is worse than no control.
+     */
+    onTranscribe?: (audio: AudioClip, signal?: AbortSignal) => Promise<TranscriptionResult>;
+    /** Mirrors microphone/transcription failures to the host for logging. */
+    onVoiceError?: (error: Error) => void;
+    /**
+     * Duration cap in seconds. Default **and maximum 120** (2 นาที) — a larger value is clamped by
+     * `useVoiceInput`, and the label shows the clamped number, never the one that was asked for.
+     */
+    maxRecordingSeconds?: number;
 }
-declare function Composer({ onSend, onCancel, busy, disabled, labels, placeholder, }: ComposerProps): React.JSX.Element;
+declare function Composer({ onSend, onCancel, busy, disabled, labels, placeholder, onTranscribe, onVoiceError, maxRecordingSeconds, }: ComposerProps): react_jsx_runtime.JSX.Element;
 
 interface ConversationPickerProps {
     load: () => Promise<ConversationListItem[]>;
@@ -707,7 +787,7 @@ interface ConversationPickerProps {
  *
  * โหลดตอนเปิดเท่านั้น — ลิ้นชักที่ปิดอยู่จึงไม่กินคำขอสักครั้ง
  */
-declare function ConversationPicker({ load, onPick, activeId, labels }: ConversationPickerProps): React.JSX.Element;
+declare function ConversationPicker({ load, onPick, activeId, labels }: ConversationPickerProps): react_jsx_runtime.JSX.Element;
 
 /**
  * Renders the frozen §3 widget payloads. The service owns the shapes; how they look is ours.
@@ -721,8 +801,27 @@ interface WidgetRendererProps {
     widget: WidgetEnvelope;
     onAction: (reply: string) => void;
     disabled?: boolean;
+    /**
+     * A NEWER confirm card in the same turn replaced this one. The service holds one pending proposal per
+     * conversation — every staging supersedes the previous one — so the buttons of an older card answer a
+     * proposal that no longer exists. Seen live (31 Aug): one turn staged the same rule three times and all
+     * three cards sat pressable; two of them were corpses. The summary stays as a record; the buttons give
+     * way to `supersededNote`.
+     */
+    superseded?: boolean;
+    /** The caption shown in place of the buttons when `superseded` (labels.cardSuperseded). */
+    supersededNote?: string;
+    /**
+     * Shown in place of the buttons while ANOTHER turn is running and this card was never pressed
+     * (labels.cardWaiting).
+     *
+     * 🔴 Dimmed buttons alone were unreadable: "the system is busy, wait" and "this card is dead" looked
+     * identical, so the reflex is to press again to find out which. Removing the buttons and saying what is
+     * happening answers the question the greying-out only raised.
+     */
+    waitingNote?: string;
 }
-declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererProps): React.JSX.Element;
+declare function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote, waitingNote, }: WidgetRendererProps): react_jsx_runtime.JSX.Element;
 
 /**
  * RR-A.6 transparency trail — what the agent actually did this turn, in the service's own
@@ -730,20 +829,20 @@ declare function WidgetRenderer({ widget, onAction, disabled }: WidgetRendererPr
  */
 declare function ToolTrail({ tools }: {
     tools: ToolCallEntry[];
-}): React.JSX.Element | null;
+}): react_jsx_runtime.JSX.Element | null;
 
 interface ContextMeterProps {
     usage: ContextUsage | null;
     labels: AiChatLabels;
     className?: string;
 }
-declare function ContextMeter({ usage, labels, className }: ContextMeterProps): React.JSX.Element | null;
+declare function ContextMeter({ usage, labels, className }: ContextMeterProps): react_jsx_runtime.JSX.Element | null;
 
 declare function Markdown({ text, className, labels, }: {
     text: string;
     className?: string;
     labels?: AiChatLabels;
-}): React.JSX.Element;
+}): react_jsx_runtime.JSX.Element;
 
 /**
  * Scope resolved at hand-off, so scheduling mode doesn't have to re-ask which department/month.
@@ -761,6 +860,64 @@ declare function extractEnterMode(text: string): ScheduleSeed | null;
 declare function hasExitMode(text: string): boolean;
 declare function extractRedirect(text: string): string | null;
 declare function stripSentinels(text: string): string;
+
+/**
+ * Microphone → text for the composer.
+ *
+ * The hook owns the whole recording lifecycle (permission, MediaRecorder, the duration cap, releasing the
+ * mic) and hands the caller ONE string. It deliberately does not send anything: transcription of Thai
+ * mangles domain words — measured on the real endpoint, "worktree" came back as "เวิร์กทรี" at 16 kHz WAV
+ * and as "Web3" at 24 kbps opus — so the text must land in the textarea for the user to fix, never in a
+ * turn. See `Composer` for the surface that enforces that.
+ *
+ * 🔴 `supported` is false on plain http (except localhost): `navigator.mediaDevices` is undefined outside a
+ * secure context, with no error and no prompt. Rendering a mic button there gives a control that can only
+ * fail, so the caller hides it instead.
+ */
+type VoiceInputStatus = "idle" | "recording" | "transcribing";
+/** Why the last attempt failed — the caller maps this onto its own copy, the hook holds no strings. */
+type VoiceInputErrorReason = 
+/** The browser prompt was denied, or the OS has no microphone to grant. */
+"denied"
+/** Recording worked; the service did not answer, or answered with nothing usable. */
+ | "failed";
+interface UseVoiceInputOptions {
+    /** Usually `session.api.transcribe`. Omit to disable voice entirely (`supported` stays false). */
+    transcribe?: (audio: AudioClip, signal?: AbortSignal) => Promise<TranscriptionResult>;
+    /** Receives the transcript. Called once per successful recording, with non-empty text. */
+    onText: (text: string) => void;
+    /** Mirrors failures to the host for logging — the UI shows its own message regardless. */
+    onError?: (error: Error) => void;
+    /**
+     * Hard stop, in seconds. Default AND ceiling 120 (2 minutes) — a larger value is clamped down, not
+     * honoured.
+     *
+     * Not a UX preference, a size budget: ai-service runs on Fastify with `bodyLimit: 1 MB` and the clip
+     * travels as base64 (+33%), so at the 32 kbps below, 120 s ≈ 640 KB encoded. A host that passes 300
+     * would get a recording the service refuses AFTER the user has finished speaking — the one moment
+     * where failing is most expensive. The clamp is here rather than in the component because every
+     * caller of the hook needs it, and a rule that lives in one caller is a rule that gets forgotten.
+     */
+    maxSeconds?: number;
+}
+interface VoiceInput {
+    status: VoiceInputStatus;
+    /** Elapsed seconds of the current recording — 0 when not recording. */
+    seconds: number;
+    /** The cap actually in force, after clamping. Show THIS, never the requested `maxSeconds`. */
+    limitSeconds: number;
+    /** Reason of the most recent failure, cleared when a new recording starts. */
+    error: VoiceInputErrorReason | null;
+    /** False when the browser cannot record here, or no `transcribe` was given. Hide the control. */
+    supported: boolean;
+    /** Begins recording (asks for permission the first time). No-op unless idle. */
+    start: () => void;
+    /** Ends recording and transcribes what was captured. */
+    stop: () => void;
+    /** Ends recording and throws the audio away — nothing is uploaded. */
+    discard: () => void;
+}
+declare function useVoiceInput({ transcribe, onText, onError, maxSeconds, }: UseVoiceInputOptions): VoiceInput;
 
 /**
  * REST half of the ai-service contract (`/v2/ai/*`). Deliberately built on plain `fetch`
@@ -789,6 +946,11 @@ interface AiChatApi {
     getMessages(conversationId: string, signal?: AbortSignal): Promise<TranscriptMessage[]>;
     connectInfo(conversationId: string, signal?: AbortSignal): Promise<ConnectInfo>;
     cancelRun(runId: string, signal?: AbortSignal): Promise<CancelResult>;
+    /**
+     * Speech → text for the composer. NOT a way to send a turn: the reply comes back as text the user reads
+     * and edits before pressing send, so a mis-heard word never reaches the assistant unseen.
+     */
+    transcribe(audio: AudioClip, signal?: AbortSignal): Promise<TranscriptionResult>;
 }
 declare function createAiChatApi(config: AiChatApiConfig): AiChatApi;
 
@@ -860,4 +1022,4 @@ declare function resolveTokenProvider(auth: AiChatAuthConfig | undefined, hostGe
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatLocale, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TransportStatus, type UserTurnPayload, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, enLabels, extractEnterMode, extractRedirect, hasExitMode, labelsByLocale, openAiChat, resolveLabels, resolveTokenProvider, seedScope, stripSentinels, thLabels, useAiChatSession };
+export { AI_CHAT_OPEN_EVENT, type AiChatApi, type AiChatApiConfig, AiChatApiError, type AiChatAuthConfig, type AiChatConfig, type AiChatLabels, type AiChatLocale, type AiChatOpenDetail, type AiChatSession, type AiChatSessionConfig, AiChatWidget, type AiChatWidgetProps, type AudioClip, type AudioFormat, type CancelResult, ChatDrawer, type ChatDrawerProps, type ChatEvent, type ChatEventName, type ChatMessage, type ChatMode, type ChatScope, type ChatSendParams, ChatTransport, type ChatTransportConfig, Composer, type ComposerProps, type ConfirmWidget, type ConnectInfo, ContextMeter, type ContextMeterProps, type ContextUsage, type Conversation, type ConversationListItem, ConversationPicker, type ConversationPickerProps, type DonePayload, type ErrorCardWidget, type ExtractionReviewWidget, FloatingButton, type FloatingButtonProps, Markdown, MessageBubble, type MessageBubbleProps, MessageList, type MessageListProps, type MessageRole, type ProposalPayload, type RuleFormWidget, type RunTicket, type ScheduleDiffWidget, type ScheduleSeed, SelfAuth, type SessionStatus, type StaffPickerWidget, type SummaryStatsWidget, type TaskStatePayload, type TokenPayload, type ToolCallEntry, type ToolCallPayload, ToolTrail, type TranscriptMessage, type TranscriptionResult, type TransportStatus, type UseVoiceInputOptions, type UserTurnPayload, type VoiceInput, type VoiceInputErrorReason, type VoiceInputStatus, type WidgetEnvelope, type WidgetPayloadMap, WidgetRenderer, type WidgetRendererProps, type WidgetType, buildScheduleGreeting, cn, createAiChatApi, defaultLabels, enLabels, extractEnterMode, extractRedirect, hasExitMode, labelsByLocale, openAiChat, resolveLabels, resolveTokenProvider, seedScope, stripSentinels, thLabels, useAiChatSession, useVoiceInput };

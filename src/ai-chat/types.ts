@@ -56,6 +56,23 @@ export interface AiChatLabels {
   placeholderSchedule: string;
   send: string;
   cancel: string;
+  /** Tooltip of the microphone button — says what it does, not what it is. */
+  voiceStart: string;
+  voiceStop: string;
+  /** Throw the recording away without uploading it. */
+  voiceDiscard: string;
+  /** Status line while the mic is live. Sits next to the running timer. */
+  voiceRecording: string;
+  voiceTranscribing: string;
+  /** The browser prompt was denied, or there is no microphone. */
+  voiceDenied: string;
+  /**
+   * Recording worked, the transcript did not arrive. Must point at typing as the way out — voice is an
+   * accelerator, and a user stuck retrying a mic has lost the composer they already had.
+   */
+  voiceFailed: string;
+  /** `{seconds}` = the duration cap, so a user who is cut off knows it was a limit, not a crash. */
+  voiceLimit: string;
   newChat: string;
   history: string;
   emptyTitle: string;
@@ -81,6 +98,13 @@ export interface AiChatLabels {
    * answered — the older ones keep their summary as a record, with this line where their buttons were.
    */
   cardSuperseded: string;
+  /**
+   * แทนที่ปุ่มของการ์ดข้อเสนอ ระหว่างที่เทิร์นอื่นกำลังทำงานอยู่ (การ์ดนี้ยังไม่ถูกกด)
+   *
+   * 🔴 ต้องบอกว่า *ต้องรอ* ไม่ใช่แค่ปิดปุ่มไว้เฉย ๆ — ปุ่มจาง ๆ ที่ไม่มีคำอธิบายอ่านได้ว่า "พัง" พอ ๆ กับ
+   * "รอสักครู่" และผู้ใช้จะกดซ้ำเพื่อทดสอบว่ามันตายจริงไหม
+   */
+  cardWaiting: string;
   thinking: string;
   scheduleMode: string;
   /**
@@ -216,6 +240,14 @@ export interface AiChatConfig {
    * language the user happened to start in.
    */
   locale?: AiChatLocale;
+  /**
+   * Microphone → text in the composer. Default true.
+   *
+   * Turning it off is a host decision (a kiosk with no mic, a policy about recording); the widget hides
+   * the button on its own when the browser cannot record — plain http, no `MediaRecorder` — or when the
+   * service has no `/v2/ai/stt`.
+   */
+  voiceInput?: boolean;
   labels?: Partial<AiChatLabels>;
   /** Surfaced for host-side logging/monitoring — the widget renders its own error state regardless. */
   onError?: (error: Error) => void;

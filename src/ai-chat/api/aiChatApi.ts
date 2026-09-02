@@ -1,8 +1,10 @@
 import type {
+  AudioClip,
   CancelResult,
   ConnectInfo,
   Conversation,
   ConversationListItem,
+  TranscriptionResult,
   TranscriptMessage,
 } from "./types";
 
@@ -41,6 +43,11 @@ export interface AiChatApi {
   getMessages(conversationId: string, signal?: AbortSignal): Promise<TranscriptMessage[]>;
   connectInfo(conversationId: string, signal?: AbortSignal): Promise<ConnectInfo>;
   cancelRun(runId: string, signal?: AbortSignal): Promise<CancelResult>;
+  /**
+   * Speech → text for the composer. NOT a way to send a turn: the reply comes back as text the user reads
+   * and edits before pressing send, so a mis-heard word never reaches the assistant unseen.
+   */
+  transcribe(audio: AudioClip, signal?: AbortSignal): Promise<TranscriptionResult>;
 }
 
 export function createAiChatApi(config: AiChatApiConfig): AiChatApi {
@@ -102,6 +109,9 @@ export function createAiChatApi(config: AiChatApiConfig): AiChatApi {
         method: "POST",
         signal,
       }),
+
+    transcribe: (audio, signal) =>
+      request<TranscriptionResult>("/v2/ai/stt", { method: "POST", body: { audio }, signal }),
   };
 }
 

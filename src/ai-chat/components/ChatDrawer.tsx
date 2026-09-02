@@ -9,7 +9,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import type { ChatMode, ContextUsage, ConversationListItem } from "../api/types";
+import type { AudioClip, ChatMode, ContextUsage, ConversationListItem, TranscriptionResult } from "../api/types";
 import type { AiChatLabels, ChatMessage, SessionStatus } from "../types";
 import type { TransportStatus } from "../realtime/chatTransport";
 import { cn } from "../lib/cn";
@@ -29,6 +29,10 @@ export interface ChatDrawerProps {
   position: "bottom-right" | "bottom-left";
   onSend: (text: string) => void;
   onCancel: () => void;
+  /** Speech-to-text for the composer. Omitted = no microphone button (see `ComposerProps`). */
+  onTranscribe?: (audio: AudioClip, signal?: AbortSignal) => Promise<TranscriptionResult>;
+  /** Microphone/transcription failures, for host logging. The composer shows its own message. */
+  onVoiceError?: (error: Error) => void;
   onNewChat: () => void;
   onPickConversation: (conversationId: string) => void;
   onRetry: () => void;
@@ -64,6 +68,8 @@ export function ChatDrawer(props: ChatDrawerProps) {
     position,
     onSend,
     onCancel,
+    onTranscribe,
+    onVoiceError,
     onNewChat,
     onPickConversation,
     onRetry,
@@ -221,6 +227,8 @@ export function ChatDrawer(props: ChatDrawerProps) {
                 disabled={starting || status === "error"}
                 labels={labels}
                 placeholder={mode === "schedule" ? labels.placeholderSchedule : labels.placeholder}
+                onTranscribe={onTranscribe}
+                onVoiceError={onVoiceError}
               />
             </>
           )}
