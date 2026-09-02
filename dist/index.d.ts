@@ -1,7 +1,6 @@
 import * as class_variance_authority_types from 'class-variance-authority/types';
 import * as React from 'react';
 import { VariantProps } from 'class-variance-authority';
-import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import * as RadixSwitch from '@radix-ui/react-switch';
 import * as RadixRadio from '@radix-ui/react-radio-group';
@@ -129,6 +128,17 @@ type FloatingFieldShellProps = {
     /** Wrapper className (the outer flex column). */
     containerClassName?: string;
     /** When true, position the rest label near the top (for textareas) instead of vertically centered. */
+    /**
+     * ช่องถูกปิดใช้งานอยู่ — **ใช้เลือกสีพื้นของป้ายลอย ไม่ได้ใช้ปิดการทำงาน**
+     *
+     * 🔴 ป้ายลอยต้องมีพื้นทึบเพื่อ **ตัดเส้นขอบ** ไม่ให้เส้นขีดทับตัวหนังสือ (กล่องป้ายกิน
+     * ตั้งแต่ −6 ถึง +10 ส่วนเส้นขอบอยู่ที่ 0–1 ⇒ ซ้อนกันเสมอ) · แต่ `bg-bg-default` ตายตัว
+     * แปลว่าป้ายจะขาวเสมอ **แม้ช่องจะไม่ขาว** — ตอน `disabled` ช่องเป็น `bg-bg-surface`
+     * ⇒ ป้ายกลายเป็นแถบขาวลอยอยู่บนช่องสีเทา เห็นได้ทุกแอป
+     *
+     * ⚠️ ตัวช่องปิดการทำงานด้วย `disabled` ของ element จริงอยู่แล้ว — prop นี้ไม่ได้ทำแทน
+     */
+    disabled?: boolean;
     multiline?: boolean;
     /** The actual interactive element (input / textarea / button). */
     children: React.ReactNode;
@@ -148,12 +158,12 @@ type FloatingFieldShellProps = {
  *   - applying its own padding (the shell does not enforce the field's internal padding,
  *     but does shift the rest-position label right when `leftAdornment` is provided)
  */
-declare function FloatingFieldShell({ label, hint, error, required, hideLabel, htmlFor, size, floating, focused, hasError: hasErrorProp, leftAdornment, rightAdornment, containerClassName, multiline, reserveMessageSpace, children, }: FloatingFieldShellProps): react_jsx_runtime.JSX.Element;
+declare function FloatingFieldShell({ label, hint, error, required, hideLabel, htmlFor, size, floating, focused, hasError: hasErrorProp, leftAdornment, rightAdornment, containerClassName, disabled, multiline, reserveMessageSpace, children, }: FloatingFieldShellProps): React.JSX.Element;
 type FieldSkeletonProps = Pick<FloatingFieldShellProps, "label" | "hint" | "required" | "hideLabel" | "size" | "containerClassName" | "multiline" | "reserveMessageSpace" | "leftAdornment" | "rightAdornment"> & {
     /** class รูปทรงของช่อง — ปกติคือ `fieldShapeClasses(...)` ตัวเดียวกับที่ component ใช้ */
     shape?: string;
 };
-declare function FieldSkeleton({ size, shape, containerClassName, ...shellProps }: FieldSkeletonProps): react_jsx_runtime.JSX.Element;
+declare function FieldSkeleton({ size, shape, containerClassName, ...shellProps }: FieldSkeletonProps): React.JSX.Element;
 /**
  * Field shape classes shared by all interactive elements (input/textarea/button).
  * Apply to the inner element so border/focus ring/error states stay consistent.
@@ -249,7 +259,7 @@ type FormatInputProps = Omit<InputProps, "value" | "defaultValue" | "onChange" |
     decimalScale?: number;
     allowNegative?: boolean;
 };
-declare function FormatInput({ format, value, onValueChange, showMask, thousandSeparator, decimalScale, allowNegative, ...rest }: FormatInputProps): react_jsx_runtime.JSX.Element;
+declare function FormatInput({ format, value, onValueChange, showMask, thousandSeparator, decimalScale, allowNegative, ...rest }: FormatInputProps): React.JSX.Element;
 declare namespace FormatInput {
     var displayName: string;
 }
@@ -281,6 +291,8 @@ type TextareaProps = React.ComponentProps<"textarea"> & {
     isLoading?: boolean;
 };
 declare const Textarea: React.ForwardRefExoticComponent<Omit<TextareaProps, "ref"> & React.RefAttributes<HTMLTextAreaElement>>;
+
+/** @doc ./toggle.md */
 
 type ToggleSize = "sm" | "md";
 /**
@@ -393,6 +405,8 @@ type SwitchProps = Omit<React.ComponentProps<typeof RadixSwitch.Root>, "asChild"
 };
 declare const Switch: React.ForwardRefExoticComponent<Omit<SwitchProps, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 
+/** @doc ./toggle.md */
+
 type RadioOption<V extends string = string> = {
     value: V;
     label: React.ReactNode;
@@ -415,7 +429,7 @@ type RadioGroupProps<V extends string = string> = Omit<React.ComponentProps<type
     containerClassName?: string;
     children?: React.ReactNode;
 };
-declare function RadioGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, orientation, size, isLoading, children, ...props }: RadioGroupProps<V>): react_jsx_runtime.JSX.Element;
+declare function RadioGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, orientation, size, isLoading, children, ...props }: RadioGroupProps<V>): React.JSX.Element;
 type RadioGroupItemProps = Omit<React.ComponentProps<typeof RadixRadio.Item>, "asChild"> & {
     description?: React.ReactNode;
     /** ทับขนาดที่ได้จากกลุ่ม — ปกติไม่ต้องใส่ */
@@ -504,8 +518,10 @@ type SelectProps<V extends string = string> = {
     /** วาดสถานะว่างเอง — ชนะ `emptyText`/`emptyAction` */
     renderEmpty?: () => React.ReactNode;
 };
-declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, clearable, isLoading, invalid, reserveMessageSpace, emptyText, emptyAction, renderEmpty, }: SelectProps<V>): react_jsx_runtime.JSX.Element;
+declare function Select<V extends string = string>({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, options, disabled, size, className, containerClassName, children, clearable, isLoading, invalid, reserveMessageSpace, emptyText, emptyAction, renderEmpty, }: SelectProps<V>): React.JSX.Element;
 declare const SelectItem: React.ForwardRefExoticComponent<Omit<RadixSelect.SelectItemProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+
+/** @doc ./toggle.md */
 
 type CheckboxOption<V extends string = string> = {
     value: V;
@@ -541,7 +557,7 @@ type CheckboxGroupProps<V extends string = string> = {
     containerClassName?: string;
     children?: React.ReactNode;
 };
-declare function CheckboxGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, name, disabled, options, value: valueProp, defaultValue, onValueChange, orientation, size, isLoading, children, }: CheckboxGroupProps<V>): react_jsx_runtime.JSX.Element;
+declare function CheckboxGroup<V extends string = string>({ id, className, containerClassName, label, hint, error, required, name, disabled, options, value: valueProp, defaultValue, onValueChange, orientation, size, isLoading, children, }: CheckboxGroupProps<V>): React.JSX.Element;
 declare namespace CheckboxGroup {
     var displayName: string;
 }
@@ -583,7 +599,7 @@ type PillSwitchProps<V extends string = string> = Omit<React.ComponentProps<type
     options: readonly [PillSwitchOption<V>, PillSwitchOption<V>];
     containerClassName?: string;
 };
-declare function PillSwitch<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, disabled, ...props }: PillSwitchProps<V>): react_jsx_runtime.JSX.Element;
+declare function PillSwitch<V extends string = string>({ id, className, containerClassName, label, hint, error, required, options, disabled, ...props }: PillSwitchProps<V>): React.JSX.Element;
 declare namespace PillSwitch {
     var displayName: string;
 }
@@ -1003,7 +1019,7 @@ type TopNavBrandProps = React.ComponentProps<"div"> & {
 declare const TopNavBrand: React.ForwardRefExoticComponent<Omit<TopNavBrandProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
 declare const TopNavSpacer: ({ className }: {
     className?: string;
-}) => react_jsx_runtime.JSX.Element;
+}) => React.JSX.Element;
 
 type MediactAppConfig = {
     /** Where this app lives. Falsy → tile is rendered as not-clickable. */
@@ -1058,7 +1074,7 @@ type AppLauncherProps = {
     };
     className?: string;
 };
-declare function AppLauncher({ apps, order, onAppClick, label, comingSoonText, showcaseLocale, showcaseAssetBaseUrl, showcaseAssets, settingsAction, className, }: AppLauncherProps): react_jsx_runtime.JSX.Element;
+declare function AppLauncher({ apps, order, onAppClick, label, comingSoonText, showcaseLocale, showcaseAssetBaseUrl, showcaseAssets, settingsAction, className, }: AppLauncherProps): React.JSX.Element;
 type NotificationBellProps = React.ComponentProps<"button"> & {
     hasUnread?: boolean;
     unreadCount?: number;
@@ -1099,7 +1115,7 @@ type UserMenuProps = {
  * profile menu: centered avatar + name + role header, full-width menu items, and
  * a bottom row that pairs an optional language switcher with a red Log Out button.
  */
-declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): react_jsx_runtime.JSX.Element;
+declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): React.JSX.Element;
 
 type LanguageOption = {
     /** ค่าที่คืนกลับตอนเลือก — โดยมากคือรหัสภาษาของ i18n (`th-TH` · `en-EN`) */
@@ -1133,7 +1149,7 @@ type LanguageSwitcherProps = {
  * เดาเป็นตัวแรกในรายการคือการบอกผู้ใช้ว่ากำลังอยู่ภาษาที่ไม่ได้อยู่จริง
  * (แอปที่ i18n มี fallback ของตัวเองอยู่แล้ว ให้ normalize ก่อนส่งมา)
  */
-declare function LanguageSwitcher({ languages, value, onChange, label, align, className, }: LanguageSwitcherProps): react_jsx_runtime.JSX.Element;
+declare function LanguageSwitcher({ languages, value, onChange, label, align, className, }: LanguageSwitcherProps): React.JSX.Element;
 declare namespace LanguageSwitcher {
     var displayName: string;
 }
@@ -1241,7 +1257,7 @@ type SidebarItemProps = {
     badge?: React.ReactNode;
     className?: string;
 };
-declare function SidebarItem({ id, label, icon: Icon, href, onClick, badge, className, }: SidebarItemProps): react_jsx_runtime.JSX.Element;
+declare function SidebarItem({ id, label, icon: Icon, href, onClick, badge, className, }: SidebarItemProps): React.JSX.Element;
 type SidebarGroupProps = {
     /** Stable id used for the chevron-toggle aria. */
     id: string;
@@ -1263,7 +1279,7 @@ type SidebarGroupProps = {
     children?: React.ReactNode;
     className?: string;
 };
-declare function SidebarGroup({ id, label, icon: Icon, defaultExpanded, expanded, onExpandedChange, isChildActive: hasActiveChild, children, className, }: SidebarGroupProps): react_jsx_runtime.JSX.Element;
+declare function SidebarGroup({ id, label, icon: Icon, defaultExpanded, expanded, onExpandedChange, isChildActive: hasActiveChild, children, className, }: SidebarGroupProps): React.JSX.Element;
 
 type FormFieldProps = {
     /** Field label rendered above the input. Omit for unlabeled fields. */
@@ -1297,7 +1313,7 @@ type FormFieldProps = {
  * Layout shell shared by every form primitive (Input, Textarea, Select, ...).
  * Renders: [Label] [children] [hint | error]
  */
-declare function FormField({ label, hint, error, required, htmlFor, hideLabel, reserveMessageSpace, className, children, }: FormFieldProps): react_jsx_runtime.JSX.Element;
+declare function FormField({ label, hint, error, required, htmlFor, hideLabel, reserveMessageSpace, className, children, }: FormFieldProps): React.JSX.Element;
 
 /** @doc ./Calendar.md */
 
@@ -1389,6 +1405,8 @@ type CalendarProps = {
  */
 declare const Calendar: React.ForwardRefExoticComponent<CalendarProps & React.RefAttributes<HTMLDivElement>>;
 
+/** @doc ../ui/Calendar.md */
+
 type DatePickerProps = {
     id?: string;
     label?: React.ReactNode;
@@ -1450,7 +1468,7 @@ type DatePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, clearLabel, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): react_jsx_runtime.JSX.Element;
+declare function DatePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, clearLabel, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, className, containerClassName, }: DatePickerProps): React.JSX.Element;
 
 type FieldIconSlotProps = {
     /** ไอคอนประจำช่อง (ปฏิทิน · นาฬิกา · ฯลฯ) — โชว์เป็นค่าปกติ */
@@ -1464,7 +1482,9 @@ type FieldIconSlotProps = {
     clearLabel: string;
     onClear: () => void;
 };
-declare function FieldIconSlot({ icon, showClear, clearLabel, onClear, }: FieldIconSlotProps): react_jsx_runtime.JSX.Element;
+declare function FieldIconSlot({ icon, showClear, clearLabel, onClear, }: FieldIconSlotProps): React.JSX.Element;
+
+/** @doc ../ui/Calendar.md */
 
 /** A closed range. `to` is only ever `null` while a selection is half-made. */
 type DateRangeValue = {
@@ -1571,7 +1591,7 @@ type DateRangePickerProps = {
  * the end; clicking before the start begins a new range rather than silently
  * swapping the pair.
  */
-declare function DateRangePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, labels, className, containerClassName, }: DateRangePickerProps): react_jsx_runtime.JSX.Element;
+declare function DateRangePicker({ id, label, hint, error, required, hideLabel, alwaysFloatLabel, placeholder, value, defaultValue, onChange, displayFormat, disabledDate, minDate, maxDate, showClearInField, reserveMessageSpace, disabled, size, calendarLocale, weekStartsOn, calendarLabels, labels, className, containerClassName, }: DateRangePickerProps): React.JSX.Element;
 
 /** "HH:mm" string in 24-hour format. */
 type TimeValue = string;
@@ -1651,7 +1671,7 @@ type TimePickerProps = {
     className?: string;
     containerClassName?: string;
 };
-declare function TimePicker({ id, label, hint, error, required, hideLabel, reserveMessageSpace, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, labels, className, containerClassName, }: TimePickerProps): react_jsx_runtime.JSX.Element;
+declare function TimePicker({ id, label, hint, error, required, hideLabel, reserveMessageSpace, alwaysFloatLabel, value, defaultValue, onChange, minuteStep, step, minTime, maxTime, ampm, disabled, size, labels, className, containerClassName, }: TimePickerProps): React.JSX.Element;
 
 declare const numberStepperVariants: (props?: ({
     invalid?: boolean | null | undefined;
@@ -1864,7 +1884,7 @@ type ComboBoxMultiProps<V extends string = string> = ComboBoxCommonProps<V> & Co
     onChange?: (value: V[]) => void;
 };
 type ComboBoxProps<V extends string = string> = ComboBoxSingleProps<V> | ComboBoxMultiProps<V>;
-declare function ComboBox<V extends string = string>(props: ComboBoxProps<V>): react_jsx_runtime.JSX.Element;
+declare function ComboBox<V extends string = string>(props: ComboBoxProps<V>): React.JSX.Element;
 
 /**
  * ช่องค้นหา-แล้วเลือก **ที่ไม่มี Radix Popover · ไม่มี popper · ไม่มี floating-ui**
@@ -2069,7 +2089,7 @@ type EntityAutocompleteProps<T> = EntityAutocompleteSingleProps<T> | EntityAutoc
  * `ComboBox` (single) / `MultiAutocomplete` (multi) — this is the generic-`T`
  * counterpart for remote entity search specifically.
  */
-declare function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>): react_jsx_runtime.JSX.Element;
+declare function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>): React.JSX.Element;
 
 declare const Table: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.TableHTMLAttributes<HTMLTableElement>, HTMLTableElement>, "ref"> & React.RefAttributes<HTMLTableElement>>;
 declare const TableHeader: React.ForwardRefExoticComponent<Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>, "ref"> & React.RefAttributes<HTMLTableSectionElement>>;
@@ -2158,7 +2178,7 @@ declare function DataTableGroupRow({ colSpan, label, collapsible, collapsed, onT
     collapsed?: boolean;
     onToggle?: () => void;
     toggleAriaLabel?: string;
-}): react_jsx_runtime.JSX.Element;
+}): React.JSX.Element;
 
 type FreezeColumns = {
     /**
@@ -2418,7 +2438,7 @@ type DataTableProps<TData> = {
     /** Override any built-in copy — see `DataTableLabels`. All English by default. */
     labels?: DataTableLabels;
 } & DataTableGroupingProps<TData>;
-declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, skeletonRowCount, containerClassName, cardClassName, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): react_jsx_runtime.JSX.Element;
+declare function DataTable<TData>({ columns, data, isLoading, pagination, sorting: sortingProp, onSortingChange, manualSorting, enableSelection, isRowSelectable, minTableWidth, freezeColumns, rowSelection: rowSelectionProp, onRowSelectionChange, getRowId, onRowClick, stickyHeader, skeletonRowCount, containerClassName, cardClassName, empty, emptyIcon, errorIcon, renderEmpty, isFiltered, renderError, className, error, errorSlot, onRetry, labels, groupBy, groupOrder, groupLabel, collapsibleGroups, defaultCollapsedGroups, collapsedGroups, onCollapsedGroupsChange, }: DataTableProps<TData>): React.JSX.Element;
 
 declare const cardVariants: (props?: ({
     variant?: "flat" | "elevated" | "outlined" | null | undefined;
@@ -2426,11 +2446,11 @@ declare const cardVariants: (props?: ({
 } & class_variance_authority_types.ClassProp) | undefined) => string;
 type CardProps = React.ComponentProps<"div"> & VariantProps<typeof cardVariants>;
 declare const Card: React.ForwardRefExoticComponent<Omit<CardProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
-declare const CardHeader: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const CardTitle: ({ className, ...props }: React.ComponentProps<"h3">) => react_jsx_runtime.JSX.Element;
-declare const CardDescription: ({ className, ...props }: React.ComponentProps<"p">) => react_jsx_runtime.JSX.Element;
-declare const CardContent: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const CardFooter: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const CardHeader: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
+declare const CardTitle: ({ className, ...props }: React.ComponentProps<"h3">) => React.JSX.Element;
+declare const CardDescription: ({ className, ...props }: React.ComponentProps<"p">) => React.JSX.Element;
+declare const CardContent: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
+declare const CardFooter: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
 
 declare const Tabs: React.ForwardRefExoticComponent<RadixTabs.TabsProps & React.RefAttributes<HTMLDivElement>>;
 declare const tabsListVariants: (props?: ({
@@ -2464,9 +2484,9 @@ type BreadcrumbProps = React.ComponentProps<"nav"> & {
      *  which keeps this package framework-agnostic (no router import inside DS). */
     linkComponent?: React.ElementType;
 };
-declare function Breadcrumb({ items, separator, maxItems, linkComponent: LinkComponent, className, ...props }: BreadcrumbProps): react_jsx_runtime.JSX.Element;
+declare function Breadcrumb({ items, separator, maxItems, linkComponent: LinkComponent, className, ...props }: BreadcrumbProps): React.JSX.Element;
 /** Low-level escape hatch — use `<BreadcrumbRoot>` + `<BreadcrumbLink>` for custom rendering. */
-declare const BreadcrumbRoot: ({ className, ...props }: React.ComponentProps<"nav">) => react_jsx_runtime.JSX.Element;
+declare const BreadcrumbRoot: ({ className, ...props }: React.ComponentProps<"nav">) => React.JSX.Element;
 declare const BreadcrumbLink: React.ForwardRefExoticComponent<Omit<React.ClassAttributes<HTMLAnchorElement> & React.AnchorHTMLAttributes<HTMLAnchorElement> & {
     asChild?: boolean;
 }, "ref"> & React.RefAttributes<HTMLAnchorElement>>;
@@ -2492,7 +2512,7 @@ type StepperProps = {
     /** Allow click on completed steps to navigate. */
     onStepClick?: (index: number) => void;
 };
-declare function Stepper({ steps, current, orientation, connector, className, onStepClick, }: StepperProps): react_jsx_runtime.JSX.Element;
+declare function Stepper({ steps, current, orientation, connector, className, onStepClick, }: StepperProps): React.JSX.Element;
 
 type SkeletonProps = React.ComponentProps<"div"> & {
     /** Shape preset. `text` defaults to a 1em-height bar. `circle` is square + rounded-full. */
@@ -2517,7 +2537,7 @@ declare const Spinner: React.ForwardRefExoticComponent<Omit<SpinnerProps, "ref">
 declare function LoadingScreen({ label, className, }: {
     label?: React.ReactNode;
     className?: string;
-}): react_jsx_runtime.JSX.Element;
+}): React.JSX.Element;
 
 /** โทนสีพื้นของป้ายรูป · `brand` = ตามธีมของแอป */
 type StateTone = "brand" | "info" | "success" | "warning" | "danger" | "neutral" | "none";
@@ -2577,7 +2597,7 @@ type EmptyStateProps = StateBlockProps & {
  * บอกให้ผู้ใช้ไปสร้างใหม่ทั้งที่เขาแค่กรองผิด คือทางที่ทำให้เขาสร้างข้อมูลซ้ำ
  * (ใน `DataTable` ใช้ `renderEmpty` ที่ได้ `isFiltered` มาแยกสองกรณีนี้)
  */
-declare function EmptyState({ iconTone, tone, ...props }: EmptyStateProps): react_jsx_runtime.JSX.Element;
+declare function EmptyState({ iconTone, tone, ...props }: EmptyStateProps): React.JSX.Element;
 type ErrorStateProps = Omit<StateBlockProps, "action"> & {
     /** ปุ่มลองใหม่ — ไม่ส่ง = ไม่มีปุ่ม */
     onRetry?: () => void;
@@ -2598,22 +2618,49 @@ type ErrorStateProps = Omit<StateBlockProps, "action"> & {
  * ⚠️ **ไม่มีข้อความตั้งต้นเป็นภาษาไทย** — DS ไม่มี i18n และไม่ควรมี
  * ทุกคำมาจากแอป ที่นี่มีแต่ค่าอังกฤษไว้กันจอว่างเปล่าตอนลืมส่ง
  */
-declare function ErrorState({ icon, image, tone, onRetry, retryLabel, action, error: _error, ...props }: ErrorStateProps): react_jsx_runtime.JSX.Element;
+declare function ErrorState({ icon, image, tone, onRetry, retryLabel, action, error: _error, ...props }: ErrorStateProps): React.JSX.Element;
 
 type ToasterProps = React.ComponentProps<typeof Toaster$1>;
 /**
  * Mount once near the app root. All `toast.*` calls render through this.
  *
- * Note for monorepo consumers using a workspace dev import (e.g. Storybook
- * importing `@mediact/react` via the package's `dist`): make sure your dev
- * resolver aliases `@mediact/react` to `packages/react/src/index.ts` so the
- * Toaster and `toast()` call share the same `sonner` module instance. Without
- * this, sonner's singleton state silently desyncs and toasts won't render.
+ * 🔴 `toast()` and `<Toaster>` MUST resolve the same `sonner` module instance.
+ * sonner keeps its queue in module state, so two copies = two queues: the call
+ * enqueues on one, the mounted Toaster listens to the other, and **nothing
+ * renders — no error, no warning**.
+ *
+ * `sonner` is therefore a **peerDependency**, not a dependency (2026-08-31).
+ * While it was a dependency, every consumer pinning a different major got a
+ * nested `node_modules/@mediact/react/node_modules/sonner` and the singleton
+ * split in two. Measured across the four apps: three pin `sonner@^2.0.7` while
+ * this package asked for `^1.7.4` — all three carried the duplicate. None had
+ * hit it yet only because none had adopted this `Toaster`; the first adopter
+ * would have.
+ *
+ * The declared range is `^2.0.0`, not `^1.7.4 || ^2.0.0`. The API used here
+ * (`position` · `duration` · `icons` · `toastOptions.unstyled` · the eight
+ * `classNames` keys) exists in both majors, but only v2 is ever installed,
+ * typechecked or tested here — declaring a v1 half nobody exercises would be a
+ * promise this package cannot keep. All three apps that declare `sonner` are
+ * already on `^2.0.7`.
+ *
+ * 🔴 **Consumers must add `sonner` to their own `package.json`.** Do not rely on
+ * a package manager to fill the peer in: `npm install` and bun do, but
+ * **`npm ci` does not** — it installs the lockfile and nothing else, so a
+ * consumer that only bumps the tag and rebuilds in CI gets a tree with no
+ * `sonner` at all. That is not "toasts don't render", it is
+ * `Module not found: Can't resolve 'sonner'` and the whole app fails to build,
+ * because `src/index.ts` re-exports this file and every barrel import reaches
+ * it. yarn 1 and pnpm without `auto-install-peers` behave the same way.
+ *
+ * Same rule for a monorepo dev import (e.g. Storybook importing this package
+ * via `dist`): alias `@mediact/react` to `packages/react/src/index.ts` so both
+ * sides share one instance.
  *
  * @example
  * <Toaster position="top-right" />
  */
-declare function Toaster(props: ToasterProps): react_jsx_runtime.JSX.Element;
+declare function Toaster(props: ToasterProps): React.JSX.Element;
 
 declare const Popover: React.FC<RadixPopover.PopoverProps>;
 declare const PopoverTrigger: React.ForwardRefExoticComponent<RadixPopover.PopoverTriggerProps & React.RefAttributes<HTMLButtonElement>>;
@@ -2632,8 +2679,8 @@ type DialogContentProps = React.ComponentProps<typeof RadixDialog.Content> & {
     showClose?: boolean;
 };
 declare const DialogContent: React.ForwardRefExoticComponent<Omit<DialogContentProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
-declare const DialogHeader: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
-declare const DialogFooter: ({ className, ...props }: React.ComponentProps<"div">) => react_jsx_runtime.JSX.Element;
+declare const DialogHeader: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
+declare const DialogFooter: ({ className, ...props }: React.ComponentProps<"div">) => React.JSX.Element;
 declare const DialogTitle: React.ForwardRefExoticComponent<Omit<RadixDialog.DialogTitleProps & React.RefAttributes<HTMLHeadingElement>, "ref"> & React.RefAttributes<HTMLHeadingElement>>;
 declare const DialogDescription: React.ForwardRefExoticComponent<Omit<RadixDialog.DialogDescriptionProps & React.RefAttributes<HTMLParagraphElement>, "ref"> & React.RefAttributes<HTMLParagraphElement>>;
 
@@ -2646,10 +2693,10 @@ type ConfirmTone = "info" | "warning" | "danger" | "success";
  * (`<ConfirmDialog icon={toneIcon.danger} … />`)
  */
 declare const toneIcon: {
-    readonly info: react_jsx_runtime.JSX.Element;
-    readonly warning: react_jsx_runtime.JSX.Element;
-    readonly danger: react_jsx_runtime.JSX.Element;
-    readonly success: react_jsx_runtime.JSX.Element;
+    readonly info: React.JSX.Element;
+    readonly warning: React.JSX.Element;
+    readonly danger: React.JSX.Element;
+    readonly success: React.JSX.Element;
 };
 type ConfirmDialogProps = {
     open: boolean;
@@ -2723,7 +2770,9 @@ type ConfirmDialogProps = {
      */
     children?: React.ReactNode;
 };
-declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, loading: loadingProp, dismissible, align, errorMessage, showCancel, confirmDisabled, children, }: ConfirmDialogProps): react_jsx_runtime.JSX.Element;
+declare function ConfirmDialog({ open, onOpenChange, title, description, tone, icon, divider, confirmLabel, cancelLabel, onConfirm, onCancel, size, isLoading, loading: loadingProp, dismissible, align, errorMessage, showCancel, confirmDisabled, children, }: ConfirmDialogProps): React.JSX.Element;
+
+/** @doc ./ContactSupportDialog.md */
 
 /**
  * ช่องทางติดต่อของ MediAct — **ค่าเดียวกันทั้ง 4 แอป**
@@ -2772,7 +2821,7 @@ type ContactSupportDialogProps = {
  * มีป้ายไอคอนและเส้นคั่น — จงใจ เพราะกล่องนี้พูดในนามบริษัท ไม่ใช่ส่วนหนึ่งของงานในจอ
  * และผู้ใช้คนเดียวกันเปิดหลายแอป จึงต้องจำหน้าตา "ที่ขอความช่วยเหลือ" ได้ทันที
  */
-declare function ContactSupportDialog({ open, onOpenChange, labels, logo, lineUrl, lineHandle, phoneNumber, className, }: ContactSupportDialogProps): react_jsx_runtime.JSX.Element;
+declare function ContactSupportDialog({ open, onOpenChange, labels, logo, lineUrl, lineHandle, phoneNumber, className, }: ContactSupportDialogProps): React.JSX.Element;
 
 type PopoverContentProps = React.ComponentProps<typeof RadixPopover.Content>;
 type FilterProps = {
@@ -2793,7 +2842,7 @@ type FilterProps = {
     /** Class for the popover content panel. */
     contentClassName?: string;
 };
-declare function Filter({ children, triggerLabel, trigger, triggerProps, open, defaultOpen, onOpenChange, align, side, sideOffset, contentClassName, }: FilterProps): react_jsx_runtime.JSX.Element;
+declare function Filter({ children, triggerLabel, trigger, triggerProps, open, defaultOpen, onOpenChange, align, side, sideOffset, contentClassName, }: FilterProps): React.JSX.Element;
 
 declare const TooltipProvider: React.FC<RadixTooltip.TooltipProviderProps>;
 declare const TooltipRoot: React.FC<RadixTooltip.TooltipProps>;
@@ -2823,7 +2872,7 @@ type TooltipProps = {
  * Convenience wrapper. For grouped tooltips wrap your tree in <TooltipProvider>.
  * This component creates its own provider if none is in scope (safe to nest).
  */
-declare function Tooltip({ content, children, side, align, delayDuration, open, defaultOpen, onOpenChange, asChild, arrow, contentClassName, }: TooltipProps): react_jsx_runtime.JSX.Element;
+declare function Tooltip({ content, children, side, align, delayDuration, open, defaultOpen, onOpenChange, asChild, arrow, contentClassName, }: TooltipProps): React.JSX.Element;
 
 declare const DropdownMenu: React.FC<RadixMenu.DropdownMenuProps>;
 declare const DropdownMenuTrigger: React.ForwardRefExoticComponent<RadixMenu.DropdownMenuTriggerProps & React.RefAttributes<HTMLButtonElement>>;

@@ -2,7 +2,9 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
+import { SpinnerGlyph } from "../feedback/spinner-parts";
 import { SkeletonBox } from "../feedback/Skeleton";
+import { BUTTON_DISABLED_OPACITY } from "./button-parts";
 
 // Square hit targets, same px scale as Solid/OutlineButton's size tokens
 // (sm=h-8/32px, md=h-9/36px, lg=h-11/44px) so an IconButton dropped next to
@@ -12,7 +14,7 @@ import { SkeletonBox } from "../feedback/Skeleton";
 // contexts. Exact default is a placeholder for UX sign-off (see audit
 // "ต้องให้คนตัดสิน" #3) — swap here if the team calls a different scale.
 const iconButtonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center rounded-full transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  `inline-flex shrink-0 items-center justify-center rounded-full transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none ${BUTTON_DISABLED_OPACITY} [&_svg]:pointer-events-none [&_svg]:shrink-0`,
   {
     variants: {
       variant: {
@@ -36,19 +38,6 @@ const iconButtonVariants = cva(
   },
 );
 
-const Spinner = () => (
-  <svg className="animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <circle
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="3"
-      opacity="0.25"
-    />
-    <path fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z" />
-  </svg>
-);
 
 type IconButtonProps = Omit<React.ComponentProps<"button">, "aria-label"> &
   VariantProps<typeof iconButtonVariants> & {
@@ -119,7 +108,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
           * ได้ปุ่มเปล่า ไม่มีไอคอน ไม่มี error ไม่มี type ฟ้อง (เพราะ `children` เป็น prop
           * ที่ถูกต้องของ `<button>` อยู่แล้ว) — เจอของจริงหลุดขึ้นจอในจอ "ข้อมูลองค์กร"
           * รับทั้งสองทางจึงถูกกว่า: prop `icon` ยังชนะเมื่อส่งมาทั้งคู่ */}
-        {asChild ? children : loading ? <Spinner /> : (icon ?? children)}
+        {asChild ? children : loading ? <SpinnerGlyph /> : (icon ?? children)}
       </Comp>
     );
   },

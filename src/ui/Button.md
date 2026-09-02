@@ -120,6 +120,7 @@
 | 2026-08-08 | Figma ทำแค่ 3 ขนาด (sm/md/lg) | playbook ของ Figma แนะนำไม่เกิน 30 ช่อง — 7×5 = 35 เกิน | `xs`/`xl` ต้องดูจากโค้ด |
 | 2026-08-08 | 🐛 **แก้บั๊ก `asChild` + ไอคอน** | `Slot` ของ Radix เรียก `React.Children.only()` — การส่งไอคอนซ้าย + ข้อความ + ไอคอนขวาเป็น 3 ก้อนพี่น้อง **throw ทันที** ⇒ `asChild` ใช้คู่กับไอคอนไม่ได้เลย ทั้งที่ prop มีอยู่ทั้งคู่ · ตอนนี้ยัดเนื้อหาเข้าไปในลูกตัวเดียวให้แทน | เมื่อ `asChild` และ children ไม่ใช่ element เดี่ยว จะถูกห่อด้วย `<span>` เพิ่ม 1 ชั้น |
 | 2026-08-08 | ครอบไอคอนด้วย `<span aria-hidden>` | `[&_svg]:shrink-0` ครอบเฉพาะ `<svg>` — ไอคอนที่เป็น `<img>` หรือ component ที่ห่อ span มาแล้วจะถูกบีบเมื่อข้อความยาว | DOM ลึกขึ้น 1 ชั้นต่อไอคอน |
+| 2026-08-31 | **ความจางตอน `disabled` ยุบเหลือค่าเดียว 30%** ย้ายไปอยู่ที่ `ui/button-parts.ts` (`BUTTON_DISABLED_OPACITY`) แล้วให้ปุ่มทั้ง 4 ตัวอ้างถึงตัวเดียวกัน | เดิม Button/IconButton เป็น **40%** แต่ OutlineButton/SolidButton (และ AddButton ที่ยืมรูปทรงจาก Solid) เป็น **30%** ⇒ จอที่วางปุ่ม `OutlineButton ยกเลิก` คู่กับ `Button บันทึก` แล้ว disabled พร้อมกัน จะเห็นสองใบจางไม่เท่ากัน (เจอจริงที่หน้า `โปรไฟล์ของฉัน` ของ Portal ตอนฟอร์มยังไม่ถูกแก้ — MQA-1019) · เลือก **30 ไม่ใช่ 40** ตามกฎข้อ 1 ของ repo: ปุ่มกลางที่แอปใช้จริงทั้งสองตัว (`portal-web` · `medimatch-web-backoffice`) เขียน `disabled:opacity-30` เหมือนกัน | ปุ่ม `Button`/`IconButton` ที่ถูก disable จางลงกว่าเดิม 10% — อ่านยากขึ้นเล็กน้อย แต่ WCAG 1.4.3 ยกเว้น control ที่ disabled อยู่แล้ว และแลกกับการที่แถวปุ่มไม่จางเหลื่อมกันอีก |
 
 ---
 
@@ -128,4 +129,5 @@
 - [ ] `warning` ใช้ตัวอักษรขาวบนพื้น `#f8a75b` — **contrast ไม่ผ่าน AA** ต้องเคาะว่าเปลี่ยนเป็นตัวอักษรเข้ม หรือเปลี่ยนพื้นให้เข้มขึ้น
 - [ ] DS ยังมี `SolidButton` · `OutlineButton` · `AddButton` แยกอยู่อีก 3 ตัว — ต้องยุบเข้า `Button` (งานตาม `CONSOLIDATION-ROADMAP.md`)
 - [ ] ยังไม่มีสถานะ `hover` / `focus` / `disabled` ใน Figma (มีแต่ในโค้ด)
+- [ ] `pointer-events` / `cursor` ตอน disabled **ยังต่างกันโดยตั้งใจ** — `SolidButton`/`OutlineButton`/`AddButton` เปิด pointer-events ค้างไว้เพื่อให้เคอร์เซอร์ `not-allowed` ขึ้น (เหตุผลอยู่หัวไฟล์ `SolidButton.tsx`) ส่วน `Button`/`IconButton` ใช้ `pointer-events-none` ⇒ ปุ่มที่กดไม่ได้สองกลุ่มนี้ให้ feedback คนละแบบ · จะยุบให้เหมือนกันต้องไล่ใส่ `disabled:hover:*` ครบทุก variant ของ `Button` ก่อน
 - [ ] `xs` / `xl` ยังไม่มีใน Figma

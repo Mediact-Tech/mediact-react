@@ -74,8 +74,28 @@ var SkeletonBox = React.forwardRef(
 );
 SkeletonBox.displayName = "SkeletonBox";
 
+// src/ui/button-parts.ts
+var BUTTON_DISABLED_OPACITY = "disabled:opacity-30";
+
+// src/feedback/spinner-parts.tsx
+import { jsx as jsx2 } from "react/jsx-runtime";
+var SpinnerGlyph = ({ className }) => /* @__PURE__ */ jsx2(
+  "svg",
+  {
+    className: cn("animate-spin", className),
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true",
+    children: /* @__PURE__ */ jsx2("path", { d: "M21 12a9 9 0 1 1-6.219-8.56" })
+  }
+);
+
 // src/ui/Button.tsx
-import { Fragment, jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+import { Fragment, jsx as jsx3, jsxs as jsxs2 } from "react/jsx-runtime";
 var buttonVariants = cva(
   // `rounded-md` ยังตรงกับ SolidButton / OutlineButton / AddButton เหมือนเดิม — ปุ่มทุกตัวใน DS
   // ใช้รัศมีมุมเดียวกัน (ข้อสรุปเดิมจาก main ยังอยู่ครบ ไม่ได้ถูกกลืนตอน merge)
@@ -83,7 +103,7 @@ var buttonVariants = cva(
   // IconButton มีอยู่แล้ว) ปุ่มที่อยู่ในแถว flex ไม่ควรถูกบีบจนข้อความหาย
   // `ring-focus-ring/50` — เดิมเขียน `ring-2` เฉย ๆ ไม่ระบุสี ⇒ Tailwind ใช้ `currentcolor`
   // แปลว่าบนปุ่มพื้นทึบที่ตัวอักษรเป็นสีขาว วงแหวนก็ขาวไปด้วย = โฟกัสคีย์บอร์ดหายทั้งใบ
-  "inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0 [&_svg]:pointer-events-none",
+  `inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none ${BUTTON_DISABLED_OPACITY} [&_svg]:shrink-0 [&_svg]:pointer-events-none`,
   {
     variants: {
       variant: {
@@ -112,35 +132,6 @@ var buttonVariants = cva(
       variant: "primary",
       size: "md"
     }
-  }
-);
-var Spinner = () => /* @__PURE__ */ jsxs2(
-  "svg",
-  {
-    className: "size-4 animate-spin",
-    viewBox: "0 0 24 24",
-    fill: "none",
-    "aria-hidden": "true",
-    children: [
-      /* @__PURE__ */ jsx2(
-        "circle",
-        {
-          cx: "12",
-          cy: "12",
-          r: "10",
-          stroke: "currentColor",
-          strokeWidth: "3",
-          opacity: "0.25"
-        }
-      ),
-      /* @__PURE__ */ jsx2(
-        "path",
-        {
-          fill: "currentColor",
-          d: "M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
-        }
-      )
-    ]
   }
 );
 var Button = React2.forwardRef(
@@ -172,7 +163,7 @@ var Button = React2.forwardRef(
         }
       );
     }
-    const slot = (node, side) => /* @__PURE__ */ jsx2(
+    const slot = (node, side) => /* @__PURE__ */ jsx3(
       "span",
       {
         "aria-hidden": "true",
@@ -182,7 +173,7 @@ var Button = React2.forwardRef(
       }
     );
     const content = /* @__PURE__ */ jsxs2(Fragment, { children: [
-      loading ? /* @__PURE__ */ jsx2(Spinner, {}) : leftIcon ? slot(leftIcon, "left") : null,
+      loading ? /* @__PURE__ */ jsx3(SpinnerGlyph, { className: "size-4" }) : leftIcon ? slot(leftIcon, "left") : null,
       children,
       !loading && rightIcon ? slot(rightIcon, "right") : null
     ] });
@@ -195,17 +186,17 @@ var Button = React2.forwardRef(
     };
     if (asChild) {
       const child = React2.isValidElement(children) ? children : null;
-      return /* @__PURE__ */ jsx2(Slot, { ref, ...shared, children: child ? React2.cloneElement(
+      return /* @__PURE__ */ jsx3(Slot, { ref, ...shared, children: child ? React2.cloneElement(
         child,
         void 0,
         /* @__PURE__ */ jsxs2(Fragment, { children: [
-          loading ? /* @__PURE__ */ jsx2(Spinner, {}) : leftIcon ? slot(leftIcon, "left") : null,
+          loading ? /* @__PURE__ */ jsx3(SpinnerGlyph, { className: "size-4" }) : leftIcon ? slot(leftIcon, "left") : null,
           child.props.children,
           !loading && rightIcon ? slot(rightIcon, "right") : null
         ] })
-      ) : /* @__PURE__ */ jsx2("span", { className: "inline-flex items-center gap-1", children: content }) });
+      ) : /* @__PURE__ */ jsx3("span", { className: "inline-flex items-center gap-1", children: content }) });
     }
-    return /* @__PURE__ */ jsx2("button", { ref, disabled: isDisabled, ...shared, children: content });
+    return /* @__PURE__ */ jsx3("button", { ref, disabled: isDisabled, ...shared, children: content });
   }
 );
 Button.displayName = "Button";
@@ -219,9 +210,9 @@ import { Plus } from "lucide-react";
 import * as React3 from "react";
 import { Slot as Slot2 } from "@radix-ui/react-slot";
 import { cva as cva2 } from "class-variance-authority";
-import { jsx as jsx3 } from "react/jsx-runtime";
+import { jsx as jsx4 } from "react/jsx-runtime";
 var solidButtonVariants = cva2(
-  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap px-3 py-2 text-body-sm font-medium leading-6 tracking-normal text-slate-50 transition-all outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  `cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap px-3 py-2 text-body-sm font-medium leading-6 tracking-normal text-slate-50 transition-all outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed ${BUTTON_DISABLED_OPACITY} [&_svg]:pointer-events-none [&_svg]:shrink-0`,
   {
     variants: {
       // rounded-md on every variant. `success` and `primary` used to be rounded-sm, so a screen that
@@ -248,7 +239,7 @@ var solidButtonVariants = cva2(
 var SolidButton = React3.forwardRef(
   ({ className, variant, size, asChild = false, label, children, ...props }, ref) => {
     const Comp = asChild ? Slot2 : "button";
-    return /* @__PURE__ */ jsx3(
+    return /* @__PURE__ */ jsx4(
       Comp,
       {
         ref,
@@ -263,11 +254,11 @@ var SolidButton = React3.forwardRef(
 SolidButton.displayName = "SolidButton";
 
 // src/ui/AddButton.tsx
-import { Fragment as Fragment2, jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx5, jsxs as jsxs3 } from "react/jsx-runtime";
 var AddButton = React4.forwardRef(
   ({ className, variant, size, asChild = false, label, children, ...props }, ref) => {
     const Comp = asChild ? Slot3 : "button";
-    return /* @__PURE__ */ jsx4(
+    return /* @__PURE__ */ jsx5(
       Comp,
       {
         ref,
@@ -275,7 +266,7 @@ var AddButton = React4.forwardRef(
         className: cn(solidButtonVariants({ variant, size, className })),
         ...props,
         children: asChild ? children : /* @__PURE__ */ jsxs3(Fragment2, { children: [
-          /* @__PURE__ */ jsx4(Plus, { className: "size-4", "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx5(Plus, { className: "size-4", "aria-hidden": "true" }),
           children ?? label
         ] })
       }
@@ -288,9 +279,9 @@ AddButton.displayName = "AddButton";
 import * as React5 from "react";
 import { Slot as Slot4 } from "@radix-ui/react-slot";
 import { cva as cva3 } from "class-variance-authority";
-import { jsx as jsx5 } from "react/jsx-runtime";
+import { jsx as jsx6 } from "react/jsx-runtime";
 var outlineButtonVariants = cva3(
-  "cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-white px-3 py-2 text-body-sm font-medium leading-6 tracking-normal shadow-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  `cursor-pointer inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-white px-3 py-2 text-body-sm font-medium leading-6 tracking-normal shadow-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-auto disabled:cursor-not-allowed ${BUTTON_DISABLED_OPACITY} disabled:hover:bg-white [&_svg]:pointer-events-none [&_svg]:shrink-0`,
   {
     variants: {
       variant: {
@@ -312,7 +303,7 @@ var outlineButtonVariants = cva3(
 var OutlineButton = React5.forwardRef(
   ({ className, variant, size, asChild = false, label, children, ...props }, ref) => {
     const Comp = asChild ? Slot4 : "button";
-    return /* @__PURE__ */ jsx5(
+    return /* @__PURE__ */ jsx6(
       Comp,
       {
         ref,
@@ -338,7 +329,7 @@ import * as React6 from "react";
 import { Eye, EyeOff, X } from "lucide-react";
 
 // src/form/FloatingFieldShell.tsx
-import { jsx as jsx6, jsxs as jsxs4 } from "react/jsx-runtime";
+import { jsx as jsx7, jsxs as jsxs4 } from "react/jsx-runtime";
 function fieldLabelId(htmlFor) {
   return htmlFor ? `${htmlFor}-label` : void 0;
 }
@@ -361,6 +352,7 @@ function FloatingFieldShell({
   leftAdornment,
   rightAdornment,
   containerClassName,
+  disabled,
   multiline,
   reserveMessageSpace = true,
   children
@@ -388,7 +380,26 @@ function FloatingFieldShell({
             "pointer-events-none absolute z-10 truncate transition-all duration-150 ease-out",
             "max-w-[calc(100%-1.5rem)]",
             floating ? cn(
-              "-top-1.5 left-2 px-1.5 font-medium bg-bg-default",
+              /* พื้นของป้ายต้องเป็นสีเดียวกับพื้นช่องที่มันวางทับ ไม่ใช่ขาวตายตัว
+               * — `fieldShapeClasses` ใช้ `bg-bg-default` ตอนปกติ และ
+               * `disabled:bg-bg-surface` ตอนปิดใช้งาน ⇒ ป้ายเดินตามคู่กัน
+               *
+               * 🔴 **ตอนปิดใช้งานต้องเขียนเป็น `var()` พร้อมค่าสำรอง ไม่ใช่คลาส
+               * `bg-bg-surface` เปล่า ๆ** — `--color-bg-surface` เป็น token ของ
+               * ชั้น semantic ซึ่ง **แอปที่ใช้ `@mediact/tailwind-preset` ยังไม่มี**
+               * (preset → `tokens.css` → `@import "./theme.css"` ซึ่งเป็นชุดเก่า
+               * และไม่ได้ประกาศ token นี้ · ตรวจแล้วใน Storybook ของ DS เอง:
+               * สตริง `bg-bg-surface` ไม่ปรากฏใน CSS ที่ compile ออกมาเลยแม้แต่ครั้งเดียว)
+               * ⇒ ถ้าใช้คลาสเปล่า ป้ายจะ **โปร่งใส** แล้วเส้นขอบขีดทับตัวหนังสือ
+               * ซึ่งแย่กว่าอาการเดิม · `var(…, …)` ทำให้มันถอยไปเป็นสีเดียวกับช่อง
+               * ในที่ที่ token ยังไม่มี — ซึ่งเป็นที่เดียวกับที่ช่องก็ยังไม่เปลี่ยนสีเช่นกัน
+               *
+               * ⚠️ นี่คือเหตุผลที่ไม่มีใครเห็นบั๊กนี้มาก่อน: ใน Storybook ช่อง disabled
+               * **ไม่ได้เป็นสีเทาเลย** เพราะ `disabled:bg-bg-surface` ก็ไม่ทำงานเหมือนกัน
+               * ⇒ ป้ายขาวบนช่องขาว มองไม่ออก (เป็นข้อ 3 ใน open decisions ของ repo:
+               * DS ยังกิน token ชุดเก่าอยู่ ยังไม่ย้ายไป semantic) */
+              disabled ? "bg-[var(--color-bg-surface,var(--color-bg-default))]" : "bg-bg-default",
+              "-top-1.5 left-2 px-1.5 font-medium",
               sz.labelTextFloat,
               hasError ? "text-cherry-red-600" : focused ? "text-brand" : "text-text-body"
             ) : cn(
@@ -401,11 +412,11 @@ function FloatingFieldShell({
           ),
           children: [
             label,
-            required && /* @__PURE__ */ jsx6("span", { className: "ml-0.5 text-cherry-red-600", children: "*" })
+            required && /* @__PURE__ */ jsx7("span", { className: "ml-0.5 text-cherry-red-600", children: "*" })
           ]
         }
       ),
-      leftAdornment && /* @__PURE__ */ jsx6("span", { className: "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary [&_svg:not([class*='size-'])]:size-4", children: leftAdornment }),
+      leftAdornment && /* @__PURE__ */ jsx7("span", { className: "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary [&_svg:not([class*='size-'])]:size-4", children: leftAdornment }),
       children,
       rightAdornment && /* 🔴 `pointer-events-none` — ตัวห่อนี้ทับปุ่ม/ช่องที่อยู่ข้างล่างเสมอ
        * (`absolute right-3`) ถ้าไม่ปล่อยให้คลิกทะลุ **การกดตรงไอคอนจะไม่ทำอะไรเลย**
@@ -419,9 +430,9 @@ function FloatingFieldShell({
        * ⚠️ adornment ที่ **เป็นปุ่มจริง** ต้องเปิด `pointer-events-auto` ที่ตัวมันเอง
        * — `TimePicker` ทำแบบนั้นอยู่ก่อนแล้ว (เจอปัญหานี้มาก่อนแต่แก้เฉพาะจุด)
        * และปุ่มล้างของ `DateRangePicker` เปิดกลับมาเฉพาะตอนถูกเผย */
-      /* @__PURE__ */ jsx6("span", { className: "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-text-tertiary [&_svg:not([class*='size-'])]:size-4", children: rightAdornment })
+      /* @__PURE__ */ jsx7("span", { className: "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-text-tertiary [&_svg:not([class*='size-'])]:size-4", children: rightAdornment })
     ] }),
-    showMessageSlot ? /* @__PURE__ */ jsx6(
+    showMessageSlot ? /* @__PURE__ */ jsx7(
       "p",
       {
         id: hasError && htmlFor ? `${htmlFor}-error` : void 0,
@@ -441,7 +452,7 @@ function FieldSkeleton({
   containerClassName,
   ...shellProps
 }) {
-  return /* @__PURE__ */ jsx6(
+  return /* @__PURE__ */ jsx7(
     FloatingFieldShell,
     {
       ...shellProps,
@@ -449,7 +460,7 @@ function FieldSkeleton({
       size,
       floating: true,
       hasError: false,
-      children: /* @__PURE__ */ jsx6(SkeletonBox, { shape: shape ?? fieldShapeClasses({ hasError: false, size }) })
+      children: /* @__PURE__ */ jsx7(SkeletonBox, { shape: shape ?? fieldShapeClasses({ hasError: false, size }) })
     }
   );
 }
@@ -513,7 +524,7 @@ function fieldShapeClasses({
 }
 
 // src/ui/Input.tsx
-import { Fragment as Fragment3, jsx as jsx7, jsxs as jsxs5 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx8, jsxs as jsxs5 } from "react/jsx-runtime";
 var Input = React6.forwardRef(function Input2({
   id,
   className,
@@ -559,7 +570,7 @@ var Input = React6.forwardRef(function Input2({
   const prefix = prefixIcon ?? leftAdornment;
   const suffix = suffixIcon ?? rightAdornment;
   if (isLoading) {
-    return /* @__PURE__ */ jsx7(
+    return /* @__PURE__ */ jsx8(
       FieldSkeleton,
       {
         label,
@@ -572,9 +583,10 @@ var Input = React6.forwardRef(function Input2({
       }
     );
   }
-  return /* @__PURE__ */ jsx7(
+  return /* @__PURE__ */ jsx8(
     FloatingFieldShell,
     {
+      disabled,
       label,
       hint,
       error,
@@ -588,7 +600,7 @@ var Input = React6.forwardRef(function Input2({
       hasError,
       leftAdornment: prefix,
       rightAdornment: showClear || isPassword || suffix ? /* @__PURE__ */ jsxs5(Fragment3, { children: [
-        showClear && /* @__PURE__ */ jsx7(
+        showClear && /* @__PURE__ */ jsx8(
           "button",
           {
             type: "button",
@@ -602,10 +614,10 @@ var Input = React6.forwardRef(function Input2({
               });
             },
             className: "pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-hover",
-            children: /* @__PURE__ */ jsx7(X, {})
+            children: /* @__PURE__ */ jsx8(X, {})
           }
         ),
-        isPassword && /* @__PURE__ */ jsx7(
+        isPassword && /* @__PURE__ */ jsx8(
           "button",
           {
             type: "button",
@@ -613,13 +625,13 @@ var Input = React6.forwardRef(function Input2({
             tabIndex: -1,
             onClick: () => setShowPassword((s) => !s),
             className: "pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-hover",
-            children: showPassword ? /* @__PURE__ */ jsx7(Eye, {}) : /* @__PURE__ */ jsx7(EyeOff, {})
+            children: showPassword ? /* @__PURE__ */ jsx8(Eye, {}) : /* @__PURE__ */ jsx8(EyeOff, {})
           }
         ),
         !showClear && !isPassword && suffix
       ] }) : null,
       containerClassName,
-      children: /* @__PURE__ */ jsx7(
+      children: /* @__PURE__ */ jsx8(
         "input",
         {
           ref,
@@ -658,7 +670,7 @@ var Input = React6.forwardRef(function Input2({
 Input.displayName = "Input";
 
 // src/ui/FormatInput.tsx
-import { jsx as jsx8 } from "react/jsx-runtime";
+import { jsx as jsx9 } from "react/jsx-runtime";
 var FORMAT_PRESETS = {
   /** เลขบัตรประชาชนไทย 13 หลัก — 1-2345-67890-12-3 */
   thaiId: { kind: "pattern", pattern: "#-####-#####-##-#", digits: 13 },
@@ -682,7 +694,7 @@ function FormatInput({
 }) {
   const spec = typeof format3 === "string" && format3 in FORMAT_PRESETS ? FORMAT_PRESETS[format3] : format3;
   if (typeof spec === "object" && "format" in spec) {
-    return /* @__PURE__ */ jsx8(
+    return /* @__PURE__ */ jsx9(
       NumberFormatBase,
       {
         customInput: Input,
@@ -695,7 +707,7 @@ function FormatInput({
     );
   }
   if (typeof spec === "object" && spec.kind === "numeric") {
-    return /* @__PURE__ */ jsx8(
+    return /* @__PURE__ */ jsx9(
       NumericFormat,
       {
         customInput: Input,
@@ -710,7 +722,7 @@ function FormatInput({
     );
   }
   const pattern = typeof spec === "string" ? spec : spec.pattern;
-  return /* @__PURE__ */ jsx8(
+  return /* @__PURE__ */ jsx9(
     PatternFormat,
     {
       customInput: Input,
@@ -726,7 +738,7 @@ FormatInput.displayName = "FormatInput";
 
 // src/ui/Textarea.tsx
 import * as React7 from "react";
-import { jsx as jsx9, jsxs as jsxs6 } from "react/jsx-runtime";
+import { jsx as jsx10, jsxs as jsxs6 } from "react/jsx-runtime";
 var minHeights = {
   sm: "min-h-[72px]",
   md: "min-h-[88px]",
@@ -788,11 +800,11 @@ var Textarea = React7.forwardRef(
     const length = currentValue == null ? 0 : String(currentValue).length;
     const counter = showCount && maxLength != null ? `${length} / ${maxLength}` : null;
     const hintWithCounter = counter ? /* @__PURE__ */ jsxs6("span", { className: "flex justify-between gap-2", children: [
-      /* @__PURE__ */ jsx9("span", { children: hint }),
-      /* @__PURE__ */ jsx9("span", { children: counter })
+      /* @__PURE__ */ jsx10("span", { children: hint }),
+      /* @__PURE__ */ jsx10("span", { children: counter })
     ] }) : hint;
     if (isLoading) {
-      return /* @__PURE__ */ jsx9(
+      return /* @__PURE__ */ jsx10(
         FieldSkeleton,
         {
           label,
@@ -806,9 +818,10 @@ var Textarea = React7.forwardRef(
         }
       );
     }
-    return /* @__PURE__ */ jsx9(
+    return /* @__PURE__ */ jsx10(
       FloatingFieldShell,
       {
+        disabled,
         label,
         hint: hintWithCounter,
         error,
@@ -822,7 +835,7 @@ var Textarea = React7.forwardRef(
         hasError,
         containerClassName,
         multiline: true,
-        children: /* @__PURE__ */ jsx9(
+        children: /* @__PURE__ */ jsx10(
           "textarea",
           {
             ref,
@@ -861,7 +874,7 @@ import * as RadixCheckbox from "@radix-ui/react-checkbox";
 import { Check, Minus } from "lucide-react";
 
 // src/ui/toggle-parts.tsx
-import { jsx as jsx10, jsxs as jsxs7 } from "react/jsx-runtime";
+import { jsx as jsx11, jsxs as jsxs7 } from "react/jsx-runtime";
 var SIZES = {
   sm: {
     box: "size-4",
@@ -925,8 +938,8 @@ function toggleLabelClasses(disabled, align = "start") {
 function ToggleText({ children, description }) {
   if (children == null && description == null) return null;
   return /* @__PURE__ */ jsxs7("span", { className: "flex flex-col gap-0.5", children: [
-    children != null && /* @__PURE__ */ jsx10("span", { className: "leading-5", children }),
-    description != null && /* @__PURE__ */ jsx10("span", { className: "text-caption font-normal leading-4 text-text-tertiary", children: description })
+    children != null && /* @__PURE__ */ jsx11("span", { className: "leading-5", children }),
+    description != null && /* @__PURE__ */ jsx11("span", { className: "text-caption font-normal leading-4 text-text-tertiary", children: description })
   ] });
 }
 var toggleAlignClass = (size) => SIZES[size].align;
@@ -962,7 +975,7 @@ var switchTrackLabelClasses = cn(
 var switchTrackLabelItemClasses = "col-start-1 row-start-1";
 
 // src/ui/Checkbox.tsx
-import { jsx as jsx11, jsxs as jsxs8 } from "react/jsx-runtime";
+import { jsx as jsx12, jsxs as jsxs8 } from "react/jsx-runtime";
 var Checkbox = React8.forwardRef(
   function Checkbox2({
     id,
@@ -982,7 +995,7 @@ var Checkbox = React8.forwardRef(
     const hasError = Boolean(error);
     const isIndeterminate = checked === "indeterminate";
     const hasText = label != null || description != null;
-    const box = /* @__PURE__ */ jsx11(
+    const box = /* @__PURE__ */ jsx12(
       RadixCheckbox.Root,
       {
         ref,
@@ -997,13 +1010,13 @@ var Checkbox = React8.forwardRef(
           className
         ),
         ...props,
-        children: /* @__PURE__ */ jsx11(RadixCheckbox.Indicator, { className: "text-brand-foreground", children: isIndeterminate ? /* @__PURE__ */ jsx11(
+        children: /* @__PURE__ */ jsx12(RadixCheckbox.Indicator, { className: "text-brand-foreground", children: isIndeterminate ? /* @__PURE__ */ jsx12(
           Minus,
           {
             className: toggleGlyphClass(size),
             strokeWidth: TOGGLE_GLYPH_STROKE
           }
-        ) : /* @__PURE__ */ jsx11(
+        ) : /* @__PURE__ */ jsx12(
           Check,
           {
             className: toggleGlyphClass(size),
@@ -1019,16 +1032,16 @@ var Checkbox = React8.forwardRef(
           shape: "inline-flex items-start gap-2 rounded-xs text-body-sm",
           className: containerClassName,
           children: [
-            /* @__PURE__ */ jsx11(
+            /* @__PURE__ */ jsx12(
               "span",
               {
                 className: cn(checkboxShapeClasses(size), toggleAlignClass(size))
               }
             ),
-            /* @__PURE__ */ jsx11(ToggleText, { description, children: label })
+            /* @__PURE__ */ jsx12(ToggleText, { description, children: label })
           ]
         }
-      ) : /* @__PURE__ */ jsx11(
+      ) : /* @__PURE__ */ jsx12(
         SkeletonBox,
         {
           shape: checkboxShapeClasses(size),
@@ -1040,9 +1053,9 @@ var Checkbox = React8.forwardRef(
     return /* @__PURE__ */ jsxs8("div", { className: cn("flex flex-col gap-1", containerClassName), children: [
       /* @__PURE__ */ jsxs8("label", { htmlFor: inputId, className: toggleLabelClasses(disabled), children: [
         box,
-        /* @__PURE__ */ jsx11(ToggleText, { description, children: label })
+        /* @__PURE__ */ jsx12(ToggleText, { description, children: label })
       ] }),
-      hasError && /* @__PURE__ */ jsx11("p", { role: "alert", className: "text-caption font-medium text-cherry-red-600", children: error })
+      hasError && /* @__PURE__ */ jsx12("p", { role: "alert", className: "text-caption font-medium text-cherry-red-600", children: error })
     ] });
   }
 );
@@ -1054,7 +1067,7 @@ import * as RadixSwitch from "@radix-ui/react-switch";
 
 // src/feedback/Spinner.tsx
 import * as React9 from "react";
-import { jsx as jsx12, jsxs as jsxs9 } from "react/jsx-runtime";
+import { jsx as jsx13, jsxs as jsxs9 } from "react/jsx-runtime";
 var sizeClasses2 = {
   xs: "size-3",
   sm: "size-4",
@@ -1062,8 +1075,8 @@ var sizeClasses2 = {
   lg: "size-6",
   xl: "size-8"
 };
-var Spinner2 = React9.forwardRef(function Spinner3({ className, size = "md", label = "Loading", ...props }, ref) {
-  return /* @__PURE__ */ jsx12(
+var Spinner = React9.forwardRef(function Spinner2({ className, size = "md", label = "Loading", ...props }, ref) {
+  return /* @__PURE__ */ jsx13(
     "span",
     {
       ref,
@@ -1071,35 +1084,7 @@ var Spinner2 = React9.forwardRef(function Spinner3({ className, size = "md", lab
       "aria-label": label,
       className: cn("inline-flex", className),
       ...props,
-      children: /* @__PURE__ */ jsxs9(
-        "svg",
-        {
-          className: cn("animate-spin text-current", sizeClasses2[size]),
-          viewBox: "0 0 24 24",
-          fill: "none",
-          "aria-hidden": "true",
-          children: [
-            /* @__PURE__ */ jsx12(
-              "circle",
-              {
-                cx: "12",
-                cy: "12",
-                r: "10",
-                stroke: "currentColor",
-                strokeWidth: "3",
-                opacity: "0.25"
-              }
-            ),
-            /* @__PURE__ */ jsx12(
-              "path",
-              {
-                fill: "currentColor",
-                d: "M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
-              }
-            )
-          ]
-        }
-      )
+      children: /* @__PURE__ */ jsx13(SpinnerGlyph, { className: sizeClasses2[size] })
     }
   );
 });
@@ -1116,16 +1101,16 @@ function LoadingScreen({
         className
       ),
       children: [
-        /* @__PURE__ */ jsx12(Spinner2, { size: "xl" }),
-        label && /* @__PURE__ */ jsx12("span", { className: "text-body-sm", children: label })
+        /* @__PURE__ */ jsx13(Spinner, { size: "xl" }),
+        label && /* @__PURE__ */ jsx13("span", { className: "text-body-sm", children: label })
       ]
     }
   );
 }
-Spinner2.displayName = "Spinner";
+Spinner.displayName = "Spinner";
 
 // src/ui/Switch.tsx
-import { Fragment as Fragment4, jsx as jsx13, jsxs as jsxs10 } from "react/jsx-runtime";
+import { Fragment as Fragment4, jsx as jsx14, jsxs as jsxs10 } from "react/jsx-runtime";
 var Switch = React10.forwardRef(function Switch2({
   id,
   className,
@@ -1175,7 +1160,7 @@ var Switch = React10.forwardRef(function Switch2({
          * `aria-hidden` เพราะสถานะจริงประกาศผ่าน `role="switch"` + `aria-checked` อยู่แล้ว
          * ถ้าปล่อยให้อ่าน โปรแกรมอ่านหน้าจอจะพูดทั้ง "เปิดใช้งาน" และ "ปิดใช้งาน" ติดกัน */
         /* @__PURE__ */ jsxs10("span", { "aria-hidden": "true", className: switchTrackLabelClasses, children: [
-          /* @__PURE__ */ jsx13(
+          /* @__PURE__ */ jsx14(
             "span",
             {
               className: cn(
@@ -1189,7 +1174,7 @@ var Switch = React10.forwardRef(function Switch2({
               children: trackLabels.on
             }
           ),
-          /* @__PURE__ */ jsx13(
+          /* @__PURE__ */ jsx14(
             "span",
             {
               className: cn(
@@ -1200,12 +1185,12 @@ var Switch = React10.forwardRef(function Switch2({
             }
           )
         ] }),
-        /* @__PURE__ */ jsx13(
+        /* @__PURE__ */ jsx14(
           RadixSwitch.Thumb,
           {
             className: labeled ? switchLabeledThumbClasses : switchThumbClasses,
-            children: loading && /* @__PURE__ */ jsx13(
-              Spinner2,
+            children: loading && /* @__PURE__ */ jsx14(
+              Spinner,
               {
                 size: "xs",
                 label: loadingLabel,
@@ -1219,10 +1204,10 @@ var Switch = React10.forwardRef(function Switch2({
   );
   const trackLabelGhost = labeled ? /* @__PURE__ */ jsxs10(Fragment4, { children: [
     /* @__PURE__ */ jsxs10("span", { className: switchTrackLabelClasses, children: [
-      /* @__PURE__ */ jsx13("span", { className: switchTrackLabelItemClasses, children: trackLabels.on }),
-      /* @__PURE__ */ jsx13("span", { className: switchTrackLabelItemClasses, children: trackLabels.off })
+      /* @__PURE__ */ jsx14("span", { className: switchTrackLabelItemClasses, children: trackLabels.on }),
+      /* @__PURE__ */ jsx14("span", { className: switchTrackLabelItemClasses, children: trackLabels.off })
     ] }),
-    /* @__PURE__ */ jsx13("span", { className: "size-5 shrink-0" })
+    /* @__PURE__ */ jsx14("span", { className: "size-5 shrink-0" })
   ] }) : null;
   if (isLoading) {
     return hasText ? /* @__PURE__ */ jsxs10(
@@ -1231,15 +1216,15 @@ var Switch = React10.forwardRef(function Switch2({
         shape: "inline-flex items-center gap-2 rounded-full text-body-sm",
         className: containerClassName,
         children: [
-          labelPosition === "left" && /* @__PURE__ */ jsx13(ToggleText, { description, children: label }),
-          /* @__PURE__ */ jsx13("span", { className: trackShape, children: labeled && trackLabelGhost }),
-          labelPosition === "right" && /* @__PURE__ */ jsx13(ToggleText, { description, children: label })
+          labelPosition === "left" && /* @__PURE__ */ jsx14(ToggleText, { description, children: label }),
+          /* @__PURE__ */ jsx14("span", { className: trackShape, children: labeled && trackLabelGhost }),
+          labelPosition === "right" && /* @__PURE__ */ jsx14(ToggleText, { description, children: label })
         ]
       }
-    ) : /* @__PURE__ */ jsx13(SkeletonBox, { shape: trackShape, className: containerClassName, children: labeled ? trackLabelGhost : null });
+    ) : /* @__PURE__ */ jsx14(SkeletonBox, { shape: trackShape, className: containerClassName, children: labeled ? trackLabelGhost : null });
   }
   if (!hasText && error == null) return sw;
-  const text = /* @__PURE__ */ jsx13(ToggleText, { description, children: label });
+  const text = /* @__PURE__ */ jsx14(ToggleText, { description, children: label });
   return /* @__PURE__ */ jsxs10("div", { className: cn("flex flex-col gap-1", containerClassName), children: [
     /* @__PURE__ */ jsxs10(
       "label",
@@ -1253,7 +1238,7 @@ var Switch = React10.forwardRef(function Switch2({
         ]
       }
     ),
-    hasError && /* @__PURE__ */ jsx13("p", { role: "alert", className: "text-caption font-medium text-cherry-red-600", children: error })
+    hasError && /* @__PURE__ */ jsx14("p", { role: "alert", className: "text-caption font-medium text-cherry-red-600", children: error })
   ] });
 });
 Switch.displayName = "Switch";
@@ -1264,7 +1249,7 @@ import * as RadixRadio from "@radix-ui/react-radio-group";
 
 // src/form/FormField.tsx
 import { Label } from "@radix-ui/react-label";
-import { jsx as jsx14, jsxs as jsxs11 } from "react/jsx-runtime";
+import { jsx as jsx15, jsxs as jsxs11 } from "react/jsx-runtime";
 function FormField({
   label,
   hint,
@@ -1297,12 +1282,12 @@ function FormField({
         ),
         children: [
           label,
-          required && /* @__PURE__ */ jsx14("span", { className: "ml-1 text-cherry-red-600", children: "*" })
+          required && /* @__PURE__ */ jsx15("span", { className: "ml-1 text-cherry-red-600", children: "*" })
         ]
       }
     ),
     children,
-    showMessageSlot ? /* @__PURE__ */ jsx14(
+    showMessageSlot ? /* @__PURE__ */ jsx15(
       "p",
       {
         role: showError ? "alert" : void 0,
@@ -1317,7 +1302,7 @@ function FormField({
 }
 
 // src/ui/RadioGroup.tsx
-import { jsx as jsx15, jsxs as jsxs12 } from "react/jsx-runtime";
+import { jsx as jsx16, jsxs as jsxs12 } from "react/jsx-runtime";
 var RadioSizeContext = React11.createContext("md");
 function RadioGroup({
   id,
@@ -1342,7 +1327,7 @@ function RadioGroup({
     orientation === "vertical" ? "flex-col" : "flex-row flex-wrap",
     className
   );
-  return /* @__PURE__ */ jsx15(
+  return /* @__PURE__ */ jsx16(
     FormField,
     {
       label,
@@ -1351,24 +1336,24 @@ function RadioGroup({
       required,
       htmlFor: groupId,
       className: containerClassName,
-      children: isLoading ? /* @__PURE__ */ jsx15("div", { className: layout, children: Array.from({ length: options?.length || 3 }).map((_, i) => /* @__PURE__ */ jsxs12(
+      children: isLoading ? /* @__PURE__ */ jsx16("div", { className: layout, children: Array.from({ length: options?.length || 3 }).map((_, i) => /* @__PURE__ */ jsxs12(
         SkeletonBox,
         {
           shape: "inline-flex items-start gap-2 rounded-full text-body-sm",
           children: [
-            /* @__PURE__ */ jsx15("span", { className: cn(radioShapeClasses(size), toggleAlignClass(size)) }),
-            /* @__PURE__ */ jsx15(ToggleText, { description: options?.[i]?.description, children: options?.[i]?.label ?? "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01" })
+            /* @__PURE__ */ jsx16("span", { className: cn(radioShapeClasses(size), toggleAlignClass(size)) }),
+            /* @__PURE__ */ jsx16(ToggleText, { description: options?.[i]?.description, children: options?.[i]?.label ?? "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01" })
           ]
         },
         i
-      )) }) : /* @__PURE__ */ jsx15(
+      )) }) : /* @__PURE__ */ jsx16(
         RadixRadio.Root,
         {
           id: groupId,
           "aria-invalid": hasError || void 0,
           className: layout,
           ...props,
-          children: /* @__PURE__ */ jsx15(RadioSizeContext.Provider, { value: size, children: options ? options.map((opt) => /* @__PURE__ */ jsx15(
+          children: /* @__PURE__ */ jsx16(RadioSizeContext.Provider, { value: size, children: options ? options.map((opt) => /* @__PURE__ */ jsx16(
             RadioGroupItem,
             {
               value: opt.value,
@@ -1390,7 +1375,7 @@ var RadioGroupItem = React11.forwardRef(
     const groupSize = React11.useContext(RadioSizeContext);
     const resolved = size ?? groupSize;
     return /* @__PURE__ */ jsxs12("label", { htmlFor: itemId, className: toggleLabelClasses(disabled), children: [
-      /* @__PURE__ */ jsx15(
+      /* @__PURE__ */ jsx16(
         RadixRadio.Item,
         {
           ref,
@@ -1403,10 +1388,10 @@ var RadioGroupItem = React11.forwardRef(
             className
           ),
           ...props,
-          children: /* @__PURE__ */ jsx15(RadixRadio.Indicator, { className: radioDotClasses(resolved) })
+          children: /* @__PURE__ */ jsx16(RadixRadio.Indicator, { className: radioDotClasses(resolved) })
         }
       ),
-      /* @__PURE__ */ jsx15(ToggleText, { description, children })
+      /* @__PURE__ */ jsx16(ToggleText, { description, children })
     ] });
   }
 );
@@ -1416,7 +1401,7 @@ RadioGroupItem.displayName = "RadioGroupItem";
 import * as React12 from "react";
 import * as RadixSelect from "@radix-ui/react-select";
 import { Check as Check2, ChevronDown, Plus as Plus2, X as X2 } from "lucide-react";
-import { Fragment as Fragment5, jsx as jsx16, jsxs as jsxs13 } from "react/jsx-runtime";
+import { Fragment as Fragment5, jsx as jsx17, jsxs as jsxs13 } from "react/jsx-runtime";
 function Select({
   id,
   label,
@@ -1461,7 +1446,7 @@ function Select({
     onChange?.("");
   };
   if (isLoading) {
-    return /* @__PURE__ */ jsx16(
+    return /* @__PURE__ */ jsx17(
       FieldSkeleton,
       {
         label,
@@ -1473,9 +1458,10 @@ function Select({
       }
     );
   }
-  return /* @__PURE__ */ jsx16(
+  return /* @__PURE__ */ jsx17(
     FloatingFieldShell,
     {
+      disabled,
       label,
       hint,
       error,
@@ -1504,17 +1490,17 @@ function Select({
          * 🔴 **ถอด `tabIndex={-1}` ออก** — เดิมคีย์บอร์ดเข้าไม่ถึงปุ่มล้างเลย ⇒ คนที่ใช้ Tab
          * ล้างค่าไม่ได้ทั้งที่เห็นปุ่มอยู่ · ปุ่มอยู่หลัง trigger ในลำดับ DOM อยู่แล้ว
          * ⇒ ลำดับ Tab ที่ได้คือ "ช่อง → ปุ่มล้าง" ซึ่งเป็นลำดับที่อ่านจากซ้ายไปขวาพอดี */
-        /* @__PURE__ */ jsx16(
+        /* @__PURE__ */ jsx17(
           "button",
           {
             type: "button",
             "aria-label": "Clear",
             onClick: handleClear,
             className: "pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-press",
-            children: /* @__PURE__ */ jsx16(X2, {})
+            children: /* @__PURE__ */ jsx17(X2, {})
           }
         ),
-        /* @__PURE__ */ jsx16(ChevronDown, {})
+        /* @__PURE__ */ jsx17(ChevronDown, {})
       ] }),
       children: /* @__PURE__ */ jsxs13(
         RadixSelect.Root,
@@ -1529,7 +1515,7 @@ function Select({
           onOpenChange: setOpen,
           disabled,
           children: [
-            /* @__PURE__ */ jsx16(
+            /* @__PURE__ */ jsx17(
               RadixSelect.Trigger,
               {
                 id: triggerId,
@@ -1544,16 +1530,16 @@ function Select({
                   "data-[placeholder]:text-text-tertiary",
                   className
                 ),
-                children: /* @__PURE__ */ jsx16("span", { className: "min-w-0 truncate", children: /* @__PURE__ */ jsx16(RadixSelect.Value, { placeholder: floating ? placeholder ?? "" : "" }) })
+                children: /* @__PURE__ */ jsx17("span", { className: "min-w-0 truncate", children: /* @__PURE__ */ jsx17(RadixSelect.Value, { placeholder: floating ? placeholder ?? "" : "" }) })
               }
             ),
-            /* @__PURE__ */ jsx16(RadixSelect.Portal, { children: /* @__PURE__ */ jsx16(
+            /* @__PURE__ */ jsx17(RadixSelect.Portal, { children: /* @__PURE__ */ jsx17(
               RadixSelect.Content,
               {
                 position: "popper",
                 sideOffset: 4,
                 className: "z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-sm border border-border-default bg-bg-default shadow-lg",
-                children: /* @__PURE__ */ jsx16(RadixSelect.Viewport, { className: "p-1", children: options ? options.length > 0 ? options.map((opt) => /* @__PURE__ */ jsx16(
+                children: /* @__PURE__ */ jsx17(RadixSelect.Viewport, { className: "p-1", children: options ? options.length > 0 ? options.map((opt) => /* @__PURE__ */ jsx17(
                   SelectItem,
                   {
                     value: opt.value,
@@ -1561,7 +1547,7 @@ function Select({
                     children: opt.label
                   },
                   opt.value
-                )) : renderEmpty?.() ?? /* @__PURE__ */ jsx16(
+                )) : renderEmpty?.() ?? /* @__PURE__ */ jsx17(
                   SelectEmpty,
                   {
                     text: emptyText,
@@ -1587,7 +1573,7 @@ function SelectEmpty({
     action?.onClick();
   };
   return /* @__PURE__ */ jsxs13("div", { className: "flex flex-col items-center gap-3 px-3 py-5 text-center", children: [
-    /* @__PURE__ */ jsx16("p", { className: "text-body-sm text-text-tertiary", children: text }),
+    /* @__PURE__ */ jsx17("p", { className: "text-body-sm text-text-tertiary", children: text }),
     action && /* @__PURE__ */ jsxs13(
       "button",
       {
@@ -1604,7 +1590,7 @@ function SelectEmpty({
         },
         className: "inline-flex h-8 items-center gap-1.5 rounded-md border border-border-strong bg-bg-default px-3 text-body-sm font-medium text-text-secondary transition-colors hover:bg-bg-subtle focus:outline-none focus-visible:ring-1 focus-visible:ring-brand [&_svg]:size-4",
         children: [
-          action.icon ?? /* @__PURE__ */ jsx16(Plus2, { "aria-hidden": true }),
+          action.icon ?? /* @__PURE__ */ jsx17(Plus2, { "aria-hidden": true }),
           action.label
         ]
       }
@@ -1625,8 +1611,8 @@ var SelectItem = React12.forwardRef(
         ),
         ...props,
         children: [
-          /* @__PURE__ */ jsx16(RadixSelect.ItemText, { children }),
-          /* @__PURE__ */ jsx16("span", { className: "absolute right-2 flex size-4 items-center justify-center", children: /* @__PURE__ */ jsx16(RadixSelect.ItemIndicator, { children: /* @__PURE__ */ jsx16(Check2, { className: "size-4 text-text-primary" }) }) })
+          /* @__PURE__ */ jsx17(RadixSelect.ItemText, { children }),
+          /* @__PURE__ */ jsx17("span", { className: "absolute right-2 flex size-4 items-center justify-center", children: /* @__PURE__ */ jsx17(RadixSelect.ItemIndicator, { children: /* @__PURE__ */ jsx17(Check2, { className: "size-4 text-text-primary" }) }) })
         ]
       }
     );
@@ -1638,7 +1624,7 @@ SelectItem.displayName = "SelectItem";
 import * as React13 from "react";
 import * as RadixCheckbox2 from "@radix-ui/react-checkbox";
 import { Check as Check3 } from "lucide-react";
-import { jsx as jsx17, jsxs as jsxs14 } from "react/jsx-runtime";
+import { jsx as jsx18, jsxs as jsxs14 } from "react/jsx-runtime";
 var CheckboxGroupContext = React13.createContext(
   null
 );
@@ -1687,7 +1673,7 @@ function CheckboxGroup({
     orientation === "vertical" ? "flex-col" : "flex-row flex-wrap",
     className
   );
-  return /* @__PURE__ */ jsx17(
+  return /* @__PURE__ */ jsx18(
     FormField,
     {
       label,
@@ -1696,29 +1682,29 @@ function CheckboxGroup({
       required,
       htmlFor: groupId,
       className: containerClassName,
-      children: isLoading ? /* @__PURE__ */ jsx17("div", { className: layout, children: Array.from({ length: options?.length || 3 }).map((_, i) => /* @__PURE__ */ jsxs14(
+      children: isLoading ? /* @__PURE__ */ jsx18("div", { className: layout, children: Array.from({ length: options?.length || 3 }).map((_, i) => /* @__PURE__ */ jsxs14(
         SkeletonBox,
         {
           shape: "inline-flex items-start gap-2 rounded-xs text-body-sm",
           children: [
-            /* @__PURE__ */ jsx17(
+            /* @__PURE__ */ jsx18(
               "span",
               {
                 className: cn(checkboxShapeClasses(size), toggleAlignClass(size))
               }
             ),
-            /* @__PURE__ */ jsx17(ToggleText, { description: options?.[i]?.description, children: options?.[i]?.label ?? "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01" })
+            /* @__PURE__ */ jsx18(ToggleText, { description: options?.[i]?.description, children: options?.[i]?.label ?? "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01" })
           ]
         },
         i
-      )) }) : /* @__PURE__ */ jsx17(CheckboxGroupContext.Provider, { value: ctx, children: /* @__PURE__ */ jsx17(
+      )) }) : /* @__PURE__ */ jsx18(CheckboxGroupContext.Provider, { value: ctx, children: /* @__PURE__ */ jsx18(
         "div",
         {
           id: groupId,
           role: "group",
           "aria-invalid": hasError || void 0,
           className: layout,
-          children: options ? options.map((opt) => /* @__PURE__ */ jsx17(
+          children: options ? options.map((opt) => /* @__PURE__ */ jsx18(
             CheckboxGroupItem,
             {
               value: opt.value,
@@ -1745,7 +1731,7 @@ var CheckboxGroupItem = React13.forwardRef(function CheckboxGroupItem2({ id, val
   const checked = ctx.value.includes(value);
   const isDisabled = disabled ?? ctx.disabled;
   return /* @__PURE__ */ jsxs14("label", { htmlFor: itemId, className: toggleLabelClasses(isDisabled), children: [
-    /* @__PURE__ */ jsx17(
+    /* @__PURE__ */ jsx18(
       RadixCheckbox2.Root,
       {
         ref,
@@ -1761,7 +1747,7 @@ var CheckboxGroupItem = React13.forwardRef(function CheckboxGroupItem2({ id, val
           className
         ),
         ...props,
-        children: /* @__PURE__ */ jsx17(RadixCheckbox2.Indicator, { className: "text-brand-foreground", children: /* @__PURE__ */ jsx17(
+        children: /* @__PURE__ */ jsx18(RadixCheckbox2.Indicator, { className: "text-brand-foreground", children: /* @__PURE__ */ jsx18(
           Check3,
           {
             className: toggleGlyphClass(ctx.size),
@@ -1770,7 +1756,7 @@ var CheckboxGroupItem = React13.forwardRef(function CheckboxGroupItem2({ id, val
         ) })
       }
     ),
-    /* @__PURE__ */ jsx17(ToggleText, { description, children })
+    /* @__PURE__ */ jsx18(ToggleText, { description, children })
   ] });
 });
 CheckboxGroupItem.displayName = "CheckboxGroupItem";
@@ -1779,7 +1765,7 @@ CheckboxGroup.displayName = "CheckboxGroup";
 // src/ui/PillSwitch.tsx
 import * as React14 from "react";
 import * as RadixRadio2 from "@radix-ui/react-radio-group";
-import { jsx as jsx18, jsxs as jsxs15 } from "react/jsx-runtime";
+import { jsx as jsx19, jsxs as jsxs15 } from "react/jsx-runtime";
 function PillSwitch({
   id,
   className,
@@ -1795,7 +1781,7 @@ function PillSwitch({
   const reactId = React14.useId();
   const groupId = id ?? reactId;
   const hasError = Boolean(error);
-  return /* @__PURE__ */ jsx18(
+  return /* @__PURE__ */ jsx19(
     FormField,
     {
       label,
@@ -1804,7 +1790,7 @@ function PillSwitch({
       required,
       htmlFor: groupId,
       className: containerClassName,
-      children: /* @__PURE__ */ jsx18(
+      children: /* @__PURE__ */ jsx19(
         RadixRadio2.Root,
         {
           id: groupId,
@@ -1830,7 +1816,7 @@ function PillSwitch({
                 "data-[state=checked]:bg-white data-[state=checked]:text-brand data-[state=checked]:shadow-sm"
               ),
               children: [
-                opt.icon != null && /* @__PURE__ */ jsx18("span", { className: "shrink-0", children: opt.icon }),
+                opt.icon != null && /* @__PURE__ */ jsx19("span", { className: "shrink-0", children: opt.icon }),
                 opt.label
               ]
             },
@@ -1847,7 +1833,7 @@ PillSwitch.displayName = "PillSwitch";
 import * as React15 from "react";
 import { X as X3 } from "lucide-react";
 import { cva as cva4 } from "class-variance-authority";
-import { jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
+import { jsx as jsx20, jsxs as jsxs16 } from "react/jsx-runtime";
 var chipVariants = cva4(
   "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-medium transition-colors",
   {
@@ -1961,7 +1947,7 @@ var Chip = React15.forwardRef(function Chip2({
       children: [
         leftIcon,
         children,
-        removable && /* @__PURE__ */ jsx19(
+        removable && /* @__PURE__ */ jsx20(
           "button",
           {
             type: "button",
@@ -1976,7 +1962,7 @@ var Chip = React15.forwardRef(function Chip2({
               "-mr-1 cursor-pointer rounded-full p-0.5",
               isSolid ? "hover:bg-white/20" : "hover:bg-black/10"
             ),
-            children: /* @__PURE__ */ jsx19(X3, {})
+            children: /* @__PURE__ */ jsx20(X3, {})
           }
         )
       ]
@@ -1989,7 +1975,7 @@ Chip.displayName = "Chip";
 import * as React16 from "react";
 import * as RadixAvatar from "@radix-ui/react-avatar";
 import { cva as cva5 } from "class-variance-authority";
-import { jsx as jsx20, jsxs as jsxs17 } from "react/jsx-runtime";
+import { jsx as jsx21, jsxs as jsxs17 } from "react/jsx-runtime";
 var avatarVariants = cva5(
   "relative flex shrink-0 overflow-hidden rounded-full bg-gray-100 text-text-tertiary",
   {
@@ -2066,7 +2052,7 @@ function initials(name) {
 }
 var Avatar = React16.forwardRef(function Avatar2({ className, size, src, name, fallback, colorKey, isLoading, ...props }, ref) {
   if (isLoading) {
-    return /* @__PURE__ */ jsx20(
+    return /* @__PURE__ */ jsx21(
       SkeletonBox,
       {
         className: cn(avatarVariants({ size }), "rounded-full", className)
@@ -2087,7 +2073,7 @@ var Avatar = React16.forwardRef(function Avatar2({ className, size, src, name, f
       ),
       ...props,
       children: [
-        src && /* @__PURE__ */ jsx20(
+        src && /* @__PURE__ */ jsx21(
           RadixAvatar.Image,
           {
             src,
@@ -2095,7 +2081,7 @@ var Avatar = React16.forwardRef(function Avatar2({ className, size, src, name, f
             className: "size-full object-cover"
           }
         ),
-        /* @__PURE__ */ jsx20(
+        /* @__PURE__ */ jsx21(
           RadixAvatar.Fallback,
           {
             delayMs: src ? 200 : void 0,
@@ -2112,9 +2098,9 @@ var Avatar = React16.forwardRef(function Avatar2({ className, size, src, name, f
 import * as React17 from "react";
 import { Slot as Slot5 } from "@radix-ui/react-slot";
 import { cva as cva6 } from "class-variance-authority";
-import { jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
+import { jsx as jsx22 } from "react/jsx-runtime";
 var iconButtonVariants = cva6(
-  "inline-flex shrink-0 items-center justify-center rounded-full transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  `inline-flex shrink-0 items-center justify-center rounded-full transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none ${BUTTON_DISABLED_OPACITY} [&_svg]:pointer-events-none [&_svg]:shrink-0`,
   {
     variants: {
       variant: {
@@ -2135,20 +2121,6 @@ var iconButtonVariants = cva6(
     }
   }
 );
-var Spinner4 = () => /* @__PURE__ */ jsxs18("svg", { className: "animate-spin", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true", children: [
-  /* @__PURE__ */ jsx21(
-    "circle",
-    {
-      cx: "12",
-      cy: "12",
-      r: "10",
-      stroke: "currentColor",
-      strokeWidth: "3",
-      opacity: "0.25"
-    }
-  ),
-  /* @__PURE__ */ jsx21("path", { fill: "currentColor", d: "M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z" })
-] });
 var IconButton = React17.forwardRef(
   ({
     className,
@@ -2165,7 +2137,7 @@ var IconButton = React17.forwardRef(
     const Comp = asChild ? Slot5 : "button";
     const isDisabled = disabled || loading;
     if (isLoading) {
-      return /* @__PURE__ */ jsx21(
+      return /* @__PURE__ */ jsx22(
         SkeletonBox,
         {
           shape: cn(iconButtonVariants({ variant, size })),
@@ -2173,7 +2145,7 @@ var IconButton = React17.forwardRef(
         }
       );
     }
-    return /* @__PURE__ */ jsx21(
+    return /* @__PURE__ */ jsx22(
       Comp,
       {
         ref,
@@ -2183,7 +2155,7 @@ var IconButton = React17.forwardRef(
         disabled: isDisabled,
         "aria-busy": loading || void 0,
         ...props,
-        children: asChild ? children : loading ? /* @__PURE__ */ jsx21(Spinner4, {}) : icon ?? children
+        children: asChild ? children : loading ? /* @__PURE__ */ jsx22(SpinnerGlyph, {}) : icon ?? children
       }
     );
   }
@@ -2193,7 +2165,7 @@ IconButton.displayName = "IconButton";
 // src/ui/ButtonGroup.tsx
 import * as React18 from "react";
 import { cva as cva7 } from "class-variance-authority";
-import { jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
+import { jsx as jsx23, jsxs as jsxs18 } from "react/jsx-runtime";
 var buttonGroupVariants = cva7("flex items-center", {
   variants: {
     align: {
@@ -2215,7 +2187,7 @@ var buttonGroupVariants = cva7("flex items-center", {
   }
 });
 var ButtonGroup = React18.forwardRef(
-  ({ className, align, gap, ...props }, ref) => /* @__PURE__ */ jsx22(
+  ({ className, align, gap, ...props }, ref) => /* @__PURE__ */ jsx23(
     "div",
     {
       ref,
@@ -2241,8 +2213,8 @@ var ConfirmCancelActions = React18.forwardRef(
     align = "end",
     gap,
     className
-  }, ref) => /* @__PURE__ */ jsxs19(ButtonGroup, { ref, align, gap, className, children: [
-    /* @__PURE__ */ jsx22(
+  }, ref) => /* @__PURE__ */ jsxs18(ButtonGroup, { ref, align, gap, className, children: [
+    /* @__PURE__ */ jsx23(
       Button,
       {
         type: "button",
@@ -2253,7 +2225,7 @@ var ConfirmCancelActions = React18.forwardRef(
         children: cancelLabel
       }
     ),
-    /* @__PURE__ */ jsx22(
+    /* @__PURE__ */ jsx23(
       Button,
       {
         type: "button",
@@ -2272,7 +2244,7 @@ ConfirmCancelActions.displayName = "ConfirmCancelActions";
 // src/ui/Text.tsx
 import * as React19 from "react";
 import { cva as cva8 } from "class-variance-authority";
-import { jsx as jsx23 } from "react/jsx-runtime";
+import { jsx as jsx24 } from "react/jsx-runtime";
 var textVariants = cva8("m-0", {
   variants: {
     variant: {
@@ -2340,7 +2312,7 @@ var Text = React19.forwardRef(function Text2({
 }, ref) {
   const Comp = as ?? "p";
   if (isLoading) {
-    return /* @__PURE__ */ jsx23(
+    return /* @__PURE__ */ jsx24(
       SkeletonBox,
       {
         style: { width: skeletonWidth },
@@ -2352,7 +2324,7 @@ var Text = React19.forwardRef(function Text2({
       }
     );
   }
-  return /* @__PURE__ */ jsx23(
+  return /* @__PURE__ */ jsx24(
     Comp,
     {
       ref,
@@ -2369,7 +2341,7 @@ Text.displayName = "Text";
 // src/ui/Heading.tsx
 import * as React20 from "react";
 import { cva as cva9 } from "class-variance-authority";
-import { jsx as jsx24 } from "react/jsx-runtime";
+import { jsx as jsx25 } from "react/jsx-runtime";
 var headingVariants = cva9("m-0 text-balance", {
   variants: {
     size: {
@@ -2412,7 +2384,7 @@ var Heading = React20.forwardRef(
     ...props
   }, ref) {
     if (isLoading) {
-      return /* @__PURE__ */ jsx24(
+      return /* @__PURE__ */ jsx25(
         SkeletonBox,
         {
           style: { width: skeletonWidth },
@@ -2425,7 +2397,7 @@ var Heading = React20.forwardRef(
       );
     }
     const Comp = `h${level}`;
-    return /* @__PURE__ */ jsx24(
+    return /* @__PURE__ */ jsx25(
       Comp,
       {
         ref,
@@ -2493,11 +2465,11 @@ var appBrandInk = {
 };
 
 // src/brand/AppMark.tsx
-import { jsx as jsx25 } from "react/jsx-runtime";
+import { jsx as jsx26 } from "react/jsx-runtime";
 var GRID_INK_HEIGHT = 0.625;
 var AppMark = React21.forwardRef(
   function AppMark2({ app, tone = "primary", fit = "ink", alt, className, style, ...props }, ref) {
-    return /* @__PURE__ */ jsx25(
+    return /* @__PURE__ */ jsx26(
       "img",
       {
         ref,
@@ -2530,7 +2502,7 @@ import { Bell, ChevronDown as ChevronDown2, LogOut, Settings } from "lucide-reac
 // src/overlay/Popover.tsx
 import * as React22 from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
-import { jsx as jsx26 } from "react/jsx-runtime";
+import { jsx as jsx27 } from "react/jsx-runtime";
 var Popover = RadixPopover.Root;
 var PopoverTrigger = RadixPopover.Trigger;
 var PopoverAnchor = RadixPopover.Anchor;
@@ -2540,7 +2512,7 @@ var PopoverContent = React22.forwardRef(
     const stopScrollLock = React22.useCallback((event) => {
       event.stopPropagation();
     }, []);
-    return /* @__PURE__ */ jsx26(RadixPopover.Portal, { children: /* @__PURE__ */ jsx26(
+    return /* @__PURE__ */ jsx27(RadixPopover.Portal, { children: /* @__PURE__ */ jsx27(
       RadixPopover.Content,
       {
         ref,
@@ -2593,13 +2565,13 @@ import { MessageCircle, Phone } from "lucide-react";
 import * as React23 from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { X as X4 } from "lucide-react";
-import { jsx as jsx27, jsxs as jsxs20 } from "react/jsx-runtime";
+import { jsx as jsx28, jsxs as jsxs19 } from "react/jsx-runtime";
 var Dialog = RadixDialog.Root;
 var DialogTrigger = RadixDialog.Trigger;
 var DialogPortal = RadixDialog.Portal;
 var DialogClose = RadixDialog.Close;
 var DialogOverlay = React23.forwardRef(function DialogOverlay2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx27(
+  return /* @__PURE__ */ jsx28(
     RadixDialog.Overlay,
     {
       ref,
@@ -2621,9 +2593,9 @@ var sizeClasses3 = {
 };
 var DialogContent = React23.forwardRef(
   function DialogContent2({ className, children, size = "md", showClose = true, ...props }, ref) {
-    return /* @__PURE__ */ jsxs20(DialogPortal, { children: [
-      /* @__PURE__ */ jsx27(DialogOverlay, {}),
-      /* @__PURE__ */ jsxs20(
+    return /* @__PURE__ */ jsxs19(DialogPortal, { children: [
+      /* @__PURE__ */ jsx28(DialogOverlay, {}),
+      /* @__PURE__ */ jsxs19(
         RadixDialog.Content,
         {
           ref,
@@ -2643,12 +2615,12 @@ var DialogContent = React23.forwardRef(
           ...props,
           children: [
             children,
-            showClose && /* @__PURE__ */ jsx27(
+            showClose && /* @__PURE__ */ jsx28(
               RadixDialog.Close,
               {
                 "aria-label": "Close",
                 className: "absolute right-4 top-4 rounded-sm p-1 text-text-tertiary opacity-70 transition-opacity hover:bg-black/5 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand/30",
-                children: /* @__PURE__ */ jsx27(X4, { className: "size-4" })
+                children: /* @__PURE__ */ jsx28(X4, { className: "size-4" })
               }
             )
           ]
@@ -2657,14 +2629,14 @@ var DialogContent = React23.forwardRef(
     ] });
   }
 );
-var DialogHeader = ({ className, ...props }) => /* @__PURE__ */ jsx27(
+var DialogHeader = ({ className, ...props }) => /* @__PURE__ */ jsx28(
   "div",
   {
     className: cn("flex flex-col gap-1.5 pb-4 pr-6", className),
     ...props
   }
 );
-var DialogFooter = ({ className, ...props }) => /* @__PURE__ */ jsx27(
+var DialogFooter = ({ className, ...props }) => /* @__PURE__ */ jsx28(
   "div",
   {
     className: cn(
@@ -2675,7 +2647,7 @@ var DialogFooter = ({ className, ...props }) => /* @__PURE__ */ jsx27(
   }
 );
 var DialogTitle = React23.forwardRef(function DialogTitle2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx27(
+  return /* @__PURE__ */ jsx28(
     RadixDialog.Title,
     {
       ref,
@@ -2688,7 +2660,7 @@ var DialogTitle = React23.forwardRef(function DialogTitle2({ className, ...props
   );
 });
 var DialogDescription = React23.forwardRef(function DialogDescription2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx27(
+  return /* @__PURE__ */ jsx28(
     RadixDialog.Description,
     {
       ref,
@@ -2703,7 +2675,7 @@ DialogTitle.displayName = "DialogTitle";
 DialogDescription.displayName = "DialogDescription";
 
 // src/overlay/ContactSupportDialog.tsx
-import { jsx as jsx28, jsxs as jsxs21 } from "react/jsx-runtime";
+import { jsx as jsx29, jsxs as jsxs20 } from "react/jsx-runtime";
 var MEDIACT_LINE_URL = "https://line.me/R/ti/p/@019bdeqs";
 var MEDIACT_LINE_HANDLE = "@mediact";
 var MEDIACT_SUPPORT_PHONE = "+66 94 124 9291";
@@ -2711,14 +2683,14 @@ var LINE_BRAND_GREEN = "#06C755";
 var LINE_BRAND_GREEN_HOVER = "#05b34e";
 var MEDIACT_LOGO_TEAL = "#14b8a6";
 var MEDIACT_LOGO_TEAL_HOVER = "#0d9488";
-var LineIcon = () => /* @__PURE__ */ jsx28(
+var LineIcon = () => /* @__PURE__ */ jsx29(
   "svg",
   {
     className: "size-4 shrink-0",
     viewBox: "0 0 24 24",
     fill: "currentColor",
     "aria-hidden": "true",
-    children: /* @__PURE__ */ jsx28("path", { d: "M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61V9.863h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.105.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" })
+    children: /* @__PURE__ */ jsx29("path", { d: "M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61V9.863h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.105.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" })
   }
 );
 var SupportCard = ({
@@ -2726,11 +2698,11 @@ var SupportCard = ({
   title,
   description,
   action
-}) => /* @__PURE__ */ jsxs21("div", { className: "flex flex-col items-center gap-3 rounded-3xl border border-border-default p-6 text-center", children: [
-  /* @__PURE__ */ jsx28("span", { className: "flex size-14 items-center justify-center rounded-full bg-info-blue-50 text-info-blue-primary", children: icon }),
-  /* @__PURE__ */ jsx28(Text, { variant: "body-md", weight: "bold", tone: "body", children: title }),
-  /* @__PURE__ */ jsx28(Text, { variant: "body-sm", tone: "muted", className: "leading-relaxed text-balance", children: description }),
-  /* @__PURE__ */ jsx28("div", { className: "mt-auto pt-1", children: action })
+}) => /* @__PURE__ */ jsxs20("div", { className: "flex flex-col items-center gap-3 rounded-3xl border border-border-default p-6 text-center", children: [
+  /* @__PURE__ */ jsx29("span", { className: "flex size-14 items-center justify-center rounded-full bg-info-blue-50 text-info-blue-primary", children: icon }),
+  /* @__PURE__ */ jsx29(Text, { variant: "body-md", weight: "bold", tone: "body", children: title }),
+  /* @__PURE__ */ jsx29(Text, { variant: "body-sm", tone: "muted", className: "leading-relaxed text-balance", children: description }),
+  /* @__PURE__ */ jsx29("div", { className: "mt-auto pt-1", children: action })
 ] });
 function ContactSupportDialog({
   open,
@@ -2742,28 +2714,28 @@ function ContactSupportDialog({
   phoneNumber = MEDIACT_SUPPORT_PHONE,
   className
 }) {
-  return /* @__PURE__ */ jsx28(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs21(
+  return /* @__PURE__ */ jsx29(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs20(
     DialogContent,
     {
       onOpenAutoFocus: (event) => event.preventDefault(),
       className: cn("max-w-[640px] rounded-2xl p-8", className),
       children: [
-        /* @__PURE__ */ jsxs21("div", { className: "mb-6 flex flex-col items-center gap-3", children: [
+        /* @__PURE__ */ jsxs20("div", { className: "mb-6 flex flex-col items-center gap-3", children: [
           logo,
-          /* @__PURE__ */ jsx28(DialogTitle, { className: "text-title-sm font-bold", children: labels.title }),
-          /* @__PURE__ */ jsx28(DialogDescription, { className: "sr-only", children: labels.title })
+          /* @__PURE__ */ jsx29(DialogTitle, { className: "text-title-sm font-bold", children: labels.title }),
+          /* @__PURE__ */ jsx29(DialogDescription, { className: "sr-only", children: labels.title })
         ] }),
-        /* @__PURE__ */ jsxs21("div", { className: "grid grid-cols-1 gap-4 sm:grid-cols-2", children: [
-          /* @__PURE__ */ jsx28(
+        /* @__PURE__ */ jsxs20("div", { className: "grid grid-cols-1 gap-4 sm:grid-cols-2", children: [
+          /* @__PURE__ */ jsx29(
             SupportCard,
             {
-              icon: /* @__PURE__ */ jsx28(MessageCircle, { className: "size-7" }),
+              icon: /* @__PURE__ */ jsx29(MessageCircle, { className: "size-7" }),
               title: labels.lineTitle,
               description: labels.lineDescription,
               action: (
                 /* 🔴 `#06C755` เป็นสีแบรนด์ของ LINE ไม่ใช่สีของระบบเรา — เป็น hex ตรง ๆ
                  * โดยตั้งใจ token แทนไม่ได้ และห้ามเพี้ยนตามธีมของแอป */
-                /* @__PURE__ */ jsxs21(
+                /* @__PURE__ */ jsxs20(
                   "a",
                   {
                     href: lineUrl,
@@ -2775,7 +2747,7 @@ function ContactSupportDialog({
                     },
                     className: "inline-flex items-center gap-2 rounded-lg bg-[var(--line-brand)] px-4 py-2 text-body-sm font-medium text-text-inverse transition-colors hover:bg-[var(--line-brand-hover)]",
                     children: [
-                      /* @__PURE__ */ jsx28(LineIcon, {}),
+                      /* @__PURE__ */ jsx29(LineIcon, {}),
                       lineHandle
                     ]
                   }
@@ -2783,17 +2755,17 @@ function ContactSupportDialog({
               )
             }
           ),
-          /* @__PURE__ */ jsx28(
+          /* @__PURE__ */ jsx29(
             SupportCard,
             {
-              icon: /* @__PURE__ */ jsx28(Phone, { className: "size-7" }),
+              icon: /* @__PURE__ */ jsx29(Phone, { className: "size-7" }),
               title: labels.phoneTitle,
               description: labels.phoneDescription,
               action: (
                 /* 🔴 เขียวน้ำทะเลของ **โลโก้ MediAct** ไม่ใช่สีแบรนด์ของแอป — ทั้งกล่องนี้
                  * พูดในนามบริษัท ถ้าให้ตามธีม เบอร์จะเป็นครามใน MediHR แต่เขียวมิ้นต์ใน
                  * Mediwork ทั้งที่เป็นเบอร์เดียวกัน */
-                /* @__PURE__ */ jsx28(
+                /* @__PURE__ */ jsx29(
                   "a",
                   {
                     href: `tel:${phoneNumber.replace(/\s/g, "")}`,
@@ -2815,7 +2787,7 @@ function ContactSupportDialog({
 }
 
 // src/overlay/AppShowcaseDialog.tsx
-import { Fragment as Fragment6, jsx as jsx29, jsxs as jsxs22 } from "react/jsx-runtime";
+import { Fragment as Fragment6, jsx as jsx30, jsxs as jsxs21 } from "react/jsx-runtime";
 var CLOSE_LABEL = {
   th: "\u0E1B\u0E34\u0E14",
   en: "Close"
@@ -2942,7 +2914,7 @@ var PreviewImage = ({
   alt
 }) => !src ? null : (
   /* ไม่มีมุมโค้ง/เงา — ที่เห็นในแบบเป็นของในภาพหน้าจอเอง ไม่ใช่สไตล์ที่ Figma ใส่ให้กรอบ */
-  /* @__PURE__ */ jsx29(
+  /* @__PURE__ */ jsx30(
     "img",
     {
       src,
@@ -2977,13 +2949,13 @@ function AppShowcaseDialog({
   return createPortal(
     /* 🔴 z ต้องเหนือ **1310** ซึ่งเป็นค่าของปุ่มผู้ช่วย AI บน Portal (วัดจากจอจริง)
      * ไม่งั้นปุ่มนั้นลอยอยู่เหนือหน้าต่างและไม่โดนเบลอ */
-    /* @__PURE__ */ jsx29(
+    /* @__PURE__ */ jsx30(
       "div",
       {
         className: "fixed inset-0 z-[1400] flex items-center justify-center overflow-auto bg-white/20 p-4 backdrop-blur-[5px]",
         onClick: onClose,
         role: "presentation",
-        children: /* @__PURE__ */ jsxs22(
+        children: /* @__PURE__ */ jsxs21(
           "div",
           {
             className: cn(
@@ -2995,14 +2967,14 @@ function AppShowcaseDialog({
             "aria-label": copy.name,
             onClick: (e) => e.stopPropagation(),
             children: [
-              /* @__PURE__ */ jsx29(
+              /* @__PURE__ */ jsx30(
                 "button",
                 {
                   type: "button",
                   onClick: onClose,
                   "aria-label": CLOSE_LABEL[locale],
                   className: "absolute right-[21px] top-[17px] flex size-6 cursor-pointer items-center justify-center rounded-sm text-text-tertiary transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30",
-                  children: /* @__PURE__ */ jsx29("svg", { viewBox: "0 0 24 24", fill: "none", className: "size-6", "aria-hidden": "true", children: /* @__PURE__ */ jsx29(
+                  children: /* @__PURE__ */ jsx30("svg", { viewBox: "0 0 24 24", fill: "none", className: "size-6", "aria-hidden": "true", children: /* @__PURE__ */ jsx30(
                     "path",
                     {
                       d: "M6 6l12 12M18 6L6 18",
@@ -3013,13 +2985,13 @@ function AppShowcaseDialog({
                   ) })
                 }
               ),
-              /* @__PURE__ */ jsxs22(
+              /* @__PURE__ */ jsxs21(
                 "div",
                 {
                   className: "absolute left-10 top-10",
                   style: { width: CONTENT_WIDTH, height: CONTENT_HEIGHT },
                   children: [
-                    /* @__PURE__ */ jsx29(
+                    /* @__PURE__ */ jsx30(
                       "div",
                       {
                         className: "absolute left-0 top-1/2 -translate-y-1/2",
@@ -3028,7 +3000,7 @@ function AppShowcaseDialog({
                           /* ภาพเดียวที่ซ้อนมาแล้ว — `object-contain` ไม่ใช่ `cover` เพราะสัดส่วนของ
                              ภาพจริงไม่ได้ตรงกับกรอบที่ Figma กันไว้เป๊ะทุกแอป (ต่างกัน 2–8%)
                              ⇒ `cover` จะครอปขอบจอทิ้งไปเงียบ ๆ */
-                          /* @__PURE__ */ jsx29(
+                          /* @__PURE__ */ jsx30(
                             "img",
                             {
                               src: asset.composed,
@@ -3037,8 +3009,8 @@ function AppShowcaseDialog({
                               className: "absolute inset-0 size-full object-contain"
                             }
                           )
-                        ) : /* @__PURE__ */ jsxs22(Fragment6, { children: [
-                          /* @__PURE__ */ jsx29(
+                        ) : /* @__PURE__ */ jsxs21(Fragment6, { children: [
+                          /* @__PURE__ */ jsx30(
                             PreviewImage,
                             {
                               box: layout.preview.wide,
@@ -3046,7 +3018,7 @@ function AppShowcaseDialog({
                               alt: copy.name
                             }
                           ),
-                          /* @__PURE__ */ jsx29(
+                          /* @__PURE__ */ jsx30(
                             PreviewImage,
                             {
                               box: layout.preview.card,
@@ -3057,13 +3029,13 @@ function AppShowcaseDialog({
                         ] })
                       }
                     ),
-                    /* @__PURE__ */ jsxs22(
+                    /* @__PURE__ */ jsxs21(
                       "div",
                       {
                         className: "absolute top-1/2 -translate-y-1/2",
                         style: { left: layout.columnX, width: layout.columnWidth },
                         children: [
-                          asset.logo ? /* @__PURE__ */ jsx29(
+                          asset.logo ? /* @__PURE__ */ jsx30(
                             "img",
                             {
                               src: asset.logo,
@@ -3071,13 +3043,13 @@ function AppShowcaseDialog({
                               className: "w-auto max-w-none object-contain",
                               style: { height: layout.logoHeight }
                             }
-                          ) : /* @__PURE__ */ jsxs22(
+                          ) : /* @__PURE__ */ jsxs21(
                             "div",
                             {
                               className: "flex items-center gap-2",
                               style: { height: layout.logoHeight },
                               children: [
-                                /* @__PURE__ */ jsx29(
+                                /* @__PURE__ */ jsx30(
                                   AppMark,
                                   {
                                     app,
@@ -3085,7 +3057,7 @@ function AppShowcaseDialog({
                                     style: { height: "100%", width: "auto" }
                                   }
                                 ),
-                                /* @__PURE__ */ jsx29(
+                                /* @__PURE__ */ jsx30(
                                   "span",
                                   {
                                     className: "whitespace-nowrap font-semibold tracking-[0.02em]",
@@ -3103,7 +3075,7 @@ function AppShowcaseDialog({
                               ]
                             }
                           ),
-                          /* @__PURE__ */ jsx29(
+                          /* @__PURE__ */ jsx30(
                             "h2",
                             {
                               className: "whitespace-pre-line text-[20px] font-semibold leading-[1.4]",
@@ -3111,7 +3083,7 @@ function AppShowcaseDialog({
                               children: copy.headline
                             }
                           ),
-                          /* @__PURE__ */ jsx29(
+                          /* @__PURE__ */ jsx30(
                             "p",
                             {
                               className: "w-[327.58px] max-w-none whitespace-pre-line pl-[4.58px] text-[14px] leading-[1.25]",
@@ -3119,8 +3091,8 @@ function AppShowcaseDialog({
                               children: copy.description
                             }
                           ),
-                          /* @__PURE__ */ jsxs22("div", { className: "mt-4 flex flex-col gap-2", children: [
-                            /* @__PURE__ */ jsxs22(
+                          /* @__PURE__ */ jsxs21("div", { className: "mt-4 flex flex-col gap-2", children: [
+                            /* @__PURE__ */ jsxs21(
                               "a",
                               {
                                 href: MEDIACT_LINE_URL,
@@ -3132,12 +3104,12 @@ function AppShowcaseDialog({
                                   "--ds-showcase-ink": BUTTON_INK
                                 },
                                 children: [
-                                  /* @__PURE__ */ jsx29(LineBadgeIcon, {}),
+                                  /* @__PURE__ */ jsx30(LineBadgeIcon, {}),
                                   MEDIACT_LINE_HANDLE
                                 ]
                               }
                             ),
-                            /* @__PURE__ */ jsxs22(
+                            /* @__PURE__ */ jsxs21(
                               "a",
                               {
                                 href: PHONE_HREF,
@@ -3147,7 +3119,7 @@ function AppShowcaseDialog({
                                   "--ds-showcase-ink": BUTTON_INK
                                 },
                                 children: [
-                                  /* @__PURE__ */ jsx29(PhoneBadgeIcon, {}),
+                                  /* @__PURE__ */ jsx30(PhoneBadgeIcon, {}),
                                   PHONE_BUTTON_LABEL
                                 ]
                               }
@@ -3167,7 +3139,7 @@ function AppShowcaseDialog({
     document.body
   );
 }
-var LineBadgeIcon = () => /* @__PURE__ */ jsxs22(
+var LineBadgeIcon = () => /* @__PURE__ */ jsxs21(
   "svg",
   {
     viewBox: "0 0 32 32",
@@ -3179,35 +3151,35 @@ var LineBadgeIcon = () => /* @__PURE__ */ jsxs22(
       "--ds-showcase-line-bubble": BUTTON_INK
     },
     children: [
-      /* @__PURE__ */ jsx29(
+      /* @__PURE__ */ jsx30(
         "path",
         {
           d: "M30 14.4979C30 8.15792 23.7199 3 15.9999 3C8.28094 3 2 8.15792 2 14.4979C2 20.1817 6.98063 24.9417 13.7084 25.8418C14.1644 25.9412 14.7849 26.146 14.9419 26.5404C15.0831 26.8986 15.0342 27.4598 14.987 27.8216C14.987 27.8216 14.8227 28.8214 14.7873 29.0343C14.7264 29.3926 14.5061 30.4353 15.9999 29.7981C17.4942 29.1609 24.0626 24.9935 26.9998 21.572C29.0287 19.3204 30 17.0353 30 14.4979Z",
           fill: "var(--ds-showcase-line-bubble)"
         }
       ),
-      /* @__PURE__ */ jsx29(
+      /* @__PURE__ */ jsx30(
         "path",
         {
           d: "M13.1553 11.4244H12.1733C12.0228 11.4244 11.9004 11.5478 11.9004 11.6995V17.866C11.9004 18.0179 12.0228 18.1411 12.1733 18.1411H13.1553C13.3059 18.1411 13.428 18.0179 13.428 17.866V11.6995C13.428 11.5478 13.3059 11.4244 13.1553 11.4244Z",
           fill: "var(--ds-showcase-line-mark)"
         }
       ),
-      /* @__PURE__ */ jsx29(
+      /* @__PURE__ */ jsx30(
         "path",
         {
           d: "M19.9147 11.4244H18.9327C18.7821 11.4244 18.66 11.5478 18.66 11.6995V15.3631L15.8645 11.5467C15.8128 11.4683 15.729 11.4295 15.6375 11.4244H14.6558C14.5052 11.4244 14.3828 11.5478 14.3828 11.6995V17.866C14.3828 18.0179 14.5052 18.1411 14.6558 18.1411H15.6375C15.7883 18.1411 15.9104 18.0179 15.9104 17.866V14.2035L18.7094 18.0247C18.7597 18.0967 18.845 18.1411 18.9327 18.1411H19.9147C20.0655 18.1411 20.1874 18.0179 20.1874 17.866V11.6995C20.1874 11.5478 20.0655 11.4244 19.9147 11.4244Z",
           fill: "var(--ds-showcase-line-mark)"
         }
       ),
-      /* @__PURE__ */ jsx29(
+      /* @__PURE__ */ jsx30(
         "path",
         {
           d: "M10.7884 16.597H8.12013V11.6999C8.12013 11.5477 7.99802 11.4242 7.84773 11.4242H6.86545C6.71489 11.4242 6.59277 11.5477 6.59277 11.6999V17.8653C6.59277 18.015 6.71435 18.1412 6.86518 18.1412H10.7884C10.9389 18.1412 11.0605 18.0175 11.0605 17.8653V16.8727C11.0605 16.7205 10.9389 16.597 10.7884 16.597Z",
           fill: "var(--ds-showcase-line-mark)"
         }
       ),
-      /* @__PURE__ */ jsx29(
+      /* @__PURE__ */ jsx30(
         "path",
         {
           d: "M25.3377 12.9684C25.4883 12.9684 25.6098 12.8453 25.6098 12.6928V11.7001C25.6098 11.5479 25.4883 11.4242 25.3377 11.4242H21.4148C21.2641 11.4242 21.1421 11.5502 21.1421 11.6999V17.8656C21.1421 18.0148 21.2638 18.1412 21.4142 18.1412H25.3377C25.4883 18.1412 25.6098 18.0175 25.6098 17.8656V16.8727C25.6098 16.7207 25.4883 16.597 25.3377 16.597H22.6697V15.5547H25.3377C25.4883 15.5547 25.6098 15.4313 25.6098 15.2791V14.2864C25.6098 14.1342 25.4883 14.0105 25.3377 14.0105H22.6697V12.9684H25.3377Z",
@@ -3217,7 +3189,7 @@ var LineBadgeIcon = () => /* @__PURE__ */ jsxs22(
     ]
   }
 );
-var PhoneBadgeIcon = () => /* @__PURE__ */ jsx29("svg", { viewBox: "0 0 24 24", fill: "none", className: "size-6 shrink-0", "aria-hidden": "true", children: /* @__PURE__ */ jsx29(
+var PhoneBadgeIcon = () => /* @__PURE__ */ jsx30("svg", { viewBox: "0 0 24 24", fill: "none", className: "size-6 shrink-0", "aria-hidden": "true", children: /* @__PURE__ */ jsx30(
   "path",
   {
     d: "M6.62 10.79C8.06 13.62 10.38 15.93 13.21 17.38L15.41 15.18C15.68 14.91 16.08 14.82 16.43 14.94C17.55 15.31 18.76 15.51 20 15.51C20.55 15.51 21 15.96 21 16.51V20C21 20.55 20.55 21 20 21C10.61 21 3 13.39 3 4C3 3.45 3.45 3 4 3H7.5C8.05 3 8.5 3.45 8.5 4C8.5 5.25 8.7 6.45 9.07 7.57C9.18 7.92 9.1 8.31 8.82 8.59L6.62 10.79Z",
@@ -3226,9 +3198,9 @@ var PhoneBadgeIcon = () => /* @__PURE__ */ jsx29("svg", { viewBox: "0 0 24 24", 
 ) });
 
 // src/navigation/TopNav.tsx
-import { Fragment as Fragment7, jsx as jsx30, jsxs as jsxs23 } from "react/jsx-runtime";
+import { Fragment as Fragment7, jsx as jsx31, jsxs as jsxs22 } from "react/jsx-runtime";
 var TopNav = React25.forwardRef(function TopNav2({ className, floating, children, ...props }, ref) {
-  return /* @__PURE__ */ jsx30(
+  return /* @__PURE__ */ jsx31(
     "header",
     {
       ref,
@@ -3254,7 +3226,7 @@ var TopNavToggle = React25.forwardRef(
     ...props
   }, ref) {
     const name = collapsed ? labels.expand : labels.collapse;
-    return /* @__PURE__ */ jsx30(
+    return /* @__PURE__ */ jsx31(
       "button",
       {
         ref,
@@ -3271,7 +3243,7 @@ var TopNavToggle = React25.forwardRef(
           className
         ),
         ...props,
-        children: /* @__PURE__ */ jsx30(
+        children: /* @__PURE__ */ jsx31(
           "img",
           {
             src: collapsed ? sidebarShowDataUrl : sidebarHideDataUrl,
@@ -3286,21 +3258,21 @@ var TopNavToggle = React25.forwardRef(
 );
 var TopNavBrand = React25.forwardRef(
   function TopNavBrand2({ className, logo, children, ...props }, ref) {
-    return /* @__PURE__ */ jsxs23(
+    return /* @__PURE__ */ jsxs22(
       "div",
       {
         ref,
         className: cn("flex items-center gap-3 truncate", className),
         ...props,
         children: [
-          logo && /* @__PURE__ */ jsx30("span", { className: "shrink-0", children: logo }),
-          /* @__PURE__ */ jsx30("span", { className: "truncate text-[18px] font-bold text-text-heading", children })
+          logo && /* @__PURE__ */ jsx31("span", { className: "shrink-0", children: logo }),
+          /* @__PURE__ */ jsx31("span", { className: "truncate text-[18px] font-bold text-text-heading", children })
         ]
       }
     );
   }
 );
-var TopNavSpacer = ({ className }) => /* @__PURE__ */ jsx30("div", { className: cn("flex-1", className), "aria-hidden": "true" });
+var TopNavSpacer = ({ className }) => /* @__PURE__ */ jsx31("div", { className: cn("flex-1", className), "aria-hidden": "true" });
 var iconButtonClass = "inline-flex size-11 cursor-pointer shrink-0 items-center justify-center rounded-full text-text-body transition-colors hover:bg-gray-50 hover:text-text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 [&_svg]:size-7";
 var DEFAULT_APP_LABELS = appMarkLabels;
 var DEFAULT_APP_ORDER = [
@@ -3319,7 +3291,7 @@ var SHOWCASE_KEYS = /* @__PURE__ */ new Set([
 ]);
 var isShowcaseKey = (key) => SHOWCASE_KEYS.has(key);
 var settingsActionClass = "mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-info-blue-50 py-3 text-[15px] font-medium text-info-blue-800 transition-colors hover:bg-info-blue-100 [&_svg]:size-5";
-var NineDotIcon = (props) => /* @__PURE__ */ jsx30(
+var NineDotIcon = (props) => /* @__PURE__ */ jsx31(
   "svg",
   {
     viewBox: "0 0 24 24",
@@ -3327,7 +3299,7 @@ var NineDotIcon = (props) => /* @__PURE__ */ jsx30(
     "aria-hidden": "true",
     ...props,
     children: [5, 12, 19].flatMap(
-      (cy) => [5, 12, 19].map((cx) => /* @__PURE__ */ jsx30("circle", { cx, cy, r: "2.4" }, `${cx}-${cy}`))
+      (cy) => [5, 12, 19].map((cx) => /* @__PURE__ */ jsx31("circle", { cx, cy, r: "2.4" }, `${cx}-${cy}`))
     )
   }
 );
@@ -3345,24 +3317,24 @@ function AppLauncher({
 }) {
   const visible = order.filter((key) => apps[key] != null);
   const [showcase, setShowcase] = React25.useState(null);
-  return /* @__PURE__ */ jsxs23(Popover, { children: [
-    /* @__PURE__ */ jsx30(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx30(
+  return /* @__PURE__ */ jsxs22(Popover, { children: [
+    /* @__PURE__ */ jsx31(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx31(
       "button",
       {
         type: "button",
         "aria-label": label,
         className: cn(iconButtonClass, className),
-        children: /* @__PURE__ */ jsx30(NineDotIcon, {})
+        children: /* @__PURE__ */ jsx31(NineDotIcon, {})
       }
     ) }),
-    /* @__PURE__ */ jsxs23(
+    /* @__PURE__ */ jsxs22(
       PopoverContent,
       {
         align: "end",
         sideOffset: 16,
         className: "w-[340px] rounded-3xl border border-gray-50 p-6 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)]",
         children: [
-          /* @__PURE__ */ jsx30("div", { className: "mb-6 flex items-center justify-center border-b border-gray-200 pb-4", children: /* @__PURE__ */ jsx30(
+          /* @__PURE__ */ jsx31("div", { className: "mb-6 flex items-center justify-center border-b border-gray-200 pb-4", children: /* @__PURE__ */ jsx31(
             "img",
             {
               src: mediactLogoDataUrl,
@@ -3370,10 +3342,10 @@ function AppLauncher({
               className: "h-6 w-[100px] object-contain"
             }
           ) }),
-          /* @__PURE__ */ jsx30("div", { className: "grid grid-cols-3 gap-x-2 gap-y-6", children: visible.map((key) => {
+          /* @__PURE__ */ jsx31("div", { className: "grid grid-cols-3 gap-x-2 gap-y-6", children: visible.map((key) => {
             const config = apps[key];
             const label2 = config.label ?? DEFAULT_APP_LABELS[key];
-            return /* @__PURE__ */ jsx30(
+            return /* @__PURE__ */ jsx31(
               AppLauncherTile,
               {
                 appKey: key,
@@ -3385,7 +3357,7 @@ function AppLauncher({
                  * ให้เต็มกล่อง ใบที่ทรงต่างกันจะดูใหญ่ไม่เท่ากัน · โหมดนี้ย่อความสูงหมึก
                  * ให้เท่ากันทุกใบ (62.5% — ตัวเลขและที่มาอยู่ใน `AppMark`)
                  * · `min-h-0`/`object-contain` มาจาก `AppMark` เองแล้ว */
-                /* @__PURE__ */ jsx30(
+                /* @__PURE__ */ jsx31(
                   AppMark,
                   {
                     app: key,
@@ -3402,25 +3374,25 @@ function AppLauncher({
             );
           }) }),
           settingsAction && /* ทรง/สีอยู่ที่ `settingsActionClass` — เหตุผลของสีฟ้าคงที่เขียนไว้ที่นั่น */
-          /* @__PURE__ */ jsx30(PopoverClose, { asChild: true, children: settingsAction.href ? /* @__PURE__ */ jsxs23(
+          /* @__PURE__ */ jsx31(PopoverClose, { asChild: true, children: settingsAction.href ? /* @__PURE__ */ jsxs22(
             "a",
             {
               href: settingsAction.href,
               onClick: settingsAction.onClick,
               className: settingsActionClass,
               children: [
-                /* @__PURE__ */ jsx30(Settings, { "aria-hidden": true }),
+                /* @__PURE__ */ jsx31(Settings, { "aria-hidden": true }),
                 settingsAction.label
               ]
             }
-          ) : /* @__PURE__ */ jsxs23(
+          ) : /* @__PURE__ */ jsxs22(
             "button",
             {
               type: "button",
               onClick: settingsAction.onClick,
               className: settingsActionClass,
               children: [
-                /* @__PURE__ */ jsx30(Settings, { "aria-hidden": true }),
+                /* @__PURE__ */ jsx31(Settings, { "aria-hidden": true }),
                 settingsAction.label
               ]
             }
@@ -3428,7 +3400,7 @@ function AppLauncher({
         ]
       }
     ),
-    /* @__PURE__ */ jsx30(
+    /* @__PURE__ */ jsx31(
       AppShowcaseDialog,
       {
         app: showcase,
@@ -3456,7 +3428,7 @@ function AppLauncherTile({
     !disabled && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 rounded-md",
     disabled && "cursor-not-allowed"
   );
-  const iconBox = /* @__PURE__ */ jsx30(
+  const iconBox = /* @__PURE__ */ jsx31(
     "span",
     {
       className: cn(
@@ -3465,21 +3437,21 @@ function AppLauncherTile({
         config.active && !disabled && "ring-2 ring-brand/40",
         config.disabled && "opacity-50 grayscale"
       ),
-      children: /* @__PURE__ */ jsx30("span", { className: "flex size-8 items-center justify-center [&_img]:size-full [&_img]:object-contain", children: icon })
+      children: /* @__PURE__ */ jsx31("span", { className: "flex size-8 items-center justify-center [&_img]:size-full [&_img]:object-contain", children: icon })
     }
   );
-  const labelEl = /* @__PURE__ */ jsxs23(Fragment7, { children: [
-    /* @__PURE__ */ jsx30("span", { className: "text-[13px] font-medium text-text-body", children: label }),
-    isComingSoon && /* @__PURE__ */ jsx30("span", { className: "mt-0.5 text-[10px] text-gray-400", children: comingSoonText })
+  const labelEl = /* @__PURE__ */ jsxs22(Fragment7, { children: [
+    /* @__PURE__ */ jsx31("span", { className: "text-[13px] font-medium text-text-body", children: label }),
+    isComingSoon && /* @__PURE__ */ jsx31("span", { className: "mt-0.5 text-[10px] text-gray-400", children: comingSoonText })
   ] });
   if (disabled) {
-    return /* @__PURE__ */ jsxs23("div", { className: tileClass, "aria-disabled": "true", children: [
+    return /* @__PURE__ */ jsxs22("div", { className: tileClass, "aria-disabled": "true", children: [
       iconBox,
       labelEl
     ] });
   }
   if (onShowcase) {
-    return /* @__PURE__ */ jsx30(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs23(
+    return /* @__PURE__ */ jsx31(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs22(
       "button",
       {
         type: "button",
@@ -3496,7 +3468,7 @@ function AppLauncherTile({
     ) });
   }
   if (onClick) {
-    return /* @__PURE__ */ jsx30(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs23(
+    return /* @__PURE__ */ jsx31(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs22(
       "button",
       {
         type: "button",
@@ -3509,7 +3481,7 @@ function AppLauncherTile({
       }
     ) });
   }
-  return /* @__PURE__ */ jsx30(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs23("a", { href: config.baseUrl, className: tileClass, children: [
+  return /* @__PURE__ */ jsx31(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs22("a", { href: config.baseUrl, className: tileClass, children: [
     iconBox,
     labelEl
   ] }) });
@@ -3517,7 +3489,7 @@ function AppLauncherTile({
 var NotificationBell = React25.forwardRef(function NotificationBell2({ hasUnread, unreadCount, label = "Notifications", className, ...props }, ref) {
   const showCount = unreadCount != null && unreadCount > 0;
   const showDot = !showCount && hasUnread;
-  return /* @__PURE__ */ jsxs23(
+  return /* @__PURE__ */ jsxs22(
     "button",
     {
       ref,
@@ -3526,15 +3498,15 @@ var NotificationBell = React25.forwardRef(function NotificationBell2({ hasUnread
       className: cn(iconButtonClass, "relative", className),
       ...props,
       children: [
-        /* @__PURE__ */ jsx30(Bell, {}),
-        showDot && /* @__PURE__ */ jsx30(
+        /* @__PURE__ */ jsx31(Bell, {}),
+        showDot && /* @__PURE__ */ jsx31(
           "span",
           {
             "aria-hidden": "true",
             className: "absolute right-2.5 top-2.5 size-2 rounded-full bg-cherry-red-600 ring-2 ring-white"
           }
         ),
-        showCount && /* @__PURE__ */ jsx30(
+        showCount && /* @__PURE__ */ jsx31(
           "span",
           {
             "aria-hidden": "true",
@@ -3555,8 +3527,8 @@ function UserMenu({
   label = "Account",
   className
 }) {
-  return /* @__PURE__ */ jsxs23(Popover, { children: [
-    /* @__PURE__ */ jsx30(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsxs23(
+  return /* @__PURE__ */ jsxs22(Popover, { children: [
+    /* @__PURE__ */ jsx31(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsxs22(
       "button",
       {
         type: "button",
@@ -3566,7 +3538,7 @@ function UserMenu({
           className
         ),
         children: [
-          /* @__PURE__ */ jsx30(
+          /* @__PURE__ */ jsx31(
             Avatar,
             {
               size: "md",
@@ -3576,19 +3548,19 @@ function UserMenu({
               className: "border-2 border-gray-100"
             }
           ),
-          /* @__PURE__ */ jsx30(ChevronDown2, { className: "size-4 text-gray-400 transition-transform group-data-[state=open]:rotate-180 group-hover:text-gray-600" })
+          /* @__PURE__ */ jsx31(ChevronDown2, { className: "size-4 text-gray-400 transition-transform group-data-[state=open]:rotate-180 group-hover:text-gray-600" })
         ]
       }
     ) }),
-    /* @__PURE__ */ jsxs23(
+    /* @__PURE__ */ jsxs22(
       PopoverContent,
       {
         align: "end",
         sideOffset: 16,
         className: "w-[310px] rounded-3xl border border-gray-50 px-6 py-6 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)]",
         children: [
-          /* @__PURE__ */ jsxs23("div", { className: "mb-5 flex flex-col items-center", children: [
-            /* @__PURE__ */ jsx30(
+          /* @__PURE__ */ jsxs22("div", { className: "mb-5 flex flex-col items-center", children: [
+            /* @__PURE__ */ jsx31(
               Avatar,
               {
                 src: user.src,
@@ -3597,10 +3569,10 @@ function UserMenu({
                 className: "mb-3 size-[60px] border-2 border-gray-100"
               }
             ),
-            user.name && /* @__PURE__ */ jsx30("h3", { className: "text-body-lg font-semibold text-text-heading", children: user.name }),
+            user.name && /* @__PURE__ */ jsx31("h3", { className: "text-body-lg font-semibold text-text-heading", children: user.name }),
             user.role && /* ระยะเป็น inline — mediwork มี `p{margin-top:0}` แบบไม่มี layer ที่ชนะ `mt-*`
                ของ Tailwind (เหตุผลเต็มอยู่ที่ `AppShowcaseDialog`) · 2px จึงหายเงียบที่นั่น */
-            /* @__PURE__ */ jsx30(
+            /* @__PURE__ */ jsx31(
               "p",
               {
                 className: "text-[15px] font-medium text-text-tertiary",
@@ -3609,20 +3581,20 @@ function UserMenu({
               }
             )
           ] }),
-          /* @__PURE__ */ jsx30("hr", { className: "mb-2 border-gray-100" }),
-          items?.map((item, idx) => /* @__PURE__ */ jsx30(UserMenuItemButton, { item }, idx)),
-          (bottomLeft || onLogout !== null) && /* @__PURE__ */ jsxs23(Fragment7, { children: [
-            /* @__PURE__ */ jsx30("hr", { className: "mb-5 mt-2 border-gray-100" }),
-            /* @__PURE__ */ jsxs23("div", { className: "flex items-center justify-between gap-3", children: [
-              bottomLeft ?? /* @__PURE__ */ jsx30("span", {}),
-              onLogout !== null && /* @__PURE__ */ jsx30(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs23(
+          /* @__PURE__ */ jsx31("hr", { className: "mb-2 border-gray-100" }),
+          items?.map((item, idx) => /* @__PURE__ */ jsx31(UserMenuItemButton, { item }, idx)),
+          (bottomLeft || onLogout !== null) && /* @__PURE__ */ jsxs22(Fragment7, { children: [
+            /* @__PURE__ */ jsx31("hr", { className: "mb-5 mt-2 border-gray-100" }),
+            /* @__PURE__ */ jsxs22("div", { className: "flex items-center justify-between gap-3", children: [
+              bottomLeft ?? /* @__PURE__ */ jsx31("span", {}),
+              onLogout !== null && /* @__PURE__ */ jsx31(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsxs22(
                 "button",
                 {
                   type: "button",
                   onClick: onLogout,
                   className: "flex cursor-pointer items-center gap-2 text-[16px] font-medium text-cherry-red-600 transition-colors hover:text-cherry-red-800",
                   children: [
-                    /* @__PURE__ */ jsx30(LogOut, { className: "size-5" }),
+                    /* @__PURE__ */ jsx31(LogOut, { className: "size-5" }),
                     logoutLabel
                   ]
                 }
@@ -3637,9 +3609,9 @@ function UserMenu({
 function UserMenuItemButton({ item }) {
   const className = "block w-full cursor-pointer text-left py-3 text-[16px] font-medium text-text-body transition-colors hover:text-text-primary";
   if (item.href) {
-    return /* @__PURE__ */ jsx30(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsx30("a", { href: item.href, className, children: item.label }) });
+    return /* @__PURE__ */ jsx31(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsx31("a", { href: item.href, className, children: item.label }) });
   }
-  return /* @__PURE__ */ jsx30(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsx30("button", { type: "button", onClick: item.onClick, className, children: item.label }) });
+  return /* @__PURE__ */ jsx31(PopoverClose, { asChild: true, children: /* @__PURE__ */ jsx31("button", { type: "button", onClick: item.onClick, className, children: item.label }) });
 }
 TopNav.displayName = "TopNav";
 TopNavBrand.displayName = "TopNavBrand";
@@ -3652,7 +3624,7 @@ import { Globe } from "lucide-react";
 import * as React26 from "react";
 import * as RadixMenu from "@radix-ui/react-dropdown-menu";
 import { Check as Check4, ChevronRight, Circle } from "lucide-react";
-import { jsx as jsx31, jsxs as jsxs24 } from "react/jsx-runtime";
+import { jsx as jsx32, jsxs as jsxs23 } from "react/jsx-runtime";
 var DropdownMenu = RadixMenu.Root;
 var DropdownMenuTrigger = RadixMenu.Trigger;
 var DropdownMenuGroup = RadixMenu.Group;
@@ -3660,7 +3632,7 @@ var DropdownMenuRadioGroup = RadixMenu.RadioGroup;
 var DropdownMenuPortal = RadixMenu.Portal;
 var DropdownMenuSub = RadixMenu.Sub;
 var DropdownMenuContent = React26.forwardRef(function DropdownMenuContent2({ className, sideOffset = 4, ...props }, ref) {
-  return /* @__PURE__ */ jsx31(RadixMenu.Portal, { children: /* @__PURE__ */ jsx31(
+  return /* @__PURE__ */ jsx32(RadixMenu.Portal, { children: /* @__PURE__ */ jsx32(
     RadixMenu.Content,
     {
       ref,
@@ -3675,7 +3647,7 @@ var DropdownMenuContent = React26.forwardRef(function DropdownMenuContent2({ cla
 });
 var DropdownMenuItem = React26.forwardRef(
   function DropdownMenuItem2({ className, destructive, inset, ...props }, ref) {
-    return /* @__PURE__ */ jsx31(
+    return /* @__PURE__ */ jsx32(
       RadixMenu.Item,
       {
         ref,
@@ -3693,7 +3665,7 @@ var DropdownMenuItem = React26.forwardRef(
   }
 );
 var DropdownMenuCheckboxItem = React26.forwardRef(function DropdownMenuCheckboxItem2({ className, children, ...props }, ref) {
-  return /* @__PURE__ */ jsxs24(
+  return /* @__PURE__ */ jsxs23(
     RadixMenu.CheckboxItem,
     {
       ref,
@@ -3705,14 +3677,14 @@ var DropdownMenuCheckboxItem = React26.forwardRef(function DropdownMenuCheckboxI
       ),
       ...props,
       children: [
-        /* @__PURE__ */ jsx31("span", { className: "absolute left-2 flex size-4 items-center justify-center", children: /* @__PURE__ */ jsx31(RadixMenu.ItemIndicator, { children: /* @__PURE__ */ jsx31(Check4, { className: "size-4" }) }) }),
+        /* @__PURE__ */ jsx32("span", { className: "absolute left-2 flex size-4 items-center justify-center", children: /* @__PURE__ */ jsx32(RadixMenu.ItemIndicator, { children: /* @__PURE__ */ jsx32(Check4, { className: "size-4" }) }) }),
         children
       ]
     }
   );
 });
 var DropdownMenuRadioItem = React26.forwardRef(function DropdownMenuRadioItem2({ className, children, ...props }, ref) {
-  return /* @__PURE__ */ jsxs24(
+  return /* @__PURE__ */ jsxs23(
     RadixMenu.RadioItem,
     {
       ref,
@@ -3723,14 +3695,14 @@ var DropdownMenuRadioItem = React26.forwardRef(function DropdownMenuRadioItem2({
       ),
       ...props,
       children: [
-        /* @__PURE__ */ jsx31("span", { className: "absolute left-2 flex size-4 items-center justify-center", children: /* @__PURE__ */ jsx31(RadixMenu.ItemIndicator, { children: /* @__PURE__ */ jsx31(Circle, { className: "size-2 fill-current" }) }) }),
+        /* @__PURE__ */ jsx32("span", { className: "absolute left-2 flex size-4 items-center justify-center", children: /* @__PURE__ */ jsx32(RadixMenu.ItemIndicator, { children: /* @__PURE__ */ jsx32(Circle, { className: "size-2 fill-current" }) }) }),
         children
       ]
     }
   );
 });
 var DropdownMenuLabel = React26.forwardRef(function DropdownMenuLabel2({ className, inset, ...props }, ref) {
-  return /* @__PURE__ */ jsx31(
+  return /* @__PURE__ */ jsx32(
     RadixMenu.Label,
     {
       ref,
@@ -3744,7 +3716,7 @@ var DropdownMenuLabel = React26.forwardRef(function DropdownMenuLabel2({ classNa
   );
 });
 var DropdownMenuSeparator = React26.forwardRef(function DropdownMenuSeparator2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx31(
+  return /* @__PURE__ */ jsx32(
     RadixMenu.Separator,
     {
       ref,
@@ -3754,7 +3726,7 @@ var DropdownMenuSeparator = React26.forwardRef(function DropdownMenuSeparator2({
   );
 });
 var DropdownMenuSubTrigger = React26.forwardRef(function DropdownMenuSubTrigger2({ className, children, ...props }, ref) {
-  return /* @__PURE__ */ jsxs24(
+  return /* @__PURE__ */ jsxs23(
     RadixMenu.SubTrigger,
     {
       ref,
@@ -3766,13 +3738,13 @@ var DropdownMenuSubTrigger = React26.forwardRef(function DropdownMenuSubTrigger2
       ...props,
       children: [
         children,
-        /* @__PURE__ */ jsx31(ChevronRight, { className: "ml-auto size-4" })
+        /* @__PURE__ */ jsx32(ChevronRight, { className: "ml-auto size-4" })
       ]
     }
   );
 });
 var DropdownMenuSubContent = React26.forwardRef(function DropdownMenuSubContent2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx31(
+  return /* @__PURE__ */ jsx32(
     RadixMenu.SubContent,
     {
       ref,
@@ -3794,7 +3766,7 @@ DropdownMenuSubTrigger.displayName = "DropdownMenuSubTrigger";
 DropdownMenuSubContent.displayName = "DropdownMenuSubContent";
 
 // src/navigation/LanguageSwitcher.tsx
-import { jsx as jsx32, jsxs as jsxs25 } from "react/jsx-runtime";
+import { jsx as jsx33, jsxs as jsxs24 } from "react/jsx-runtime";
 var triggerClass = "inline-flex h-9 w-30 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-border-strong bg-bg-default px-3 text-body-sm font-medium text-text-body transition-colors hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40";
 function LanguageSwitcher({
   languages,
@@ -3812,19 +3784,19 @@ function LanguageSwitcher({
      * `<html> intercepts pointer events` กิน) · สำคัญเป็นพิเศษเมื่อปุ่มนี้ไปนั่งอยู่ใน
      * ป๊อปอัปของตัวอื่น เพราะปุ่มที่เหลือในป๊อปอัปนั้นจะกดไม่ได้ไปด้วย
      * เมนูนี้ไม่ได้กันคนไปทำอย่างอื่น จึงไม่ควรเป็น modal */
-    /* @__PURE__ */ jsxs25(DropdownMenu, { modal: false, children: [
-      /* @__PURE__ */ jsx32(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsxs25("button", { type: "button", "aria-label": label, className: cn(triggerClass, className), children: [
-        /* @__PURE__ */ jsx32(Globe, { className: "size-5 shrink-0", "aria-hidden": true }),
-        /* @__PURE__ */ jsx32("span", { className: "truncate", children: selected?.label })
+    /* @__PURE__ */ jsxs24(DropdownMenu, { modal: false, children: [
+      /* @__PURE__ */ jsx33(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsxs24("button", { type: "button", "aria-label": label, className: cn(triggerClass, className), children: [
+        /* @__PURE__ */ jsx33(Globe, { className: "size-5 shrink-0", "aria-hidden": true }),
+        /* @__PURE__ */ jsx33("span", { className: "truncate", children: selected?.label })
       ] }) }),
-      /* @__PURE__ */ jsx32(DropdownMenuContent, { align, sideOffset: 8, className: "min-w-30 rounded-xl p-1.5", children: /* @__PURE__ */ jsx32(
+      /* @__PURE__ */ jsx33(DropdownMenuContent, { align, sideOffset: 8, className: "min-w-30 rounded-xl p-1.5", children: /* @__PURE__ */ jsx33(
         DropdownMenuRadioGroup,
         {
           value,
           onValueChange: (next) => {
             if (next !== value) onChange?.(next);
           },
-          children: languages.map((lang) => /* @__PURE__ */ jsx32(
+          children: languages.map((lang) => /* @__PURE__ */ jsx33(
             DropdownMenuRadioItem,
             {
               value: lang.value,
@@ -3843,7 +3815,7 @@ LanguageSwitcher.displayName = "LanguageSwitcher";
 // src/navigation/Sidebar.tsx
 import * as React27 from "react";
 import { ChevronDown as ChevronDown3, Headphones } from "lucide-react";
-import { Fragment as Fragment8, jsx as jsx33, jsxs as jsxs26 } from "react/jsx-runtime";
+import { Fragment as Fragment8, jsx as jsx34, jsxs as jsxs25 } from "react/jsx-runtime";
 var SidebarContext = React27.createContext(
   void 0
 );
@@ -3898,8 +3870,8 @@ var Sidebar = React27.forwardRef(function Sidebar2({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isMobileMode, mobileOpen, onMobileOpenChange]);
-  return /* @__PURE__ */ jsxs26(SidebarContext.Provider, { value: ctx, children: [
-    isMobileMode && mobileOpen && /* @__PURE__ */ jsx33(
+  return /* @__PURE__ */ jsxs25(SidebarContext.Provider, { value: ctx, children: [
+    isMobileMode && mobileOpen && /* @__PURE__ */ jsx34(
       "div",
       {
         "aria-hidden": "true",
@@ -3907,7 +3879,7 @@ var Sidebar = React27.forwardRef(function Sidebar2({
         className: "fixed inset-0 z-40 bg-black/50 lg:hidden"
       }
     ),
-    /* @__PURE__ */ jsx33(
+    /* @__PURE__ */ jsx34(
       "aside",
       {
         ref,
@@ -3938,34 +3910,34 @@ var Sidebar = React27.forwardRef(function Sidebar2({
           className
         ),
         ...props,
-        children: /* @__PURE__ */ jsxs26(
+        children: /* @__PURE__ */ jsxs25(
           "div",
           {
             style: { width: typeof width === "number" ? `${width}px` : width },
             className: "flex h-full shrink-0 flex-col",
             children: [
               (header || brand) && /* วัดจาก Portal: สูง 88 · pad 24 · เว้นบนอีก 16 · กางแล้วชิดซ้าย ยุบแล้วกึ่งกลาง */
-              /* @__PURE__ */ jsx33(
+              /* @__PURE__ */ jsx34(
                 "div",
                 {
                   className: cn(
                     "mt-4 flex items-center transition-all duration-300 ease-in-out",
                     showExpanded ? "min-h-[88px] justify-between p-6" : "justify-center p-4"
                   ),
-                  children: header ?? /* @__PURE__ */ jsxs26(Fragment8, { children: [
-                    /* @__PURE__ */ jsxs26("span", { className: "flex min-w-0 flex-1 items-center justify-center gap-3", children: [
-                      /* @__PURE__ */ jsx33("span", { className: "flex shrink-0 items-center", children: brand.symbol }),
-                      showExpanded && brand.name && /* @__PURE__ */ jsx33("span", { className: "truncate text-title-md font-bold tracking-wide", children: brand.name })
+                  children: header ?? /* @__PURE__ */ jsxs25(Fragment8, { children: [
+                    /* @__PURE__ */ jsxs25("span", { className: "flex min-w-0 flex-1 items-center justify-center gap-3", children: [
+                      /* @__PURE__ */ jsx34("span", { className: "flex shrink-0 items-center", children: brand.symbol }),
+                      showExpanded && brand.name && /* @__PURE__ */ jsx34("span", { className: "truncate text-title-md font-bold tracking-wide", children: brand.name })
                     ] }),
                     showExpanded && brand.action
                   ] })
                 }
               ),
-              /* @__PURE__ */ jsx33("nav", { className: "flex-1 space-y-1 overflow-y-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", children }),
-              /* @__PURE__ */ jsxs26("div", { className: "px-4 pb-4", children: [
+              /* @__PURE__ */ jsx34("nav", { className: "flex-1 space-y-1 overflow-y-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", children }),
+              /* @__PURE__ */ jsxs25("div", { className: "px-4 pb-4", children: [
                 supportAction && /* ปุ่มติดต่อฝ่ายสนับสนุน — วัดจาก Portal: 36 สูง · มุม 8 · pad 8/12
                  * · 14px · `white/60` · ไอคอน 16 · gap 8 · เต็มความกว้าง จัดกึ่งกลาง */
-                /* @__PURE__ */ jsxs26(
+                /* @__PURE__ */ jsxs25(
                   "button",
                   {
                     type: "button",
@@ -3977,13 +3949,13 @@ var Sidebar = React27.forwardRef(function Sidebar2({
                       showExpanded ? "justify-center px-3" : "justify-center px-0"
                     ),
                     children: [
-                      /* @__PURE__ */ jsx33("span", { "aria-hidden": true, className: "flex shrink-0 [&_svg]:size-4", children: supportAction.icon ?? /* @__PURE__ */ jsx33(Headphones, { className: "size-4" }) }),
+                      /* @__PURE__ */ jsx34("span", { "aria-hidden": true, className: "flex shrink-0 [&_svg]:size-4", children: supportAction.icon ?? /* @__PURE__ */ jsx34(Headphones, { className: "size-4" }) }),
                       showExpanded && supportAction.label
                     ]
                   }
                 ),
                 footer && showExpanded && /* วัดจาก Portal: 12px · `white/40` · กึ่งกลาง · เว้นบนล่าง 8 */
-                /* @__PURE__ */ jsx33("div", { className: "py-2 text-center text-caption text-white/40", children: footer })
+                /* @__PURE__ */ jsx34("div", { className: "py-2 text-center text-caption text-white/40", children: footer })
               ] })
             ]
           }
@@ -4020,10 +3992,10 @@ function SidebarItem({
       onItemClick(id, href);
     }
   };
-  const content = /* @__PURE__ */ jsxs26(Fragment8, { children: [
-    (!isNested || isCollapsed) && /* @__PURE__ */ jsx33("span", { className: "flex shrink-0 items-center justify-center", children: Icon ? /* @__PURE__ */ jsx33(Icon, { className: "size-6" }) : isCollapsed ? /* @__PURE__ */ jsx33("span", { className: "size-1.5 rounded-full bg-white" }) : null }),
-    !isCollapsed && /* @__PURE__ */ jsxs26("span", { className: "flex min-w-0 flex-1 flex-col items-start text-left", children: [
-      /* @__PURE__ */ jsx33(
+  const content = /* @__PURE__ */ jsxs25(Fragment8, { children: [
+    (!isNested || isCollapsed) && /* @__PURE__ */ jsx34("span", { className: "flex shrink-0 items-center justify-center", children: Icon ? /* @__PURE__ */ jsx34(Icon, { className: "size-6" }) : isCollapsed ? /* @__PURE__ */ jsx34("span", { className: "size-1.5 rounded-full bg-white" }) : null }),
+    !isCollapsed && /* @__PURE__ */ jsxs25("span", { className: "flex min-w-0 flex-1 flex-col items-start text-left", children: [
+      /* @__PURE__ */ jsx34(
         "span",
         {
           className: cn(
@@ -4033,7 +4005,7 @@ function SidebarItem({
           children: label
         }
       ),
-      badge && /* @__PURE__ */ jsx33(
+      badge && /* @__PURE__ */ jsx34(
         "span",
         {
           className: cn(
@@ -4053,7 +4025,7 @@ function SidebarItem({
   );
   const srName = collapsedName(label, isCollapsed);
   if (href && !onClick && !onItemClick) {
-    return /* @__PURE__ */ jsx33(
+    return /* @__PURE__ */ jsx34(
       LinkComponent,
       {
         href,
@@ -4064,7 +4036,7 @@ function SidebarItem({
       }
     );
   }
-  return /* @__PURE__ */ jsx33(
+  return /* @__PURE__ */ jsx34(
     "button",
     {
       type: "button",
@@ -4103,8 +4075,8 @@ function SidebarGroup({
     isCollapsed && hasActiveChild ? "bg-white/20 text-white" : "text-white/90 hover:bg-white/10 hover:text-white",
     className
   );
-  return /* @__PURE__ */ jsxs26("div", { className: "space-y-1", children: [
-    /* @__PURE__ */ jsxs26(
+  return /* @__PURE__ */ jsxs25("div", { className: "space-y-1", children: [
+    /* @__PURE__ */ jsxs25(
       "button",
       {
         type: "button",
@@ -4115,10 +4087,10 @@ function SidebarGroup({
         "aria-label": collapsedName(label, isCollapsed),
         className: headerClass,
         children: [
-          /* @__PURE__ */ jsx33("span", { className: "flex shrink-0 items-center justify-center", children: Icon ? /* @__PURE__ */ jsx33(Icon, { className: "size-6" }) : isNested && !isCollapsed ? /* @__PURE__ */ jsx33("span", { className: "size-1.5 rounded-full bg-white" }) : null }),
-          !isCollapsed && /* @__PURE__ */ jsxs26(Fragment8, { children: [
-            /* @__PURE__ */ jsx33("span", { className: "flex-1 truncate text-left", children: label }),
-            /* @__PURE__ */ jsx33(
+          /* @__PURE__ */ jsx34("span", { className: "flex shrink-0 items-center justify-center", children: Icon ? /* @__PURE__ */ jsx34(Icon, { className: "size-6" }) : isNested && !isCollapsed ? /* @__PURE__ */ jsx34("span", { className: "size-1.5 rounded-full bg-white" }) : null }),
+          !isCollapsed && /* @__PURE__ */ jsxs25(Fragment8, { children: [
+            /* @__PURE__ */ jsx34("span", { className: "flex-1 truncate text-left", children: label }),
+            /* @__PURE__ */ jsx34(
               ChevronDown3,
               {
                 className: cn(
@@ -4131,12 +4103,12 @@ function SidebarGroup({
         ]
       }
     ),
-    isExpanded && !isCollapsed && /* @__PURE__ */ jsx33(
+    isExpanded && !isCollapsed && /* @__PURE__ */ jsx34(
       "div",
       {
         id: `${id}-content`,
         className: "mt-0.5 ml-[22px] space-y-0.5 border-l border-white/12 pl-3",
-        children: /* @__PURE__ */ jsx33(DepthContext.Provider, { value: depth + 1, children })
+        children: /* @__PURE__ */ jsx34(DepthContext.Provider, { value: depth + 1, children })
       }
     )
   ] });
@@ -4151,7 +4123,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 // src/ui/Calendar.tsx
 import * as React28 from "react";
 import { ChevronLeft, ChevronRight as ChevronRight2 } from "lucide-react";
-import { jsx as jsx34, jsxs as jsxs27 } from "react/jsx-runtime";
+import { jsx as jsx35, jsxs as jsxs26 } from "react/jsx-runtime";
 var dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
   d.getDate()
 ).padStart(2, "0")}`;
@@ -4331,9 +4303,9 @@ var Calendar = React28.forwardRef(
       year: "month"
     };
     const navClass = "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-overlay-hover text-text-body transition-colors hover:bg-overlay-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-overlay-hover [&_svg]:size-[18px]";
-    return /* @__PURE__ */ jsxs27("div", { ref, className: cn("w-[340px] p-4 pb-0", className), children: [
-      /* @__PURE__ */ jsxs27("div", { className: "mb-3 flex items-center justify-between", children: [
-        /* @__PURE__ */ jsx34(
+    return /* @__PURE__ */ jsxs26("div", { ref, className: cn("w-[340px] p-4 pb-0", className), children: [
+      /* @__PURE__ */ jsxs26("div", { className: "mb-3 flex items-center justify-between", children: [
+        /* @__PURE__ */ jsx35(
           "button",
           {
             type: "button",
@@ -4341,10 +4313,10 @@ var Calendar = React28.forwardRef(
             disabled: !canStep(-1),
             onClick: () => stepMonth(-1),
             className: navClass,
-            children: /* @__PURE__ */ jsx34(ChevronLeft, {})
+            children: /* @__PURE__ */ jsx35(ChevronLeft, {})
           }
         ),
-        /* @__PURE__ */ jsx34(
+        /* @__PURE__ */ jsx35(
           "button",
           {
             type: "button",
@@ -4355,7 +4327,7 @@ var Calendar = React28.forwardRef(
             children: headerLabel
           }
         ),
-        /* @__PURE__ */ jsx34(
+        /* @__PURE__ */ jsx35(
           "button",
           {
             type: "button",
@@ -4363,7 +4335,7 @@ var Calendar = React28.forwardRef(
             disabled: !canStep(1),
             onClick: () => stepMonth(1),
             className: navClass,
-            children: /* @__PURE__ */ jsx34(ChevronRight2, {})
+            children: /* @__PURE__ */ jsx35(ChevronRight2, {})
           }
         )
       ] }),
@@ -4371,12 +4343,12 @@ var Calendar = React28.forwardRef(
         /* ตารางปี — ทรงเดียวกับตารางเดือนเป๊ะ (3 คอลัมน์ × 4 แถว) ⇒ สลับมุมมอง
          * แล้วกล่องไม่กระโดด · เลือกปีแล้วลงไปมุมมองเดือนต่อ ไม่ใช่จบเลย เพราะ
          * หน่วยที่ผู้ใช้กำลังหาคือ "วัน" ปีเป็นแค่ทางผ่าน */
-        /* @__PURE__ */ jsx34("div", { className: "grid grid-cols-3 gap-2 pb-2", children: Array.from({ length: YEARS_PER_PAGE }, (_, i) => {
+        /* @__PURE__ */ jsx35("div", { className: "grid grid-cols-3 gap-2 pb-2", children: Array.from({ length: YEARS_PER_PAGE }, (_, i) => {
           const year = yearPageStart + i;
           const cell = new Date(year, month.getMonth(), 1);
           const isCurrent = month.getFullYear() === year;
           const isDisabled = yearOutOfBounds(cell);
-          return /* @__PURE__ */ jsx34(
+          return /* @__PURE__ */ jsx35(
             "button",
             {
               type: "button",
@@ -4395,11 +4367,11 @@ var Calendar = React28.forwardRef(
             year
           );
         }) })
-      ) : view === "month" ? /* @__PURE__ */ jsx34("div", { className: "grid grid-cols-3 gap-2 pb-2", children: Array.from({ length: 12 }, (_, i) => {
+      ) : view === "month" ? /* @__PURE__ */ jsx35("div", { className: "grid grid-cols-3 gap-2 pb-2", children: Array.from({ length: 12 }, (_, i) => {
         const cell = new Date(month.getFullYear(), i, 1);
         const isCurrent = month.getMonth() === i;
         const isDisabled = monthOutOfBounds(cell);
-        return /* @__PURE__ */ jsx34(
+        return /* @__PURE__ */ jsx35(
           "button",
           {
             type: "button",
@@ -4423,14 +4395,14 @@ var Calendar = React28.forwardRef(
          * ทำแบบนั้นไม่ได้ ต้อง `border-separate` + `border-spacing`
          * ถ้าไม่มี ระยะห่างแถวหายไป 4 ทุกแถว = ปฏิทินเตี้ยลง 24 และแถบช่วงวัน
          * กลายเป็นก้อนทึบแทนที่จะเป็นแถบต่อแถว */
-        /* @__PURE__ */ jsxs27(
+        /* @__PURE__ */ jsxs26(
           "table",
           {
             role: "grid",
             className: "-mt-1 w-full border-separate border-spacing-x-0 border-spacing-y-1",
             onKeyDown: onGridKeyDown,
             children: [
-              /* @__PURE__ */ jsx34("thead", { children: /* @__PURE__ */ jsx34("tr", { children: grid.slice(0, 7).map((d) => /* @__PURE__ */ jsx34(
+              /* @__PURE__ */ jsx35("thead", { children: /* @__PURE__ */ jsx35("tr", { children: grid.slice(0, 7).map((d) => /* @__PURE__ */ jsx35(
                 "th",
                 {
                   scope: "col",
@@ -4440,7 +4412,7 @@ var Calendar = React28.forwardRef(
                 },
                 d.getDay()
               )) }) }),
-              /* @__PURE__ */ jsx34("tbody", { children: Array.from({ length: 6 }, (_, row) => /* @__PURE__ */ jsx34("tr", { children: grid.slice(row * 7, row * 7 + 7).map((day) => {
+              /* @__PURE__ */ jsx35("tbody", { children: Array.from({ length: 6 }, (_, row) => /* @__PURE__ */ jsx35("tr", { children: grid.slice(row * 7, row * 7 + 7).map((day) => {
                 const outside = day.getMonth() !== month.getMonth();
                 const disabled = outside || outOfBounds(day);
                 const isStart = isSameDay(day, selected);
@@ -4449,7 +4421,7 @@ var Calendar = React28.forwardRef(
                 const between = !!selected && !!end && startOfDay(day) > startOfDay(selected) && startOfDay(day) < startOfDay(end);
                 const isFocus = isSameDay(day, focusDay);
                 const isToday = !outside && isSameDay(day, todayDate);
-                return /* @__PURE__ */ jsx34(
+                return /* @__PURE__ */ jsx35(
                   "td",
                   {
                     role: "gridcell",
@@ -4461,7 +4433,7 @@ var Calendar = React28.forwardRef(
                       isStart && isSpan && "rounded-l-full",
                       isEnd && isSpan && "rounded-r-full"
                     ),
-                    children: /* @__PURE__ */ jsx34(
+                    children: /* @__PURE__ */ jsx35(
                       "button",
                       {
                         type: "button",
@@ -4504,7 +4476,7 @@ Calendar.displayName = "Calendar";
 
 // src/form/field-icon-slot.tsx
 import { X as X5 } from "lucide-react";
-import { jsx as jsx35, jsxs as jsxs28 } from "react/jsx-runtime";
+import { jsx as jsx36, jsxs as jsxs27 } from "react/jsx-runtime";
 function FieldIconSlot({
   icon,
   showClear,
@@ -4515,8 +4487,8 @@ function FieldIconSlot({
     /* 🔴 `pointer-events-none` — ตัวห่อนี้ทับปุ่ม trigger ที่อยู่ข้างล่าง ถ้าไม่ปล่อย
      * ให้คลิกทะลุ **กดตรงไอคอนแล้วจะไม่เปิดอะไรเลย** (เคยเป็นแบบนั้นจริงทั้ง
      * `DatePicker` และตัวนี้ · `FloatingFieldShell` ก็แก้ที่ตัวห่อของมันแล้วเช่นกัน) */
-    /* @__PURE__ */ jsxs28("span", { className: "pointer-events-none relative inline-flex size-4 items-center justify-center", children: [
-      /* @__PURE__ */ jsx35(
+    /* @__PURE__ */ jsxs27("span", { className: "pointer-events-none relative inline-flex size-4 items-center justify-center", children: [
+      /* @__PURE__ */ jsx36(
         "span",
         {
           className: cn(
@@ -4527,7 +4499,7 @@ function FieldIconSlot({
           children: icon
         }
       ),
-      showClear && /* @__PURE__ */ jsx35(
+      showClear && /* @__PURE__ */ jsx36(
         "button",
         {
           type: "button",
@@ -4546,7 +4518,7 @@ function FieldIconSlot({
             "group-focus-within:pointer-events-auto group-focus-within:opacity-100",
             "[&_svg]:size-4"
           ),
-          children: /* @__PURE__ */ jsx35(X5, {})
+          children: /* @__PURE__ */ jsx36(X5, {})
         }
       )
     ] })
@@ -4554,7 +4526,7 @@ function FieldIconSlot({
 }
 
 // src/form/DatePicker.tsx
-import { jsx as jsx36, jsxs as jsxs29 } from "react/jsx-runtime";
+import { jsx as jsx37, jsxs as jsxs28 } from "react/jsx-runtime";
 function DatePicker({
   id,
   label,
@@ -4609,9 +4581,10 @@ function DatePicker({
     if (next) setMonth(startOfMonth(selected ?? /* @__PURE__ */ new Date()));
     setOpen(next);
   };
-  return /* @__PURE__ */ jsx36(
+  return /* @__PURE__ */ jsx37(
     FloatingFieldShell,
     {
+      disabled,
       label,
       hint,
       error,
@@ -4624,17 +4597,17 @@ function DatePicker({
       focused: open,
       hasError,
       containerClassName: cn("group", containerClassName),
-      rightAdornment: /* @__PURE__ */ jsx36(
+      rightAdornment: /* @__PURE__ */ jsx37(
         FieldIconSlot,
         {
-          icon: /* @__PURE__ */ jsx36(CalendarIcon, {}),
+          icon: /* @__PURE__ */ jsx37(CalendarIcon, {}),
           showClear: showClearInField && hasValue && !disabled,
           clearLabel,
           onClear: handleClear
         }
       ),
-      children: /* @__PURE__ */ jsxs29(Popover, { open, onOpenChange: handleOpenChange, children: [
-        /* @__PURE__ */ jsx36(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx36(
+      children: /* @__PURE__ */ jsxs28(Popover, { open, onOpenChange: handleOpenChange, children: [
+        /* @__PURE__ */ jsx37(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx37(
           "button",
           {
             id: triggerId,
@@ -4649,16 +4622,16 @@ function DatePicker({
               !display && "text-text-tertiary",
               className
             ),
-            children: /* @__PURE__ */ jsx36("span", { className: "truncate", children: display || (floating ? placeholder ?? "" : "") })
+            children: /* @__PURE__ */ jsx37("span", { className: "truncate", children: display || (floating ? placeholder ?? "" : "") })
           }
         ) }),
-        /* @__PURE__ */ jsx36(
+        /* @__PURE__ */ jsx37(
           PopoverContent,
           {
             align: "start",
             sideOffset: 8,
             className: "w-auto rounded-2xl p-0 pb-4",
-            children: /* @__PURE__ */ jsx36(
+            children: /* @__PURE__ */ jsx37(
               Calendar,
               {
                 month,
@@ -4684,7 +4657,7 @@ function DatePicker({
 import * as React30 from "react";
 import { format as format2, isBefore, isValid as isValid2, startOfDay as startOfDay2 } from "date-fns";
 import { Calendar as CalendarIcon2 } from "lucide-react";
-import { jsx as jsx37, jsxs as jsxs30 } from "react/jsx-runtime";
+import { jsx as jsx38, jsxs as jsxs29 } from "react/jsx-runtime";
 var EMPTY_RANGE = { from: null, to: null };
 var DEFAULT_LABELS2 = {
   confirm: "OK",
@@ -4775,9 +4748,10 @@ function DateRangePicker({
   const fmt = (d) => d && isValid2(d) ? displayFormat ? format2(d, displayFormat) : intlFmt.format(d) : null;
   const display = committed.from ? `${fmt(committed.from)} \u2013 ${fmt(committed.to ?? committed.from)}` : "";
   const placeholderText = placeholder ? `${placeholder} \u2013 ${placeholder}` : "";
-  return /* @__PURE__ */ jsx37(
+  return /* @__PURE__ */ jsx38(
     FloatingFieldShell,
     {
+      disabled,
       label,
       hint,
       error,
@@ -4790,17 +4764,17 @@ function DateRangePicker({
       focused: open,
       hasError,
       containerClassName: cn("group", containerClassName),
-      rightAdornment: /* @__PURE__ */ jsx37(
+      rightAdornment: /* @__PURE__ */ jsx38(
         FieldIconSlot,
         {
-          icon: /* @__PURE__ */ jsx37(CalendarIcon2, {}),
+          icon: /* @__PURE__ */ jsx38(CalendarIcon2, {}),
           showClear,
           clearLabel: L.clear,
           onClear: clear
         }
       ),
-      children: /* @__PURE__ */ jsxs30(Popover, { open, onOpenChange: handleOpenChange, children: [
-        /* @__PURE__ */ jsx37(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx37(
+      children: /* @__PURE__ */ jsxs29(Popover, { open, onOpenChange: handleOpenChange, children: [
+        /* @__PURE__ */ jsx38(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx38(
           "button",
           {
             id: triggerId,
@@ -4821,11 +4795,11 @@ function DateRangePicker({
               !display && "text-text-tertiary",
               className
             ),
-            children: /* @__PURE__ */ jsx37("span", { className: "truncate", children: display || (floating ? placeholderText : "") })
+            children: /* @__PURE__ */ jsx38("span", { className: "truncate", children: display || (floating ? placeholderText : "") })
           }
         ) }),
-        /* @__PURE__ */ jsxs30(PopoverContent, { align: "start", sideOffset: 8, className: "w-auto rounded-2xl p-0", children: [
-          /* @__PURE__ */ jsx37(
+        /* @__PURE__ */ jsxs29(PopoverContent, { align: "start", sideOffset: 8, className: "w-auto rounded-2xl p-0", children: [
+          /* @__PURE__ */ jsx38(
             Calendar,
             {
               month,
@@ -4843,9 +4817,9 @@ function DateRangePicker({
               labels: calendarLabels
             }
           ),
-          /* @__PURE__ */ jsxs30("div", { className: "flex items-center justify-end gap-2 border-t border-border-default px-4 py-3", children: [
-            /* @__PURE__ */ jsx37(Button, { type: "button", variant: "secondary", size: "sm", onClick: clear, children: L.clear }),
-            /* @__PURE__ */ jsx37(Button, { type: "button", variant: "primary", size: "sm", onClick: confirm, children: L.confirm })
+          /* @__PURE__ */ jsxs29("div", { className: "flex items-center justify-end gap-2 border-t border-border-default px-4 py-3", children: [
+            /* @__PURE__ */ jsx38(Button, { type: "button", variant: "secondary", size: "sm", onClick: clear, children: L.clear }),
+            /* @__PURE__ */ jsx38(Button, { type: "button", variant: "primary", size: "sm", onClick: confirm, children: L.confirm })
           ] })
         ] })
       ] })
@@ -4856,7 +4830,7 @@ function DateRangePicker({
 // src/form/TimePicker.tsx
 import * as React31 from "react";
 import { Clock } from "lucide-react";
-import { jsx as jsx38, jsxs as jsxs31 } from "react/jsx-runtime";
+import { jsx as jsx39, jsxs as jsxs30 } from "react/jsx-runtime";
 var DEFAULT_LABELS3 = {
   hour: "HH",
   minute: "mm",
@@ -5053,9 +5027,10 @@ function TimePicker({
     for (let i = 0; i < 60; i += stepEffective) out.push(i);
     return out;
   }, [stepEffective]);
-  return /* @__PURE__ */ jsx38(
+  return /* @__PURE__ */ jsx39(
     FloatingFieldShell,
     {
+      disabled,
       label,
       hint,
       error,
@@ -5068,18 +5043,18 @@ function TimePicker({
       focused,
       hasError,
       containerClassName,
-      rightAdornment: /* @__PURE__ */ jsxs31(Popover, { open, onOpenChange: setOpen, children: [
-        /* @__PURE__ */ jsx38(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx38(
+      rightAdornment: /* @__PURE__ */ jsxs30(Popover, { open, onOpenChange: setOpen, children: [
+        /* @__PURE__ */ jsx39(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx39(
           "button",
           {
             type: "button",
             "aria-label": t.openPicker,
             disabled,
             className: "pointer-events-auto inline-flex size-6 cursor-pointer items-center justify-center rounded-sm hover:bg-black/5 disabled:cursor-not-allowed [&_svg]:size-4",
-            children: /* @__PURE__ */ jsx38(Clock, {})
+            children: /* @__PURE__ */ jsx39(Clock, {})
           }
         ) }),
-        /* @__PURE__ */ jsx38(PopoverContent, { align: "end", sideOffset: 6, className: "p-0", children: /* @__PURE__ */ jsxs31(
+        /* @__PURE__ */ jsx39(PopoverContent, { align: "end", sideOffset: 6, className: "p-0", children: /* @__PURE__ */ jsxs30(
           "div",
           {
             className: cn(
@@ -5089,7 +5064,7 @@ function TimePicker({
             role: "dialog",
             "aria-label": t.picker,
             children: [
-              /* @__PURE__ */ jsx38(
+              /* @__PURE__ */ jsx39(
                 TimeColumn,
                 {
                   ariaLabel: t.hourAria,
@@ -5099,7 +5074,7 @@ function TimePicker({
                   onPick: (next) => applyValue(ampm ? from12Hour(next, period) : next, m)
                 }
               ),
-              /* @__PURE__ */ jsx38(
+              /* @__PURE__ */ jsx39(
                 TimeColumn,
                 {
                   ariaLabel: t.minuteAria,
@@ -5109,7 +5084,7 @@ function TimePicker({
                   onPick: (next) => applyValue(h, next)
                 }
               ),
-              ampm && /* @__PURE__ */ jsx38(
+              ampm && /* @__PURE__ */ jsx39(
                 TimeColumn,
                 {
                   ariaLabel: t.period,
@@ -5124,7 +5099,7 @@ function TimePicker({
           }
         ) })
       ] }),
-      children: /* @__PURE__ */ jsxs31(
+      children: /* @__PURE__ */ jsxs30(
         "div",
         {
           className: cn(
@@ -5151,7 +5126,7 @@ function TimePicker({
             }
           },
           children: [
-            /* @__PURE__ */ jsx38(
+            /* @__PURE__ */ jsx39(
               "input",
               {
                 id: inputId,
@@ -5167,8 +5142,8 @@ function TimePicker({
                 className: "w-8 bg-transparent text-center font-medium tabular-nums outline-none disabled:cursor-not-allowed"
               }
             ),
-            /* @__PURE__ */ jsx38("span", { className: "select-none text-text-tertiary", children: ":" }),
-            /* @__PURE__ */ jsx38(
+            /* @__PURE__ */ jsx39("span", { className: "select-none text-text-tertiary", children: ":" }),
+            /* @__PURE__ */ jsx39(
               "input",
               {
                 type: "text",
@@ -5183,7 +5158,7 @@ function TimePicker({
                 className: "w-8 bg-transparent text-center font-medium tabular-nums outline-none disabled:cursor-not-allowed"
               }
             ),
-            ampm && /* @__PURE__ */ jsx38(
+            ampm && /* @__PURE__ */ jsx39(
               "button",
               {
                 type: "button",
@@ -5194,7 +5169,7 @@ function TimePicker({
                 children: period
               }
             ),
-            /* @__PURE__ */ jsx38("span", { className: "ml-auto", "aria-hidden": "true" })
+            /* @__PURE__ */ jsx39("span", { className: "ml-auto", "aria-hidden": "true" })
           ]
         }
       )
@@ -5223,7 +5198,7 @@ function TimeColumn({
     const maxScrollTop = container.scrollHeight - container.clientHeight;
     container.scrollTop = Math.max(0, Math.min(centered, maxScrollTop));
   }, [selected]);
-  return /* @__PURE__ */ jsx38(
+  return /* @__PURE__ */ jsx39(
     "div",
     {
       ref: containerRef,
@@ -5233,7 +5208,7 @@ function TimeColumn({
       children: items.map((item) => {
         const isSelected = item === selected;
         const disabled = isDisabled?.(item) ?? false;
-        return /* @__PURE__ */ jsx38(
+        return /* @__PURE__ */ jsx39(
           "button",
           {
             type: "button",
@@ -5259,7 +5234,7 @@ function TimeColumn({
 // src/form/NumberStepper.tsx
 import * as React32 from "react";
 import { cva as cva10 } from "class-variance-authority";
-import { jsx as jsx39, jsxs as jsxs32 } from "react/jsx-runtime";
+import { jsx as jsx40, jsxs as jsxs31 } from "react/jsx-runtime";
 var numberStepperVariants = cva10(
   "flex items-center rounded-sm border transition-colors",
   {
@@ -5306,7 +5281,7 @@ var NumberStepper = React32.forwardRef(
       const next = Math.min(max, Math.max(min, base + direction * step));
       onChange(next.toFixed(precision).replace(/\.0+$/, ""));
     };
-    return /* @__PURE__ */ jsxs32(
+    return /* @__PURE__ */ jsxs31(
       "div",
       {
         className: cn(
@@ -5314,7 +5289,7 @@ var NumberStepper = React32.forwardRef(
           className
         ),
         children: [
-          /* @__PURE__ */ jsx39(
+          /* @__PURE__ */ jsx40(
             "button",
             {
               type: "button",
@@ -5325,7 +5300,7 @@ var NumberStepper = React32.forwardRef(
               children: "\u2212"
             }
           ),
-          /* @__PURE__ */ jsx39(
+          /* @__PURE__ */ jsx40(
             "input",
             {
               ref,
@@ -5346,7 +5321,7 @@ var NumberStepper = React32.forwardRef(
               ...props
             }
           ),
-          /* @__PURE__ */ jsx39(
+          /* @__PURE__ */ jsx40(
             "button",
             {
               type: "button",
@@ -5399,7 +5374,7 @@ function groupItems(items, groupBy, groupOrder) {
 var GROUP_HEADING_CLASS = "[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-caption [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-text-tertiary";
 
 // src/form/ComboBox.tsx
-import { Fragment as Fragment10, jsx as jsx40, jsxs as jsxs33 } from "react/jsx-runtime";
+import { Fragment as Fragment10, jsx as jsx41, jsxs as jsxs32 } from "react/jsx-runtime";
 var minHeights2 = {
   sm: "min-h-9",
   md: "min-h-11",
@@ -5465,7 +5440,7 @@ function ComboBox(props) {
       onChange?.(next[0] ?? null);
     }
   };
-  const clearButton = clearable && !isMultiple && selected.length > 0 && !disabled ? /* @__PURE__ */ jsx40(
+  const clearButton = clearable && !isMultiple && selected.length > 0 && !disabled ? /* @__PURE__ */ jsx41(
     "button",
     {
       type: "button",
@@ -5478,7 +5453,7 @@ function ComboBox(props) {
       },
       onPointerDown: (event) => event.stopPropagation(),
       className: "pointer-events-auto cursor-pointer rounded-full p-0.5 hover:bg-overlay-press",
-      children: /* @__PURE__ */ jsx40(X6, { className: "size-4" })
+      children: /* @__PURE__ */ jsx41(X6, { className: "size-4" })
     }
   ) : null;
   const flatOptions = React33.useMemo(
@@ -5524,7 +5499,7 @@ function ComboBox(props) {
   const visible = selected.slice(0, maxVisibleChips);
   const overflow = selected.length - visible.length;
   if (isLoading) {
-    return /* @__PURE__ */ jsx40(
+    return /* @__PURE__ */ jsx41(
       FieldSkeleton,
       {
         label,
@@ -5538,13 +5513,13 @@ function ComboBox(props) {
     );
   }
   const selectedLabel = optionByValue(selected[0])?.label;
-  const optionList = /* @__PURE__ */ jsx40(CmdkRoot.List, { className: "max-h-64 overflow-auto p-1", children: optionsLoading ? /* @__PURE__ */ jsxs33(CmdkRoot.Loading, { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
-    /* @__PURE__ */ jsx40(Spinner2, { size: "sm" }),
+  const optionList = /* @__PURE__ */ jsx41(CmdkRoot.List, { className: "max-h-64 overflow-auto p-1", children: optionsLoading ? /* @__PURE__ */ jsxs32(CmdkRoot.Loading, { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
+    /* @__PURE__ */ jsx41(Spinner, { size: "sm" }),
     loadingText
-  ] }) : /* @__PURE__ */ jsxs33(Fragment10, { children: [
-    /* @__PURE__ */ jsx40(CmdkRoot.Empty, { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: emptyText }),
+  ] }) : /* @__PURE__ */ jsxs32(Fragment10, { children: [
+    /* @__PURE__ */ jsx41(CmdkRoot.Empty, { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: emptyText }),
     renderGroups.map((g) => {
-      const rows = g.items.map((opt) => /* @__PURE__ */ jsx40(
+      const rows = g.items.map((opt) => /* @__PURE__ */ jsx41(
         ComboBoxItem,
         {
           opt,
@@ -5556,7 +5531,7 @@ function ComboBox(props) {
         },
         opt.value
       ));
-      return g.heading == null ? /* @__PURE__ */ jsx40(React33.Fragment, { children: rows }, "__ungrouped") : /* @__PURE__ */ jsx40(
+      return g.heading == null ? /* @__PURE__ */ jsx41(React33.Fragment, { children: rows }, "__ungrouped") : /* @__PURE__ */ jsx41(
         CmdkRoot.Group,
         {
           heading: g.heading,
@@ -5567,20 +5542,20 @@ function ComboBox(props) {
       );
     })
   ] }) });
-  const multiFooter = isMultiple && selected.length > 0 && /* @__PURE__ */ jsxs33("div", { className: "flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption", children: [
-    /* @__PURE__ */ jsxs33("span", { className: "text-text-tertiary", children: [
+  const multiFooter = isMultiple && selected.length > 0 && /* @__PURE__ */ jsxs32("div", { className: "flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption", children: [
+    /* @__PURE__ */ jsxs32("span", { className: "text-text-tertiary", children: [
       selected.length,
       " selected",
       maxItems != null && ` / ${maxItems}`
     ] }),
-    /* @__PURE__ */ jsxs33(
+    /* @__PURE__ */ jsxs32(
       "button",
       {
         type: "button",
         onClick: clearAll,
         className: "flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-cherry-red-600 hover:bg-cherry-red-50",
         children: [
-          /* @__PURE__ */ jsx40(X6, { className: "size-3" }),
+          /* @__PURE__ */ jsx41(X6, { className: "size-3" }),
           "Clear"
         ]
       }
@@ -5597,7 +5572,7 @@ function ComboBox(props) {
        * `display: contents` ทำให้ element นี้ไม่สร้างกล่อง ลูกของมันขึ้นไปเป็น flex item
        * ของผู้เรียกตรง ๆ ⇒ โครงเลย์เอาต์เหมือนโหมดปกติทุกประการ · event กับ context
        * ของ cmdk ยังทำงานครบเพราะ element ยังอยู่ใน DOM */
-      /* @__PURE__ */ jsx40(CmdkRoot, { shouldFilter: !onSearch, className: "contents", children: /* @__PURE__ */ jsxs33(
+      /* @__PURE__ */ jsx41(CmdkRoot, { shouldFilter: !onSearch, className: "contents", children: /* @__PURE__ */ jsxs32(
         Popover,
         {
           open,
@@ -5607,9 +5582,10 @@ function ComboBox(props) {
             if (!next) setQuery("");
           },
           children: [
-            /* @__PURE__ */ jsx40(
+            /* @__PURE__ */ jsx41(
               FloatingFieldShell,
               {
+                disabled,
                 label,
                 hint,
                 error,
@@ -5622,16 +5598,16 @@ function ComboBox(props) {
                 hasError,
                 reserveMessageSpace,
                 containerClassName,
-                rightAdornment: /* @__PURE__ */ jsxs33(Fragment10, { children: [
+                rightAdornment: /* @__PURE__ */ jsxs32(Fragment10, { children: [
                   clearButton,
-                  /* @__PURE__ */ jsx40(
+                  /* @__PURE__ */ jsx41(
                     ChevronDown4,
                     {
                       className: cn("transition-transform", open && "rotate-180")
                     }
                   )
                 ] }),
-                children: /* @__PURE__ */ jsx40(PopoverAnchor, { asChild: true, children: /* @__PURE__ */ jsx40(
+                children: /* @__PURE__ */ jsx41(PopoverAnchor, { asChild: true, children: /* @__PURE__ */ jsx41(
                   CmdkRoot.Input,
                   {
                     ref: typeaheadInputRef,
@@ -5656,7 +5632,7 @@ function ComboBox(props) {
                 ) })
               }
             ),
-            /* @__PURE__ */ jsx40(
+            /* @__PURE__ */ jsx41(
               PopoverContent,
               {
                 className: "w-[var(--radix-popover-trigger-width)] p-0",
@@ -5689,9 +5665,10 @@ function ComboBox(props) {
       ) })
     );
   }
-  return /* @__PURE__ */ jsx40(
+  return /* @__PURE__ */ jsx41(
     FloatingFieldShell,
     {
+      disabled,
       label,
       hint,
       error,
@@ -5704,11 +5681,11 @@ function ComboBox(props) {
       hasError,
       reserveMessageSpace,
       containerClassName,
-      rightAdornment: /* @__PURE__ */ jsxs33(Fragment10, { children: [
+      rightAdornment: /* @__PURE__ */ jsxs32(Fragment10, { children: [
         clearButton,
-        /* @__PURE__ */ jsx40(ChevronsUpDown, {})
+        /* @__PURE__ */ jsx41(ChevronsUpDown, {})
       ] }),
-      children: /* @__PURE__ */ jsxs33(
+      children: /* @__PURE__ */ jsxs32(
         Popover,
         {
           open,
@@ -5717,9 +5694,9 @@ function ComboBox(props) {
             setOpen(next);
           },
           children: [
-            /* @__PURE__ */ jsx40(PopoverTrigger, { asChild: true, children: isMultiple ? (
+            /* @__PURE__ */ jsx41(PopoverTrigger, { asChild: true, children: isMultiple ? (
               /* หลายอัน — กล่อง chip ที่สูงตามจำนวนแถวของ chip */
-              /* @__PURE__ */ jsx40(
+              /* @__PURE__ */ jsx41(
                 "div",
                 {
                   id: triggerId,
@@ -5745,7 +5722,7 @@ function ComboBox(props) {
                     hasError ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40" : "border-border-strong focus:border-brand focus:ring-brand/30",
                     className
                   ),
-                  children: /* @__PURE__ */ jsx40("span", { className: "flex flex-1 flex-wrap items-center gap-1", children: selected.length === 0 ? /* @__PURE__ */ jsx40("span", { className: "text-body-sm text-text-tertiary", children: floating ? placeholder ?? "" : "" }) : /* @__PURE__ */ jsxs33(Fragment10, { children: [
+                  children: /* @__PURE__ */ jsx41("span", { className: "flex flex-1 flex-wrap items-center gap-1", children: selected.length === 0 ? /* @__PURE__ */ jsx41("span", { className: "text-body-sm text-text-tertiary", children: floating ? placeholder ?? "" : "" }) : /* @__PURE__ */ jsxs32(Fragment10, { children: [
                     visible.map((v) => {
                       const opt = optionByValue(v) ?? {
                         value: v,
@@ -5753,9 +5730,9 @@ function ComboBox(props) {
                       };
                       const locked = isLocked(opt);
                       if (renderChip) {
-                        return /* @__PURE__ */ jsx40(React33.Fragment, { children: renderChip(opt, { locked }) }, v);
+                        return /* @__PURE__ */ jsx41(React33.Fragment, { children: renderChip(opt, { locked }) }, v);
                       }
-                      return /* @__PURE__ */ jsx40(
+                      return /* @__PURE__ */ jsx41(
                         Chip,
                         {
                           size: "sm",
@@ -5765,15 +5742,15 @@ function ComboBox(props) {
                             e.stopPropagation();
                             remove(v);
                           },
-                          children: /* @__PURE__ */ jsxs33("span", { className: "inline-flex items-center gap-1", children: [
-                            locked && /* @__PURE__ */ jsx40(Lock, { className: "size-3 shrink-0", "aria-hidden": true }),
+                          children: /* @__PURE__ */ jsxs32("span", { className: "inline-flex items-center gap-1", children: [
+                            locked && /* @__PURE__ */ jsx41(Lock, { className: "size-3 shrink-0", "aria-hidden": true }),
                             opt.label
                           ] })
                         },
                         v
                       );
                     }),
-                    overflow > 0 && /* @__PURE__ */ jsxs33(Chip, { size: "sm", variant: "neutral", children: [
+                    overflow > 0 && /* @__PURE__ */ jsxs32(Chip, { size: "sm", variant: "neutral", children: [
                       "+",
                       overflow
                     ] })
@@ -5782,7 +5759,7 @@ function ComboBox(props) {
               )
             ) : (
               /* อันเดียว — ปุ่มที่โชว์ป้ายของตัวที่เลือก ตัดท้ายถ้ายาวเกิน */
-              /* @__PURE__ */ jsx40(
+              /* @__PURE__ */ jsx41(
                 "button",
                 {
                   id: triggerId,
@@ -5796,17 +5773,17 @@ function ComboBox(props) {
                     !selectedLabel && "text-text-tertiary",
                     className
                   ),
-                  children: /* @__PURE__ */ jsx40("span", { className: "truncate", children: selectedLabel ?? (floating ? placeholder ?? "" : "") })
+                  children: /* @__PURE__ */ jsx41("span", { className: "truncate", children: selectedLabel ?? (floating ? placeholder ?? "" : "") })
                 }
               )
             ) }),
-            /* @__PURE__ */ jsx40(
+            /* @__PURE__ */ jsx41(
               PopoverContent,
               {
                 className: "w-[var(--radix-popover-trigger-width)] p-0",
                 align: "start",
-                children: /* @__PURE__ */ jsxs33(CmdkRoot, { shouldFilter: !onSearch, className: "flex w-full flex-col", children: [
-                  /* @__PURE__ */ jsx40(
+                children: /* @__PURE__ */ jsxs32(CmdkRoot, { shouldFilter: !onSearch, className: "flex w-full flex-col", children: [
+                  /* @__PURE__ */ jsx41(
                     CmdkRoot.Input,
                     {
                       value: query,
@@ -5839,7 +5816,7 @@ function ComboBoxItem({
 }) {
   const checked = selected.includes(opt.value);
   const capped = !checked && maxItems != null && selected.length >= maxItems;
-  return /* @__PURE__ */ jsx40(
+  return /* @__PURE__ */ jsx41(
     CmdkRoot.Item,
     {
       value: opt.label,
@@ -5856,12 +5833,12 @@ function ComboBoxItem({
         selected: checked,
         locked,
         disabled: Boolean(opt.disabled) || capped
-      }) : /* @__PURE__ */ jsxs33(Fragment10, { children: [
-        /* @__PURE__ */ jsxs33("span", { className: "flex flex-col", children: [
-          /* @__PURE__ */ jsx40("span", { children: opt.label }),
-          opt.description && /* @__PURE__ */ jsx40("span", { className: "text-caption text-text-tertiary", children: opt.description })
+      }) : /* @__PURE__ */ jsxs32(Fragment10, { children: [
+        /* @__PURE__ */ jsxs32("span", { className: "flex flex-col", children: [
+          /* @__PURE__ */ jsx41("span", { children: opt.label }),
+          opt.description && /* @__PURE__ */ jsx41("span", { className: "text-caption text-text-tertiary", children: opt.description })
         ] }),
-        locked ? /* @__PURE__ */ jsx40(Lock, { className: "size-3.5 shrink-0 text-text-tertiary", "aria-hidden": true }) : checked && /* @__PURE__ */ jsx40(Check5, { className: "size-4 text-text-primary" })
+        locked ? /* @__PURE__ */ jsx41(Lock, { className: "size-3.5 shrink-0 text-text-tertiary", "aria-hidden": true }) : checked && /* @__PURE__ */ jsx41(Check5, { className: "size-4 text-text-primary" })
       ] })
     }
   );
@@ -5870,7 +5847,7 @@ function ComboBoxItem({
 // src/form/SearchSelect.tsx
 import * as React34 from "react";
 import { Check as Check6, ChevronsUpDown as ChevronsUpDown2, X as X7 } from "lucide-react";
-import { jsx as jsx41, jsxs as jsxs34 } from "react/jsx-runtime";
+import { jsx as jsx42, jsxs as jsxs33 } from "react/jsx-runtime";
 var SearchSelect = ({
   label,
   placeholder,
@@ -5961,9 +5938,10 @@ var SearchSelect = ({
   };
   const shown = term !== "" ? term : value ? getOptionLabel(value) : "";
   const hasValue = Boolean(value) || term.length > 0;
-  return /* @__PURE__ */ jsx41(
+  return /* @__PURE__ */ jsx42(
     FloatingFieldShell,
     {
+      disabled,
       label,
       hint,
       error,
@@ -5980,7 +5958,7 @@ var SearchSelect = ({
         /* 🔑 ปุ่มล้างแทนลูกศรเมื่อมีค่า **และ** เปิด `clearable` ⛔ ไม่วางซ้อนกันสองอัน —
            ช่องกว้าง 37px ตามดีไซน์ของแถบขอบเขต ใส่สองไอคอนแล้วตัวอักษรจะไปมุดใต้ปุ่ม
            `pointer-events-auto` เพราะ shell ปิด pointer ของ adornment ไว้ (ไม่งั้นมันทับช่อง) */
-        clearable && value !== null && !disabled ? /* @__PURE__ */ jsx41(
+        clearable && value !== null && !disabled ? /* @__PURE__ */ jsx42(
           "button",
           {
             type: "button",
@@ -5993,12 +5971,12 @@ var SearchSelect = ({
               setTerm("");
               setOpen(false);
             },
-            children: /* @__PURE__ */ jsx41(X7, { className: "size-4" })
+            children: /* @__PURE__ */ jsx42(X7, { className: "size-4" })
           }
-        ) : /* @__PURE__ */ jsx41(ChevronsUpDown2, { className: "size-4 text-text-tertiary" })
+        ) : /* @__PURE__ */ jsx42(ChevronsUpDown2, { className: "size-4 text-text-tertiary" })
       ),
-      children: /* @__PURE__ */ jsxs34("div", { ref: rootRef, className: "relative w-full", children: [
-        /* @__PURE__ */ jsx41(
+      children: /* @__PURE__ */ jsxs33("div", { ref: rootRef, className: "relative w-full", children: [
+        /* @__PURE__ */ jsx42(
           "input",
           {
             ref: inputRef,
@@ -6033,20 +6011,20 @@ var SearchSelect = ({
            (`tokens.guard.test.ts`) · เป็น token ตัวเดียวกับที่ `DataTable` ใช้เป็นพื้น surface
            ⚠️ ด่านนั้น **สแกนคอมเมนต์ด้วย** ⇒ ห้ามเขียนชื่อคลาสสีดิบไว้ในเนื้อคอมเมนต์เอง
            (เจอจริงตอนเขียนไฟล์นี้: คอมเมนต์ที่อธิบายว่าอย่าใช้ กลายเป็นตัวทำให้ด่านแดง) */
-        /* @__PURE__ */ jsx41(
+        /* @__PURE__ */ jsx42(
           "div",
           {
             id: listboxId,
             role: "listbox",
             className: "absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-auto rounded-sm border border-border-default bg-bg-default p-1 shadow-lg",
-            children: optionsLoading ? /* @__PURE__ */ jsxs34("div", { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
-              /* @__PURE__ */ jsx41(Spinner2, { size: "sm" }),
+            children: optionsLoading ? /* @__PURE__ */ jsxs33("div", { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
+              /* @__PURE__ */ jsx42(Spinner, { size: "sm" }),
               hintText
-            ] }) : visible.length === 0 ? /* @__PURE__ */ jsx41("div", { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: isSearching || minChars === 0 ? emptyText : hintText }) : visible.map((option, index) => {
+            ] }) : visible.length === 0 ? /* @__PURE__ */ jsx42("div", { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: isSearching || minChars === 0 ? emptyText : hintText }) : visible.map((option, index) => {
               const key = getOptionValue(option);
               const selected = value !== null && getOptionValue(value) === key;
               const description = getOptionDescription?.(option);
-              return /* @__PURE__ */ jsxs34(
+              return /* @__PURE__ */ jsxs33(
                 "div",
                 {
                   role: "option",
@@ -6063,11 +6041,11 @@ var SearchSelect = ({
                     selected && "font-medium"
                   ),
                   children: [
-                    /* @__PURE__ */ jsxs34("span", { className: "flex min-w-0 flex-col", children: [
-                      /* @__PURE__ */ jsx41("span", { className: "truncate text-text-black", children: getOptionLabel(option) }),
-                      description && /* @__PURE__ */ jsx41("span", { className: "truncate text-caption text-text-tertiary", children: description })
+                    /* @__PURE__ */ jsxs33("span", { className: "flex min-w-0 flex-col", children: [
+                      /* @__PURE__ */ jsx42("span", { className: "truncate text-text-black", children: getOptionLabel(option) }),
+                      description && /* @__PURE__ */ jsx42("span", { className: "truncate text-caption text-text-tertiary", children: description })
                     ] }),
-                    selected && /* @__PURE__ */ jsx41(Check6, { className: "size-4 shrink-0 text-brand" })
+                    selected && /* @__PURE__ */ jsx42(Check6, { className: "size-4 shrink-0 text-brand" })
                   ]
                 },
                 key
@@ -6084,7 +6062,7 @@ var SearchSelect = ({
 import * as React35 from "react";
 import { Command as CmdkRoot2 } from "cmdk";
 import { Check as Check7, ChevronsUpDown as ChevronsUpDown3, Lock as Lock2, TriangleAlert } from "lucide-react";
-import { Fragment as Fragment12, jsx as jsx42, jsxs as jsxs35 } from "react/jsx-runtime";
+import { Fragment as Fragment12, jsx as jsx43, jsxs as jsxs34 } from "react/jsx-runtime";
 var minHeights3 = {
   sm: "min-h-9",
   md: "min-h-11",
@@ -6207,7 +6185,7 @@ function EntityAutocomplete(props) {
     const checked = selectedItems.some((i) => keyOf(i) === k);
     const capped = isMultiple && !checked && maxItems != null && selectedItems.length >= maxItems;
     const locked = lockedOf(item);
-    return /* @__PURE__ */ jsx42(
+    return /* @__PURE__ */ jsx43(
       CmdkRoot2.Item,
       {
         value: k,
@@ -6224,19 +6202,19 @@ function EntityAutocomplete(props) {
           selected: checked,
           locked,
           disabled: capped
-        }) : /* @__PURE__ */ jsxs35(Fragment12, { children: [
-          /* @__PURE__ */ jsxs35("span", { className: "flex flex-col", children: [
-            /* @__PURE__ */ jsx42("span", { children: getOptionLabel(item) }),
-            getOptionDescription && /* @__PURE__ */ jsx42("span", { className: "text-caption text-text-tertiary", children: getOptionDescription(item) })
+        }) : /* @__PURE__ */ jsxs34(Fragment12, { children: [
+          /* @__PURE__ */ jsxs34("span", { className: "flex flex-col", children: [
+            /* @__PURE__ */ jsx43("span", { children: getOptionLabel(item) }),
+            getOptionDescription && /* @__PURE__ */ jsx43("span", { className: "text-caption text-text-tertiary", children: getOptionDescription(item) })
           ] }),
-          locked ? /* @__PURE__ */ jsx42(Lock2, { className: "size-3.5 shrink-0 text-text-tertiary", "aria-hidden": true }) : checked && /* @__PURE__ */ jsx42(Check7, { className: "size-4 text-text-primary" })
+          locked ? /* @__PURE__ */ jsx43(Lock2, { className: "size-3.5 shrink-0 text-text-tertiary", "aria-hidden": true }) : checked && /* @__PURE__ */ jsx43(Check7, { className: "size-4 text-text-primary" })
         ] })
       },
       k
     );
   };
   if (isLoading) {
-    return /* @__PURE__ */ jsx42(
+    return /* @__PURE__ */ jsx43(
       FieldSkeleton,
       {
         label,
@@ -6248,9 +6226,10 @@ function EntityAutocomplete(props) {
       }
     );
   }
-  return /* @__PURE__ */ jsx42(
+  return /* @__PURE__ */ jsx43(
     FloatingFieldShell,
     {
+      disabled,
       label,
       hint,
       error,
@@ -6263,8 +6242,8 @@ function EntityAutocomplete(props) {
       focused: open,
       hasError,
       containerClassName,
-      rightAdornment: /* @__PURE__ */ jsx42(ChevronsUpDown3, {}),
-      children: /* @__PURE__ */ jsxs35(
+      rightAdornment: /* @__PURE__ */ jsx43(ChevronsUpDown3, {}),
+      children: /* @__PURE__ */ jsxs34(
         Popover,
         {
           open,
@@ -6273,7 +6252,7 @@ function EntityAutocomplete(props) {
             setOpen(next);
           },
           children: [
-            /* @__PURE__ */ jsx42(PopoverTrigger, { asChild: true, children: isMultiple ? /* @__PURE__ */ jsx42(
+            /* @__PURE__ */ jsx43(PopoverTrigger, { asChild: true, children: isMultiple ? /* @__PURE__ */ jsx43(
               "div",
               {
                 id: triggerId,
@@ -6299,14 +6278,14 @@ function EntityAutocomplete(props) {
                   hasError ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40" : "border-border-strong focus:border-brand focus:ring-brand/30",
                   className
                 ),
-                children: /* @__PURE__ */ jsx42("span", { className: "flex flex-1 flex-wrap items-center gap-1", children: selectedItems.length === 0 ? /* @__PURE__ */ jsx42("span", { className: "text-body-sm text-text-tertiary", children: floating ? placeholder ?? "" : "" }) : /* @__PURE__ */ jsxs35(Fragment12, { children: [
+                children: /* @__PURE__ */ jsx43("span", { className: "flex flex-1 flex-wrap items-center gap-1", children: selectedItems.length === 0 ? /* @__PURE__ */ jsx43("span", { className: "text-body-sm text-text-tertiary", children: floating ? placeholder ?? "" : "" }) : /* @__PURE__ */ jsxs34(Fragment12, { children: [
                   visible.map((item) => {
                     const k = keyOf(item);
                     const locked = lockedOf(item);
                     if (renderChip) {
-                      return /* @__PURE__ */ jsx42(React35.Fragment, { children: renderChip(item, { locked }) }, k);
+                      return /* @__PURE__ */ jsx43(React35.Fragment, { children: renderChip(item, { locked }) }, k);
                     }
-                    return /* @__PURE__ */ jsx42(
+                    return /* @__PURE__ */ jsx43(
                       Chip,
                       {
                         size: "sm",
@@ -6316,21 +6295,21 @@ function EntityAutocomplete(props) {
                           e.stopPropagation();
                           removeItem(item);
                         },
-                        children: /* @__PURE__ */ jsxs35("span", { className: "inline-flex items-center gap-1", children: [
-                          locked && /* @__PURE__ */ jsx42(Lock2, { className: "size-3 shrink-0", "aria-hidden": true }),
+                        children: /* @__PURE__ */ jsxs34("span", { className: "inline-flex items-center gap-1", children: [
+                          locked && /* @__PURE__ */ jsx43(Lock2, { className: "size-3 shrink-0", "aria-hidden": true }),
                           getOptionLabel(item)
                         ] })
                       },
                       k
                     );
                   }),
-                  overflow > 0 && /* @__PURE__ */ jsxs35(Chip, { size: "sm", variant: "neutral", children: [
+                  overflow > 0 && /* @__PURE__ */ jsxs34(Chip, { size: "sm", variant: "neutral", children: [
                     "+",
                     overflow
                   ] })
                 ] }) })
               }
-            ) : /* @__PURE__ */ jsx42(
+            ) : /* @__PURE__ */ jsx43(
               "button",
               {
                 id: triggerId,
@@ -6344,16 +6323,16 @@ function EntityAutocomplete(props) {
                   !selectedItems[0] && "text-text-tertiary",
                   className
                 ),
-                children: /* @__PURE__ */ jsx42("span", { className: "truncate", children: selectedItems[0] ? getOptionLabel(selectedItems[0]) : floating ? placeholder ?? "" : "" })
+                children: /* @__PURE__ */ jsx43("span", { className: "truncate", children: selectedItems[0] ? getOptionLabel(selectedItems[0]) : floating ? placeholder ?? "" : "" })
               }
             ) }),
-            /* @__PURE__ */ jsx42(
+            /* @__PURE__ */ jsx43(
               PopoverContent,
               {
                 className: "w-[var(--radix-popover-trigger-width)] p-0",
                 align: "start",
-                children: /* @__PURE__ */ jsxs35(CmdkRoot2, { shouldFilter: false, className: "flex w-full flex-col", children: [
-                  /* @__PURE__ */ jsx42(
+                children: /* @__PURE__ */ jsxs34(CmdkRoot2, { shouldFilter: false, className: "flex w-full flex-col", children: [
+                  /* @__PURE__ */ jsx43(
                     CmdkRoot2.Input,
                     {
                       value: query,
@@ -6362,17 +6341,17 @@ function EntityAutocomplete(props) {
                       className: "border-b border-border-default px-3 py-2 text-body-sm outline-none placeholder:text-text-tertiary"
                     }
                   ),
-                  /* @__PURE__ */ jsx42(CmdkRoot2.List, { className: "max-h-64 overflow-auto p-1", children: optionsLoading ? /* @__PURE__ */ jsxs35(CmdkRoot2.Loading, { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
-                    /* @__PURE__ */ jsx42(Spinner2, { size: "sm" }),
+                  /* @__PURE__ */ jsx43(CmdkRoot2.List, { className: "max-h-64 overflow-auto p-1", children: optionsLoading ? /* @__PURE__ */ jsxs34(CmdkRoot2.Loading, { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
+                    /* @__PURE__ */ jsx43(Spinner, { size: "sm" }),
                     loadingText
-                  ] }) : searchError ? /* @__PURE__ */ jsxs35("div", { className: "flex items-center justify-center gap-2 px-3 py-6 text-center text-body-sm text-cherry-red-600", children: [
-                    /* @__PURE__ */ jsx42(TriangleAlert, { className: "size-4 shrink-0" }),
+                  ] }) : searchError ? /* @__PURE__ */ jsxs34("div", { className: "flex items-center justify-center gap-2 px-3 py-6 text-center text-body-sm text-cherry-red-600", children: [
+                    /* @__PURE__ */ jsx43(TriangleAlert, { className: "size-4 shrink-0" }),
                     searchError
-                  ] }) : /* @__PURE__ */ jsxs35(Fragment12, { children: [
-                    /* @__PURE__ */ jsx42(CmdkRoot2.Empty, { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: emptyText }),
+                  ] }) : /* @__PURE__ */ jsxs34(Fragment12, { children: [
+                    /* @__PURE__ */ jsx43(CmdkRoot2.Empty, { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: emptyText }),
                     renderGroups.map((g) => {
                       const rows = g.items.map(renderRow);
-                      return g.heading == null ? /* @__PURE__ */ jsx42(React35.Fragment, { children: rows }, "__ungrouped") : /* @__PURE__ */ jsx42(
+                      return g.heading == null ? /* @__PURE__ */ jsx43(React35.Fragment, { children: rows }, "__ungrouped") : /* @__PURE__ */ jsx43(
                         CmdkRoot2.Group,
                         {
                           heading: g.heading,
@@ -6383,13 +6362,13 @@ function EntityAutocomplete(props) {
                       );
                     })
                   ] }) }),
-                  isMultiple && selectedItems.length > 0 && /* @__PURE__ */ jsxs35("div", { className: "flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption", children: [
-                    /* @__PURE__ */ jsxs35("span", { className: "text-text-tertiary", children: [
+                  isMultiple && selectedItems.length > 0 && /* @__PURE__ */ jsxs34("div", { className: "flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption", children: [
+                    /* @__PURE__ */ jsxs34("span", { className: "text-text-tertiary", children: [
                       selectedItems.length,
                       " selected",
                       maxItems != null && ` / ${maxItems}`
                     ] }),
-                    /* @__PURE__ */ jsx42(
+                    /* @__PURE__ */ jsx43(
                       "button",
                       {
                         type: "button",
@@ -6411,9 +6390,9 @@ function EntityAutocomplete(props) {
 
 // src/data/Table.tsx
 import * as React36 from "react";
-import { jsx as jsx43 } from "react/jsx-runtime";
+import { jsx as jsx44 } from "react/jsx-runtime";
 var Table = React36.forwardRef(function Table2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx43("div", { className: "relative w-full overflow-auto", children: /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44("div", { className: "relative w-full overflow-auto", children: /* @__PURE__ */ jsx44(
     "table",
     {
       ref,
@@ -6423,7 +6402,7 @@ var Table = React36.forwardRef(function Table2({ className, ...props }, ref) {
   ) });
 });
 var TableHeader = React36.forwardRef(function TableHeader2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44(
     "thead",
     {
       ref,
@@ -6433,7 +6412,7 @@ var TableHeader = React36.forwardRef(function TableHeader2({ className, ...props
   );
 });
 var TableBody = React36.forwardRef(function TableBody2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44(
     "tbody",
     {
       ref,
@@ -6443,7 +6422,7 @@ var TableBody = React36.forwardRef(function TableBody2({ className, ...props }, 
   );
 });
 var TableFooter = React36.forwardRef(function TableFooter2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44(
     "tfoot",
     {
       ref,
@@ -6456,7 +6435,7 @@ var TableFooter = React36.forwardRef(function TableFooter2({ className, ...props
   );
 });
 var TableRow = React36.forwardRef(function TableRow2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44(
     "tr",
     {
       ref,
@@ -6471,7 +6450,7 @@ var TableRow = React36.forwardRef(function TableRow2({ className, ...props }, re
   );
 });
 var TableHead = React36.forwardRef(function TableHead2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44(
     "th",
     {
       ref,
@@ -6497,7 +6476,7 @@ var TableHead = React36.forwardRef(function TableHead2({ className, ...props }, 
   );
 });
 var TableCell = React36.forwardRef(function TableCell2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44(
     "td",
     {
       ref,
@@ -6537,7 +6516,7 @@ var TableCell = React36.forwardRef(function TableCell2({ className, ...props }, 
   );
 });
 var TableCaption = React36.forwardRef(function TableCaption2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx43(
+  return /* @__PURE__ */ jsx44(
     "caption",
     {
       ref,
@@ -6574,7 +6553,7 @@ import {
 
 // src/feedback/EmptyState.tsx
 import { AlertTriangle } from "lucide-react";
-import { jsx as jsx44, jsxs as jsxs36 } from "react/jsx-runtime";
+import { jsx as jsx45, jsxs as jsxs35 } from "react/jsx-runtime";
 var toneBg = {
   /* ตัวเดียวที่เปลี่ยนตามแอป — อีก 5 ตัวเป็นสีความหมาย (สำเร็จ/เตือน/ผิดพลาด)
    * ซึ่งต้องเหมือนกันทุกแอปโดยตั้งใจ */
@@ -6611,14 +6590,14 @@ function StateBlock({
   const media = image ?? icon;
   const shape = mediaShape ?? (image ? "none" : "circle");
   const showBadge = shape !== "none" && tone !== "none";
-  return /* @__PURE__ */ jsx44(
+  return /* @__PURE__ */ jsx45(
     "div",
     {
       className: cn("flex w-full justify-center p-3", className),
       style: { ...minHeight != null ? { minHeight } : null, ...style },
       ...props,
-      children: /* @__PURE__ */ jsxs36("div", { className: "w-full max-w-[600px] rounded-xl bg-bg-default p-8 text-center", children: [
-        media && /* @__PURE__ */ jsx44("div", { className: cn("flex justify-center", sz.gap), children: showBadge ? /* @__PURE__ */ jsx44(
+      children: /* @__PURE__ */ jsxs35("div", { className: "w-full max-w-[600px] rounded-xl bg-bg-default p-8 text-center", children: [
+        media && /* @__PURE__ */ jsx45("div", { className: cn("flex justify-center", sz.gap), children: showBadge ? /* @__PURE__ */ jsx45(
           "div",
           {
             className: cn(
@@ -6633,8 +6612,8 @@ function StateBlock({
             ),
             children: media
           }
-        ) : /* @__PURE__ */ jsx44("div", { className: cn(image ? "[&_img]:max-h-40 [&_img]:w-auto" : sz.glyph, mediaClassName), children: media }) }),
-        title && /* @__PURE__ */ jsx44(
+        ) : /* @__PURE__ */ jsx45("div", { className: cn(image ? "[&_img]:max-h-40 [&_img]:w-auto" : sz.glyph, mediaClassName), children: media }) }),
+        title && /* @__PURE__ */ jsx45(
           "h2",
           {
             className: cn(
@@ -6644,14 +6623,14 @@ function StateBlock({
             children: title
           }
         ),
-        description && /* @__PURE__ */ jsx44("p", { className: "text-body-md leading-[1.7] text-text-tertiary", children: description }),
-        action && /* @__PURE__ */ jsx44("div", { className: "mt-8 flex justify-center", children: action })
+        description && /* @__PURE__ */ jsx45("p", { className: "text-body-md leading-[1.7] text-text-tertiary", children: description }),
+        action && /* @__PURE__ */ jsx45("div", { className: "mt-8 flex justify-center", children: action })
       ] })
     }
   );
 }
 function EmptyState({ iconTone, tone, ...props }) {
-  return /* @__PURE__ */ jsx44(StateBlock, { tone: tone ?? iconTone ?? "brand", ...props });
+  return /* @__PURE__ */ jsx45(StateBlock, { tone: tone ?? iconTone ?? "brand", ...props });
 }
 function ErrorState({
   icon,
@@ -6663,13 +6642,13 @@ function ErrorState({
   error: _error,
   ...props
 }) {
-  return /* @__PURE__ */ jsx44(
+  return /* @__PURE__ */ jsx45(
     StateBlock,
     {
       tone,
-      icon: image ? void 0 : icon ?? /* @__PURE__ */ jsx44(AlertTriangle, {}),
+      icon: image ? void 0 : icon ?? /* @__PURE__ */ jsx45(AlertTriangle, {}),
       image,
-      action: action ?? (onRetry ? /* @__PURE__ */ jsx44(RetryButton, { onClick: onRetry, children: retryLabel ?? "Retry" }) : void 0),
+      action: action ?? (onRetry ? /* @__PURE__ */ jsx45(RetryButton, { onClick: onRetry, children: retryLabel ?? "Retry" }) : void 0),
       ...props
     }
   );
@@ -6678,7 +6657,7 @@ function RetryButton({
   children,
   onClick
 }) {
-  return /* @__PURE__ */ jsx44(
+  return /* @__PURE__ */ jsx45(
     "button",
     {
       type: "button",
@@ -6691,7 +6670,7 @@ function RetryButton({
 
 // src/data/table-groups.tsx
 import { ChevronDown as ChevronDown5 } from "lucide-react";
-import { jsx as jsx45, jsxs as jsxs37 } from "react/jsx-runtime";
+import { jsx as jsx46, jsxs as jsxs36 } from "react/jsx-runtime";
 function resolveGroups(rows, groupBy, groupOrder, collapsedKeys) {
   const collapsed = new Set(collapsedKeys);
   return groupItems(rows, (row) => groupBy(row.original), groupOrder).map(
@@ -6710,7 +6689,7 @@ function DataTableGroupRow({
   onToggle,
   toggleAriaLabel
 }) {
-  return /* @__PURE__ */ jsx45(TableRow, { className: "border-t border-divider-gray hover:bg-transparent", children: /* @__PURE__ */ jsx45(
+  return /* @__PURE__ */ jsx46(TableRow, { className: "border-t border-divider-gray hover:bg-transparent", children: /* @__PURE__ */ jsx46(
     TableHead,
     {
       scope: "colgroup",
@@ -6720,7 +6699,7 @@ function DataTableGroupRow({
          * และต้องตัดบรรทัดได้ เพราะป้ายกลุ่มเป็นข้อความยาว (ชื่อวันที่เต็ม) ไม่ใช่ชื่อคอลัมน์ */
         "h-auto whitespace-normal bg-bg-table-header py-2.5 font-semibold"
       ),
-      children: collapsible ? /* @__PURE__ */ jsxs37(
+      children: collapsible ? /* @__PURE__ */ jsxs36(
         "button",
         {
           type: "button",
@@ -6729,7 +6708,7 @@ function DataTableGroupRow({
           "aria-label": toggleAriaLabel,
           className: "-mx-1 flex cursor-pointer items-center gap-1.5 rounded-sm px-1 py-0.5 hover:bg-overlay-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-brand",
           children: [
-            /* @__PURE__ */ jsx45(
+            /* @__PURE__ */ jsx46(
               ChevronDown5,
               {
                 "aria-hidden": true,
@@ -6832,7 +6811,7 @@ function frozenCellProps(frozen, kind) {
 }
 
 // src/data/DataTable.tsx
-import { Fragment as Fragment14, jsx as jsx46, jsxs as jsxs38 } from "react/jsx-runtime";
+import { Fragment as Fragment14, jsx as jsx47, jsxs as jsxs37 } from "react/jsx-runtime";
 function DataTable({
   columns,
   data,
@@ -6924,7 +6903,7 @@ function DataTable({
         const rows = table2.getRowModel().rows;
         const selectable = rows.filter((r) => r.getCanSelect());
         const picked = selectable.filter((r) => r.getIsSelected()).length;
-        return /* @__PURE__ */ jsx46("div", { className: "flex justify-center", children: /* @__PURE__ */ jsx46(
+        return /* @__PURE__ */ jsx47("div", { className: "flex justify-center", children: /* @__PURE__ */ jsx47(
           Checkbox,
           {
             checked: selectable.length > 0 && picked === selectable.length ? true : picked > 0 ? "indeterminate" : false,
@@ -6941,7 +6920,7 @@ function DataTable({
           }
         ) });
       },
-      cell: ({ row }) => /* @__PURE__ */ jsx46("div", { className: "flex justify-center", onClick: (e) => e.stopPropagation(), children: /* @__PURE__ */ jsx46(
+      cell: ({ row }) => /* @__PURE__ */ jsx47("div", { className: "flex justify-center", onClick: (e) => e.stopPropagation(), children: /* @__PURE__ */ jsx47(
         Checkbox,
         {
           checked: row.getIsSelected(),
@@ -6995,8 +6974,8 @@ function DataTable({
      * เพราะแถบมี `py-4` ของตัวเองอยู่แล้ว ⇒ ของ Portal วัดจากขอบการ์ดถึงตัวหนังสือ
      * ได้ 38 ซึ่งดูหลุดจากตาราง · ลดเหลือ 4 แล้วได้ 26 แถบยังไม่ติดขอบการ์ด
      * เพราะ padding ของตัวมันเองกันไว้ */
-    /* @__PURE__ */ jsxs38("div", { className: cn("flex min-h-0 flex-col gap-1", className), children: [
-      /* @__PURE__ */ jsx46(
+    /* @__PURE__ */ jsxs37("div", { className: cn("flex min-h-0 flex-col gap-1", className), children: [
+      /* @__PURE__ */ jsx47(
         "div",
         {
           className: cn(
@@ -7013,7 +6992,7 @@ function DataTable({
                ไม่งั้นได้กรอบซ้อนกันสองชั้น (ดู `cardClassName` ใน props) */
             cardClassName
           ),
-          children: /* @__PURE__ */ jsx46(
+          children: /* @__PURE__ */ jsx47(
             "div",
             {
               className: cn(
@@ -7038,14 +7017,14 @@ function DataTable({
                 hasFrozen && "[&>div]:h-full",
                 containerClassName
               ),
-              children: /* @__PURE__ */ jsxs38(
+              children: /* @__PURE__ */ jsxs37(
                 Table,
                 {
                   ref: tableRef,
                   className: hasFrozen ? "h-full" : void 0,
                   style: minTableWidth != null ? { minWidth: minTableWidth } : void 0,
                   children: [
-                    /* @__PURE__ */ jsx46(
+                    /* @__PURE__ */ jsx47(
                       TableHeader,
                       {
                         className: cn(
@@ -7061,11 +7040,11 @@ function DataTable({
                            * ต้องสูงกว่า 20 เสมอ: หัวตารางบังทุกอย่างที่เลื่อนผ่านใต้มัน */
                           stickyHeader && "sticky top-0 z-30 shadow-[0_1px_0_0_#0000001f]"
                         ),
-                        children: table.getHeaderGroups().map((hg) => /* @__PURE__ */ jsx46(TableRow, { className: "hover:bg-transparent", children: hg.headers.map((header) => {
+                        children: table.getHeaderGroups().map((hg) => /* @__PURE__ */ jsx47(TableRow, { className: "hover:bg-transparent", children: hg.headers.map((header) => {
                           const sortable = header.column.getCanSort();
                           const sortDir = header.column.getIsSorted();
                           const pin = frozenCellProps(frozen[header.column.id], "head");
-                          return /* @__PURE__ */ jsx46(
+                          return /* @__PURE__ */ jsx47(
                             TableHead,
                             {
                               "data-col-id": header.column.id,
@@ -7083,7 +7062,7 @@ function DataTable({
                                 } : null,
                                 ...pin.style
                               },
-                              children: header.isPlaceholder ? null : sortable ? /* @__PURE__ */ jsxs38(
+                              children: header.isPlaceholder ? null : sortable ? /* @__PURE__ */ jsxs37(
                                 "button",
                                 {
                                   type: "button",
@@ -7094,7 +7073,7 @@ function DataTable({
                                       header.column.columnDef.header,
                                       header.getContext()
                                     ),
-                                    sortDir === "asc" ? /* @__PURE__ */ jsx46(ArrowUp, { className: "size-3" }) : sortDir === "desc" ? /* @__PURE__ */ jsx46(ArrowDown, { className: "size-3" }) : /* @__PURE__ */ jsx46(ChevronsUpDown4, { className: "size-3 opacity-60" })
+                                    sortDir === "asc" ? /* @__PURE__ */ jsx47(ArrowUp, { className: "size-3" }) : sortDir === "desc" ? /* @__PURE__ */ jsx47(ArrowDown, { className: "size-3" }) : /* @__PURE__ */ jsx47(ChevronsUpDown4, { className: "size-3 opacity-60" })
                                   ]
                                 }
                               ) : flexRender(
@@ -7107,20 +7086,20 @@ function DataTable({
                         }) }, hg.id))
                       }
                     ),
-                    /* @__PURE__ */ jsxs38(
+                    /* @__PURE__ */ jsxs37(
                       TableBody,
                       {
                         className: showFiller ? "[&_tr:nth-last-child(2)]:border-b-0" : void 0,
                         children: [
-                          isLoading ? /* @__PURE__ */ jsx46(
+                          isLoading ? /* @__PURE__ */ jsx47(
                             SkeletonRows,
                             {
                               columnCount: finalColumns.length,
                               rowCount: skeletonRowCount ?? Math.min(pagination?.pageSize ?? 5, 10)
                             }
-                          ) : error ? /* @__PURE__ */ jsx46(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx46(TableCell, { colSpan: finalColumns.length, className: "p-0", children: renderError ? renderError({ error, retry: onRetry }) : errorSlot ?? /* ใช้ `ErrorState` ตัวเดียวกับที่แอปใช้ ไม่ประกอบเองในตาราง —
+                          ) : error ? /* @__PURE__ */ jsx47(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx47(TableCell, { colSpan: finalColumns.length, className: "p-0", children: renderError ? renderError({ error, retry: onRetry }) : errorSlot ?? /* ใช้ `ErrorState` ตัวเดียวกับที่แอปใช้ ไม่ประกอบเองในตาราง —
                            * ไม่งั้นสถานะผิดพลาดในตารางจะหน้าตาต่างจากที่อื่นในจอเดียวกัน */
-                          /* @__PURE__ */ jsx46(
+                          /* @__PURE__ */ jsx47(
                             ErrorState,
                             {
                               error,
@@ -7130,7 +7109,7 @@ function DataTable({
                               onRetry,
                               retryLabel: labels?.retry ?? "Retry"
                             }
-                          ) }) }) : table.getRowModel().rows.length === 0 ? /* @__PURE__ */ jsx46(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx46(
+                          ) }) }) : table.getRowModel().rows.length === 0 ? /* @__PURE__ */ jsx47(TableRow, { className: "hover:bg-transparent", children: /* @__PURE__ */ jsx47(
                             TableCell,
                             {
                               colSpan: finalColumns.length,
@@ -7140,16 +7119,16 @@ function DataTable({
                                * แล้วสถานะว่างในตารางหน้าตาไม่เหมือน `EmptyState` ที่อื่นในจอเดียวกัน
                                * ทั้งที่เรียก component ตัวเดียวกันอยู่ · ผู้เรียกเปลี่ยนไอคอน
                                * ให้ตรงกับสิ่งที่ตารางนี้แสดงได้ผ่าน `emptyIcon` */
-                              /* @__PURE__ */ jsx46(
+                              /* @__PURE__ */ jsx47(
                                 EmptyState,
                                 {
-                                  icon: emptyIcon ?? /* @__PURE__ */ jsx46(Inbox, {}),
+                                  icon: emptyIcon ?? /* @__PURE__ */ jsx47(Inbox, {}),
                                   title: labels?.empty?.title ?? "No data",
                                   description: labels?.empty?.description ?? "There's nothing to show here yet."
                                 }
                               )
                             }
-                          ) }) : groupBy ? /* @__PURE__ */ jsx46(
+                          ) }) : groupBy ? /* @__PURE__ */ jsx47(
                             GroupedRows,
                             {
                               table,
@@ -7163,7 +7142,7 @@ function DataTable({
                               onRowClick,
                               frozen
                             }
-                          ) : table.getRowModel().rows.map((row, idx) => /* @__PURE__ */ jsx46(
+                          ) : table.getRowModel().rows.map((row, idx) => /* @__PURE__ */ jsx47(
                             DataRow,
                             {
                               row,
@@ -7172,7 +7151,7 @@ function DataTable({
                             },
                             row.id
                           )),
-                          showFiller && /* @__PURE__ */ jsx46(FrozenFillerRow, { columns: finalColumns, frozen })
+                          showFiller && /* @__PURE__ */ jsx47(FrozenFillerRow, { columns: finalColumns, frozen })
                         ]
                       }
                     )
@@ -7183,7 +7162,7 @@ function DataTable({
           )
         }
       ),
-      pagination ? /* @__PURE__ */ jsx46(
+      pagination ? /* @__PURE__ */ jsx47(
         PaginationFooter,
         {
           pagination,
@@ -7196,7 +7175,7 @@ function DataTable({
         /* 🔴 ตัวนับ "เลือกแล้ว N" เคยอยู่ในแถบแบ่งหน้าเท่านั้น ⇒ ตารางที่เลือกแถวได้
          * แต่ไม่มีแบ่งหน้าจะ **ติ๊กแล้วไม่มีอะไรบอกเลย** (ของจริง: เลือกได้ 11 ตาราง
          * แต่มีแบ่งหน้าแค่ 6) — การเลือกที่ไม่มีผลตอบกลับคือการเลือกที่ผู้ใช้ไม่มั่นใจ */
-        /* @__PURE__ */ jsx46(SelectedCountBar, { table, labels })
+        /* @__PURE__ */ jsx47(SelectedCountBar, { table, labels })
       )
     ] })
   );
@@ -7205,10 +7184,10 @@ function FrozenFillerRow({
   columns,
   frozen
 }) {
-  return /* @__PURE__ */ jsx46(TableRow, { "aria-hidden": true, className: "h-full border-b-0 hover:bg-transparent", children: columns.map((column, index) => {
+  return /* @__PURE__ */ jsx47(TableRow, { "aria-hidden": true, className: "h-full border-b-0 hover:bg-transparent", children: columns.map((column, index) => {
     const id = column.id ?? column.accessorKey ?? String(index);
     const pin = frozenCellProps(frozen[id], "cell");
-    return /* @__PURE__ */ jsx46(
+    return /* @__PURE__ */ jsx47(
       TableCell,
       {
         "data-col-id": id,
@@ -7225,7 +7204,7 @@ function DataRow({
   onClick,
   frozen
 }) {
-  return /* @__PURE__ */ jsx46(
+  return /* @__PURE__ */ jsx47(
     TableRow,
     {
       "data-state": row.getIsSelected() ? "selected" : void 0,
@@ -7233,7 +7212,7 @@ function DataRow({
       className: cn("group/row", onClick && "cursor-pointer"),
       children: row.getVisibleCells().map((cell) => {
         const pin = frozenCellProps(frozen[cell.column.id], "cell");
-        return /* @__PURE__ */ jsx46(
+        return /* @__PURE__ */ jsx47(
           TableCell,
           {
             "data-col-id": cell.column.id,
@@ -7273,8 +7252,8 @@ function GroupedRows({
     collapsedKeys
   );
   let renderIndex = 0;
-  return /* @__PURE__ */ jsx46(Fragment14, { children: groups.map((group, groupIndex) => /* @__PURE__ */ jsxs38(React38.Fragment, { children: [
-    group.key != null && /* @__PURE__ */ jsx46(
+  return /* @__PURE__ */ jsx47(Fragment14, { children: groups.map((group, groupIndex) => /* @__PURE__ */ jsxs37(React38.Fragment, { children: [
+    group.key != null && /* @__PURE__ */ jsx47(
       DataTableGroupRow,
       {
         colSpan,
@@ -7292,7 +7271,7 @@ function GroupedRows({
     ),
     !group.collapsed && group.rows.map((row) => {
       const idx = renderIndex++;
-      return /* @__PURE__ */ jsx46(
+      return /* @__PURE__ */ jsx47(
         DataRow,
         {
           row,
@@ -7308,7 +7287,7 @@ function SkeletonRows({
   columnCount,
   rowCount
 }) {
-  return /* @__PURE__ */ jsx46(Fragment14, { children: Array.from({ length: rowCount }).map((_, r) => /* @__PURE__ */ jsx46(TableRow, { className: "hover:bg-transparent", children: Array.from({ length: columnCount }).map((__, c) => /* @__PURE__ */ jsx46(TableCell, { children: /* @__PURE__ */ jsx46(Skeleton, { shape: "text", className: "w-full" }) }, c)) }, r)) });
+  return /* @__PURE__ */ jsx47(Fragment14, { children: Array.from({ length: rowCount }).map((_, r) => /* @__PURE__ */ jsx47(TableRow, { className: "hover:bg-transparent", children: Array.from({ length: columnCount }).map((__, c) => /* @__PURE__ */ jsx47(TableCell, { children: /* @__PURE__ */ jsx47(Skeleton, { shape: "text", className: "w-full" }) }, c)) }, r)) });
 }
 function defaultOfLabel(start, end, total) {
   return total > 0 ? `${start}\u2013${end} of ${total}` : "0 of 0";
@@ -7322,7 +7301,7 @@ function SelectedCountBar({
   return (
     /* ไม่มีเส้นคั่นแล้ว — แถบนี้อยู่นอกการ์ด ระยะห่างมาจาก `gap-4` ของกล่องนอก
      * pad เท่ากับแถบแบ่งหน้า เพราะสองอันนี้สลับที่กัน ต้องไม่ขยับตำแหน่ง */
-    /* @__PURE__ */ jsx46(
+    /* @__PURE__ */ jsx47(
       "div",
       {
         "data-slot": "selected-count",
@@ -7356,15 +7335,15 @@ function PaginationFooter({
     /* `data-slot` เป็นที่เกาะที่มั่นคงกว่าการไล่ `closest("div")` — เทสรอบแรก
      * ไล่ขึ้นไปเจอ div ชั้นในแล้วยืนยันว่า "ไม่มี border-t" ซึ่งจริงเสมอ
      * โดยไม่ได้พิสูจน์อะไรเลย · ผู้เรียกก็เกาะ selector นี้จัดสไตล์เพิ่มได้ */
-    /* @__PURE__ */ jsxs38(
+    /* @__PURE__ */ jsxs37(
       "div",
       {
         "data-slot": "pagination",
         className: "flex flex-wrap items-center gap-x-8 gap-y-3 px-2 pt-4 text-body-sm font-medium",
         children: [
-          pagination.onPageSizeChange && /* @__PURE__ */ jsxs38("div", { className: "flex items-center gap-3", children: [
-            /* @__PURE__ */ jsx46("span", { className: "whitespace-nowrap text-text-tertiary", children: labels?.rowsPerPage ?? "Rows per page" }),
-            /* @__PURE__ */ jsx46(
+          pagination.onPageSizeChange && /* @__PURE__ */ jsxs37("div", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ jsx47("span", { className: "whitespace-nowrap text-text-tertiary", children: labels?.rowsPerPage ?? "Rows per page" }),
+            /* @__PURE__ */ jsx47(
               Select,
               {
                 size: "sm",
@@ -7380,10 +7359,10 @@ function PaginationFooter({
               }
             )
           ] }),
-          /* @__PURE__ */ jsxs38("div", { className: "flex items-center gap-4 text-text-body", children: [
-            /* @__PURE__ */ jsx46("span", { className: "whitespace-nowrap", children: labels?.of ? labels.of(start, end, pagination.rowCount) : defaultOfLabel(start, end, pagination.rowCount) }),
-            /* @__PURE__ */ jsxs38("div", { className: "flex items-center gap-1", children: [
-              /* @__PURE__ */ jsx46(
+          /* @__PURE__ */ jsxs37("div", { className: "flex items-center gap-4 text-text-body", children: [
+            /* @__PURE__ */ jsx47("span", { className: "whitespace-nowrap", children: labels?.of ? labels.of(start, end, pagination.rowCount) : defaultOfLabel(start, end, pagination.rowCount) }),
+            /* @__PURE__ */ jsxs37("div", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ jsx47(
                 "button",
                 {
                   type: "button",
@@ -7391,10 +7370,10 @@ function PaginationFooter({
                   className: pagerButton,
                   disabled: atFirst,
                   onClick: () => pagination.onPageChange(Math.max(0, pagination.pageIndex - 1)),
-                  children: /* @__PURE__ */ jsx46(ChevronLeft2, { className: "size-5" })
+                  children: /* @__PURE__ */ jsx47(ChevronLeft2, { className: "size-5" })
                 }
               ),
-              /* @__PURE__ */ jsx46(
+              /* @__PURE__ */ jsx47(
                 "button",
                 {
                   type: "button",
@@ -7404,12 +7383,12 @@ function PaginationFooter({
                   onClick: () => pagination.onPageChange(
                     Math.min(totalPages - 1, pagination.pageIndex + 1)
                   ),
-                  children: /* @__PURE__ */ jsx46(ChevronRight3, { className: "size-5" })
+                  children: /* @__PURE__ */ jsx47(ChevronRight3, { className: "size-5" })
                 }
               )
             ] })
           ] }),
-          selectedCount > 0 && /* @__PURE__ */ jsx46("span", { className: "ml-auto whitespace-nowrap text-text-black", children: labels?.selected ? labels.selected(selectedCount) : `${selectedCount} selected` })
+          selectedCount > 0 && /* @__PURE__ */ jsx47("span", { className: "ml-auto whitespace-nowrap text-text-black", children: labels?.selected ? labels.selected(selectedCount) : `${selectedCount} selected` })
         ]
       }
     )
@@ -7419,7 +7398,7 @@ function PaginationFooter({
 // src/layout/Card.tsx
 import * as React39 from "react";
 import { cva as cva11 } from "class-variance-authority";
-import { jsx as jsx47 } from "react/jsx-runtime";
+import { jsx as jsx48 } from "react/jsx-runtime";
 var cardVariants = cva11("flex flex-col bg-white", {
   variants: {
     variant: {
@@ -7437,7 +7416,7 @@ var cardVariants = cva11("flex flex-col bg-white", {
   defaultVariants: { variant: "outlined", padding: "md" }
 });
 var Card = React39.forwardRef(function Card2({ className, variant, padding, ...props }, ref) {
-  return /* @__PURE__ */ jsx47(
+  return /* @__PURE__ */ jsx48(
     "div",
     {
       ref,
@@ -7446,7 +7425,7 @@ var Card = React39.forwardRef(function Card2({ className, variant, padding, ...p
     }
   );
 });
-var CardHeader = ({ className, ...props }) => /* @__PURE__ */ jsx47(
+var CardHeader = ({ className, ...props }) => /* @__PURE__ */ jsx48(
   "div",
   {
     className: cn("flex flex-col gap-1 pb-3", className),
@@ -7456,7 +7435,7 @@ var CardHeader = ({ className, ...props }) => /* @__PURE__ */ jsx47(
 var CardTitle = ({
   className,
   ...props
-}) => /* @__PURE__ */ jsx47(
+}) => /* @__PURE__ */ jsx48(
   "h3",
   {
     className: cn("text-body-md font-semibold text-text-heading", className),
@@ -7466,9 +7445,9 @@ var CardTitle = ({
 var CardDescription = ({
   className,
   ...props
-}) => /* @__PURE__ */ jsx47("p", { className: cn("text-body-sm text-text-body", className), ...props });
-var CardContent = ({ className, ...props }) => /* @__PURE__ */ jsx47("div", { className: cn("flex-1", className), ...props });
-var CardFooter = ({ className, ...props }) => /* @__PURE__ */ jsx47(
+}) => /* @__PURE__ */ jsx48("p", { className: cn("text-body-sm text-text-body", className), ...props });
+var CardContent = ({ className, ...props }) => /* @__PURE__ */ jsx48("div", { className: cn("flex-1", className), ...props });
+var CardFooter = ({ className, ...props }) => /* @__PURE__ */ jsx48(
   "div",
   {
     className: cn("flex items-center gap-2 pt-3", className),
@@ -7481,7 +7460,7 @@ Card.displayName = "Card";
 import * as React40 from "react";
 import * as RadixTabs from "@radix-ui/react-tabs";
 import { cva as cva12 } from "class-variance-authority";
-import { jsx as jsx48 } from "react/jsx-runtime";
+import { jsx as jsx49 } from "react/jsx-runtime";
 var Tabs = RadixTabs.Root;
 var tabsListVariants = cva12("inline-flex items-center", {
   variants: {
@@ -7511,7 +7490,7 @@ var tabsTriggerVariants = cva12(
 );
 var TabsList = React40.forwardRef(
   function TabsList2({ className, variant, ...props }, ref) {
-    return /* @__PURE__ */ jsx48(
+    return /* @__PURE__ */ jsx49(
       RadixTabs.List,
       {
         ref,
@@ -7524,7 +7503,7 @@ var TabsList = React40.forwardRef(
 );
 var TabsTrigger = React40.forwardRef(
   function TabsTrigger2({ className, variant, ...props }, ref) {
-    return /* @__PURE__ */ jsx48(
+    return /* @__PURE__ */ jsx49(
       RadixTabs.Trigger,
       {
         ref,
@@ -7535,7 +7514,7 @@ var TabsTrigger = React40.forwardRef(
   }
 );
 var TabsContent = React40.forwardRef(function TabsContent2({ className, ...props }, ref) {
-  return /* @__PURE__ */ jsx48(
+  return /* @__PURE__ */ jsx49(
     RadixTabs.Content,
     {
       ref,
@@ -7555,7 +7534,7 @@ TabsContent.displayName = "TabsContent";
 import * as React41 from "react";
 import { MoreHorizontal } from "lucide-react";
 import { Slot as Slot6 } from "@radix-ui/react-slot";
-import { jsx as jsx49, jsxs as jsxs39 } from "react/jsx-runtime";
+import { jsx as jsx50, jsxs as jsxs38 } from "react/jsx-runtime";
 function Breadcrumb({
   items,
   separator,
@@ -7564,30 +7543,30 @@ function Breadcrumb({
   className,
   ...props
 }) {
-  const sep = separator ?? /* @__PURE__ */ jsx49("span", { className: "select-none text-text-tertiary", "aria-hidden": "true", children: "/" });
+  const sep = separator ?? /* @__PURE__ */ jsx50("span", { className: "select-none text-text-tertiary", "aria-hidden": "true", children: "/" });
   let visible = items;
   if (maxItems > 0 && items.length > maxItems) {
     visible = [items[0], "ellipsis", ...items.slice(-(maxItems - 1))];
   }
-  return /* @__PURE__ */ jsx49(
+  return /* @__PURE__ */ jsx50(
     "nav",
     {
       "aria-label": "Breadcrumb",
       className: cn("flex items-center text-body-sm", className),
       ...props,
-      children: /* @__PURE__ */ jsx49("ol", { className: "flex flex-wrap items-center gap-3", children: visible.map((item, i) => {
+      children: /* @__PURE__ */ jsx50("ol", { className: "flex flex-wrap items-center gap-3", children: visible.map((item, i) => {
         const isLast = i === visible.length - 1;
         if (item === "ellipsis") {
-          return /* @__PURE__ */ jsxs39("li", { className: "flex items-center gap-3", children: [
-            /* @__PURE__ */ jsx49(MoreHorizontal, { className: "size-4 text-text-tertiary" }),
+          return /* @__PURE__ */ jsxs38("li", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ jsx50(MoreHorizontal, { className: "size-4 text-text-tertiary" }),
             !isLast && sep
           ] }, `ellipsis-${i}`);
         }
         const itemBaseClass = "inline-flex items-center gap-2 leading-none [&_svg]:size-5";
         const currentClass = "font-semibold text-text-body";
         const linkClass = "cursor-pointer text-text-tertiary transition-colors hover:text-text-black";
-        return /* @__PURE__ */ jsxs39("li", { className: "flex items-center gap-3 leading-none", children: [
-          isLast ? /* @__PURE__ */ jsxs39(
+        return /* @__PURE__ */ jsxs38("li", { className: "flex items-center gap-3 leading-none", children: [
+          isLast ? /* @__PURE__ */ jsxs38(
             "span",
             {
               className: cn(itemBaseClass, currentClass),
@@ -7597,7 +7576,7 @@ function Breadcrumb({
                 item.label
               ]
             }
-          ) : item.href ? /* @__PURE__ */ jsxs39(
+          ) : item.href ? /* @__PURE__ */ jsxs38(
             LinkComponent,
             {
               href: item.href,
@@ -7607,7 +7586,7 @@ function Breadcrumb({
                 item.label
               ]
             }
-          ) : item.onClick ? /* @__PURE__ */ jsxs39(
+          ) : item.onClick ? /* @__PURE__ */ jsxs38(
             "button",
             {
               type: "button",
@@ -7618,7 +7597,7 @@ function Breadcrumb({
                 item.label
               ]
             }
-          ) : /* @__PURE__ */ jsxs39("span", { className: cn(itemBaseClass, "text-text-tertiary"), children: [
+          ) : /* @__PURE__ */ jsxs38("span", { className: cn(itemBaseClass, "text-text-tertiary"), children: [
             item.icon,
             item.label
           ] }),
@@ -7628,7 +7607,7 @@ function Breadcrumb({
     }
   );
 }
-var BreadcrumbRoot = ({ className, ...props }) => /* @__PURE__ */ jsx49(
+var BreadcrumbRoot = ({ className, ...props }) => /* @__PURE__ */ jsx50(
   "nav",
   {
     "aria-label": "Breadcrumb",
@@ -7638,7 +7617,7 @@ var BreadcrumbRoot = ({ className, ...props }) => /* @__PURE__ */ jsx49(
 );
 var BreadcrumbLink = React41.forwardRef(function BreadcrumbLink2({ className, asChild, ...props }, ref) {
   const Comp = asChild ? Slot6 : "a";
-  return /* @__PURE__ */ jsx49(
+  return /* @__PURE__ */ jsx50(
     Comp,
     {
       ref,
@@ -7654,7 +7633,7 @@ BreadcrumbLink.displayName = "BreadcrumbLink";
 
 // src/layout/Stepper.tsx
 import { Check as Check8 } from "lucide-react";
-import { jsx as jsx50, jsxs as jsxs40 } from "react/jsx-runtime";
+import { jsx as jsx51, jsxs as jsxs39 } from "react/jsx-runtime";
 function Stepper({
   steps,
   current,
@@ -7665,7 +7644,7 @@ function Stepper({
 }) {
   const isVertical = orientation === "vertical";
   const isFixed = !isVertical && connector === "fixed";
-  return /* @__PURE__ */ jsx50(
+  return /* @__PURE__ */ jsx51(
     "ol",
     {
       className: cn(
@@ -7678,7 +7657,7 @@ function Stepper({
         const isLast = i === steps.length - 1;
         const clickable = Boolean(onStepClick) && status === "done";
         const showCheck = status === "done";
-        const circle = /* @__PURE__ */ jsx50(
+        const circle = /* @__PURE__ */ jsx51(
           "div",
           {
             className: cn(
@@ -7686,10 +7665,10 @@ function Stepper({
               "flex size-6 shrink-0 items-center justify-center rounded-full text-caption font-bold transition-colors",
               status === "todo" ? "bg-gray-200 text-text-tertiary" : "bg-brand-active text-white"
             ),
-            children: showCheck ? /* @__PURE__ */ jsx50(Check8, { className: "size-3.5", strokeWidth: 3 }) : i + 1
+            children: showCheck ? /* @__PURE__ */ jsx51(Check8, { className: "size-3.5", strokeWidth: 3 }) : i + 1
           }
         );
-        return /* @__PURE__ */ jsxs40(
+        return /* @__PURE__ */ jsxs39(
           "li",
           {
             className: cn(
@@ -7698,7 +7677,7 @@ function Stepper({
               !isVertical && !isFixed && !isLast && "flex-1"
             ),
             children: [
-              /* @__PURE__ */ jsxs40(
+              /* @__PURE__ */ jsxs39(
                 "div",
                 {
                   className: cn(
@@ -7706,7 +7685,7 @@ function Stepper({
                     isVertical ? "flex-col items-center" : "items-center gap-2"
                   ),
                   children: [
-                    clickable ? /* @__PURE__ */ jsx50(
+                    clickable ? /* @__PURE__ */ jsx51(
                       "button",
                       {
                         type: "button",
@@ -7715,7 +7694,7 @@ function Stepper({
                         children: circle
                       }
                     ) : circle,
-                    isVertical && !isLast && /* @__PURE__ */ jsx50(
+                    isVertical && !isLast && /* @__PURE__ */ jsx51(
                       "div",
                       {
                         className: cn(
@@ -7724,7 +7703,7 @@ function Stepper({
                         )
                       }
                     ),
-                    !isVertical && /* @__PURE__ */ jsxs40(
+                    !isVertical && /* @__PURE__ */ jsxs39(
                       "div",
                       {
                         className: cn(
@@ -7733,15 +7712,15 @@ function Stepper({
                         ),
                         children: [
                           step.label,
-                          step.description && /* @__PURE__ */ jsx50("div", { className: "text-caption font-normal text-text-tertiary", children: step.description })
+                          step.description && /* @__PURE__ */ jsx51("div", { className: "text-caption font-normal text-text-tertiary", children: step.description })
                         ]
                       }
                     )
                   ]
                 }
               ),
-              isVertical && /* @__PURE__ */ jsxs40("div", { className: "min-w-0 pb-4", children: [
-                /* @__PURE__ */ jsx50(
+              isVertical && /* @__PURE__ */ jsxs39("div", { className: "min-w-0 pb-4", children: [
+                /* @__PURE__ */ jsx51(
                   "div",
                   {
                     className: cn(
@@ -7751,9 +7730,9 @@ function Stepper({
                     children: step.label
                   }
                 ),
-                step.description && /* @__PURE__ */ jsx50("div", { className: "text-caption text-text-tertiary", children: step.description })
+                step.description && /* @__PURE__ */ jsx51("div", { className: "text-caption text-text-tertiary", children: step.description })
               ] }),
-              !isVertical && !isLast && /* @__PURE__ */ jsx50(
+              !isVertical && !isLast && /* @__PURE__ */ jsx51(
                 "div",
                 {
                   className: cn(
@@ -7776,7 +7755,7 @@ function Stepper({
 import { Toaster as SonnerToaster } from "sonner";
 import { CheckCircle2, AlertTriangle as AlertTriangle3, Info, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { jsx as jsx51 } from "react/jsx-runtime";
+import { jsx as jsx52 } from "react/jsx-runtime";
 var baseToast = "flex items-center gap-3 rounded-sm border px-5 py-3 shadow-sm font-semibold text-body-md [&_svg]:size-6 [&_svg]:shrink-0";
 var tones = {
   success: "bg-success-green-50! border-success-green-200! text-success-green-800! [&_svg]:text-success-green-primary!",
@@ -7786,16 +7765,16 @@ var tones = {
   default: "bg-white border-border-default text-brand [&_svg]:text-brand"
 };
 function Toaster(props) {
-  return /* @__PURE__ */ jsx51(
+  return /* @__PURE__ */ jsx52(
     SonnerToaster,
     {
       position: "top-right",
       duration: 4e3,
       icons: {
-        success: /* @__PURE__ */ jsx51(CheckCircle2, { strokeWidth: 2.25 }),
-        error: /* @__PURE__ */ jsx51(XCircle, { strokeWidth: 2.25 }),
-        warning: /* @__PURE__ */ jsx51(AlertTriangle3, { strokeWidth: 2.25 }),
-        info: /* @__PURE__ */ jsx51(Info, { strokeWidth: 2.25 })
+        success: /* @__PURE__ */ jsx52(CheckCircle2, { strokeWidth: 2.25 }),
+        error: /* @__PURE__ */ jsx52(XCircle, { strokeWidth: 2.25 }),
+        warning: /* @__PURE__ */ jsx52(AlertTriangle3, { strokeWidth: 2.25 }),
+        info: /* @__PURE__ */ jsx52(Info, { strokeWidth: 2.25 })
       },
       toastOptions: {
         unstyled: true,
@@ -7818,7 +7797,7 @@ function Toaster(props) {
 // src/overlay/ConfirmDialog.tsx
 import * as React42 from "react";
 import { AlertTriangle as AlertTriangle4, Info as Info2, CheckCircle2 as CheckCircle22 } from "lucide-react";
-import { jsx as jsx52, jsxs as jsxs41 } from "react/jsx-runtime";
+import { jsx as jsx53, jsxs as jsxs40 } from "react/jsx-runtime";
 var toneDivider = {
   /* `info-blue-primary` ไม่ใช่ `brand-active` — โทน "ข้อมูล" ต้องเป็นสีข้อมูล ไม่ใช่
    * สถานะกดของแบรนด์ · บนแอปที่ไม่ override ทั้งสองตัวชี้ค่าเดียวกันอยู่แล้ว
@@ -7829,10 +7808,10 @@ var toneDivider = {
   success: "bg-success-green-primary"
 };
 var toneIcon = {
-  info: /* @__PURE__ */ jsx52(Info2, { className: "size-10 text-info-blue-primary" }),
-  warning: /* @__PURE__ */ jsx52(AlertTriangle4, { className: "size-10 text-warning-yellow-600" }),
-  danger: /* @__PURE__ */ jsx52(AlertTriangle4, { className: "size-10 text-cherry-red-600" }),
-  success: /* @__PURE__ */ jsx52(CheckCircle22, { className: "size-10 text-success-green-primary" })
+  info: /* @__PURE__ */ jsx53(Info2, { className: "size-10 text-info-blue-primary" }),
+  warning: /* @__PURE__ */ jsx53(AlertTriangle4, { className: "size-10 text-warning-yellow-600" }),
+  danger: /* @__PURE__ */ jsx53(AlertTriangle4, { className: "size-10 text-cherry-red-600" }),
+  success: /* @__PURE__ */ jsx53(CheckCircle22, { className: "size-10 text-success-green-primary" })
 };
 var toneConfirmVariant = {
   info: "primary",
@@ -7869,7 +7848,7 @@ function ConfirmDialogHeading({
   return (
     // `gap-0` จำเป็น — `DialogHeader` ตั้ง `gap-1.5` ไว้เป็นค่าเริ่มต้น
     // ถ้าไม่ล้าง ระยะจริงจะเป็น 6px + `mt-*` ของทุกชิ้นด้านล่าง
-    /* @__PURE__ */ jsxs41(
+    /* @__PURE__ */ jsxs40(
       DialogHeader,
       {
         className: cn(
@@ -7877,12 +7856,12 @@ function ConfirmDialogHeading({
           centered ? "items-center text-center" : "items-start text-left"
         ),
         children: [
-          icon && /* @__PURE__ */ jsx52("div", { className: cn("mb-3 mt-2 flex", centered ? "justify-center" : "justify-start"), children: icon }),
-          /* @__PURE__ */ jsx52(DialogTitle, { className: "text-title-md font-semibold text-text-black", children: title }),
+          icon && /* @__PURE__ */ jsx53("div", { className: cn("mb-3 mt-2 flex", centered ? "justify-center" : "justify-start"), children: icon }),
+          /* @__PURE__ */ jsx53(DialogTitle, { className: "text-title-md font-semibold text-text-black", children: title }),
           showDivider && /* 📐 48×4 · ห่างจากหัวข้อ 8 · ห่างจากคำอธิบาย 16
            * วัดจาก 4 จอของ Portal ที่วาดเส้นเอง (`mx-auto mb-4 h-1 w-12`)
            * ของเดิมที่นี่เป็น 40×4 ห่าง 10/8 ซึ่งไม่ตรงกับที่ไหน */
-          /* @__PURE__ */ jsx52(
+          /* @__PURE__ */ jsx53(
             "span",
             {
               "aria-hidden": true,
@@ -7899,7 +7878,7 @@ function ConfirmDialogHeading({
              * block element (เส้นคั่นที่วาดเอง · `<p>` ซ้อน · รายการ) เข้ามา จะได้ HTML ที่
              * ผิดสเปกและเบราว์เซอร์จะแยกแท็กให้เองแบบเงียบ ๆ จนระยะเพี้ยน
              * ⇒ ข้อความล้วนใช้ `<p>` ตามเดิม · อย่างอื่นสวมเป็น `<div>` ผ่าน `asChild` */
-            typeof description === "string" ? /* @__PURE__ */ jsx52(DialogDescription, { className: descriptionClass, children: description }) : /* @__PURE__ */ jsx52(DialogDescription, { asChild: true, children: /* @__PURE__ */ jsx52("div", { className: descriptionClass, children: description }) })
+            typeof description === "string" ? /* @__PURE__ */ jsx53(DialogDescription, { className: descriptionClass, children: description }) : /* @__PURE__ */ jsx53(DialogDescription, { asChild: true, children: /* @__PURE__ */ jsx53("div", { className: descriptionClass, children: description }) })
           ) : null
         ]
       }
@@ -7909,7 +7888,7 @@ function ConfirmDialogHeading({
 function ConfirmDialogError({
   children
 }) {
-  return /* @__PURE__ */ jsx52(
+  return /* @__PURE__ */ jsx53(
     "p",
     {
       role: "alert",
@@ -7928,8 +7907,8 @@ function ConfirmDialogActions({
   showCancel,
   confirmDisabled
 }) {
-  return /* @__PURE__ */ jsxs41(DialogFooter, { className: "mt-5 flex-row gap-4 border-none p-0 pt-0 sm:justify-center", children: [
-    showCancel && /* @__PURE__ */ jsx52(
+  return /* @__PURE__ */ jsxs40(DialogFooter, { className: "mt-5 flex-row gap-4 border-none p-0 pt-0 sm:justify-center", children: [
+    showCancel && /* @__PURE__ */ jsx53(
       Button,
       {
         variant: "secondary",
@@ -7940,7 +7919,7 @@ function ConfirmDialogActions({
         children: cancelLabel
       }
     ),
-    /* @__PURE__ */ jsx52(
+    /* @__PURE__ */ jsx53(
       Button,
       {
         variant: toneConfirmVariant[tone],
@@ -8002,7 +7981,7 @@ function ConfirmDialog({
     onCancel?.();
     onOpenChange(false);
   };
-  return /* @__PURE__ */ jsx52(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs41(
+  return /* @__PURE__ */ jsx53(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs40(
     DialogContent,
     {
       size,
@@ -8015,7 +7994,7 @@ function ConfirmDialog({
         if (loading || !dismissible) e.preventDefault();
       },
       children: [
-        /* @__PURE__ */ jsx52(
+        /* @__PURE__ */ jsx53(
           ConfirmDialogHeading,
           {
             align,
@@ -8026,9 +8005,9 @@ function ConfirmDialog({
             divider
           }
         ),
-        children != null && /* @__PURE__ */ jsx52("div", { className: "mt-5", children }),
-        errorMessage && /* @__PURE__ */ jsx52(ConfirmDialogError, { children: errorMessage }),
-        /* @__PURE__ */ jsx52(
+        children != null && /* @__PURE__ */ jsx53("div", { className: "mt-5", children }),
+        errorMessage && /* @__PURE__ */ jsx53(ConfirmDialogError, { children: errorMessage }),
+        /* @__PURE__ */ jsx53(
           ConfirmDialogActions,
           {
             tone,
@@ -8048,7 +8027,7 @@ function ConfirmDialog({
 
 // src/overlay/Filter.tsx
 import { ListFilter } from "lucide-react";
-import { jsx as jsx53, jsxs as jsxs42 } from "react/jsx-runtime";
+import { jsx as jsx54, jsxs as jsxs41 } from "react/jsx-runtime";
 function Filter({
   children,
   triggerLabel = "Filter",
@@ -8062,17 +8041,17 @@ function Filter({
   sideOffset = 8,
   contentClassName
 }) {
-  return /* @__PURE__ */ jsxs42(Popover, { open, defaultOpen, onOpenChange, children: [
-    /* @__PURE__ */ jsx53(PopoverTrigger, { asChild: true, children: trigger ?? /* @__PURE__ */ jsx53(
+  return /* @__PURE__ */ jsxs41(Popover, { open, defaultOpen, onOpenChange, children: [
+    /* @__PURE__ */ jsx54(PopoverTrigger, { asChild: true, children: trigger ?? /* @__PURE__ */ jsx54(
       Button,
       {
         variant: "secondary",
-        leftIcon: /* @__PURE__ */ jsx53(ListFilter, {}),
+        leftIcon: /* @__PURE__ */ jsx54(ListFilter, {}),
         ...triggerProps,
         children: triggerLabel
       }
     ) }),
-    /* @__PURE__ */ jsx53(
+    /* @__PURE__ */ jsx54(
       PopoverContent,
       {
         align,
@@ -8088,14 +8067,14 @@ function Filter({
 // src/overlay/Tooltip.tsx
 import * as React43 from "react";
 import * as RadixTooltip from "@radix-ui/react-tooltip";
-import { jsx as jsx54, jsxs as jsxs43 } from "react/jsx-runtime";
+import { jsx as jsx55, jsxs as jsxs42 } from "react/jsx-runtime";
 var TooltipProvider = RadixTooltip.Provider;
 var TooltipRoot = RadixTooltip.Root;
 var TooltipTrigger = RadixTooltip.Trigger;
 var TooltipPortal = RadixTooltip.Portal;
 var TooltipContent = React43.forwardRef(
   function TooltipContent2({ className, sideOffset = 8, arrow = true, children, ...props }, ref) {
-    return /* @__PURE__ */ jsx54(TooltipPortal, { children: /* @__PURE__ */ jsxs43(
+    return /* @__PURE__ */ jsx55(TooltipPortal, { children: /* @__PURE__ */ jsxs42(
       RadixTooltip.Content,
       {
         ref,
@@ -8117,7 +8096,7 @@ var TooltipContent = React43.forwardRef(
         ...props,
         children: [
           children,
-          arrow && /* @__PURE__ */ jsx54(
+          arrow && /* @__PURE__ */ jsx55(
             RadixTooltip.Arrow,
             {
               width: 14,
@@ -8143,15 +8122,15 @@ function Tooltip({
   arrow = true,
   contentClassName
 }) {
-  return /* @__PURE__ */ jsx54(TooltipProvider, { delayDuration, children: /* @__PURE__ */ jsxs43(
+  return /* @__PURE__ */ jsx55(TooltipProvider, { delayDuration, children: /* @__PURE__ */ jsxs42(
     TooltipRoot,
     {
       open,
       defaultOpen,
       onOpenChange,
       children: [
-        /* @__PURE__ */ jsx54(TooltipTrigger, { asChild, children }),
-        /* @__PURE__ */ jsx54(
+        /* @__PURE__ */ jsx55(TooltipTrigger, { asChild, children }),
+        /* @__PURE__ */ jsx55(
           TooltipContent,
           {
             side,
@@ -8170,7 +8149,7 @@ TooltipContent.displayName = "TooltipContent";
 // src/ui/StatusBadge.tsx
 import * as React44 from "react";
 import { cva as cva13 } from "class-variance-authority";
-import { jsx as jsx55, jsxs as jsxs44 } from "react/jsx-runtime";
+import { jsx as jsx56, jsxs as jsxs43 } from "react/jsx-runtime";
 var statusBadgeVariants = cva13(
   "inline-flex items-center gap-1.5 rounded-full font-medium",
   {
@@ -8210,14 +8189,14 @@ var statusBadgeVariants = cva13(
 );
 var StatusBadge = React44.forwardRef(
   function StatusBadge2({ className, tone, size, hideDot, children, ...props }, ref) {
-    return /* @__PURE__ */ jsxs44(
+    return /* @__PURE__ */ jsxs43(
       "span",
       {
         ref,
         className: cn(statusBadgeVariants({ tone, size }), className),
         ...props,
         children: [
-          !hideDot && /* @__PURE__ */ jsx55(
+          !hideDot && /* @__PURE__ */ jsx56(
             "span",
             {
               "aria-hidden": "true",
@@ -8236,7 +8215,7 @@ StatusBadge.displayName = "StatusBadge";
 import * as React45 from "react";
 import { ChevronLeft as ChevronLeft3, ChevronRight as ChevronRight4 } from "lucide-react";
 import { cva as cva14 } from "class-variance-authority";
-import { jsx as jsx56, jsxs as jsxs45 } from "react/jsx-runtime";
+import { jsx as jsx57, jsxs as jsxs44 } from "react/jsx-runtime";
 var dateNavigatorVariants = cva14(
   "inline-flex items-stretch overflow-hidden rounded-lg border border-border-default bg-bg-default",
   {
@@ -8339,7 +8318,7 @@ var DateNavigator = React45.forwardRef(
     const arrowClass = "flex w-6 shrink-0 cursor-pointer items-center justify-center text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40 [&_svg]:size-5";
     const ruleClass = "w-px shrink-0 self-stretch bg-border-default";
     const centreClass = "flex min-w-0 flex-1 items-center justify-center px-3 text-center text-body-sm font-semibold text-text-black";
-    const centre = calendar ? /* @__PURE__ */ jsx56(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx56(
+    const centre = calendar ? /* @__PURE__ */ jsx57(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx57(
       "button",
       {
         type: "button",
@@ -8350,10 +8329,10 @@ var DateNavigator = React45.forwardRef(
           centreClass,
           "min-w-28 cursor-pointer transition-colors hover:bg-overlay-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40"
         ),
-        children: /* @__PURE__ */ jsx56("span", { className: "truncate", children: displayLabel })
+        children: /* @__PURE__ */ jsx57("span", { className: "truncate", children: displayLabel })
       }
-    ) }) : /* @__PURE__ */ jsx56("span", { className: cn(centreClass, "min-w-28"), children: displayLabel });
-    const shell = /* @__PURE__ */ jsxs45(
+    ) }) : /* @__PURE__ */ jsx57("span", { className: cn(centreClass, "min-w-28"), children: displayLabel });
+    const shell = /* @__PURE__ */ jsxs44(
       "div",
       {
         ref,
@@ -8363,7 +8342,7 @@ var DateNavigator = React45.forwardRef(
         ),
         ...props,
         children: [
-          /* @__PURE__ */ jsx56(
+          /* @__PURE__ */ jsx57(
             "button",
             {
               type: "button",
@@ -8371,13 +8350,13 @@ var DateNavigator = React45.forwardRef(
               disabled: isPrevDisabled,
               onClick: () => step(-1),
               className: arrowClass,
-              children: /* @__PURE__ */ jsx56(ChevronLeft3, {})
+              children: /* @__PURE__ */ jsx57(ChevronLeft3, {})
             }
           ),
-          /* @__PURE__ */ jsx56("span", { "aria-hidden": true, className: ruleClass }),
+          /* @__PURE__ */ jsx57("span", { "aria-hidden": true, className: ruleClass }),
           centre,
-          /* @__PURE__ */ jsx56("span", { "aria-hidden": true, className: ruleClass }),
-          /* @__PURE__ */ jsx56(
+          /* @__PURE__ */ jsx57("span", { "aria-hidden": true, className: ruleClass }),
+          /* @__PURE__ */ jsx57(
             "button",
             {
               type: "button",
@@ -8385,24 +8364,24 @@ var DateNavigator = React45.forwardRef(
               disabled: isNextDisabled,
               onClick: () => step(1),
               className: arrowClass,
-              children: /* @__PURE__ */ jsx56(ChevronRight4, {})
+              children: /* @__PURE__ */ jsx57(ChevronRight4, {})
             }
           )
         ]
       }
     );
     if (!calendar) return shell;
-    return /* @__PURE__ */ jsxs45(Popover, { open, onOpenChange: setOpen, children: [
+    return /* @__PURE__ */ jsxs44(Popover, { open, onOpenChange: setOpen, children: [
       shell,
-      /* @__PURE__ */ jsxs45(
+      /* @__PURE__ */ jsxs44(
         PopoverContent,
         {
           align: "center",
           sideOffset: 8,
           className: "w-auto rounded-2xl p-0",
           children: [
-            calendarTitle != null && /* @__PURE__ */ jsx56("p", { className: "px-4 pt-4 text-body-sm font-semibold text-text-black", children: calendarTitle }),
-            /* @__PURE__ */ jsx56(
+            calendarTitle != null && /* @__PURE__ */ jsx57("p", { className: "px-4 pt-4 text-body-sm font-semibold text-text-black", children: calendarTitle }),
+            /* @__PURE__ */ jsx57(
               Calendar,
               {
                 ...calendarProps,
@@ -8419,9 +8398,9 @@ var DateNavigator = React45.forwardRef(
             ),
             (children != null || isDraft) && /* กว้างเท่าปฏิทินเป๊ะ — ปล่อยให้ hug จะโดนแถวปุ่มที่ผู้เรียกวางมา
              * ดันจนลิ้นชักกว้างกว่าปฏิทิน แล้วปฏิทินจะลอยไม่เต็มกล่อง */
-            /* @__PURE__ */ jsxs45("div", { className: "w-[340px] px-4 pb-4 pt-3", children: [
+            /* @__PURE__ */ jsxs44("div", { className: "w-[340px] px-4 pb-4 pt-3", children: [
               children,
-              isDraft && /* @__PURE__ */ jsx56(
+              isDraft && /* @__PURE__ */ jsx57(
                 Button,
                 {
                   variant: "primary",
@@ -8443,7 +8422,7 @@ DateNavigator.displayName = "DateNavigator";
 
 // src/ui/PeriodNavigator.tsx
 import * as React46 from "react";
-import { jsx as jsx57 } from "react/jsx-runtime";
+import { jsx as jsx58 } from "react/jsx-runtime";
 var DEFAULT_LABELS4 = {
   prev: "Previous period",
   next: "Next period",
@@ -8538,7 +8517,7 @@ var PeriodNavigator = React46.forwardRef(
     };
     const hasPeriods = ordered.length > 0;
     const centreLabel = selected ? [rangeLabel(selected.period), selected.period.suffix].filter(Boolean).join(" ") : L.empty;
-    return /* @__PURE__ */ jsx57(
+    return /* @__PURE__ */ jsx58(
       DateNavigator,
       {
         ref,
@@ -8550,7 +8529,7 @@ var PeriodNavigator = React46.forwardRef(
         prevDisabled: hasPeriods && !disabled ? void 0 : true,
         nextDisabled: hasPeriods && !disabled ? void 0 : true,
         calendar: hasPeriods && !disabled,
-        label: /* @__PURE__ */ jsx57("span", { title: selected?.period.label, className: "truncate", children: centreLabel }),
+        label: /* @__PURE__ */ jsx58("span", { title: selected?.period.label, className: "truncate", children: centreLabel }),
         prevLabel: L.prev,
         nextLabel: L.next,
         locale,
@@ -8570,7 +8549,7 @@ var PeriodNavigator = React46.forwardRef(
           }
         },
         ...props,
-        children: showFooter && selected && /* @__PURE__ */ jsx57("div", { className: "mt-3 border-t border-divider-gray pt-3", children: /* @__PURE__ */ jsx57(Text, { as: "span", variant: "body-sm", tone: "muted", numeric: true, children: L.footer.replace("{month}", fmt.monthCell.format(selected.month)).replace("{range}", rangeLabel(selected.period)) }) })
+        children: showFooter && selected && /* @__PURE__ */ jsx58("div", { className: "mt-3 border-t border-divider-gray pt-3", children: /* @__PURE__ */ jsx58(Text, { as: "span", variant: "body-sm", tone: "muted", numeric: true, children: L.footer.replace("{month}", fmt.monthCell.format(selected.month)).replace("{range}", rangeLabel(selected.period)) }) })
       }
     );
   }
@@ -8673,7 +8652,7 @@ export {
   Skeleton,
   SkeletonBox,
   SolidButton,
-  Spinner2 as Spinner,
+  Spinner,
   StatusBadge,
   Stepper,
   Switch,

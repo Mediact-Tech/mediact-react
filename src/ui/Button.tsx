@@ -3,6 +3,8 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 import { SkeletonBox } from "../feedback/Skeleton";
+import { BUTTON_DISABLED_OPACITY } from "./button-parts";
+import { SpinnerGlyph } from "../feedback/spinner-parts";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * รูปทรงของปุ่มยึดจาก 2 แหล่งที่ตรงกันเอง — Figma (`shadcn/ui Button` ใน
@@ -24,7 +26,7 @@ const buttonVariants = cva(
   // IconButton มีอยู่แล้ว) ปุ่มที่อยู่ในแถว flex ไม่ควรถูกบีบจนข้อความหาย
   // `ring-focus-ring/50` — เดิมเขียน `ring-2` เฉย ๆ ไม่ระบุสี ⇒ Tailwind ใช้ `currentcolor`
   // แปลว่าบนปุ่มพื้นทึบที่ตัวอักษรเป็นสีขาว วงแหวนก็ขาวไปด้วย = โฟกัสคีย์บอร์ดหายทั้งใบ
-  "inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-40 [&_svg]:shrink-0 [&_svg]:pointer-events-none",
+  `inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap text-body-sm font-medium transition-all rounded-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:ring-offset-1 disabled:pointer-events-none ${BUTTON_DISABLED_OPACITY} [&_svg]:shrink-0 [&_svg]:pointer-events-none`,
   {
     variants: {
       variant: {
@@ -77,27 +79,6 @@ type ButtonProps = React.ComponentProps<"button"> &
     rightIcon?: React.ReactNode;
   };
 
-const Spinner = () => (
-  <svg
-    className="size-4 animate-spin"
-    viewBox="0 0 24 24"
-    fill="none"
-    aria-hidden="true"
-  >
-    <circle
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="3"
-      opacity="0.25"
-    />
-    <path
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
-    />
-  </svg>
-);
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -149,7 +130,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const content = (
       <>
-        {loading ? <Spinner /> : leftIcon ? slot(leftIcon, "left") : null}
+        {loading ? <SpinnerGlyph className="size-4" /> : leftIcon ? slot(leftIcon, "left") : null}
         {children}
         {!loading && rightIcon ? slot(rightIcon, "right") : null}
       </>
@@ -176,7 +157,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 child as React.ReactElement<{ children?: React.ReactNode }>,
                 undefined,
                 <>
-                  {loading ? <Spinner /> : leftIcon ? slot(leftIcon, "left") : null}
+                  {loading ? <SpinnerGlyph className="size-4" /> : leftIcon ? slot(leftIcon, "left") : null}
                   {(child.props as { children?: React.ReactNode }).children}
                   {!loading && rightIcon ? slot(rightIcon, "right") : null}
                 </>,

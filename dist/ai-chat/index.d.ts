@@ -1,4 +1,3 @@
-import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as React from 'react';
 import { ClassValue } from 'clsx';
 
@@ -525,7 +524,7 @@ interface AiChatWidgetProps extends AiChatConfig {
  * the host arrives as props (`baseUrl`, `getToken`, `scope`), so it stays free of any app's
  * auth wiring, HTTP client or router.
  */
-declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): react_jsx_runtime.JSX.Element;
+declare function AiChatWidget({ open: controlledOpen, defaultOpen, onOpenChange, hideLauncher, className, ...config }: AiChatWidgetProps): React.JSX.Element;
 
 /**
  * Host → widget bridge. The drawer is mounted ONCE at the app root, but the moments that want to
@@ -679,7 +678,7 @@ interface ChatDrawerProps {
  * kept alive): the assistant answers questions about the page behind it, so covering that
  * page — or stealing its scroll and focus — would defeat the point.
  */
-declare function ChatDrawer(props: ChatDrawerProps): react_jsx_runtime.JSX.Element;
+declare function ChatDrawer(props: ChatDrawerProps): React.JSX.Element;
 
 interface FloatingButtonProps {
     open: boolean;
@@ -733,7 +732,7 @@ interface MessageListProps {
     /** Example questions shown on the empty state — tapping one sends it. */
     suggestions?: string[];
 }
-declare function MessageList({ messages, labels, onWidgetAction, busy, suggestions, }: MessageListProps): react_jsx_runtime.JSX.Element;
+declare function MessageList({ messages, labels, onWidgetAction, busy, suggestions, }: MessageListProps): React.JSX.Element;
 
 interface MessageBubbleProps {
     message: ChatMessage;
@@ -746,7 +745,7 @@ interface MessageBubbleProps {
      */
     widgetsDisabled?: boolean;
 }
-declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): react_jsx_runtime.JSX.Element;
+declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): React.JSX.Element;
 
 interface ComposerProps {
     onSend: (text: string) => void;
@@ -770,7 +769,7 @@ interface ComposerProps {
      */
     maxRecordingSeconds?: number;
 }
-declare function Composer({ onSend, onCancel, busy, disabled, labels, placeholder, onTranscribe, onVoiceError, maxRecordingSeconds, }: ComposerProps): react_jsx_runtime.JSX.Element;
+declare function Composer({ onSend, onCancel, busy, disabled, labels, placeholder, onTranscribe, onVoiceError, maxRecordingSeconds, }: ComposerProps): React.JSX.Element;
 
 interface ConversationPickerProps {
     load: () => Promise<ConversationListItem[]>;
@@ -787,7 +786,7 @@ interface ConversationPickerProps {
  *
  * โหลดตอนเปิดเท่านั้น — ลิ้นชักที่ปิดอยู่จึงไม่กินคำขอสักครั้ง
  */
-declare function ConversationPicker({ load, onPick, activeId, labels }: ConversationPickerProps): react_jsx_runtime.JSX.Element;
+declare function ConversationPicker({ load, onPick, activeId, labels }: ConversationPickerProps): React.JSX.Element;
 
 /**
  * Renders the frozen §3 widget payloads. The service owns the shapes; how they look is ours.
@@ -821,7 +820,7 @@ interface WidgetRendererProps {
      */
     waitingNote?: string;
 }
-declare function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote, waitingNote, }: WidgetRendererProps): react_jsx_runtime.JSX.Element;
+declare function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote, waitingNote, }: WidgetRendererProps): React.JSX.Element;
 
 /**
  * RR-A.6 transparency trail — what the agent actually did this turn, in the service's own
@@ -829,20 +828,20 @@ declare function WidgetRenderer({ widget, onAction, disabled, superseded, supers
  */
 declare function ToolTrail({ tools }: {
     tools: ToolCallEntry[];
-}): react_jsx_runtime.JSX.Element | null;
+}): React.JSX.Element | null;
 
 interface ContextMeterProps {
     usage: ContextUsage | null;
     labels: AiChatLabels;
     className?: string;
 }
-declare function ContextMeter({ usage, labels, className }: ContextMeterProps): react_jsx_runtime.JSX.Element | null;
+declare function ContextMeter({ usage, labels, className }: ContextMeterProps): React.JSX.Element | null;
 
 declare function Markdown({ text, className, labels, }: {
     text: string;
     className?: string;
     labels?: AiChatLabels;
-}): react_jsx_runtime.JSX.Element;
+}): React.JSX.Element;
 
 /**
  * Scope resolved at hand-off, so scheduling mode doesn't have to re-ask which department/month.
