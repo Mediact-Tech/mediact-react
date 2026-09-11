@@ -264,6 +264,11 @@ export {
   type StateSize,
 } from "./feedback/EmptyState";
 export { Toaster, toast, type ToasterProps } from "./feedback/Toast";
+export {
+  ProgressBar,
+  progressBarVariants,
+  type ProgressBarProps,
+} from "./feedback/ProgressBar";
 
 // Overlays
 export {
