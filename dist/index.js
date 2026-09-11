@@ -1,7 +1,7 @@
 import {
   TYPE_SCALE,
   TYPE_SCALE_DEFAULT_WEIGHT
-} from "./chunk-55J7CLWB.js";
+} from "./chunk-4WZ3XEF5.js";
 
 // src/ui/Button.tsx
 import * as React2 from "react";
@@ -1368,27 +1368,41 @@ function RadioGroup({
     }
   );
 }
+var RadioControl = React11.forwardRef(
+  function RadioControl2({ size, className, ...props }, ref) {
+    const groupSize = React11.useContext(RadioSizeContext);
+    const resolved = size ?? groupSize;
+    return /* @__PURE__ */ jsx16(
+      RadixRadio.Item,
+      {
+        ref,
+        className: cn(
+          radioShapeClasses(resolved),
+          toggleAlignClass(resolved),
+          className
+        ),
+        ...props,
+        children: /* @__PURE__ */ jsx16(RadixRadio.Indicator, { className: radioDotClasses(resolved) })
+      }
+    );
+  }
+);
+RadioControl.displayName = "RadioControl";
 var RadioGroupItem = React11.forwardRef(
   function RadioGroupItem2({ id, value, disabled, description, size, children, className, ...props }, ref) {
     const reactId = React11.useId();
     const itemId = id ?? reactId;
-    const groupSize = React11.useContext(RadioSizeContext);
-    const resolved = size ?? groupSize;
     return /* @__PURE__ */ jsxs12("label", { htmlFor: itemId, className: toggleLabelClasses(disabled), children: [
       /* @__PURE__ */ jsx16(
-        RadixRadio.Item,
+        RadioControl,
         {
           ref,
           id: itemId,
           value,
           disabled,
-          className: cn(
-            radioShapeClasses(resolved),
-            toggleAlignClass(resolved),
-            className
-          ),
-          ...props,
-          children: /* @__PURE__ */ jsx16(RadixRadio.Indicator, { className: radioDotClasses(resolved) })
+          size,
+          className,
+          ...props
         }
       ),
       /* @__PURE__ */ jsx16(ToggleText, { description, children })
@@ -1396,6 +1410,7 @@ var RadioGroupItem = React11.forwardRef(
   }
 );
 RadioGroupItem.displayName = "RadioGroupItem";
+var RadioGroupRoot = RadixRadio.Root;
 
 // src/ui/Select.tsx
 import * as React12 from "react";
@@ -8639,8 +8654,10 @@ export {
   PopoverClose,
   PopoverContent,
   PopoverTrigger,
+  RadioControl,
   RadioGroup,
   RadioGroupItem,
+  RadioGroupRoot,
   SHOWCASE_COPY,
   SHOWCASE_LAYOUT,
   SearchSelect,
@@ -8702,6 +8719,7 @@ export {
   iconButtonVariants,
   numberStepperVariants,
   outlineButtonVariants,
+  radioDotClasses,
   radioShapeClasses,
   resolveGroups,
   solidButtonVariants,

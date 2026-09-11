@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { RadioGroup } from "./RadioGroup";
+import { RadioGroup, RadioControl, RadioGroupRoot } from "./RadioGroup";
+import * as React from "react";
 
 const meta = {
   title: "UI/RadioGroup",
@@ -106,4 +107,48 @@ export const Loading: Story = {
       <RadioGroup isLoading label="ยังไม่รู้ตัวเลือก" />
     </div>
   ),
+};
+
+/**
+ * `RadioControl` + `RadioGroupRoot` — สำหรับจอที่จัดเลย์เอาต์เอง
+ *
+ * การ์ดทั้งใบกดได้ไม่ได้ทำด้วย `RadioGroupItem` เพราะตัวนั้นห่อ `<label>` มาให้เสมอ
+ * ⇒ จะได้ label ซ้อนสองชั้น · ใช้รากเปล่า + ตัวควบคุมเปล่าแทน แล้ววางป้ายเอง
+ */
+export const BareControlInCards: StoryObj = {
+  render: function BareControlInCards() {
+    const [value, setValue] = React.useState("a");
+    const opts = [
+      { value: "a", label: "รายวัน", desc: "จ่ายตามจำนวนวันที่ทำจริง" },
+      { value: "b", label: "รายเดือน", desc: "จ่ายเป็นก้อนทุกสิ้นเดือน" },
+      { value: "c", label: "เหมาจ่าย", desc: "ยังไม่เปิดใช้งาน", disabled: true },
+    ];
+    return (
+      <RadioGroupRoot
+        value={value}
+        onValueChange={setValue}
+        aria-label="รูปแบบการจ่าย"
+        className="grid w-[560px] grid-cols-3 gap-3"
+      >
+        {opts.map((o) => (
+          <label
+            key={o.value}
+            className={[
+              "flex cursor-pointer flex-col gap-2 rounded-lg border p-3 transition-colors",
+              value === o.value ? "border-brand bg-brand-subtle" : "border-border-default",
+              o.disabled && "cursor-not-allowed opacity-60",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <span className="flex items-center gap-2">
+              <RadioControl value={o.value} disabled={o.disabled} />
+              <span className="text-body-sm font-medium text-text-body">{o.label}</span>
+            </span>
+            <span className="text-caption text-text-tertiary">{o.desc}</span>
+          </label>
+        ))}
+      </RadioGroupRoot>
+    );
+  },
 };

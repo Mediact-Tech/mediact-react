@@ -120,6 +120,52 @@ function RadioGroup<V extends string = string>({
   );
 }
 
+export type RadioControlProps = Omit<
+  React.ComponentProps<typeof RadixRadio.Item>,
+  "asChild" | "children"
+> & {
+  /** ทับขนาดที่ได้จากกลุ่ม — ปกติไม่ต้องใส่ */
+  size?: ToggleSize;
+};
+
+/**
+ * **ตัวควบคุมเปล่า ๆ ไม่มีป้ายกำกับ** — วงกลม + จุดกลาง เท่านั้น
+ *
+ * 🔴 มีไว้เพราะ `RadioGroupItem` **ห่อ `<label>` + ข้อความมาให้เสมอ** ซึ่งใช้ไม่ได้กับจอ
+ * ที่วางป้ายเอง (การ์ดที่มีไอคอน · ป้ายที่มี tooltip/ไอคอนกุญแจ · ตัวเลือกที่มีเนื้อหา
+ * ซ้อนอยู่ข้างใต้) — เอา `RadioGroupItem` ไปใช้จะได้ `<label>` ซ้อนสองชั้น
+ *
+ * ⚠️ **ที่ผ่านมาไม่มีตัวนี้ ผลคือแอปไป import `@radix-ui/react-radio-group` เอง**
+ * แล้วเขียนวงกลมกับจุดกลางขึ้นใหม่ · วัดจาก Medimatch (แอปเดียวที่ทำ) เมื่อ 2026-09-11:
+ * มันเขียนจุดกลางเป็น `after:size-2.5 after:bg-brand` ด้วยมือ เพราะ DS มี
+ * `radioDotClasses()` อยู่แล้วแต่ **ไม่ได้ re-export ออกจาก `index.ts`**
+ * ⇒ วงกลม radio มีสองสูตรในแอปเดียว และเพี้ยนออกจากกันจริง (ขอบ `#bac2cb` ⇄ `#b9c2cb`)
+ *
+ * 🔴 **`RadioGroupItem` ประกอบจากตัวนี้** ไม่ได้เขียนวงกลมซ้ำ — สองตัวที่แชร์ทรงกันจะ
+ * drift เสมอถ้าปล่อยให้ต่างคนต่างเขียน (บทเรียนเดียวกับที่ `toggle-parts.tsx` เกิดมา)
+ */
+const RadioControl = React.forwardRef<HTMLButtonElement, RadioControlProps>(
+  function RadioControl({ size, className, ...props }, ref) {
+    const groupSize = React.useContext(RadioSizeContext);
+    const resolved = size ?? groupSize;
+    return (
+      <RadixRadio.Item
+        ref={ref}
+        className={cn(
+          radioShapeClasses(resolved),
+          toggleAlignClass(resolved),
+          className,
+        )}
+        {...props}
+      >
+        <RadixRadio.Indicator className={radioDotClasses(resolved)} />
+      </RadixRadio.Item>
+    );
+  },
+);
+
+RadioControl.displayName = "RadioControl";
+
 type RadioGroupItemProps = Omit<
   React.ComponentProps<typeof RadixRadio.Item>,
   "asChild"
@@ -136,24 +182,17 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
   ) {
     const reactId = React.useId();
     const itemId = id ?? reactId;
-    const groupSize = React.useContext(RadioSizeContext);
-    const resolved = size ?? groupSize;
     return (
       <label htmlFor={itemId} className={toggleLabelClasses(disabled)}>
-        <RadixRadio.Item
+        <RadioControl
           ref={ref}
           id={itemId}
           value={value}
           disabled={disabled}
-          className={cn(
-            radioShapeClasses(resolved),
-            toggleAlignClass(resolved),
-            className,
-          )}
+          size={size}
+          className={className}
           {...props}
-        >
-          <RadixRadio.Indicator className={radioDotClasses(resolved)} />
-        </RadixRadio.Item>
+        />
         <ToggleText description={description}>{children}</ToggleText>
       </label>
     );
@@ -162,4 +201,16 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
 
 RadioGroupItem.displayName = "RadioGroupItem";
 
-export { RadioGroup, RadioGroupItem };
+/**
+ * รากของกลุ่มแบบเปล่า ๆ — ไม่มี `FormField` ไม่มีคลาสจัดเรียง
+ *
+ * `RadioGroup` ข้างบนห่อ `FormField` (ป้าย · hint · error) และใส่ `flex gap-4` ให้
+ * ซึ่งถูกสำหรับฟอร์มทั่วไป แต่จอที่จัดเลย์เอาต์เอง (กริด 3 คอลัมน์ · การ์ดเรียงแถว)
+ * ต้องการแค่ context ของกลุ่ม ⇒ เปิดรากออกมาตรง ๆ
+ *
+ * แบบเดียวกับที่ DS เปิด `Popover`/`Dialog`/`DropdownMenu` ของ Radix ออกมาทั้งชุด
+ * — จุดประสงค์คือ **แอปไม่ต้องประกาศ `@radix-ui/*` เป็น dependency ของตัวเอง**
+ */
+const RadioGroupRoot = RadixRadio.Root;
+
+export { RadioGroup, RadioGroupItem, RadioControl, RadioGroupRoot };

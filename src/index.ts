@@ -24,6 +24,9 @@ export { Checkbox, type CheckboxProps } from "./ui/Checkbox";
 export {
   checkboxShapeClasses,
   radioShapeClasses,
+  /* จุดกลางของ radio — เดิมมีอยู่แต่ไม่ได้เปิดออกมา ผลคือแอปที่ประกอบ radio เอง
+   * ลอกคลาสไปเขียนมือ (`after:size-2.5 after:bg-brand`) แล้วเพี้ยนจากของ DS */
+  radioDotClasses,
   type ToggleSize,
 } from "./ui/toggle-parts";
 export {
@@ -35,7 +38,12 @@ export { switchToneClasses, type SwitchTone } from "./ui/toggle-parts";
 export {
   RadioGroup,
   RadioGroupItem,
+  /* ตัวควบคุมเปล่าไม่มีป้าย + รากเปล่าไม่มี FormField — สำหรับจอที่จัดเลย์เอาต์เอง
+   * มีไว้เพื่อให้แอปไม่ต้อง import `@radix-ui/react-radio-group` เอง */
+  RadioControl,
+  RadioGroupRoot,
   type RadioGroupProps,
+  type RadioControlProps,
   type RadioOption,
 } from "./ui/RadioGroup";
 export {
