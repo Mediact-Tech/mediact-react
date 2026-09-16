@@ -93,6 +93,40 @@ const TITLE_PREFIXES = new Set([
 ]);
 
 /**
+ * คำนำหน้าที่ **ติดกับชื่อโดยไม่มีตัวคั่น** — ตัดออกก่อนหาตัวย่อ
+ *
+ * 🔴 **ไม่ใช่เคสหายาก — เป็นรูปแบบหลักของข้อมูลจริง** วัดจาก production ของ MediAct
+ * (ตาราง `users`, 14,446 แถว, 2026-09-11) · ไม่มีคอลัมน์คำนำหน้าแยก คำนำหน้าถูกเก็บ
+ * ปนอยู่ใน `first_name` แล้ว backend ประกอบเป็น `fullName`:
+ *   • ติดกัน **มีจุด** (`"นพ.วรวิทย์"`)      32 แถว
+ *   • `"นางสาว"` ติดกัน **ไม่มีจุด**         11 แถว
+ *   • เป็นคำแยกมีเว้นวรรค (`"นพ. วรวิทย์"`)   4 แถว  ← ทางเดียวที่โค้ดเดิมรองรับ
+ * ⇒ ก่อนหน้านี้ 43 จาก 47 แถวได้ตัวย่อเป็น **พยัญชนะของคำนำหน้า** ("น" จาก "นพ.")
+ *   แทนที่จะเป็นอักษรแรกของชื่อจริง
+ *
+ * ── เส้นแบ่งว่าตัดตัวไหน: **ขอบเขตต้องไม่กำกวม** ────────────────────────────
+ * ✅ **มีจุด** — จุดคือเครื่องหมายย่อ ไม่มีชื่อจริงคนไหนมีจุดคั่นกลาง ⇒ ตัดได้ทุกคำนำหน้า
+ * ✅ **`"นางสาว"` ไม่มีจุด** — ยาว 6 อักขระ ไม่มีชื่อจริงที่ขึ้นต้นแบบนี้
+ * ⛔ **`"นาย"` / `"นาง"` ไม่มีจุด (4 แถว) — จงใจไม่ตัด** เพราะกินชื่อจริงได้
+ *    ("นางนวล" · "นายก") การตัดพลาดทำให้ตัวย่อ**ผิดคน** ซึ่งแย่กว่าการไม่ตัด
+ *    ที่แค่ได้ตัวย่อไม่สวย — 4 แถวไม่คุ้มกับความเสี่ยงนั้น
+ */
+const NO_DOT_GLUED_TITLES = ["นางสาว"];
+
+/* เรียงยาวไปสั้นเพื่อให้ชนตัวที่เจาะจงกว่าก่อน — ไม่งั้น "ทพ" จะชน "ทพญ" และ
+ * "นาง" จะชน "นางสาว" แล้วเหลือเศษคำนำหน้าติดมากับชื่อ
+ * (สมาชิกทุกตัวเป็นตัวอักษรล้วน ไม่มีอักขระพิเศษของ regex จึงไม่ต้อง escape) */
+const TITLE_ALTERNATION = [...TITLE_PREFIXES]
+  .sort((a, b) => b.length - a.length)
+  .join("|");
+
+/** `(?=.)` — ต้องเหลือตัวอักษรหลังคำนำหน้า ไม่งั้น `"นพ."` เดี่ยว ๆ จะถูกลบจนว่าง */
+const GLUED_TITLE_REGEX = new RegExp(
+  `^(?:(?:${TITLE_ALTERNATION})\\.|${NO_DOT_GLUED_TITLES.join("|")})(?=.)`,
+  "i",
+);
+
+/**
  * Thai consonants ก–ฮ (U+0E01–U+0E2E). Leading vowels (เ แ โ ใ ไ) sort before the
  * consonant they belong to in string order, so a bare "first character" can land
  * on a vowel mark that means nothing on its own — this is what a single-character
@@ -108,8 +142,10 @@ function firstInitialOf(word: string): string {
 
 /**
  * Compute up to 2 uppercase initials from a name string.
- * Leading titles (e.g. "นพ.", "พญ.", "Dr.") are skipped, so
- * "นพ. วรวิทย์ ตันสกุล" → "วต" and "Dr. John Smith" → "JS".
+ * Leading titles (e.g. "นพ.", "พญ.", "Dr.") are skipped whether they are their own
+ * word or glued to the given name, so "นพ. วรวิทย์ ตันสกุล", "นพ.วรวิทย์ ตันสกุล" and
+ * "Dr.John Smith" all resolve to the name's own initials — see `NO_DOT_GLUED_TITLES`
+ * above for which glued forms are safe to strip and why the rest deliberately are not.
  *
  * Each name's initial is its first *consonant*, not its first character: "ธนชาญ
  * โอค้ากอง" → "ธอ", not "ธโ" — a leading vowel alone renders as a floating mark
@@ -118,12 +154,27 @@ function firstInitialOf(word: string): string {
 function initials(name?: string) {
   if (!name) return "";
   let parts = name.trim().split(/\s+/).filter(Boolean);
-  while (
-    parts.length > 1 &&
-    TITLE_PREFIXES.has(parts[0]!.replace(/\./g, "").toLowerCase())
-  ) {
-    parts = parts.slice(1);
+
+  /* ตัดคำนำหน้าออกจนไม่เหลือ — วนเพราะมีได้มากกว่าชั้นเดียว ("ผศ. นพ.สมชาย")
+   * และเพราะตัดแบบติดกันแล้วอาจโผล่คำนำหน้าตัวถัดไปที่เป็นคำแยก */
+  for (let guard = 0; guard < parts.length + 2; guard++) {
+    /* ① คำนำหน้าเป็น **คำแยก** — "นพ. วรวิทย์ ตันสกุล"
+     *    ต้องเหลือคำอื่นอย่างน้อยหนึ่งคำ ไม่งั้นจะไม่เหลืออะไรให้ย่อ */
+    if (
+      parts.length > 1 &&
+      TITLE_PREFIXES.has(parts[0]!.replace(/\./g, "").toLowerCase())
+    ) {
+      parts = parts.slice(1);
+      continue;
+    }
+    /* ② คำนำหน้า **ติดกับชื่อ** — "นพ.วรวิทย์" */
+    const head = parts[0];
+    if (!head) break;
+    const stripped = head.replace(GLUED_TITLE_REGEX, "");
+    if (!stripped || stripped === head) break;
+    parts = [stripped, ...parts.slice(1)];
   }
+
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return (
