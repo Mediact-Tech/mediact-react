@@ -68,7 +68,15 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           {showClose && (
             <RadixDialog.Close
               aria-label="Close"
-              className="absolute right-4 top-4 rounded-sm p-1 text-text-tertiary opacity-70 transition-opacity hover:bg-black/5 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand/30"
+              /* `cursor-pointer` — `<button>` ของเบราว์เซอร์เป็น `cursor: default` และ preflight
+               * ของ Tailwind v4 **ไม่ได้ตั้ง pointer ให้ปุ่มอีกแล้ว** (ต่างจาก v3) ⇒ ต้องระบุเอง
+               * เหตุผลเดียวกับที่ `Tabs` · `Button` · `IconButton` · `EmptyState` · `Breadcrumb` ·
+               * หัวตารางที่เรียงได้ ระบุกันไว้แล้ว — กากบาทปิดกล่องเป็นตัวที่ตกหล่น
+               *
+               * 🔴 **โผล่ช้าเพราะแทบไม่มีใครใช้ปุ่มนี้** — แอปปลายทางส่ง `showClose={false}`
+               * แล้ววาดปุ่มปิดเอง (medimatch 10 จาก 12 กล่อง) เหลือแค่ `ContactSupportDialog`
+               * ที่ใช้ของ DS ⇒ อาการเลยอยู่เฉพาะกล่อง "ติดต่อฝ่ายสนับสนุน" ของทุกแอป */
+              className="absolute right-4 top-4 cursor-pointer rounded-sm p-1 text-text-tertiary opacity-70 transition-opacity hover:bg-black/5 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand/30"
             >
               <X className="size-4" />
             </RadixDialog.Close>

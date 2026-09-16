@@ -1,7 +1,7 @@
 import {
   TYPE_SCALE,
   TYPE_SCALE_DEFAULT_WEIGHT
-} from "./chunk-4WZ3XEF5.js";
+} from "./chunk-55J7CLWB.js";
 
 // src/ui/Button.tsx
 import * as React2 from "react";
@@ -2050,6 +2050,12 @@ var TITLE_PREFIXES = /* @__PURE__ */ new Set([
   "dr",
   "prof"
 ]);
+var NO_DOT_GLUED_TITLES = ["\u0E19\u0E32\u0E07\u0E2A\u0E32\u0E27"];
+var TITLE_ALTERNATION = [...TITLE_PREFIXES].sort((a, b) => b.length - a.length).join("|");
+var GLUED_TITLE_REGEX = new RegExp(
+  `^(?:(?:${TITLE_ALTERNATION})\\.|${NO_DOT_GLUED_TITLES.join("|")})(?=.)`,
+  "i"
+);
 var THAI_CONSONANT_REGEX = /[ก-ฮ]/;
 function firstInitialOf(word) {
   const consonant = Array.from(word).find((char) => THAI_CONSONANT_REGEX.test(char));
@@ -2058,8 +2064,16 @@ function firstInitialOf(word) {
 function initials(name) {
   if (!name) return "";
   let parts = name.trim().split(/\s+/).filter(Boolean);
-  while (parts.length > 1 && TITLE_PREFIXES.has(parts[0].replace(/\./g, "").toLowerCase())) {
-    parts = parts.slice(1);
+  for (let guard = 0; guard < parts.length + 2; guard++) {
+    if (parts.length > 1 && TITLE_PREFIXES.has(parts[0].replace(/\./g, "").toLowerCase())) {
+      parts = parts.slice(1);
+      continue;
+    }
+    const head = parts[0];
+    if (!head) break;
+    const stripped = head.replace(GLUED_TITLE_REGEX, "");
+    if (!stripped || stripped === head) break;
+    parts = [stripped, ...parts.slice(1)];
   }
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
@@ -2634,7 +2648,7 @@ var DialogContent = React23.forwardRef(
               RadixDialog.Close,
               {
                 "aria-label": "Close",
-                className: "absolute right-4 top-4 rounded-sm p-1 text-text-tertiary opacity-70 transition-opacity hover:bg-black/5 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand/30",
+                className: "absolute right-4 top-4 cursor-pointer rounded-sm p-1 text-text-tertiary opacity-70 transition-opacity hover:bg-black/5 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand/30",
                 children: /* @__PURE__ */ jsx28(X4, { className: "size-4" })
               }
             )
@@ -7809,10 +7823,65 @@ function Toaster(props) {
   );
 }
 
-// src/overlay/ConfirmDialog.tsx
+// src/feedback/ProgressBar.tsx
 import * as React42 from "react";
+import { cva as cva13 } from "class-variance-authority";
+import { jsx as jsx53 } from "react/jsx-runtime";
+var trackVariants = cva13("w-full overflow-hidden rounded-full bg-progress-track", {
+  variants: {
+    /* ความสูงเดียวที่มีของจริงคือ 8px (วัดจาก Medimatch 2026-09-11 ทั้งสองจุด)
+     * `sm` เผื่อไว้สำหรับแถบในแถวตารางที่ 8px จะดันความสูงแถว — ยังไม่มีผู้ใช้ */
+    size: { sm: "h-1", md: "h-2" }
+  },
+  defaultVariants: { size: "md" }
+});
+var fillVariants = cva13("h-full rounded-full transition-[width] duration-300", {
+  variants: {
+    /* 🔴 `info` เป็นค่าตั้งต้นเพราะเป็นสิ่งที่แอปแรกที่ใช้แสดงอยู่จริง ไม่ใช่เพราะ
+     * "ฟ้าดูเป็นกลาง" — Medimatch วาดแถบโควตาเครดิตด้วย `#06b5ed` ซึ่ง
+     * `--color-progress-fill` ชี้ไปหาพอดี (ผ่าน `info-default`)
+     *
+     * อีก 3 โทนมีไว้เพราะแถบโควตา **เปลี่ยนความหมายตามระดับ** เป็นเรื่องปกติ
+     * (ใกล้เต็ม = เตือน · เต็มแล้ว = อันตราย) และจอ "เครดิตหมด" ของ Medimatch
+     * มีอยู่จริงแล้ว (`CreditLimitReachedBanner`) ⇒ ถ้าไม่ให้มาแต่แรก จุดแรกที่ต้องการ
+     * จะ fork ด้วย `className` แล้วโทนจะกระจายกันเองทีละจอ
+     * ⚠️ วันนี้ยังไม่มี call site ไหนใช้ 3 โทนนั้น — เขียนไว้ใน `.md` แล้ว */
+    tone: {
+      info: "bg-progress-fill",
+      success: "bg-success-default",
+      warning: "bg-warning-default",
+      danger: "bg-danger-default"
+    }
+  },
+  defaultVariants: { tone: "info" }
+});
+var ProgressBar = React42.forwardRef(
+  function ProgressBar2({ value, label, tone, size, isLoading, className, ...props }, ref) {
+    const pct = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
+    if (isLoading) {
+      return /* @__PURE__ */ jsx53(SkeletonBox, { className: cn(trackVariants({ size }), className) });
+    }
+    return /* @__PURE__ */ jsx53(
+      "div",
+      {
+        ref,
+        role: "progressbar",
+        "aria-valuenow": Math.round(pct),
+        "aria-valuemin": 0,
+        "aria-valuemax": 100,
+        "aria-label": label,
+        className: cn(trackVariants({ size }), className),
+        ...props,
+        children: /* @__PURE__ */ jsx53("div", { className: fillVariants({ tone }), style: { width: `${pct}%` } })
+      }
+    );
+  }
+);
+
+// src/overlay/ConfirmDialog.tsx
+import * as React43 from "react";
 import { AlertTriangle as AlertTriangle4, Info as Info2, CheckCircle2 as CheckCircle22 } from "lucide-react";
-import { jsx as jsx53, jsxs as jsxs40 } from "react/jsx-runtime";
+import { jsx as jsx54, jsxs as jsxs40 } from "react/jsx-runtime";
 var toneDivider = {
   /* `info-blue-primary` ไม่ใช่ `brand-active` — โทน "ข้อมูล" ต้องเป็นสีข้อมูล ไม่ใช่
    * สถานะกดของแบรนด์ · บนแอปที่ไม่ override ทั้งสองตัวชี้ค่าเดียวกันอยู่แล้ว
@@ -7823,10 +7892,10 @@ var toneDivider = {
   success: "bg-success-green-primary"
 };
 var toneIcon = {
-  info: /* @__PURE__ */ jsx53(Info2, { className: "size-10 text-info-blue-primary" }),
-  warning: /* @__PURE__ */ jsx53(AlertTriangle4, { className: "size-10 text-warning-yellow-600" }),
-  danger: /* @__PURE__ */ jsx53(AlertTriangle4, { className: "size-10 text-cherry-red-600" }),
-  success: /* @__PURE__ */ jsx53(CheckCircle22, { className: "size-10 text-success-green-primary" })
+  info: /* @__PURE__ */ jsx54(Info2, { className: "size-10 text-info-blue-primary" }),
+  warning: /* @__PURE__ */ jsx54(AlertTriangle4, { className: "size-10 text-warning-yellow-600" }),
+  danger: /* @__PURE__ */ jsx54(AlertTriangle4, { className: "size-10 text-cherry-red-600" }),
+  success: /* @__PURE__ */ jsx54(CheckCircle22, { className: "size-10 text-success-green-primary" })
 };
 var toneConfirmVariant = {
   info: "primary",
@@ -7871,12 +7940,12 @@ function ConfirmDialogHeading({
           centered ? "items-center text-center" : "items-start text-left"
         ),
         children: [
-          icon && /* @__PURE__ */ jsx53("div", { className: cn("mb-3 mt-2 flex", centered ? "justify-center" : "justify-start"), children: icon }),
-          /* @__PURE__ */ jsx53(DialogTitle, { className: "text-title-md font-semibold text-text-black", children: title }),
+          icon && /* @__PURE__ */ jsx54("div", { className: cn("mb-3 mt-2 flex", centered ? "justify-center" : "justify-start"), children: icon }),
+          /* @__PURE__ */ jsx54(DialogTitle, { className: "text-title-md font-semibold text-text-black", children: title }),
           showDivider && /* 📐 48×4 · ห่างจากหัวข้อ 8 · ห่างจากคำอธิบาย 16
            * วัดจาก 4 จอของ Portal ที่วาดเส้นเอง (`mx-auto mb-4 h-1 w-12`)
            * ของเดิมที่นี่เป็น 40×4 ห่าง 10/8 ซึ่งไม่ตรงกับที่ไหน */
-          /* @__PURE__ */ jsx53(
+          /* @__PURE__ */ jsx54(
             "span",
             {
               "aria-hidden": true,
@@ -7893,7 +7962,7 @@ function ConfirmDialogHeading({
              * block element (เส้นคั่นที่วาดเอง · `<p>` ซ้อน · รายการ) เข้ามา จะได้ HTML ที่
              * ผิดสเปกและเบราว์เซอร์จะแยกแท็กให้เองแบบเงียบ ๆ จนระยะเพี้ยน
              * ⇒ ข้อความล้วนใช้ `<p>` ตามเดิม · อย่างอื่นสวมเป็น `<div>` ผ่าน `asChild` */
-            typeof description === "string" ? /* @__PURE__ */ jsx53(DialogDescription, { className: descriptionClass, children: description }) : /* @__PURE__ */ jsx53(DialogDescription, { asChild: true, children: /* @__PURE__ */ jsx53("div", { className: descriptionClass, children: description }) })
+            typeof description === "string" ? /* @__PURE__ */ jsx54(DialogDescription, { className: descriptionClass, children: description }) : /* @__PURE__ */ jsx54(DialogDescription, { asChild: true, children: /* @__PURE__ */ jsx54("div", { className: descriptionClass, children: description }) })
           ) : null
         ]
       }
@@ -7903,7 +7972,7 @@ function ConfirmDialogHeading({
 function ConfirmDialogError({
   children
 }) {
-  return /* @__PURE__ */ jsx53(
+  return /* @__PURE__ */ jsx54(
     "p",
     {
       role: "alert",
@@ -7923,7 +7992,7 @@ function ConfirmDialogActions({
   confirmDisabled
 }) {
   return /* @__PURE__ */ jsxs40(DialogFooter, { className: "mt-5 flex-row gap-4 border-none p-0 pt-0 sm:justify-center", children: [
-    showCancel && /* @__PURE__ */ jsx53(
+    showCancel && /* @__PURE__ */ jsx54(
       Button,
       {
         variant: "secondary",
@@ -7934,7 +8003,7 @@ function ConfirmDialogActions({
         children: cancelLabel
       }
     ),
-    /* @__PURE__ */ jsx53(
+    /* @__PURE__ */ jsx54(
       Button,
       {
         variant: toneConfirmVariant[tone],
@@ -7970,7 +8039,7 @@ function ConfirmDialog({
   confirmDisabled,
   children
 }) {
-  const [internalLoading, setInternalLoading] = React42.useState(false);
+  const [internalLoading, setInternalLoading] = React43.useState(false);
   const controlled = loadingProp ?? isLoading;
   const isLoadingControlled = controlled !== void 0;
   const loading = isLoadingControlled ? controlled : internalLoading;
@@ -7996,7 +8065,7 @@ function ConfirmDialog({
     onCancel?.();
     onOpenChange(false);
   };
-  return /* @__PURE__ */ jsx53(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs40(
+  return /* @__PURE__ */ jsx54(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxs40(
     DialogContent,
     {
       size,
@@ -8009,7 +8078,7 @@ function ConfirmDialog({
         if (loading || !dismissible) e.preventDefault();
       },
       children: [
-        /* @__PURE__ */ jsx53(
+        /* @__PURE__ */ jsx54(
           ConfirmDialogHeading,
           {
             align,
@@ -8020,9 +8089,9 @@ function ConfirmDialog({
             divider
           }
         ),
-        children != null && /* @__PURE__ */ jsx53("div", { className: "mt-5", children }),
-        errorMessage && /* @__PURE__ */ jsx53(ConfirmDialogError, { children: errorMessage }),
-        /* @__PURE__ */ jsx53(
+        children != null && /* @__PURE__ */ jsx54("div", { className: "mt-5", children }),
+        errorMessage && /* @__PURE__ */ jsx54(ConfirmDialogError, { children: errorMessage }),
+        /* @__PURE__ */ jsx54(
           ConfirmDialogActions,
           {
             tone,
@@ -8042,7 +8111,7 @@ function ConfirmDialog({
 
 // src/overlay/Filter.tsx
 import { ListFilter } from "lucide-react";
-import { jsx as jsx54, jsxs as jsxs41 } from "react/jsx-runtime";
+import { jsx as jsx55, jsxs as jsxs41 } from "react/jsx-runtime";
 function Filter({
   children,
   triggerLabel = "Filter",
@@ -8057,16 +8126,16 @@ function Filter({
   contentClassName
 }) {
   return /* @__PURE__ */ jsxs41(Popover, { open, defaultOpen, onOpenChange, children: [
-    /* @__PURE__ */ jsx54(PopoverTrigger, { asChild: true, children: trigger ?? /* @__PURE__ */ jsx54(
+    /* @__PURE__ */ jsx55(PopoverTrigger, { asChild: true, children: trigger ?? /* @__PURE__ */ jsx55(
       Button,
       {
         variant: "secondary",
-        leftIcon: /* @__PURE__ */ jsx54(ListFilter, {}),
+        leftIcon: /* @__PURE__ */ jsx55(ListFilter, {}),
         ...triggerProps,
         children: triggerLabel
       }
     ) }),
-    /* @__PURE__ */ jsx54(
+    /* @__PURE__ */ jsx55(
       PopoverContent,
       {
         align,
@@ -8080,16 +8149,16 @@ function Filter({
 }
 
 // src/overlay/Tooltip.tsx
-import * as React43 from "react";
+import * as React44 from "react";
 import * as RadixTooltip from "@radix-ui/react-tooltip";
-import { jsx as jsx55, jsxs as jsxs42 } from "react/jsx-runtime";
+import { jsx as jsx56, jsxs as jsxs42 } from "react/jsx-runtime";
 var TooltipProvider = RadixTooltip.Provider;
 var TooltipRoot = RadixTooltip.Root;
 var TooltipTrigger = RadixTooltip.Trigger;
 var TooltipPortal = RadixTooltip.Portal;
-var TooltipContent = React43.forwardRef(
+var TooltipContent = React44.forwardRef(
   function TooltipContent2({ className, sideOffset = 8, arrow = true, children, ...props }, ref) {
-    return /* @__PURE__ */ jsx55(TooltipPortal, { children: /* @__PURE__ */ jsxs42(
+    return /* @__PURE__ */ jsx56(TooltipPortal, { children: /* @__PURE__ */ jsxs42(
       RadixTooltip.Content,
       {
         ref,
@@ -8111,7 +8180,7 @@ var TooltipContent = React43.forwardRef(
         ...props,
         children: [
           children,
-          arrow && /* @__PURE__ */ jsx55(
+          arrow && /* @__PURE__ */ jsx56(
             RadixTooltip.Arrow,
             {
               width: 14,
@@ -8137,15 +8206,15 @@ function Tooltip({
   arrow = true,
   contentClassName
 }) {
-  return /* @__PURE__ */ jsx55(TooltipProvider, { delayDuration, children: /* @__PURE__ */ jsxs42(
+  return /* @__PURE__ */ jsx56(TooltipProvider, { delayDuration, children: /* @__PURE__ */ jsxs42(
     TooltipRoot,
     {
       open,
       defaultOpen,
       onOpenChange,
       children: [
-        /* @__PURE__ */ jsx55(TooltipTrigger, { asChild, children }),
-        /* @__PURE__ */ jsx55(
+        /* @__PURE__ */ jsx56(TooltipTrigger, { asChild, children }),
+        /* @__PURE__ */ jsx56(
           TooltipContent,
           {
             side,
@@ -8162,10 +8231,10 @@ function Tooltip({
 TooltipContent.displayName = "TooltipContent";
 
 // src/ui/StatusBadge.tsx
-import * as React44 from "react";
-import { cva as cva13 } from "class-variance-authority";
-import { jsx as jsx56, jsxs as jsxs43 } from "react/jsx-runtime";
-var statusBadgeVariants = cva13(
+import * as React45 from "react";
+import { cva as cva14 } from "class-variance-authority";
+import { jsx as jsx57, jsxs as jsxs43 } from "react/jsx-runtime";
+var statusBadgeVariants = cva14(
   "inline-flex items-center gap-1.5 rounded-full font-medium",
   {
     variants: {
@@ -8202,7 +8271,7 @@ var statusBadgeVariants = cva13(
     defaultVariants: { tone: "neutral", size: "sm" }
   }
 );
-var StatusBadge = React44.forwardRef(
+var StatusBadge = React45.forwardRef(
   function StatusBadge2({ className, tone, size, hideDot, children, ...props }, ref) {
     return /* @__PURE__ */ jsxs43(
       "span",
@@ -8211,7 +8280,7 @@ var StatusBadge = React44.forwardRef(
         className: cn(statusBadgeVariants({ tone, size }), className),
         ...props,
         children: [
-          !hideDot && /* @__PURE__ */ jsx56(
+          !hideDot && /* @__PURE__ */ jsx57(
             "span",
             {
               "aria-hidden": "true",
@@ -8227,11 +8296,11 @@ var StatusBadge = React44.forwardRef(
 StatusBadge.displayName = "StatusBadge";
 
 // src/ui/DateNavigator.tsx
-import * as React45 from "react";
+import * as React46 from "react";
 import { ChevronLeft as ChevronLeft3, ChevronRight as ChevronRight4 } from "lucide-react";
-import { cva as cva14 } from "class-variance-authority";
-import { jsx as jsx57, jsxs as jsxs44 } from "react/jsx-runtime";
-var dateNavigatorVariants = cva14(
+import { cva as cva15 } from "class-variance-authority";
+import { jsx as jsx58, jsxs as jsxs44 } from "react/jsx-runtime";
+var dateNavigatorVariants = cva15(
   "inline-flex items-stretch overflow-hidden rounded-lg border border-border-default bg-bg-default",
   {
     variants: {
@@ -8247,7 +8316,7 @@ function startOfUnit(date, unit) {
 function addUnit(date, unit, amount) {
   return unit === "month" ? new Date(date.getFullYear(), date.getMonth() + amount, 1) : new Date(date.getFullYear(), date.getMonth(), date.getDate() + amount);
 }
-var DateNavigator = React45.forwardRef(
+var DateNavigator = React46.forwardRef(
   function DateNavigator2({
     className,
     size,
@@ -8275,7 +8344,7 @@ var DateNavigator = React45.forwardRef(
     calendarProps,
     ...props
   }, ref) {
-    const formatter = React45.useMemo(
+    const formatter = React46.useMemo(
       () => new Intl.DateTimeFormat(
         locale,
         unit === "month" ? { month: "long", year: "numeric" } : { weekday: "long", day: "numeric", month: "long" }
@@ -8301,15 +8370,15 @@ var DateNavigator = React45.forwardRef(
     };
     const isPrevDisabled = prevDisabled ?? !canStep(-1);
     const isNextDisabled = nextDisabled ?? !canStep(1);
-    const [internalOpen, setInternalOpen] = React45.useState(false);
+    const [internalOpen, setInternalOpen] = React46.useState(false);
     const open = calendarOpen ?? internalOpen;
     const setOpen = (next) => {
       if (calendarOpen === void 0) setInternalOpen(next);
       onCalendarOpenChange?.(next);
     };
     const isDraft = confirmLabel != null;
-    const [draft, setDraft] = React45.useState(current);
-    const [month, setMonth] = React45.useState(
+    const [draft, setDraft] = React46.useState(current);
+    const [month, setMonth] = React46.useState(
       () => startOfMonth(current ?? /* @__PURE__ */ new Date())
     );
     const openCalendar = () => {
@@ -8333,7 +8402,7 @@ var DateNavigator = React45.forwardRef(
     const arrowClass = "flex w-6 shrink-0 cursor-pointer items-center justify-center text-text-body transition-colors hover:bg-overlay-hover disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40 [&_svg]:size-5";
     const ruleClass = "w-px shrink-0 self-stretch bg-border-default";
     const centreClass = "flex min-w-0 flex-1 items-center justify-center px-3 text-center text-body-sm font-semibold text-text-black";
-    const centre = calendar ? /* @__PURE__ */ jsx57(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx57(
+    const centre = calendar ? /* @__PURE__ */ jsx58(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx58(
       "button",
       {
         type: "button",
@@ -8344,9 +8413,9 @@ var DateNavigator = React45.forwardRef(
           centreClass,
           "min-w-28 cursor-pointer transition-colors hover:bg-overlay-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40"
         ),
-        children: /* @__PURE__ */ jsx57("span", { className: "truncate", children: displayLabel })
+        children: /* @__PURE__ */ jsx58("span", { className: "truncate", children: displayLabel })
       }
-    ) }) : /* @__PURE__ */ jsx57("span", { className: cn(centreClass, "min-w-28"), children: displayLabel });
+    ) }) : /* @__PURE__ */ jsx58("span", { className: cn(centreClass, "min-w-28"), children: displayLabel });
     const shell = /* @__PURE__ */ jsxs44(
       "div",
       {
@@ -8357,7 +8426,7 @@ var DateNavigator = React45.forwardRef(
         ),
         ...props,
         children: [
-          /* @__PURE__ */ jsx57(
+          /* @__PURE__ */ jsx58(
             "button",
             {
               type: "button",
@@ -8365,13 +8434,13 @@ var DateNavigator = React45.forwardRef(
               disabled: isPrevDisabled,
               onClick: () => step(-1),
               className: arrowClass,
-              children: /* @__PURE__ */ jsx57(ChevronLeft3, {})
+              children: /* @__PURE__ */ jsx58(ChevronLeft3, {})
             }
           ),
-          /* @__PURE__ */ jsx57("span", { "aria-hidden": true, className: ruleClass }),
+          /* @__PURE__ */ jsx58("span", { "aria-hidden": true, className: ruleClass }),
           centre,
-          /* @__PURE__ */ jsx57("span", { "aria-hidden": true, className: ruleClass }),
-          /* @__PURE__ */ jsx57(
+          /* @__PURE__ */ jsx58("span", { "aria-hidden": true, className: ruleClass }),
+          /* @__PURE__ */ jsx58(
             "button",
             {
               type: "button",
@@ -8379,7 +8448,7 @@ var DateNavigator = React45.forwardRef(
               disabled: isNextDisabled,
               onClick: () => step(1),
               className: arrowClass,
-              children: /* @__PURE__ */ jsx57(ChevronRight4, {})
+              children: /* @__PURE__ */ jsx58(ChevronRight4, {})
             }
           )
         ]
@@ -8395,8 +8464,8 @@ var DateNavigator = React45.forwardRef(
           sideOffset: 8,
           className: "w-auto rounded-2xl p-0",
           children: [
-            calendarTitle != null && /* @__PURE__ */ jsx57("p", { className: "px-4 pt-4 text-body-sm font-semibold text-text-black", children: calendarTitle }),
-            /* @__PURE__ */ jsx57(
+            calendarTitle != null && /* @__PURE__ */ jsx58("p", { className: "px-4 pt-4 text-body-sm font-semibold text-text-black", children: calendarTitle }),
+            /* @__PURE__ */ jsx58(
               Calendar,
               {
                 ...calendarProps,
@@ -8415,7 +8484,7 @@ var DateNavigator = React45.forwardRef(
              * ดันจนลิ้นชักกว้างกว่าปฏิทิน แล้วปฏิทินจะลอยไม่เต็มกล่อง */
             /* @__PURE__ */ jsxs44("div", { className: "w-[340px] px-4 pb-4 pt-3", children: [
               children,
-              isDraft && /* @__PURE__ */ jsx57(
+              isDraft && /* @__PURE__ */ jsx58(
                 Button,
                 {
                   variant: "primary",
@@ -8436,8 +8505,8 @@ var DateNavigator = React45.forwardRef(
 DateNavigator.displayName = "DateNavigator";
 
 // src/ui/PeriodNavigator.tsx
-import * as React46 from "react";
-import { jsx as jsx58 } from "react/jsx-runtime";
+import * as React47 from "react";
+import { jsx as jsx59 } from "react/jsx-runtime";
 var DEFAULT_LABELS4 = {
   prev: "Previous period",
   next: "Next period",
@@ -8462,7 +8531,7 @@ var monthOfPeriod = (period) => {
   return end ? new Date(end.getFullYear(), end.getMonth(), 1) : null;
 };
 var monthIndexOf = (d) => d.getFullYear() * 12 + d.getMonth();
-var PeriodNavigator = React46.forwardRef(
+var PeriodNavigator = React47.forwardRef(
   function PeriodNavigator2({
     periods,
     value,
@@ -8475,7 +8544,7 @@ var PeriodNavigator = React46.forwardRef(
     ...props
   }, ref) {
     const L = { ...DEFAULT_LABELS4, ...labels };
-    const fmt = React46.useMemo(
+    const fmt = React47.useMemo(
       () => ({
         full: new Intl.DateTimeFormat(locale, {
           day: "numeric",
@@ -8490,14 +8559,14 @@ var PeriodNavigator = React46.forwardRef(
       }),
       [locale]
     );
-    const ordered = React46.useMemo(
+    const ordered = React47.useMemo(
       () => periods.map((period) => ({ period, month: monthOfPeriod(period) })).filter(
         (entry) => entry.month !== null
       ).sort((a, b) => monthIndexOf(a.month) - monthIndexOf(b.month)),
       [periods]
     );
     const bounds = ordered.length ? { min: ordered[0].month, max: ordered[ordered.length - 1].month } : null;
-    const idByMonth = React46.useMemo(() => {
+    const idByMonth = React47.useMemo(() => {
       const map = /* @__PURE__ */ new Map();
       ordered.forEach(({ period, month }) => {
         const key = monthIndexOf(month);
@@ -8532,7 +8601,7 @@ var PeriodNavigator = React46.forwardRef(
     };
     const hasPeriods = ordered.length > 0;
     const centreLabel = selected ? [rangeLabel(selected.period), selected.period.suffix].filter(Boolean).join(" ") : L.empty;
-    return /* @__PURE__ */ jsx58(
+    return /* @__PURE__ */ jsx59(
       DateNavigator,
       {
         ref,
@@ -8544,7 +8613,7 @@ var PeriodNavigator = React46.forwardRef(
         prevDisabled: hasPeriods && !disabled ? void 0 : true,
         nextDisabled: hasPeriods && !disabled ? void 0 : true,
         calendar: hasPeriods && !disabled,
-        label: /* @__PURE__ */ jsx58("span", { title: selected?.period.label, className: "truncate", children: centreLabel }),
+        label: /* @__PURE__ */ jsx59("span", { title: selected?.period.label, className: "truncate", children: centreLabel }),
         prevLabel: L.prev,
         nextLabel: L.next,
         locale,
@@ -8564,7 +8633,7 @@ var PeriodNavigator = React46.forwardRef(
           }
         },
         ...props,
-        children: showFooter && selected && /* @__PURE__ */ jsx58("div", { className: "mt-3 border-t border-divider-gray pt-3", children: /* @__PURE__ */ jsx58(Text, { as: "span", variant: "body-sm", tone: "muted", numeric: true, children: L.footer.replace("{month}", fmt.monthCell.format(selected.month)).replace("{range}", rangeLabel(selected.period)) }) })
+        children: showFooter && selected && /* @__PURE__ */ jsx59("div", { className: "mt-3 border-t border-divider-gray pt-3", children: /* @__PURE__ */ jsx59(Text, { as: "span", variant: "body-sm", tone: "muted", numeric: true, children: L.footer.replace("{month}", fmt.monthCell.format(selected.month)).replace("{range}", rangeLabel(selected.period)) }) })
       }
     );
   }
@@ -8654,6 +8723,7 @@ export {
   PopoverClose,
   PopoverContent,
   PopoverTrigger,
+  ProgressBar,
   RadioControl,
   RadioGroup,
   RadioGroupItem,
@@ -8719,6 +8789,7 @@ export {
   iconButtonVariants,
   numberStepperVariants,
   outlineButtonVariants,
+  trackVariants as progressBarVariants,
   radioDotClasses,
   radioShapeClasses,
   resolveGroups,

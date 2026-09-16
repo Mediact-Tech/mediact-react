@@ -22,4 +22,4 @@ export {
   TYPE_SCALE,
   TYPE_SCALE_DEFAULT_WEIGHT
 };
-//# sourceMappingURL=chunk-4WZ3XEF5.js.map
+//# sourceMappingURL=chunk-55J7CLWB.js.map
