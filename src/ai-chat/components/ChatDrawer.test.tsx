@@ -208,3 +208,13 @@ describe("ChatDrawer — แผนกและหน่วยงานที่�
     expect(screen.getByText("ผู้ช่วย Medy")).toBeTruthy();
   });
 });
+
+describe("ChatDrawer — no context meter in the header", () => {
+  it("does not draw the memory meter even when the service reports usage", () => {
+    const { container } = render(
+      <ChatDrawer {...props({ contextUsage: { used: 9_000, limit: 10_000, trimmed: false } })} />,
+    );
+    expect(container.ownerDocument.querySelector('[data-slot="ai-chat-context-meter"]')).toBeNull();
+    expect(screen.queryByText("90%")).toBeNull();
+  });
+});

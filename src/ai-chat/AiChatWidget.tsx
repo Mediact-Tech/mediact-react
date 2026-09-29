@@ -204,7 +204,6 @@ export function AiChatWidget({
         labels={labels}
         position={position}
         mode={session.state.mode}
-        contextUsage={session.state.contextUsage}
         suggestions={suggestions}
         scope={config.scope}
         onSend={handleSend}

@@ -22,7 +22,6 @@ import type { AiChatLabels, ChatMessage, SessionStatus } from "../types";
 import type { TransportStatus } from "../realtime/chatTransport";
 import { cn } from "../lib/cn";
 import { Composer } from "./Composer";
-import { ContextMeter } from "./ContextMeter";
 import { ConversationPicker } from "./ConversationPicker";
 import { MessageList } from "./MessageList";
 
@@ -54,7 +53,12 @@ export interface ChatDrawerProps {
    * `useAiChatSession`), so the header states the mode rather than offering to change it.
    */
   mode: ChatMode;
-  /** Conversation memory fill, as last measured by the service. Null hides the meter entirely. */
+  /**
+   * Conversation memory fill, as last measured by the service.
+   *
+   * @deprecated Accepted but not shown — the header meter is off for now. `ContextMeter` is still exported,
+   * and putting it back is one line beside the history button.
+   */
   contextUsage?: ContextUsage | null;
   suggestions?: string[];
   /**
@@ -90,7 +94,6 @@ export function ChatDrawer(props: ChatDrawerProps) {
     loadConversations,
     activeConversationId,
     mode,
-    contextUsage,
     suggestions,
     scope,
   } = props;
@@ -178,12 +181,6 @@ export function ChatDrawer(props: ChatDrawerProps) {
                 )
               ) : null}
             </div>
-
-            {/* Sits beside the actions rather than in the log: it describes the CONVERSATION, and it
-                has to stay readable while the transcript scrolls. */}
-            {!historyOpen && (
-              <ContextMeter usage={contextUsage ?? null} labels={labels} className="mr-1" />
-            )}
 
             {!historyOpen && (
               <IconButton label={labels.history} onClick={() => setHistoryOpen(true)}>
