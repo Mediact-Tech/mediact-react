@@ -77,6 +77,9 @@ export function MessageList({
           // Confirm then answered a proposal that no longer existed. Anything after the card (the reply to
           // it, the next question) means it has been dealt with; the summary stays, the buttons do not.
           widgetsDisabled={busy || index !== messages.length - 1}
+          // …and the two reasons stay apart: a running turn ends (spinner, then unlock), an answered card does not.
+          widgetsBusy={Boolean(busy)}
+          widgetsStale={index !== messages.length - 1}
         />
       ))}
       <div ref={endRef} />

@@ -174,3 +174,37 @@ describe("ChatDrawer — โหมดบนแถบหัว", () => {
     await waitFor(() => expect(screen.queryByText(defaultLabels.scheduleMode)).toBeNull());
   });
 });
+
+/**
+ * บรรทัดใต้ชื่อบอกว่าผู้ช่วยกำลังทำงานกับแผนกและหน่วยงานไหน — หัวหน้าพยาบาลที่สลับวอร์ดบนหน้าจอ
+ * ต้องเห็นว่าแชทตามไปแล้ว · แอปที่ยังไม่ส่งชื่อมา ได้คำบรรยายเดิม (ไม่มีอะไรพัง)
+ */
+describe("ChatDrawer — แผนกและหน่วยงานที่กำลังทำงาน", () => {
+  it("shows department › ward in place of the generic subtitle", () => {
+    render(<ChatDrawer {...props({ scope: { departmentName: "AI", subUnitName: "TestAI" } })} />);
+    const line = screen.getByText("AI › TestAI");
+    expect(line.closest('[data-slot="ai-chat-scope"]')?.getAttribute("title")).toContain("AI › TestAI");
+    expect(screen.queryByText(defaultLabels.subtitle)).toBeNull();
+  });
+
+  it("shows the department alone when no ward is picked yet", () => {
+    render(<ChatDrawer {...props({ scope: { departmentName: "แผนกอายุรกรรม" } })} />);
+    expect(screen.getByText("แผนกอายุรกรรม")).toBeTruthy();
+  });
+
+  it("keeps the generic subtitle for a host that passes no names", () => {
+    render(<ChatDrawer {...props({ scope: {} })} />);
+    expect(screen.getByText(defaultLabels.subtitle)).toBeTruthy();
+  });
+
+  it("names the ward next to the scheduling-mode label", () => {
+    render(<ChatDrawer {...props({ mode: "schedule", scope: { departmentName: "AI", subUnitName: "TestAI" } })} />);
+    expect(screen.getByText(`${defaultLabels.scheduleMode} · TestAI`)).toBeTruthy();
+  });
+
+  it("is called Medy", () => {
+    render(<ChatDrawer {...props()} />);
+    expect(defaultLabels.title).toBe("ผู้ช่วย Medy");
+    expect(screen.getByText("ผู้ช่วย Medy")).toBeTruthy();
+  });
+});

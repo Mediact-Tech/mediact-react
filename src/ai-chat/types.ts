@@ -175,6 +175,8 @@ export interface AiChatLabels {
   scheduleGreetingPeriod: string;
   /** Used when nothing is resolved yet, to ask for department + month. */
   scheduleGreetingUnscoped: string;
+  /** Tooltip on the header's department › ward line. `{scope}` = that line. */
+  scopeTooltip: string;
   /** Context meter tooltip. `{used}` / `{limit}` are token counts, already grouped with commas. */
   contextTooltip: string;
   /** Appended to the tooltip once the service has actually dropped older messages. */

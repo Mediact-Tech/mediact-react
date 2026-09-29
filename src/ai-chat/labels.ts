@@ -7,8 +7,9 @@ import type { AiChatLabels, AiChatLocale } from "./types";
  * asserts on it. Adding `en` must not force any of them to change a line.
  */
 export const thLabels: AiChatLabels = {
-  launcher: "ผู้ช่วย AI",
-  title: "ผู้ช่วย AI",
+  // "Medy" — the Medi of MediWork / MediHR / Medi Match, made into a name the assistant answers to.
+  launcher: "ผู้ช่วย Medy",
+  title: "ผู้ช่วย Medy",
   subtitle: "ถามเรื่องตารางเวร คำขอ และการตั้งค่าได้เลย",
   placeholder: "ถามเรื่องตารางเวร เช่น วันที่ 6 ใครเวรเช้า…",
   placeholderSchedule: 'อยู่ในโหมดจัดเวร — พิมพ์ "จัดเวรเลย" หรือระบุแผนก/เดือน…',
@@ -44,7 +45,7 @@ export const thLabels: AiChatLabels = {
   linkOpenHere: "เปิดในหน้านี้",
   linkOpenNewTab: "เปิดในแท็บใหม่",
   you: "คุณ",
-  assistant: "ผู้ช่วย",
+  assistant: "Medy",
   historyTitle: "ประวัติการสนทนา",
   historySearch: "ค้นหาในประวัติ",
   historyBack: "กลับไปที่บทสนทนา",
@@ -76,6 +77,7 @@ export const thLabels: AiChatLabels = {
   scheduleGreetingSubUnit: " · **หน่วยงาน {subUnit}**",
   scheduleGreetingPeriod: " เดือน {month}/{year}",
   scheduleGreetingUnscoped: 'เริ่มได้โดยบอกแผนกและเดือนที่จะจัดก่อน เช่น *"แผนก ICU เดือนหน้า"*',
+  scopeTooltip: "Medy กำลังทำงานกับ {scope} — เปลี่ยนได้จากตัวเลือกแผนก/หน่วยงานบนหน้าจอ",
   contextTooltip:
     "ความจำของแชทนี้ — ใช้ไปประมาณ {used} จาก {limit} โทเคน\nเกินกว่านี้ ข้อความเก่าสุดจะถูกตัดออกจากสิ่งที่ AI จำได้",
   contextTrimmed: "ตอนนี้ตัดข้อความเก่าบางส่วนออกไปแล้ว — ถ้าต้องการเริ่มใหม่ให้กด “แชทใหม่”",
@@ -89,8 +91,8 @@ export const thLabels: AiChatLabels = {
  * English counterpart, so those stay Thai whatever this is set to. See `labels.md`.
  */
 export const enLabels: AiChatLabels = {
-  launcher: "AI assistant",
-  title: "AI assistant",
+  launcher: "Medy assistant",
+  title: "Medy assistant",
   subtitle: "Ask about rosters, requests and settings",
   placeholder: "Ask about the roster — e.g. who is on the morning shift on the 6th…",
   placeholderSchedule: 'Scheduling mode — type "generate the roster", or name a department/month…',
@@ -125,7 +127,7 @@ export const enLabels: AiChatLabels = {
   linkOpenHere: "Open here",
   linkOpenNewTab: "Open in a new tab",
   you: "You",
-  assistant: "Assistant",
+  assistant: "Medy",
   historyTitle: "Conversation history",
   historySearch: "Search history",
   historyBack: "Back to the conversation",
@@ -156,6 +158,7 @@ export const enLabels: AiChatLabels = {
   scheduleGreetingSubUnit: " · **{subUnit}**",
   scheduleGreetingPeriod: " for {month}/{year}",
   scheduleGreetingUnscoped: 'Start by naming the department and month — e.g. *"ICU next month"*',
+  scopeTooltip: "Medy is working on {scope} — change it with the department/unit picker on the page",
   contextTooltip:
     "This chat's memory — about {used} of {limit} tokens used\nPast that, the oldest messages drop out of what the AI remembers",
   contextTrimmed: "Some older messages have been dropped — press “New chat” to start clean",

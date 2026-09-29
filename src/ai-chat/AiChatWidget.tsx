@@ -206,6 +206,7 @@ export function AiChatWidget({
         mode={session.state.mode}
         contextUsage={session.state.contextUsage}
         suggestions={suggestions}
+        scope={config.scope}
         onSend={handleSend}
         onCancel={() => void session.cancel()}
         onTranscribe={voiceEnabled ? transcribe : undefined}

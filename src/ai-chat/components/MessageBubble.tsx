@@ -16,9 +16,20 @@ export interface MessageBubbleProps {
    * what it was, but pressing it would answer for a proposal that is gone.
    */
   widgetsDisabled?: boolean;
+  /** A turn is in flight — see `WidgetRendererProps.busy`. */
+  widgetsBusy?: boolean;
+  /** A later turn exists, so this message's cards have been dealt with — see `WidgetRendererProps.stale`. */
+  widgetsStale?: boolean;
 }
 
-export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  labels,
+  onWidgetAction,
+  widgetsDisabled,
+  widgetsBusy,
+  widgetsStale,
+}: MessageBubbleProps) {
   // `system` rows are the scheduling-span boundary markers the transcript replays — a divider, not a turn.
   if (message.role === "system") {
     return (
@@ -101,6 +112,8 @@ export function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled
             widget={widget}
             onAction={onWidgetAction}
             disabled={widgetsDisabled}
+            busy={widgetsBusy}
+            stale={widgetsStale}
             superseded={widget.type === "confirm" && index !== lastConfirm}
             supersededNote={labels.cardSuperseded}
             waitingNote={labels.cardWaiting}

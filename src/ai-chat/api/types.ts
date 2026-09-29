@@ -67,6 +67,8 @@ export interface ChatScope {
   departmentId?: number;
   subUnitId?: number;
   departmentName?: string;
+  /** Shown in the drawer header next to `departmentName` — the ward the assistant is working in. */
+  subUnitName?: string;
   /** Scheduling-mode target month (1–12) + year — ignored in assistant mode. */
   month?: number;
   year?: number;

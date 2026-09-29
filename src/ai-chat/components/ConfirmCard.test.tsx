@@ -265,3 +265,49 @@ describe("WidgetRenderer — confirm ตอนถูกล็อกด้วย�
     expect(screen.queryByText(waitingNote)).toBeNull();
   });
 });
+
+/**
+ * 🔴 Defect seen on dev (2026-09-29): press "ยืนยัน", the change saves ("บันทึกแล้ว"), and the button keeps
+ * spinning forever. Pressing appends the user's own message, so the card stops being the last turn and stays
+ * locked for good — and the spinner only cleared on unlock. The run ending is what must stop it.
+ */
+describe("MessageList — a pressed card stops spinning when its run ends", () => {
+  const cardTurn = { id: "m1", role: "assistant" as const, content: "เตรียมไว้แล้ว", widgets: [card] };
+  const userYes = { id: "m2", role: "user" as const, content: "ยืนยัน" };
+  const saved = { id: "m3", role: "assistant" as const, content: "บันทึกเรียบร้อยแล้วค่ะ" };
+  const confirmButton = () => screen.getByRole("button", { name: /ยืนยัน/ });
+
+  it("spins while the save runs, then stops for good once it has landed", () => {
+    const onAction = vi.fn();
+    const view = render(
+      <MessageList messages={[cardTurn]} labels={defaultLabels} busy={false} onWidgetAction={onAction} />,
+    );
+    act(() => confirmButton().click());
+
+    // The user's "ยืนยัน" is on screen and the turn is running: the pressed button says it is working.
+    view.rerender(
+      <MessageList messages={[cardTurn, userYes]} labels={defaultLabels} busy onWidgetAction={onAction} />,
+    );
+    expect(confirmButton().getAttribute("aria-busy")).toBe("true");
+
+    // The reply has arrived and the run is over: no spinner, and the answered card stays locked.
+    view.rerender(
+      <MessageList messages={[cardTurn, userYes, saved]} labels={defaultLabels} busy={false} onWidgetAction={onAction} />,
+    );
+    expect(confirmButton().getAttribute("aria-busy")).toBeNull();
+    expect((confirmButton() as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("never shows the waiting note on a card that has already been dealt with", () => {
+    // She typed "ยืนยัน" instead of pressing: the card was never pressed, and a later turn is running.
+    render(
+      <MessageList messages={[cardTurn, userYes]} labels={defaultLabels} busy onWidgetAction={vi.fn()} />,
+    );
+    expect(screen.queryByText(defaultLabels.cardWaiting)).toBeNull();
+  });
+
+  it("still shows the waiting note on the CURRENT card while another run finishes", () => {
+    render(<MessageList messages={[cardTurn]} labels={defaultLabels} busy onWidgetAction={vi.fn()} />);
+    expect(screen.getByText(defaultLabels.cardWaiting)).toBeTruthy();
+  });
+});

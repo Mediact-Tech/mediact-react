@@ -41,6 +41,19 @@ export interface WidgetRendererProps {
    * happening answers the question the greying-out only raised.
    */
   waitingNote?: string;
+  /**
+   * A turn is in flight right now. It is what makes the PRESSED button spin and an unpressed current card
+   * show `waitingNote`. Defaults to `disabled`, for callers that only know one flag.
+   *
+   * 🔴 Kept apart from `disabled` because "locked" has two causes that must not share a spinner: a turn is
+   * running (it will end), or something happened after this card (`stale` — it never unlocks). With one flag,
+   * the button the user pressed kept spinning forever after the save: pressing it appends the user's own
+   * message, so the card stopped being the last turn and stayed locked, and the spinner only cleared on
+   * unlock.
+   */
+  busy?: boolean;
+  /** Something happened after this card — it has been dealt with. Locked for good: no spinner, no waiting note. */
+  stale?: boolean;
 }
 
 export function WidgetRenderer({
@@ -50,6 +63,8 @@ export function WidgetRenderer({
   superseded,
   supersededNote,
   waitingNote,
+  busy,
+  stale,
 }: WidgetRendererProps) {
   switch (widget.type) {
     case "confirm":
@@ -58,6 +73,8 @@ export function WidgetRenderer({
           payload={widget.payload as ConfirmWidget}
           onAction={onAction}
           disabled={disabled}
+          busy={busy}
+          stale={stale}
           superseded={superseded}
           supersededNote={supersededNote}
           waitingNote={waitingNote}
@@ -69,6 +86,8 @@ export function WidgetRenderer({
           payload={widget.payload as ErrorCardWidget}
           onAction={onAction}
           disabled={disabled}
+          busy={busy}
+          stale={stale}
           waitingNote={waitingNote}
         />
       );
@@ -78,6 +97,8 @@ export function WidgetRenderer({
           payload={widget.payload as StaffPickerWidget}
           onAction={onAction}
           disabled={disabled}
+          busy={busy}
+          stale={stale}
           waitingNote={waitingNote}
         />
       );
@@ -172,12 +193,13 @@ function WaitingRow({ note }: { note: string }) {
   );
 }
 
-function usePressed(disabled?: boolean) {
+function usePressed(inFlight?: boolean) {
   const [pressed, setPressed] = React.useState<string | null>(null);
-  // The run ended (or the card was re-enabled) — drop the claim, or a finished card keeps spinning.
+  // The run ended — drop the claim, or a finished card keeps spinning. Keyed on the RUN, not on "locked":
+  // an answered card stays locked for good, so waiting for it to unlock meant waiting forever.
   React.useEffect(() => {
-    if (!disabled) setPressed(null);
-  }, [disabled]);
+    if (!inFlight) setPressed(null);
+  }, [inFlight]);
   return [pressed, setPressed] as const;
 }
 
@@ -188,6 +210,8 @@ function ConfirmCard({
   superseded,
   supersededNote,
   waitingNote,
+  busy,
+  stale,
 }: {
   payload: ConfirmWidget;
   onAction: (reply: string) => void;
@@ -195,11 +219,15 @@ function ConfirmCard({
   superseded?: boolean;
   supersededNote?: string;
   waitingNote?: string;
+  busy?: boolean;
+  stale?: boolean;
 }) {
-  const [pressed, setPressed] = usePressed(disabled);
+  const inFlight = busy ?? disabled;
+  const [pressed, setPressed] = usePressed(inFlight);
   /* ล็อกอยู่ และการ์ดใบนี้ไม่ใช่ต้นเหตุ ⇒ ไม่มีปุ่มให้กด มีแต่คำบอกว่าต้องรอ
      ⛔ ถ้าเป็นการ์ดที่ผู้ใช้เพิ่งกดเอง ปุ่มต้องอยู่ต่อ — คนต้องเห็นว่าตัวเองกดปุ่มไหนไป */
-  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
+  // Only the CURRENT card waits on another turn; one that has been dealt with just stays locked.
+  const waiting = Boolean(inFlight) && !stale && pressed === null && Boolean(waitingNote);
   const answer = (label: string) => {
     setPressed(label);
     onAction(label);
@@ -220,7 +248,7 @@ function ConfirmCard({
           <ActionButton
             onClick={() => answer(payload.confirmLabel)}
             disabled={disabled}
-            loading={Boolean(disabled) && pressed === payload.confirmLabel}
+            loading={Boolean(inFlight) && pressed === payload.confirmLabel}
           >
             {payload.confirmLabel}
           </ActionButton>
@@ -228,7 +256,7 @@ function ConfirmCard({
             variant="secondary"
             onClick={() => answer(payload.cancelLabel)}
             disabled={disabled}
-            loading={Boolean(disabled) && pressed === payload.cancelLabel}
+            loading={Boolean(inFlight) && pressed === payload.cancelLabel}
           >
             {payload.cancelLabel}
           </ActionButton>
@@ -243,14 +271,20 @@ function ErrorCard({
   onAction,
   disabled,
   waitingNote,
+  busy,
+  stale,
 }: {
   payload: ErrorCardWidget;
   onAction: (reply: string) => void;
   disabled?: boolean;
   waitingNote?: string;
+  busy?: boolean;
+  stale?: boolean;
 }) {
-  const [pressed, setPressed] = usePressed(disabled);
-  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
+  const inFlight = busy ?? disabled;
+  const [pressed, setPressed] = usePressed(inFlight);
+  // Only the CURRENT card waits on another turn; one that has been dealt with just stays locked.
+  const waiting = Boolean(inFlight) && !stale && pressed === null && Boolean(waitingNote);
   const isError = payload.severity === "error";
   return (
     <Frame
@@ -287,7 +321,7 @@ function ErrorCard({
                     onAction(fix.label_th);
                   }}
                   disabled={disabled}
-                  loading={Boolean(disabled) && pressed === fix.label_th}
+                  loading={Boolean(inFlight) && pressed === fix.label_th}
                 >
                   {fix.label_th}
                 </ActionButton>
@@ -305,26 +339,32 @@ function StaffPicker({
   onAction,
   disabled,
   waitingNote,
+  busy,
+  stale,
 }: {
   payload: StaffPickerWidget;
   onAction: (reply: string) => void;
   disabled?: boolean;
   waitingNote?: string;
+  busy?: boolean;
+  stale?: boolean;
 }) {
-  const [pressed, setPressed] = usePressed(disabled);
-  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
+  const inFlight = busy ?? disabled;
+  const [pressed, setPressed] = usePressed(inFlight);
+  // Only the CURRENT card waits on another turn; one that has been dealt with just stays locked.
+  const waiting = Boolean(inFlight) && !stale && pressed === null && Boolean(waitingNote);
   return (
     <Frame>
       <p className="text-body-sm text-gray-700">{payload.prompt_th}</p>
       <div className="mt-2 flex flex-col gap-1">
         {payload.candidates.map((candidate) => {
-          const busy = Boolean(disabled) && pressed === candidate.displayName;
+          const working = Boolean(inFlight) && pressed === candidate.displayName;
           return (
           <button
             key={candidate.userId}
             type="button"
             disabled={disabled}
-            aria-busy={busy || undefined}
+            aria-busy={working || undefined}
             onClick={() => {
               setPressed(candidate.displayName);
               onAction(candidate.displayName);
@@ -332,7 +372,7 @@ function StaffPicker({
             className={cn(
               "flex items-baseline gap-2 rounded-sm border border-border-subtle px-2 py-1.5 text-left",
               "hover:bg-brand-subtle disabled:pointer-events-none disabled:opacity-40 cursor-pointer",
-              busy && "disabled:opacity-100 border-brand bg-brand-subtle",
+              working && "disabled:opacity-100 border-brand bg-brand-subtle",
             )}
           >
             {busy && <Loader2 aria-hidden className="size-3.5 shrink-0 animate-spin text-brand" />}

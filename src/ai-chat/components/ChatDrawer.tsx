@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import {
+  Building2,
   CalendarDays,
   ChevronLeft,
   ChevronsLeft,
@@ -9,7 +10,14 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import type { AudioClip, ChatMode, ContextUsage, ConversationListItem, TranscriptionResult } from "../api/types";
+import type {
+  AudioClip,
+  ChatMode,
+  ChatScope,
+  ContextUsage,
+  ConversationListItem,
+  TranscriptionResult,
+} from "../api/types";
 import type { AiChatLabels, ChatMessage, SessionStatus } from "../types";
 import type { TransportStatus } from "../realtime/chatTransport";
 import { cn } from "../lib/cn";
@@ -49,6 +57,12 @@ export interface ChatDrawerProps {
   /** Conversation memory fill, as last measured by the service. Null hides the meter entirely. */
   contextUsage?: ContextUsage | null;
   suggestions?: string[];
+  /**
+   * Where the assistant is working, as the host names it. Shown under the title in place of the generic
+   * subtitle — a head nurse switching wards needs to see which one the chat now follows. Hosts that pass no
+   * names keep the generic subtitle.
+   */
+  scope?: Pick<ChatScope, "departmentName" | "subUnitName">;
 }
 
 /**
@@ -78,7 +92,14 @@ export function ChatDrawer(props: ChatDrawerProps) {
     mode,
     contextUsage,
     suggestions,
+    scope,
   } = props;
+
+  // "แผนก › หน่วยงาน" without the words — ward names already carry them ("แผนกอายุรกรรม", "ICU").
+  const scopeText = [scope?.departmentName, scope?.subUnitName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" › ");
 
   const [historyOpen, setHistoryOpen] = React.useState(false);
   const busy = status === "sending" || status === "streaming";
@@ -137,11 +158,24 @@ export function ChatDrawer(props: ChatDrawerProps) {
                   {/* แค่ "โหมดจัดเวร" — เคยต่อท้ายด้วยแผนก/หน่วยงานที่ล็อกไว้ ซึ่งยาวเกินบรรทัดนี้
                       และซ้ำกับข้อความเปิดโหมดที่ผู้ช่วยพิมพ์ไปแล้ว */}
                   {labels.scheduleMode}
+                  {/* The ward only — the department and the long form live in the greeting already. */}
+                  {scope?.subUnitName?.trim() ? ` · ${scope.subUnitName.trim()}` : null}
                 </p>
               ) : !historyOpen ? (
                 /* คำบรรยายมีเฉพาะหน้าแชท — ในหน้าประวัติ หัวข้อบอกตัวเองครบแล้ว
                    และแถวรายการต้องการความสูงมากกว่าคำอธิบายซ้ำ */
-                <p className="truncate text-caption text-text-body">{labels.subtitle}</p>
+                scopeText ? (
+                  <p
+                    data-slot="ai-chat-scope"
+                    title={labels.scopeTooltip.replace("{scope}", scopeText)}
+                    className="mt-0.5 flex min-w-0 items-center gap-1 text-caption text-text-body"
+                  >
+                    <Building2 className="size-3 shrink-0" aria-hidden />
+                    <span className="truncate">{scopeText}</span>
+                  </p>
+                ) : (
+                  <p className="truncate text-caption text-text-body">{labels.subtitle}</p>
+                )
               ) : null}
             </div>
 
