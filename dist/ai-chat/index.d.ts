@@ -679,7 +679,12 @@ interface ChatDrawerProps {
      * `useAiChatSession`), so the header states the mode rather than offering to change it.
      */
     mode: ChatMode;
-    /** Conversation memory fill, as last measured by the service. Null hides the meter entirely. */
+    /**
+     * Conversation memory fill, as last measured by the service.
+     *
+     * @deprecated Accepted but not shown — the header meter is off for now. `ContextMeter` is still exported,
+     * and putting it back is one line beside the history button.
+     */
     contextUsage?: ContextUsage | null;
     suggestions?: string[];
     /**
