@@ -60,6 +60,8 @@ interface ChatScope {
     departmentId?: number;
     subUnitId?: number;
     departmentName?: string;
+    /** Shown in the drawer header next to `departmentName` — the ward the assistant is working in. */
+    subUnitName?: string;
     /** Scheduling-mode target month (1–12) + year — ignored in assistant mode. */
     month?: number;
     year?: number;
@@ -429,6 +431,8 @@ interface AiChatLabels {
     scheduleGreetingPeriod: string;
     /** Used when nothing is resolved yet, to ask for department + month. */
     scheduleGreetingUnscoped: string;
+    /** Tooltip on the header's department › ward line. `{scope}` = that line. */
+    scopeTooltip: string;
     /** Context meter tooltip. `{used}` / `{limit}` are token counts, already grouped with commas. */
     contextTooltip: string;
     /** Appended to the tooltip once the service has actually dropped older messages. */
@@ -678,6 +682,12 @@ interface ChatDrawerProps {
     /** Conversation memory fill, as last measured by the service. Null hides the meter entirely. */
     contextUsage?: ContextUsage | null;
     suggestions?: string[];
+    /**
+     * Where the assistant is working, as the host names it. Shown under the title in place of the generic
+     * subtitle — a head nurse switching wards needs to see which one the chat now follows. Hosts that pass no
+     * names keep the generic subtitle.
+     */
+    scope?: Pick<ChatScope, "departmentName" | "subUnitName">;
 }
 /**
  * The chat surface itself. Deliberately NON-modal (`modal={false}` + outside-interaction
@@ -750,8 +760,12 @@ interface MessageBubbleProps {
      * what it was, but pressing it would answer for a proposal that is gone.
      */
     widgetsDisabled?: boolean;
+    /** A turn is in flight — see `WidgetRendererProps.busy`. */
+    widgetsBusy?: boolean;
+    /** A later turn exists, so this message's cards have been dealt with — see `WidgetRendererProps.stale`. */
+    widgetsStale?: boolean;
 }
-declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }: MessageBubbleProps): React.JSX.Element;
+declare function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled, widgetsBusy, widgetsStale, }: MessageBubbleProps): React.JSX.Element;
 
 interface ComposerProps {
     onSend: (text: string) => void;
@@ -825,8 +839,21 @@ interface WidgetRendererProps {
      * happening answers the question the greying-out only raised.
      */
     waitingNote?: string;
+    /**
+     * A turn is in flight right now. It is what makes the PRESSED button spin and an unpressed current card
+     * show `waitingNote`. Defaults to `disabled`, for callers that only know one flag.
+     *
+     * 🔴 Kept apart from `disabled` because "locked" has two causes that must not share a spinner: a turn is
+     * running (it will end), or something happened after this card (`stale` — it never unlocks). With one flag,
+     * the button the user pressed kept spinning forever after the save: pressing it appends the user's own
+     * message, so the card stopped being the last turn and stayed locked, and the spinner only cleared on
+     * unlock.
+     */
+    busy?: boolean;
+    /** Something happened after this card — it has been dealt with. Locked for good: no spinner, no waiting note. */
+    stale?: boolean;
 }
-declare function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote, waitingNote, }: WidgetRendererProps): React.JSX.Element;
+declare function WidgetRenderer({ widget, onAction, disabled, superseded, supersededNote, waitingNote, busy, stale, }: WidgetRendererProps): React.JSX.Element;
 
 /**
  * RR-A.6 transparency trail — what the agent actually did this turn, in the service's own

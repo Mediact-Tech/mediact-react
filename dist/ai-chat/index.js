@@ -161,6 +161,7 @@ function resolveTokenProvider(auth, hostGetToken, onError) {
 import * as React9 from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import {
+  Building2,
   CalendarDays,
   ChevronLeft,
   ChevronsLeft,
@@ -1109,7 +1110,9 @@ function WidgetRenderer({
   disabled,
   superseded,
   supersededNote,
-  waitingNote
+  waitingNote,
+  busy,
+  stale
 }) {
   switch (widget.type) {
     case "confirm":
@@ -1119,6 +1122,8 @@ function WidgetRenderer({
           payload: widget.payload,
           onAction,
           disabled,
+          busy,
+          stale,
           superseded,
           supersededNote,
           waitingNote
@@ -1131,6 +1136,8 @@ function WidgetRenderer({
           payload: widget.payload,
           onAction,
           disabled,
+          busy,
+          stale,
           waitingNote
         }
       );
@@ -1141,6 +1148,8 @@ function WidgetRenderer({
           payload: widget.payload,
           onAction,
           disabled,
+          busy,
+          stale,
           waitingNote
         }
       );
@@ -1209,11 +1218,11 @@ function WaitingRow({ note }) {
     }
   );
 }
-function usePressed(disabled) {
+function usePressed(inFlight) {
   const [pressed, setPressed] = React7.useState(null);
   React7.useEffect(() => {
-    if (!disabled) setPressed(null);
-  }, [disabled]);
+    if (!inFlight) setPressed(null);
+  }, [inFlight]);
   return [pressed, setPressed];
 }
 function ConfirmCard({
@@ -1222,10 +1231,13 @@ function ConfirmCard({
   disabled,
   superseded,
   supersededNote,
-  waitingNote
+  waitingNote,
+  busy,
+  stale
 }) {
-  const [pressed, setPressed] = usePressed(disabled);
-  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
+  const inFlight = busy ?? disabled;
+  const [pressed, setPressed] = usePressed(inFlight);
+  const waiting = Boolean(inFlight) && !stale && pressed === null && Boolean(waitingNote);
   const answer = (label) => {
     setPressed(label);
     onAction(label);
@@ -1239,7 +1251,7 @@ function ConfirmCard({
         {
           onClick: () => answer(payload.confirmLabel),
           disabled,
-          loading: Boolean(disabled) && pressed === payload.confirmLabel,
+          loading: Boolean(inFlight) && pressed === payload.confirmLabel,
           children: payload.confirmLabel
         }
       ),
@@ -1249,7 +1261,7 @@ function ConfirmCard({
           variant: "secondary",
           onClick: () => answer(payload.cancelLabel),
           disabled,
-          loading: Boolean(disabled) && pressed === payload.cancelLabel,
+          loading: Boolean(inFlight) && pressed === payload.cancelLabel,
           children: payload.cancelLabel
         }
       )
@@ -1260,10 +1272,13 @@ function ErrorCard({
   payload,
   onAction,
   disabled,
-  waitingNote
+  waitingNote,
+  busy,
+  stale
 }) {
-  const [pressed, setPressed] = usePressed(disabled);
-  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
+  const inFlight = busy ?? disabled;
+  const [pressed, setPressed] = usePressed(inFlight);
+  const waiting = Boolean(inFlight) && !stale && pressed === null && Boolean(waitingNote);
   const isError = payload.severity === "error";
   return /* @__PURE__ */ jsx7(
     Frame,
@@ -1292,7 +1307,7 @@ function ErrorCard({
                 onAction(fix.label_th);
               },
               disabled,
-              loading: Boolean(disabled) && pressed === fix.label_th,
+              loading: Boolean(inFlight) && pressed === fix.label_th,
               children: fix.label_th
             },
             fix.opRef
@@ -1306,20 +1321,23 @@ function StaffPicker({
   payload,
   onAction,
   disabled,
-  waitingNote
+  waitingNote,
+  busy,
+  stale
 }) {
-  const [pressed, setPressed] = usePressed(disabled);
-  const waiting = Boolean(disabled) && pressed === null && Boolean(waitingNote);
+  const inFlight = busy ?? disabled;
+  const [pressed, setPressed] = usePressed(inFlight);
+  const waiting = Boolean(inFlight) && !stale && pressed === null && Boolean(waitingNote);
   return /* @__PURE__ */ jsxs7(Frame, { children: [
     /* @__PURE__ */ jsx7("p", { className: "text-body-sm text-gray-700", children: payload.prompt_th }),
     /* @__PURE__ */ jsx7("div", { className: "mt-2 flex flex-col gap-1", children: payload.candidates.map((candidate) => {
-      const busy = Boolean(disabled) && pressed === candidate.displayName;
+      const working = Boolean(inFlight) && pressed === candidate.displayName;
       return /* @__PURE__ */ jsxs7(
         "button",
         {
           type: "button",
           disabled,
-          "aria-busy": busy || void 0,
+          "aria-busy": working || void 0,
           onClick: () => {
             setPressed(candidate.displayName);
             onAction(candidate.displayName);
@@ -1327,7 +1345,7 @@ function StaffPicker({
           className: cn(
             "flex items-baseline gap-2 rounded-sm border border-border-subtle px-2 py-1.5 text-left",
             "hover:bg-brand-subtle disabled:pointer-events-none disabled:opacity-40 cursor-pointer",
-            busy && "disabled:opacity-100 border-brand bg-brand-subtle"
+            working && "disabled:opacity-100 border-brand bg-brand-subtle"
           ),
           children: [
             busy && /* @__PURE__ */ jsx7(Loader24, { "aria-hidden": true, className: "size-3.5 shrink-0 animate-spin text-brand" }),
@@ -1386,7 +1404,14 @@ function ScheduleDiff({ payload }) {
 
 // src/ai-chat/components/MessageBubble.tsx
 import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
-function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
+function MessageBubble({
+  message,
+  labels,
+  onWidgetAction,
+  widgetsDisabled,
+  widgetsBusy,
+  widgetsStale
+}) {
   if (message.role === "system") {
     return /* @__PURE__ */ jsxs8("div", { className: "my-2 flex items-center gap-2", "data-slot": "ai-chat-divider", children: [
       /* @__PURE__ */ jsx8("span", { className: "h-px flex-1 bg-border-subtle" }),
@@ -1449,6 +1474,8 @@ function MessageBubble({ message, labels, onWidgetAction, widgetsDisabled }) {
             widget,
             onAction: onWidgetAction,
             disabled: widgetsDisabled,
+            busy: widgetsBusy,
+            stale: widgetsStale,
             superseded: widget.type === "confirm" && index !== lastConfirm,
             supersededNote: labels.cardSuperseded,
             waitingNote: labels.cardWaiting
@@ -1549,7 +1576,9 @@ function MessageList({
             message,
             labels,
             onWidgetAction,
-            widgetsDisabled: busy || index !== messages.length - 1
+            widgetsDisabled: busy || index !== messages.length - 1,
+            widgetsBusy: Boolean(busy),
+            widgetsStale: index !== messages.length - 1
           },
           message.id
         )),
@@ -1582,8 +1611,10 @@ function ChatDrawer(props) {
     activeConversationId,
     mode,
     contextUsage,
-    suggestions
+    suggestions,
+    scope
   } = props;
+  const scopeText = [scope?.departmentName, scope?.subUnitName].map((part) => part?.trim()).filter(Boolean).join(" \u203A ");
   const [historyOpen, setHistoryOpen] = React9.useState(false);
   const busy = status === "sending" || status === "streaming";
   const starting = status === "starting";
@@ -1611,11 +1642,23 @@ function ChatDrawer(props) {
             /* @__PURE__ */ jsx10(RadixDialog.Title, { className: "truncate text-body-sm font-semibold text-text-black", children: historyOpen ? labels.historyTitle : labels.title }),
             !historyOpen && mode === "schedule" ? /* @__PURE__ */ jsxs10("p", { className: "mt-0.5 flex min-w-0 items-center gap-1 truncate text-caption font-medium text-brand", children: [
               /* @__PURE__ */ jsx10(CalendarDays, { className: "size-3 shrink-0", "aria-hidden": true }),
-              labels.scheduleMode
+              labels.scheduleMode,
+              scope?.subUnitName?.trim() ? ` \xB7 ${scope.subUnitName.trim()}` : null
             ] }) : !historyOpen ? (
               /* คำบรรยายมีเฉพาะหน้าแชท — ในหน้าประวัติ หัวข้อบอกตัวเองครบแล้ว
                  และแถวรายการต้องการความสูงมากกว่าคำอธิบายซ้ำ */
-              /* @__PURE__ */ jsx10("p", { className: "truncate text-caption text-text-body", children: labels.subtitle })
+              scopeText ? /* @__PURE__ */ jsxs10(
+                "p",
+                {
+                  "data-slot": "ai-chat-scope",
+                  title: labels.scopeTooltip.replace("{scope}", scopeText),
+                  className: "mt-0.5 flex min-w-0 items-center gap-1 text-caption text-text-body",
+                  children: [
+                    /* @__PURE__ */ jsx10(Building2, { className: "size-3 shrink-0", "aria-hidden": true }),
+                    /* @__PURE__ */ jsx10("span", { className: "truncate", children: scopeText })
+                  ]
+                }
+              ) : /* @__PURE__ */ jsx10("p", { className: "truncate text-caption text-text-body", children: labels.subtitle })
             ) : null
           ] }),
           !historyOpen && /* @__PURE__ */ jsx10(ContextMeter, { usage: contextUsage ?? null, labels, className: "mr-1" }),
@@ -1884,8 +1927,9 @@ var FloatingButton = React10.forwardRef(
 
 // src/ai-chat/labels.ts
 var thLabels = {
-  launcher: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22 AI",
-  title: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22 AI",
+  // "Medy" — the Medi of MediWork / MediHR / Medi Match, made into a name the assistant answers to.
+  launcher: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22 Medy",
+  title: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22 Medy",
   subtitle: "\u0E16\u0E32\u0E21\u0E40\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E15\u0E32\u0E23\u0E32\u0E07\u0E40\u0E27\u0E23 \u0E04\u0E33\u0E02\u0E2D \u0E41\u0E25\u0E30\u0E01\u0E32\u0E23\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22",
   placeholder: "\u0E16\u0E32\u0E21\u0E40\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E15\u0E32\u0E23\u0E32\u0E07\u0E40\u0E27\u0E23 \u0E40\u0E0A\u0E48\u0E19 \u0E27\u0E31\u0E19\u0E17\u0E35\u0E48 6 \u0E43\u0E04\u0E23\u0E40\u0E27\u0E23\u0E40\u0E0A\u0E49\u0E32\u2026",
   placeholderSchedule: '\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E42\u0E2B\u0E21\u0E14\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23 \u2014 \u0E1E\u0E34\u0E21\u0E1E\u0E4C "\u0E08\u0E31\u0E14\u0E40\u0E27\u0E23\u0E40\u0E25\u0E22" \u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E30\u0E1A\u0E38\u0E41\u0E1C\u0E19\u0E01/\u0E40\u0E14\u0E37\u0E2D\u0E19\u2026',
@@ -1921,7 +1965,7 @@ var thLabels = {
   linkOpenHere: "\u0E40\u0E1B\u0E34\u0E14\u0E43\u0E19\u0E2B\u0E19\u0E49\u0E32\u0E19\u0E35\u0E49",
   linkOpenNewTab: "\u0E40\u0E1B\u0E34\u0E14\u0E43\u0E19\u0E41\u0E17\u0E47\u0E1A\u0E43\u0E2B\u0E21\u0E48",
   you: "\u0E04\u0E38\u0E13",
-  assistant: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22",
+  assistant: "Medy",
   historyTitle: "\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u0E01\u0E32\u0E23\u0E2A\u0E19\u0E17\u0E19\u0E32",
   historySearch: "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E43\u0E19\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34",
   historyBack: "\u0E01\u0E25\u0E31\u0E1A\u0E44\u0E1B\u0E17\u0E35\u0E48\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32",
@@ -1953,12 +1997,13 @@ var thLabels = {
   scheduleGreetingSubUnit: " \xB7 **\u0E2B\u0E19\u0E48\u0E27\u0E22\u0E07\u0E32\u0E19 {subUnit}**",
   scheduleGreetingPeriod: " \u0E40\u0E14\u0E37\u0E2D\u0E19 {month}/{year}",
   scheduleGreetingUnscoped: '\u0E40\u0E23\u0E34\u0E48\u0E21\u0E44\u0E14\u0E49\u0E42\u0E14\u0E22\u0E1A\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E01\u0E41\u0E25\u0E30\u0E40\u0E14\u0E37\u0E2D\u0E19\u0E17\u0E35\u0E48\u0E08\u0E30\u0E08\u0E31\u0E14\u0E01\u0E48\u0E2D\u0E19 \u0E40\u0E0A\u0E48\u0E19 *"\u0E41\u0E1C\u0E19\u0E01 ICU \u0E40\u0E14\u0E37\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32"*',
+  scopeTooltip: "Medy \u0E01\u0E33\u0E25\u0E31\u0E07\u0E17\u0E33\u0E07\u0E32\u0E19\u0E01\u0E31\u0E1A {scope} \u2014 \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E44\u0E14\u0E49\u0E08\u0E32\u0E01\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E01/\u0E2B\u0E19\u0E48\u0E27\u0E22\u0E07\u0E32\u0E19\u0E1A\u0E19\u0E2B\u0E19\u0E49\u0E32\u0E08\u0E2D",
   contextTooltip: "\u0E04\u0E27\u0E32\u0E21\u0E08\u0E33\u0E02\u0E2D\u0E07\u0E41\u0E0A\u0E17\u0E19\u0E35\u0E49 \u2014 \u0E43\u0E0A\u0E49\u0E44\u0E1B\u0E1B\u0E23\u0E30\u0E21\u0E32\u0E13 {used} \u0E08\u0E32\u0E01 {limit} \u0E42\u0E17\u0E40\u0E04\u0E19\n\u0E40\u0E01\u0E34\u0E19\u0E01\u0E27\u0E48\u0E32\u0E19\u0E35\u0E49 \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E40\u0E01\u0E48\u0E32\u0E2A\u0E38\u0E14\u0E08\u0E30\u0E16\u0E39\u0E01\u0E15\u0E31\u0E14\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2A\u0E34\u0E48\u0E07\u0E17\u0E35\u0E48 AI \u0E08\u0E33\u0E44\u0E14\u0E49",
   contextTrimmed: "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E15\u0E31\u0E14\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E40\u0E01\u0E48\u0E32\u0E1A\u0E32\u0E07\u0E2A\u0E48\u0E27\u0E19\u0E2D\u0E2D\u0E01\u0E44\u0E1B\u0E41\u0E25\u0E49\u0E27 \u2014 \u0E16\u0E49\u0E32\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E23\u0E34\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48\u0E43\u0E2B\u0E49\u0E01\u0E14 \u201C\u0E41\u0E0A\u0E17\u0E43\u0E2B\u0E21\u0E48\u201D"
 };
 var enLabels = {
-  launcher: "AI assistant",
-  title: "AI assistant",
+  launcher: "Medy assistant",
+  title: "Medy assistant",
   subtitle: "Ask about rosters, requests and settings",
   placeholder: "Ask about the roster \u2014 e.g. who is on the morning shift on the 6th\u2026",
   placeholderSchedule: 'Scheduling mode \u2014 type "generate the roster", or name a department/month\u2026',
@@ -1993,7 +2038,7 @@ var enLabels = {
   linkOpenHere: "Open here",
   linkOpenNewTab: "Open in a new tab",
   you: "You",
-  assistant: "Assistant",
+  assistant: "Medy",
   historyTitle: "Conversation history",
   historySearch: "Search history",
   historyBack: "Back to the conversation",
@@ -2024,6 +2069,7 @@ var enLabels = {
   scheduleGreetingSubUnit: " \xB7 **{subUnit}**",
   scheduleGreetingPeriod: " for {month}/{year}",
   scheduleGreetingUnscoped: 'Start by naming the department and month \u2014 e.g. *"ICU next month"*',
+  scopeTooltip: "Medy is working on {scope} \u2014 change it with the department/unit picker on the page",
   contextTooltip: "This chat's memory \u2014 about {used} of {limit} tokens used\nPast that, the oldest messages drop out of what the AI remembers",
   contextTrimmed: "Some older messages have been dropped \u2014 press \u201CNew chat\u201D to start clean"
 };
@@ -2917,6 +2963,7 @@ function AiChatWidget({
         mode: session.state.mode,
         contextUsage: session.state.contextUsage,
         suggestions,
+        scope: config.scope,
         onSend: handleSend,
         onCancel: () => void session.cancel(),
         onTranscribe: voiceEnabled ? transcribe : void 0,
