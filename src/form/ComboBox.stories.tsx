@@ -364,3 +364,55 @@ export const MultiCustomRowWithState: Story = {
     ),
   },
 };
+
+const wardStaff = [
+  { value: "u1", label: "nurse01 BEHPED", description: "Ward A" },
+  { value: "u2", label: "nurse03 behped", description: "Ward A" },
+  { value: "u3", label: "mm 04", description: "Ward B" },
+  { value: "u4", label: "testinvite006 1235", description: "Ward B" },
+  { value: "u5", label: "testinvite005 12356", description: "Ward B" },
+  { value: "u6", label: "testInactive 00001", description: "ปิดใช้งาน", disabled: true },
+  { value: "u7", label: "หัวหน้าหอ (ประจำ)", description: "Ward A", locked: true },
+];
+
+/** `selectAll` — แถว "เลือกทั้งหมด" ใต้ช่องค้นหา ติดอยู่กับที่ไม่เลื่อนตามลิสต์
+ *
+ * - เลือกเฉพาะตัวที่**มองเห็นตามคำค้น** — พิมพ์ "nurse" แล้วกด ได้แค่สองคน และป้ายบอกจำนวน
+ * - ข้ามตัวที่ `disabled` (testInactive) · ไม่แตะตัวที่ `locked` (หัวหน้าหอ)
+ * - เลือกบางคน = กล่องเป็น "−" · กดตอนครบ = ถอดเฉพาะที่มองเห็น
+ * - ป้ายส่งเป็นภาษาไทยได้ผ่าน `selectAllLabel` / `selectAllMatchesLabel`
+ */
+export const MultiSelectAll: Story = {
+  render: () => {
+    const [v, setV] = useState<string[]>(["u7"]);
+    return (
+      <div className="w-96">
+        <ComboBox
+          multiple
+          selectAll
+          selectAllLabel="เลือกทั้งหมด"
+          selectAllMatchesLabel={(n) => `เลือกทั้งหมดที่ค้นเจอ (${n})`}
+          label="พนักงาน"
+          placeholder="เลือกพนักงาน (หลายคน)"
+          searchPlaceholder="ค้นหา..."
+          options={wardStaff}
+          value={v}
+          onChange={setV}
+        />
+      </div>
+    );
+  },
+};
+
+/** `selectAll` + `maxItems` — เลือกต่อแล้วเกินเพดาน = แถวกดไม่ได้
+ * (ไม่เลือกให้ "เท่าที่ใส่ได้" — ผู้ใช้จะไม่รู้ว่าตัวไหนตกหล่น) */
+export const MultiSelectAllMaxItems: Story = {
+  args: {
+    multiple: true,
+    selectAll: true,
+    label: "Top 3 skills",
+    options: skills,
+    maxItems: 3,
+    hint: "Select up to 3 — type “n” to narrow the list to 3 and Select all works again",
+  },
+};

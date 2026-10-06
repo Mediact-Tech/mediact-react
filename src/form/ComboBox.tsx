@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Command as CmdkRoot } from "cmdk";
+import { Command as CmdkRoot, defaultFilter } from "cmdk";
 import { Check, ChevronDown, ChevronsUpDown, Lock, X } from "lucide-react";
 import { cn } from "../lib/cn";
 import {
@@ -16,6 +16,7 @@ import {
   type OptionGroup,
 } from "./group-options";
 import type { OptionRowState, ChipState } from "./option-row";
+import { SelectAllRow, type SelectAllProps } from "./select-all";
 import {
   Popover,
   PopoverAnchor,
@@ -141,8 +142,9 @@ type ComboBoxCommonProps<V extends string = string> = {
   containerClassName?: string;
 };
 
-/** เฉพาะโหมดเลือกหลายอัน — ไม่มีความหมายตอนเลือกอันเดียว */
-type ComboBoxMultiOnlyProps<V extends string = string> = {
+/** เฉพาะโหมดเลือกหลายอัน — ไม่มีความหมายตอนเลือกอันเดียว
+ * `selectAll*` มาจาก `form/select-all.tsx` ชุดเดียวกับ `EntityAutocomplete` */
+type ComboBoxMultiOnlyProps<V extends string = string> = SelectAllProps & {
   /**
    * วาด chip ของตัวที่เลือกไว้เอง
    *
@@ -230,7 +232,15 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
   } = props;
 
   const isMultiple = multiple === true;
-  const { renderChip, maxVisibleChips = 3, maxItems } = isMultiple
+  const {
+    renderChip,
+    maxVisibleChips = 3,
+    maxItems,
+    selectAll,
+    selectAllLabel,
+    selectAllMatchesLabel,
+    selectAllMaxLabel,
+  } = isMultiple
     ? (props as ComboBoxMultiProps<V>)
     : ({} as ComboBoxMultiOnlyProps<V>);
   /* ปุ่มล้างเป็นของโหมดเดี่ยวเท่านั้น — โหมดหลายอันมีปุ่ม `Clear` ของตัวเองอยู่ในแผง */
@@ -343,6 +353,22 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
     return [{ heading: null, items: options }];
   }, [groups, groupBy, groupOrder, options]);
 
+  /* เป้าหมายของ "เลือกทั้งหมด" = ตัวที่ลิสต์โชว์อยู่ตอนนี้ และเลือกได้
+   *
+   * 🔴 cmdk เก็บผลกรองไว้ตาม id ภายในของมัน ไม่ใช่ตาม option ⇒ อ่านกลับมาไม่ได้
+   * จึงกรองซ้ำด้วย `defaultFilter` **ตัวเดียวกัน กับค่าเดียวกัน** ที่ cmdk ใช้:
+   * ค่าของแถวคือ `opt.label` (cmdk `trim()` ให้) · คำค้นคือค่าในช่องตามที่พิมพ์ (ไม่ trim)
+   * · cmdk กรองเฉพาะตอนคำค้นไม่ว่าง และไม่ได้ส่ง `onSearch` มา
+   * ⚠️ ถ้าวันหนึ่งส่ง `filter`/`keywords` ให้ cmdk ต้องแก้ตรงนี้ด้วย ไม่งั้นสองฝั่งนับไม่ตรงกัน */
+  const selectAllTargets = React.useMemo<V[]>(() => {
+    if (!selectAll || !isMultiple) return [];
+    const shown =
+      onSearch || !query
+        ? flatOptions
+        : flatOptions.filter((o) => defaultFilter(o.label.trim(), query) > 0);
+    return shown.filter((o) => !o.disabled && !isLocked(o)).map((o) => o.value);
+  }, [selectAll, isMultiple, onSearch, query, flatOptions, isLocked]);
+
   const pick = (v: V) => {
     const opt = optionByValue(v);
     if (!isMultiple) {
@@ -439,6 +465,21 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
         </>
       )}
     </CmdkRoot.List>
+  );
+
+  const selectAllRow = (
+    <SelectAllRow
+      selectAll={selectAll}
+      selectAllLabel={selectAllLabel}
+      selectAllMatchesLabel={selectAllMatchesLabel}
+      selectAllMaxLabel={selectAllMaxLabel}
+      targets={optionsLoading ? [] : selectAllTargets}
+      selected={selected}
+      keyOf={(v) => v}
+      maxItems={maxItems}
+      searching={query !== ""}
+      onChange={setSelected}
+    />
   );
 
   const multiFooter = isMultiple && selected.length > 0 && (
@@ -743,6 +784,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
               placeholder={searchPlaceholder}
               className="border-b border-border-default px-3 py-2 text-body-sm outline-none placeholder:text-text-tertiary"
             />
+            {selectAllRow}
             {optionList}
             {multiFooter}
           </CmdkRoot>

@@ -107,7 +107,7 @@ export const Single: Story = {
   },
 };
 
-function MultiDemo() {
+function MultiDemo({ selectAll }: { selectAll?: boolean }) {
   const [value, setValue] = useState<Person[]>([]);
   const [options, setOptions] = useState<Person[]>([]);
   const [optionsLoading, setOptionsLoading] = useState(false);
@@ -121,7 +121,9 @@ function MultiDemo() {
       onChange={setValue}
       options={options}
       optionsLoading={optionsLoading}
-      maxItems={4}
+      /* เพดาน 4 จากเรื่อง "Multiple" ทำให้แถวเลือกทั้งหมด (8 คน) กดไม่ได้ตั้งแต่เปิด */
+      maxItems={selectAll ? undefined : 4}
+      selectAll={selectAll}
       getOptionValue={(p) => p.id}
       getOptionLabel={(p) => p.name}
       getOptionDescription={(p) => p.department}
@@ -147,6 +149,22 @@ export const Multiple: Story = {
       description: {
         story:
           "Multi-select mode (`multiple`) — chips on the trigger, cap via `maxItems`, same chip-overflow (+N) convention as MultiAutocomplete.",
+      },
+    },
+  },
+};
+
+export const SelectAll: Story = {
+  render: () => (
+    <div className="w-80">
+      <MultiDemo selectAll />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "`selectAll` — selects every option the search returned **for this query**, not the whole database. Type “radio” and the row becomes “Select all 2 results”. Same rules as `ComboBox`: locked items are never touched, exceeding `maxItems` disables the row.",
       },
     },
   },

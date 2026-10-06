@@ -16,11 +16,13 @@ import {
   type OptionGroup,
 } from "./group-options";
 import type { OptionRowState, ChipState } from "./option-row";
+import { SelectAllRow, type SelectAllProps } from "./select-all";
 import { Popover, PopoverContent, PopoverTrigger } from "../overlay/Popover";
 import { Chip } from "../ui/Chip";
 import { Spinner } from "../feedback/Spinner";
 
-type EntityAutocompleteCommonProps<T> = {
+/** `selectAll*` (เฉพาะ `multiple`) มาจาก `form/select-all.tsx` ชุดเดียวกับ `ComboBox` */
+type EntityAutocompleteCommonProps<T> = SelectAllProps & {
   id?: string;
   label?: React.ReactNode;
   hint?: React.ReactNode;
@@ -193,6 +195,10 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
     groupOrder,
     maxVisibleChips = 3,
     maxItems,
+    selectAll,
+    selectAllLabel,
+    selectAllMatchesLabel,
+    selectAllMaxLabel,
     multiple,
     value,
     defaultValue,
@@ -354,6 +360,25 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
     );
   };
 
+  /* หลังบ้านกรองมาแล้ว ⇒ ตัวที่มองเห็นคือ `options` ตามที่ได้มา · ตัดเฉพาะตัวที่ล็อก
+   * กำลังโหลด / ค้นพัง ⇒ ลิสต์ไม่ได้โชว์ `options` อยู่ ⇒ ไม่มีเป้าหมาย */
+  const selectAllRow = isMultiple && (
+    <SelectAllRow
+      selectAll={selectAll}
+      selectAllLabel={selectAllLabel}
+      selectAllMatchesLabel={selectAllMatchesLabel}
+      selectAllMaxLabel={selectAllMaxLabel}
+      targets={
+        optionsLoading || searchError ? [] : options.filter((o) => !lockedOf(o))
+      }
+      selected={selectedItems}
+      keyOf={keyOf}
+      maxItems={maxItems}
+      searching={query !== ""}
+      onChange={setSelectedItems}
+    />
+  );
+
   /* โครงร่างใช้ shell ตัวเดียวกับของจริง ⇒ สูงเท่ากันโดยโครงสร้าง
    * ⚠️ ต้องอยู่ **หลัง** hook ทุกตัวข้างบน — return ก่อนจะทำให้จำนวน hook ต่างกันระหว่าง render */
   if (isLoading) {
@@ -507,6 +532,7 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
               placeholder={searchPlaceholder}
               className="border-b border-border-default px-3 py-2 text-body-sm outline-none placeholder:text-text-tertiary"
             />
+            {selectAllRow}
             <CmdkRoot.List className="max-h-64 overflow-auto p-1">
               {optionsLoading ? (
                 <CmdkRoot.Loading className="flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary">
