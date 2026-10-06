@@ -1,5 +1,6 @@
 /** @doc ./option-list.md */
 import * as React from "react";
+import { cn } from "../lib/cn";
 import { Checkbox } from "../ui/Checkbox";
 import { toggleLabelClasses } from "../ui/toggle-parts";
 
@@ -155,7 +156,13 @@ export function SelectAllRow<T>({
     /* `px-3` = `p-1` ของ List + `px-2` ของแถว ⇒ ข้อความและกล่องติ๊กตรงแนวกับแถวข้างล่าง */
     <div className="flex items-center justify-between gap-2 border-b border-border-default px-3 py-1.5">
       <span className="flex min-w-0 items-baseline gap-2">
-        <label htmlFor={id} className={toggleLabelClasses(model.disabled)}>
+        {/* `text-inherit` ทับ `text-text-body` ของตระกูล toggle — แถวตัวเลือกข้างล่างไม่ได้ตั้งสี
+            รับสีจากแผงที่ครอบ ⇒ รับจากที่เดียวกัน = สีเท่ากันโดยโครงสร้าง ไม่ต้องตามค่ากัน
+            (ใช้ `text-text-body` แล้วหัวแถวเทากว่ารายการข้างใต้ — เห็นจากภาพจริง 2026-10-06) */}
+        <label
+          htmlFor={id}
+          className={cn(toggleLabelClasses(model.disabled), "text-inherit")}
+        >
           {searching ? selectAllMatchesLabel(targets.length) : selectAllLabel}
         </label>
         {showCap && (
