@@ -16,6 +16,11 @@ import {
   type OptionGroup,
 } from "./group-options";
 import type { OptionRowState, ChipState } from "./option-row";
+import {
+  OPTION_LIST_CLASS,
+  OPTION_PANEL_CLASS,
+  OPTION_ROOT_CLASS,
+} from "./option-panel";
 import { SelectAllRow, type SelectAllProps } from "./select-all";
 import { Popover, PopoverContent, PopoverTrigger } from "../overlay/Popover";
 import { Chip } from "../ui/Chip";
@@ -528,12 +533,12 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
           )}
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-0"
+          className={OPTION_PANEL_CLASS}
           align="start"
         >
           {/* Options come from the caller's own search (`onSearch`) — cmdk
               must not re-filter an already server-filtered result set. */}
-          <CmdkRoot shouldFilter={false} className="flex w-full flex-col">
+          <CmdkRoot shouldFilter={false} className={OPTION_ROOT_CLASS}>
             <CmdkRoot.Input
               value={query}
               onValueChange={setQuery}
@@ -541,7 +546,7 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
               className="border-b border-border-default px-3 py-2 text-body-sm outline-none placeholder:text-text-tertiary"
             />
             {selectAllRow}
-            <CmdkRoot.List className="max-h-64 overflow-auto p-1">
+            <CmdkRoot.List className={OPTION_LIST_CLASS}>
               {optionsLoading ? (
                 <CmdkRoot.Loading className="flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary">
                   <Spinner size="sm" />

@@ -16,6 +16,11 @@ import {
   type OptionGroup,
 } from "./group-options";
 import type { OptionRowState, ChipState } from "./option-row";
+import {
+  OPTION_LIST_CLASS,
+  OPTION_PANEL_CLASS,
+  OPTION_ROOT_CLASS,
+} from "./option-panel";
 import { SelectAllRow, type SelectAllProps } from "./select-all";
 import {
   Popover,
@@ -425,7 +430,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
    * ต่างกันแค่ว่า `Command.Input` ไปอยู่ที่ไหน (ในแผง หรือกลายเป็นตัวช่องเอง)
    * ถ้าเขียนซ้ำสองที่ มันจะเพี้ยนออกจากกันแน่นอน — บทเรียนเดิมของ repo นี้ */
   const optionList = (
-    <CmdkRoot.List className="max-h-64 overflow-auto p-1">
+    <CmdkRoot.List className={OPTION_LIST_CLASS}>
       {optionsLoading ? (
         <CmdkRoot.Loading className="flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary">
           <Spinner size="sm" />
@@ -598,7 +603,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
           </FloatingFieldShell>
 
           <PopoverContent
-            className="w-[var(--radix-popover-trigger-width)] p-0"
+            className={OPTION_PANEL_CLASS}
             align="start"
             /* โฟกัสต้องอยู่ที่ช่องต่อไป ไม่งั้นพิมพ์ตัวที่สองไม่ได้ */
             onOpenAutoFocus={(e) => e.preventDefault()}
@@ -779,10 +784,10 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
           )}
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-0"
+          className={OPTION_PANEL_CLASS}
           align="start"
         >
-          <CmdkRoot shouldFilter={!onSearch} className="flex w-full flex-col">
+          <CmdkRoot shouldFilter={!onSearch} className={OPTION_ROOT_CLASS}>
             <CmdkRoot.Input
               value={query}
               onValueChange={(v) => {

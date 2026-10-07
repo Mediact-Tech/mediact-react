@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| โค้ด | `form/group-options.ts` · `form/option-row.ts` · `form/select-all.tsx` |
+| โค้ด | `form/group-options.ts` · `form/option-row.ts` · `form/select-all.tsx` · `form/option-panel.ts` |
 | Storybook | `Form/ComboBox` → `Multi Grouped By Function` · `Multi Locked Defaults` · `Multi Custom Row With State` · `Multi Select All` · `Multi Select All Max Items` · `Form/EntityAutocomplete` → `Grouped` · `Locked Selection` · `Select All` |
 | Figma | หน้า `Select` — `<Group heading>` (`58:18`) · `<Option>` `State=locked` · เฟรม `ตอนกางตัวเลือกแบบจัดกลุ่ม` (`58:35`) · `เลือกหลายอัน — ค่าที่ล็อกไว้` (`62:48`) |
 
@@ -295,6 +295,7 @@ prop ทั้งชุด (`SelectAllProps`) และตรรกะทั้�
 
 | วันที่ | ตัดสิน | เหตุผล | ราคาที่รับ |
 |---|---|---|---|
+| 2026-10-07 | **แผงตัวเลือกไม่สูงเกินพื้นที่ที่เหลือบนจอ** (`form/option-panel.ts`) — `max-h` = `--radix-popover-content-available-height` · ลิสต์เป็นส่วนเดียวที่หด (`min-h-0`) | วัดบน Mediwork (viewport 634px): หลังเลือกทั้งหมด ช่องสูง 150px แผงเปิดขึ้นบนแล้วขอบบนอยู่ **−80px** ⇒ ช่องค้นหากับแถว "เลือกทั้งหมด" หลุดนอกจอ · อีกจอแผงล้นขอบล่าง 24px · หลังแก้: ขอบบน 0 · ช่องค้นหาที่ 1px · แถวเลือกทั้งหมดที่ 46px · ลิสต์หด 256→196px / ขอบล่าง 658→634 พอดีจอ · ใช้ร่วมทั้ง `ComboBox` สองทาง + `EntityAutocomplete` เพราะสามที่เขียนคลาสแผงซ้ำกันอยู่แล้ว | แผงชิดขอบจอพอดี ไม่มีระยะหายใจ (`collisionPadding` ยังเป็น 0) · พื้นที่เหลือน้อยมาก ลิสต์อาจเหลือไม่กี่แถว ต้องเลื่อนดู · ยังไม่ได้วัดเคสพื้นที่เหลือเยอะใน Storybook — หน้าตาควรเท่าเดิมเพราะ `max-h` จะไม่ผูกเมื่อเนื้อหาเตี้ยกว่า แต่เป็นเหตุผล ไม่ใช่ผลวัด |
 | 2026-10-07 | **`renderChip` ได้ `onRemove`** · overlay ของ DS ตั้งชั้นผ่าน `--mx-z-overlay` ได้ (`overlay/overlay-layer.ts`) | ย้ายช่องพนักงานของ Mediwork มาใช้ DS (wrapper `MultiSelectAutocomplete`) แล้วเจอสองอย่างบนจอจริง: chip ที่วาดเองไม่มีทางถอดออก และ**แผงตัวเลือกเปิดอยู่ใต้ MUI Dialog มองไม่เห็นเลย** (DS `z-50` vs MUI `1300` · วัด `elementFromPoint` กลางแผงได้ `MuiDialogContent-root`) ทั้งที่ focus/พิมพ์/กดทำงานครบ — ที่กลัวไว้ว่า focus trap ของ MUI จะดึงโฟกัสกลับ **ไม่เกิด** (วัดหลังรอ 3 วินาที) | ค่าตั้งต้นยังเป็น 50 ⇒ แอป MUI ต้องตั้ง `--mx-z-overlay` เอง (Mediwork ตั้ง 1400) ลืมแล้วพังเงียบ · ไม่ได้รวม `Dialog` ของ DS (ไม่ใช่ overlay ที่ลอยจากตัวกระตุ้น) |
 | 2026-10-06 | **เพิ่ม `selectAll` ให้ `ComboBox`/`EntityAutocomplete` (multi)** ผ่านชิ้นกลาง `form/select-all.tsx` · opt-in | ยังไม่มี select-all ใน dropdown ตัวไหนเลยทั้ง 4 แอป (สำรวจแล้ว) · จอที่ขอคือช่อง "พนักงาน (หลายคน)" ในตั้งค่าจัดตารางของ Mediwork · แยกเป็นชิ้นกลางตั้งแต่ตัวแรก เพราะ footer ของสองตัวนี้ลอกกันมาแล้วและเพี้ยนไปแล้ว (Clear มี/ไม่มีไอคอน X) | ลูกศรขึ้น/ลงไม่ถึงแถวนี้ (ต้อง Tab) · `ComboBox` ต้องกรองซ้ำด้วย `defaultFilter` ให้ตรงกับ cmdk — ถ้าวันหนึ่งเปลี่ยนการกรองของ cmdk ต้องแก้สองที่ · `EntityAutocomplete` เลือกได้แค่ผลหน้านี้ · ⚠️ **จอใน screenshot ยังไม่ได้** — เป็น MUI `MultiSelectAutocomplete` ของแอปเอง ไม่ใช่ DS · ยังไม่มี Figma · กล่องที่กดไม่ได้ Tab ข้ามไป (เหมือน checkbox ทุกตัวใน DS) — ข้อความเพดานจึงต้องมองเห็นได้เอง ไม่พึ่ง focus |
 | 2026-08-08 | แยกตัวจัดกลุ่มไว้ที่ `group-options.ts` | สอง component ใช้ร่วมกัน · เขียนแยกแล้วจะเพี้ยนกันแน่ | มีไฟล์เพิ่ม 1 ไฟล์ |
