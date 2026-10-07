@@ -1780,6 +1780,41 @@ type OptionRowState = {
 type ChipState = {
     /** ถอดออกไม่ได้ — ต้องบอกผู้ใช้ด้วยว่าทำไม ไม่ใช่แค่ซ่อนปุ่ม × */
     locked: boolean;
+    /**
+     * ถอดตัวนี้ออก — ผูกกับปุ่ม × ของ chip ที่วาดเอง · `undefined` เมื่อ `locked`
+     *
+     * 🔴 เดิมไม่มี ⇒ **chip ที่วาดเองถอดออกไม่ได้เลย** (ปุ่ม × ไม่มีอะไรให้เรียก) ผู้เรียกที่อยากได้แค่
+     * avatar บน chip ต้องเลือกระหว่าง "สวยแต่ลบไม่ได้" กับ "ลบได้แต่หน้าตา default"
+     * (พบตอนย้าย `MultiSelectAutocomplete` ของ Mediwork มาใช้ DS: 7 จอวาด chip เองพร้อม `onDelete`)
+     *
+     * หยุด event ไม่ให้ไปถึงตัวช่องให้แล้ว — ไม่งั้นกด × แล้วแผงตัวเลือกเปิดตามขึ้นมาด้วย
+     */
+    onRemove?: (event: React.SyntheticEvent) => void;
+};
+
+/** @doc ./option-list.md */
+
+/** prop ชุดเดียวที่ทั้ง `ComboBox` และ `EntityAutocomplete` รับ (มีผลเฉพาะ `multiple`) */
+type SelectAllProps = {
+    /**
+     * แถว "เลือกทั้งหมด" ใต้ช่องค้นหา — ติดอยู่กับที่ ไม่เลื่อนตามลิสต์
+     *
+     * - เลือกเฉพาะตัวที่ **มองเห็นตามคำค้นตอนนี้** — ค้น "ward A" แล้วกด ได้แค่ ward A
+     * - ข้ามตัวที่ `disabled` · ไม่แตะตัวที่ล็อก
+     * - กดตอนครบแล้ว = ถอดเฉพาะตัวที่มองเห็น ตัวที่เลือกไว้นอกคำค้นยังอยู่
+     * - เลือกต่อแล้วเกิน `maxItems` = กดไม่ได้ พร้อมบอกเพดาน (ไม่เลือกให้ครึ่ง ๆ)
+     *
+     * ⚠️ `EntityAutocomplete`: "ทั้งหมด" = ทั้งหมดที่หลังบ้านคืนมาหน้านี้ ไม่ใช่ทั้งฐานข้อมูล
+     *
+     * ปิดเป็นค่าเริ่มต้น — บางลิสต์การเลือกทั้งหมดไม่มีความหมาย
+     */
+    selectAll?: boolean;
+    /** ป้ายของแถว · ค่าเริ่มต้น `"Select all"` */
+    selectAllLabel?: string;
+    /** ป้ายตอนกำลังค้นหา — ได้จำนวนที่เลือกได้ในผลค้น · ค่าเริ่มต้น `Select all N results` */
+    selectAllMatchesLabel?: (count: number) => string;
+    /** บอกเพดานตอนแถวกดไม่ได้เพราะ `maxItems` · ค่าเริ่มต้น `Max N` */
+    selectAllMaxLabel?: (max: number) => string;
 };
 
 type ComboBoxOption<V extends string = string> = {
@@ -1878,8 +1913,9 @@ type ComboBoxCommonProps<V extends string = string> = {
     className?: string;
     containerClassName?: string;
 };
-/** เฉพาะโหมดเลือกหลายอัน — ไม่มีความหมายตอนเลือกอันเดียว */
-type ComboBoxMultiOnlyProps<V extends string = string> = {
+/** เฉพาะโหมดเลือกหลายอัน — ไม่มีความหมายตอนเลือกอันเดียว
+ * `selectAll*` มาจาก `form/select-all.tsx` ชุดเดียวกับ `EntityAutocomplete` */
+type ComboBoxMultiOnlyProps<V extends string = string> = SelectAllProps & {
     /**
      * วาด chip ของตัวที่เลือกไว้เอง
      *
@@ -1889,6 +1925,14 @@ type ComboBoxMultiOnlyProps<V extends string = string> = {
     renderChip?: (option: ComboBoxOption<V>, state: ChipState) => React.ReactNode;
     /** จำนวน chip ที่โชว์ ที่เหลือยุบเป็น "+N" · ค่าเริ่มต้น `3` */
     maxVisibleChips?: number;
+    /**
+     * วาด chip "+N" เอง — ได้จำนวนที่ยุบไว้ และตัวที่ถูกยุบ (เอาไปทำ tooltip รายชื่อได้)
+     *
+     * มีไว้คู่กับ `renderChip` — แอปที่วาด chip เองด้วย library อื่น (เช่น MUI ใน Mediwork) จะได้
+     * "+N" หน้าตาเดียวกับ chip ข้าง ๆ · ไม่ส่ง = `Chip` โทน `neutral` ของ DS ตามเดิม
+     * (เดิมวาดเองไม่ได้ ⇒ วัดบน Mediwork ได้ chip รายชื่อพื้นเทาไม่มีกรอบ ต่อด้วย "+12" พื้นขาวมีกรอบ)
+     */
+    renderOverflowChip?: (count: number, hidden: ComboBoxOption<V>[]) => React.ReactNode;
     /** เพดานจำนวนที่เลือกได้ */
     maxItems?: number;
 };
@@ -2003,7 +2047,8 @@ type SearchSelectProps<T> = {
 };
 declare const SearchSelect: <T>({ label, placeholder, required, disabled, size, hint, error, hideLabel, reserveMessageSpace, alwaysFloatLabel, id, className, containerClassName, options, optionsLoading, value, onChange, onSearch, getOptionValue, getOptionLabel, getOptionDescription, hintText, emptyText, minChars, clearable, clearLabel, }: SearchSelectProps<T>) => React.ReactElement;
 
-type EntityAutocompleteCommonProps<T> = {
+/** `selectAll*` (เฉพาะ `multiple`) มาจาก `form/select-all.tsx` ชุดเดียวกับ `ComboBox` */
+type EntityAutocompleteCommonProps<T> = SelectAllProps & {
     id?: string;
     label?: React.ReactNode;
     hint?: React.ReactNode;
@@ -2097,6 +2142,14 @@ type EntityAutocompleteCommonProps<T> = {
     groupOrder?: string[];
     /** Maximum visible chips in multi mode — extras collapse into "+N". Default `3`. */
     maxVisibleChips?: number;
+    /**
+     * วาด chip "+N" เอง — ได้จำนวนที่ยุบไว้ และตัวที่ถูกยุบ (เอาไปทำ tooltip รายชื่อได้)
+     *
+     * มีไว้คู่กับ `renderChip` — แอปที่วาด chip เองด้วย library อื่น (เช่น MUI ใน Mediwork) จะได้
+     * "+N" หน้าตาเดียวกับ chip ข้าง ๆ · ไม่ส่ง = `Chip` โทน `neutral` ของ DS ตามเดิม
+     * (เดิมวาดเองไม่ได้ ⇒ วัดบน Mediwork ได้ chip รายชื่อพื้นเทาไม่มีกรอบ ต่อด้วย "+12" พื้นขาวมีกรอบ)
+     */
+    renderOverflowChip?: (count: number, hidden: T[]) => React.ReactNode;
     /** Cap selection in multi mode. */
     maxItems?: number;
 };
