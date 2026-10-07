@@ -223,3 +223,24 @@ describe("EntityAutocomplete", () => {
     });
   });
 });
+
+describe("EntityAutocomplete — renderOverflowChip", () => {
+  it("ได้จำนวนและ item ทั้งก้อนที่ถูกยุบ", () => {
+    let hiddenNames: string[] = [];
+    render(
+      <EntityAutocomplete<Person>
+        {...base}
+        multiple
+        maxVisibleChips={1}
+        defaultValue={[alicia, ben, carmen]}
+        renderOverflowChip={(count, hidden) => {
+          hiddenNames = hidden.map((p) => p.name);
+          return <span>+{count} คน</span>;
+        }}
+      />,
+    );
+    expect(screen.getByText("+2 คน")).toBeInTheDocument();
+    expect(hiddenNames).toEqual(["Ben", "Carmen"]);
+  });
+});
+

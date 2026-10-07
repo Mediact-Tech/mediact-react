@@ -256,6 +256,43 @@ describe("ComboBox — สิ่งที่ได้จากการรวบ
       expect(seen).toEqual([true, false]);
     });
 
+    it("renderOverflowChip ได้จำนวนและตัวที่ถูกยุบ · ไม่ส่ง = +N แบบเดิม", () => {
+      const seen: { count: number; hidden: string[] }[] = [];
+      const opts = [
+        { value: "a", label: "A" },
+        { value: "b", label: "B" },
+        { value: "c", label: "C" },
+        { value: "d", label: "D" },
+      ];
+      const { rerender } = render(
+        <ComboBox
+          multiple
+          label="Stack"
+          maxVisibleChips={2}
+          defaultValue={["a", "b", "c", "d"]}
+          options={opts}
+          renderOverflowChip={(count, hidden) => {
+            seen.push({ count, hidden: hidden.map((o) => o.label) });
+            return <span>อีก {count} คน</span>;
+          }}
+        />,
+      );
+      expect(screen.getByText("อีก 2 คน")).toBeInTheDocument();
+      expect(screen.queryByText("+2")).toBeNull();
+      expect(seen.at(-1)).toEqual({ count: 2, hidden: ["C", "D"] });
+
+      rerender(
+        <ComboBox
+          multiple
+          label="Stack"
+          maxVisibleChips={2}
+          defaultValue={["a", "b", "c", "d"]}
+          options={opts}
+        />,
+      );
+      expect(screen.getByText("+2")).toBeInTheDocument();
+    });
+
     /* chip ที่วาดเองต้องถอดได้ — เดิมไม่มีอะไรให้ปุ่ม × เรียก */
     it("renderChip ได้ onRemove ที่ถอดตัวนั้นออก · ตัวที่ล็อกได้ undefined", async () => {
       const user = userEvent.setup();

@@ -159,6 +159,14 @@ type ComboBoxMultiOnlyProps<V extends string = string> = SelectAllProps & {
   renderChip?: (option: ComboBoxOption<V>, state: ChipState) => React.ReactNode;
   /** จำนวน chip ที่โชว์ ที่เหลือยุบเป็น "+N" · ค่าเริ่มต้น `3` */
   maxVisibleChips?: number;
+  /**
+   * วาด chip "+N" เอง — ได้จำนวนที่ยุบไว้ และตัวที่ถูกยุบ (เอาไปทำ tooltip รายชื่อได้)
+   *
+   * มีไว้คู่กับ `renderChip` — แอปที่วาด chip เองด้วย library อื่น (เช่น MUI ใน Mediwork) จะได้
+   * "+N" หน้าตาเดียวกับ chip ข้าง ๆ · ไม่ส่ง = `Chip` โทน `neutral` ของ DS ตามเดิม
+   * (เดิมวาดเองไม่ได้ ⇒ วัดบน Mediwork ได้ chip รายชื่อพื้นเทาไม่มีกรอบ ต่อด้วย "+12" พื้นขาวมีกรอบ)
+   */
+  renderOverflowChip?: (count: number, hidden: ComboBoxOption<V>[]) => React.ReactNode;
   /** เพดานจำนวนที่เลือกได้ */
   maxItems?: number;
 };
@@ -239,6 +247,7 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
   const isMultiple = multiple === true;
   const {
     renderChip,
+    renderOverflowChip,
     maxVisibleChips = 3,
     maxItems,
     selectAll,
@@ -753,11 +762,19 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
                         </Chip>
                       );
                     })}
-                    {overflow > 0 && (
-                      <Chip size="sm" variant="neutral">
-                        +{overflow}
-                      </Chip>
-                    )}
+                    {overflow > 0 &&
+                      (renderOverflowChip ? (
+                        renderOverflowChip(
+                          overflow,
+                          selected
+                            .slice(visible.length)
+                            .map((v) => optionByValue(v) ?? { value: v, label: String(v) }),
+                        )
+                      ) : (
+                        <Chip size="sm" variant="neutral">
+                          +{overflow}
+                        </Chip>
+                      ))}
                   </>
                 )}
               </span>

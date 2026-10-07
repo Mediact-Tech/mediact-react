@@ -126,6 +126,14 @@ type EntityAutocompleteCommonProps<T> = SelectAllProps & {
 
   /** Maximum visible chips in multi mode — extras collapse into "+N". Default `3`. */
   maxVisibleChips?: number;
+  /**
+   * วาด chip "+N" เอง — ได้จำนวนที่ยุบไว้ และตัวที่ถูกยุบ (เอาไปทำ tooltip รายชื่อได้)
+   *
+   * มีไว้คู่กับ `renderChip` — แอปที่วาด chip เองด้วย library อื่น (เช่น MUI ใน Mediwork) จะได้
+   * "+N" หน้าตาเดียวกับ chip ข้าง ๆ · ไม่ส่ง = `Chip` โทน `neutral` ของ DS ตามเดิม
+   * (เดิมวาดเองไม่ได้ ⇒ วัดบน Mediwork ได้ chip รายชื่อพื้นเทาไม่มีกรอบ ต่อด้วย "+12" พื้นขาวมีกรอบ)
+   */
+  renderOverflowChip?: (count: number, hidden: T[]) => React.ReactNode;
   /** Cap selection in multi mode. */
   maxItems?: number;
 };
@@ -195,6 +203,7 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
     getOptionDescription,
     renderOption,
     renderChip,
+    renderOverflowChip,
     isOptionLocked,
     groupBy,
     groupOrder,
@@ -499,11 +508,14 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
                         </Chip>
                       );
                     })}
-                    {overflow > 0 && (
-                      <Chip size="sm" variant="neutral">
-                        +{overflow}
-                      </Chip>
-                    )}
+                    {overflow > 0 &&
+                      (renderOverflowChip ? (
+                        renderOverflowChip(overflow, selectedItems.slice(visible.length))
+                      ) : (
+                        <Chip size="sm" variant="neutral">
+                          +{overflow}
+                        </Chip>
+                      ))}
                   </>
                 )}
               </span>
