@@ -255,6 +255,43 @@ describe("ComboBox — สิ่งที่ได้จากการรวบ
       );
       expect(seen).toEqual([true, false]);
     });
+
+    /* chip ที่วาดเองต้องถอดได้ — เดิมไม่มีอะไรให้ปุ่ม × เรียก */
+    it("renderChip ได้ onRemove ที่ถอดตัวนั้นออก · ตัวที่ล็อกได้ undefined", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      const removers: Record<string, unknown> = {};
+      render(
+        <ComboBox
+          multiple
+          label="Stack"
+          defaultValue={["react", "vue", "svelte"]}
+          onChange={onChange}
+          options={
+            [
+              { value: "react", label: "React", locked: true },
+              { value: "vue", label: "Vue" },
+              { value: "svelte", label: "Svelte" },
+            ] as ComboBoxOption[]
+          }
+          renderChip={(opt, { onRemove }) => {
+            removers[opt.value] = onRemove;
+            return onRemove ? (
+              <button type="button" onClick={onRemove}>
+                ลบ {opt.label}
+              </button>
+            ) : (
+              <span>{opt.label}</span>
+            );
+          }}
+        />,
+      );
+      expect(removers.react).toBeUndefined();
+      await user.click(screen.getByRole("button", { name: "ลบ Vue" }));
+      expect(onChange).toHaveBeenLastCalledWith(["react", "svelte"]);
+      /* ⛔ กด × แล้วแผงต้องไม่เปิดตามมา */
+      expect(screen.queryByRole("listbox")).toBeNull();
+    });
   });
 
   describe("โครงร่างตอนโหลด", () => {

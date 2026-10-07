@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as RadixTooltip from "@radix-ui/react-tooltip";
 import { cn } from "../lib/cn";
+import { OVERLAY_Z } from "./overlay-layer";
 
 const TooltipProvider = RadixTooltip.Provider;
 const TooltipRoot = RadixTooltip.Root;
@@ -32,7 +33,8 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
             // ประกาศ token เองในไฟล์ตัวเอง และไม่มี `--text-*` เลยสักตัว) Tailwind v4 จะไม่ generate
             // `.text-body-sm` ถ้าไม่มีตัวแปรรองรับ ⇒ ตัวหนังสือจะไหลไปตามขนาดของ parent เงียบ ๆ
             // ปลดล็อกเมื่อแอปเหล่านั้น import `@mediact/react/tokens.css` แล้ว
-            "z-50 max-w-xs rounded-md bg-black px-4 py-2.5 text-sm font-medium text-white shadow-lg",
+            OVERLAY_Z,
+            "max-w-xs rounded-md bg-black px-4 py-2.5 text-sm font-medium text-white shadow-lg",
             "data-[state=delayed-open]:animate-in data-[state=closed]:animate-out",
             className,
           )}

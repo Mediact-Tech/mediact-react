@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { cn } from "../lib/cn";
+import { OVERLAY_Z } from "./overlay-layer";
 
 const Popover = RadixPopover.Root;
 const PopoverTrigger = RadixPopover.Trigger;
@@ -60,7 +61,8 @@ const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentProps>(
              * ⚠️ พังเงียบสนิท — popover เปิดออกมาสวยงามครบทุกอย่าง แค่กดไม่ติด
              * ไม่มี error ไม่มี warning · เคยแก้เฉพาะจุดที่ `DatePicker` มาก่อน แล้ว `TimePicker`
              * ก็เจอเรื่องเดียวกันอีก ⇒ ย้ายมาแก้ที่ primitive ตัวนี้ให้จบทีเดียวทุกตัวที่ใช้ `Popover` */
-            "pointer-events-auto z-50 rounded-sm border border-border-default bg-white p-3 shadow-lg outline-none",
+            OVERLAY_Z,
+            "pointer-events-auto rounded-sm border border-border-default bg-white p-3 shadow-lg outline-none",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             className,
           )}

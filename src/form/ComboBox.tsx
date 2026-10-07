@@ -714,7 +714,15 @@ function ComboBox<V extends string = string>(props: ComboBoxProps<V>) {
                       if (renderChip) {
                         return (
                           <React.Fragment key={v}>
-                            {renderChip(opt, { locked })}
+                            {renderChip(opt, {
+                              locked,
+                              onRemove: locked
+                                ? undefined
+                                : (e) => {
+                                    e.stopPropagation();
+                                    remove(v);
+                                  },
+                            })}
                           </React.Fragment>
                         );
                       }

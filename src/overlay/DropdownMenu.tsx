@@ -2,6 +2,7 @@ import * as React from "react";
 import * as RadixMenu from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
 import { cn } from "../lib/cn";
+import { OVERLAY_Z } from "./overlay-layer";
 
 const DropdownMenu = RadixMenu.Root;
 const DropdownMenuTrigger = RadixMenu.Trigger;
@@ -20,7 +21,8 @@ const DropdownMenuContent = React.forwardRef<
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 min-w-[8rem] overflow-hidden rounded-sm border border-border-default bg-white p-1 shadow-lg",
+          OVERLAY_Z,
+          "min-w-[8rem] overflow-hidden rounded-sm border border-border-default bg-white p-1 shadow-lg",
           className,
         )}
         {...props}
@@ -160,7 +162,8 @@ const DropdownMenuSubContent = React.forwardRef<
     <RadixMenu.SubContent
       ref={ref}
       className={cn(
-        "z-50 min-w-[8rem] overflow-hidden rounded-sm border border-border-default bg-white p-1 shadow-lg",
+        OVERLAY_Z,
+        "min-w-[8rem] overflow-hidden rounded-sm border border-border-default bg-white p-1 shadow-lg",
         className,
       )}
       {...props}

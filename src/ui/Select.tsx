@@ -2,6 +2,7 @@ import * as React from "react";
 import * as RadixSelect from "@radix-ui/react-select";
 import { Check, ChevronDown, Plus, X } from "lucide-react";
 import { cn } from "../lib/cn";
+import { OVERLAY_Z } from "../overlay/overlay-layer";
 import {
   FloatingFieldShell,
   FieldSkeleton,
@@ -251,7 +252,10 @@ function Select<V extends string = string>({
           <RadixSelect.Content
             position="popper"
             sideOffset={4}
-            className="z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-sm border border-border-default bg-bg-default shadow-lg"
+            className={cn(
+              OVERLAY_Z,
+              "max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-sm border border-border-default bg-bg-default shadow-lg",
+            )}
           >
             <RadixSelect.Viewport className="p-1">
               {options

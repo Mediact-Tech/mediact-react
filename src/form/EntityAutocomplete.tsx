@@ -460,7 +460,15 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
                       if (renderChip) {
                         return (
                           <React.Fragment key={k}>
-                            {renderChip(item, { locked })}
+                            {renderChip(item, {
+                              locked,
+                              onRemove: locked
+                                ? undefined
+                                : (e) => {
+                                    e.stopPropagation();
+                                    removeItem(item);
+                                  },
+                            })}
                           </React.Fragment>
                         );
                       }
