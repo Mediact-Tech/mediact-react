@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | โค้ด | `form/group-options.ts` · `form/option-row.ts` · `form/select-all.tsx` · `form/option-panel.ts` |
-| Storybook | `Form/ComboBox` → `Multi Grouped By Function` · `Multi Locked Defaults` · `Multi Custom Row With State` · `Multi Select All` · `Multi Select All Max Items` · `Form/EntityAutocomplete` → `Grouped` · `Locked Selection` · `Select All` |
+| Storybook | `Form/EntityAutocomplete` → `Typeahead Multiple` · `Form/ComboBox` → `Multi Grouped By Function` · `Multi Locked Defaults` · `Multi Custom Row With State` · `Multi Select All` · `Multi Select All Max Items` · `Form/EntityAutocomplete` → `Grouped` · `Locked Selection` · `Select All` |
 | Figma | หน้า `Select` — `<Group heading>` (`58:18`) · `<Option>` `State=locked` · เฟรม `ตอนกางตัวเลือกแบบจัดกลุ่ม` (`58:35`) · `เลือกหลายอัน — ค่าที่ล็อกไว้` (`62:48`) |
 
 | ความสามารถ | `ComboBox` | `EntityAutocomplete` |
@@ -18,6 +18,8 @@
 | ล็อกค่าไว้ถอดไม่ได้ | ✅ `locked` (multi) | ✅ `isOptionLocked` (multi) |
 | เลือกทั้งหมด | ✅ `selectAll` (multi) | ✅ `selectAll` (multi) |
 | กรองในเครื่อง | ✅ | — ผู้เรียกกรอง |
+| พิมพ์ค้นในช่อง (`typeahead`) | ✅ เลือกอันเดียว | ✅ **เลือกหลายอัน** (chip + ช่องพิมพ์ในกล่องเดียว) |
+| `leadingIcon` · `listFooter` · `selectionFooter` · `panelClassName` | — | ✅ |
 | ทรงข้อมูล | ตายตัว `{value,label}` | object อะไรก็ได้ `<T>` |
 
 > **รวบ `MultiAutocomplete` เข้า `ComboBox` แล้ว (2026-08-08)** — prop ทั้ง 23 ตัวของ
@@ -322,6 +324,7 @@ prop ทั้งชุด (`SelectAllProps`) และตรรกะทั้�
 | 2026-08-13 | `EntityAutocomplete` รับ **`reserveMessageSpace`** แล้ว | `ComboBox` รับได้อยู่ก่อน แต่ตัวนี้ไม่ ⇒ **สองตัวที่ถูกสลับกันใช้บ่อยมี prop ไม่เท่ากัน** สลับ component แล้วความสูงเปลี่ยนโดยไม่มีใครคาด — เป็นความไม่สม่ำเสมอชนิดเดียวกับที่ทำให้รวบ `MultiAutocomplete` เข้ามา | ไม่มี — ส่งต่อค่าลง shell ตรง ๆ · ค่าตั้งต้นของ shell เป็น `true` ผู้เรียกเดิมจึงไม่กระทบ |
 | 2026-08-19 | 🔴🔴 **ถอน pin `@radix-ui/react-popover` กลับเป็น `^1.1.15`** (กลับคำการ pin exact ของแถวข้างบน) · และ **กฎใหม่: ห้าม pin `@radix-ui/react-*` แบบ exact** | pin exact `1.1.15` ทำให้ npm สร้าง **สำเนาซ้อน** ของ deps ที่ popover pin เอาไว้แบบ exact — รวม **`react-focus-scope` 1.1.7** ขณะที่ `react-dialog` ใช้ **1.1.10** · แพ็กเกจนี้เก็บ **stack ของ focus scope ไว้ระดับ module** ⇒ 2 ก๊อป = 2 stack ที่มองไม่เห็นกัน ⇒ `Dialog` ไม่รู้ว่า popover push scope เข้ามา จึงดึงโฟกัสกลับ ⇒ **ช่องค้นหาใน `EntityAutocomplete` ที่วางในโมดัลพิมพ์ไม่ติดเลย** (Mediwork จอ *เพิ่มบุคลากร* 2026-08-19 · ผู้ใช้ยืนยันว่าก่อนหน้านี้ใช้ได้ปกติและไม่เคยแก้) · 📊 และการ pin นั้น **ไม่ได้กำจัดต้นเหตุของ loop ด้วยซ้ำ** — `react-menu` / `react-select` / `react-tooltip` ยังใช้ popper **1.3.1** ที่มี effect เดียวกันอยู่ในต้นไม้ ⇒ ที่ pin ทำได้คือ *ย้าย* มันออกจากเส้น ComboBox | ชั้นกัน loop เหลือ **`onClick` แทน `onMouseDown`** ซึ่งแก้ที่ *เส้นเหตุการณ์* (ไม่ให้ปิดแผงหนึ่ง+เปิดอีกแผงใน คอมมิตเดียว) และมีเทสล็อกไว้ · ⚠️ ถ้า loop กลับมา ⇒ ใส่ `overrides` บังคับ **popper ตัวเดียวทั้งต้นไม้ = 1.2.8** ที่ `package.json` ของแอป (ครอบ menu/select/tooltip/popover พร้อมกัน) ⛔ **ห้ามกลับไป pin popover** · 🗑️ ถอน prop `modalPopover` ที่เพิ่มไว้ระหว่างวินิจฉัยผิดออกแล้ว — มันแก้ที่อาการของรากที่ถูกเอาออกไปแล้ว และยังไม่เคยพิสูจน์ว่าได้ผล |
 
+| 2026-10-19 | `EntityAutocomplete` **`multiple` + `typeahead`** (พิมพ์ค้นในกล่องเดียวกับ chip) + `leadingIcon` · `listFooter` · `selectionFooter` · `panelClassName` | Figma D2 ของ Mediwork (ช่องเลือกทีมผ่าตัด: แว่นขยาย + chip + ช่องพิมพ์ในกล่องเดียว · แผงกว้างกว่าช่อง · footer *แสดง N จาก M แพทย์*) ⇒ ของเดิมวางช่องค้นหาไว้ในแผงเสมอ และ footer `N selected · Clear` เป็นอังกฤษตายตัวซึ่งดีไซน์ไม่มี · 📊 `ComboBox typeahead` ทำได้เฉพาะเลือกอันเดียว | ใช้กลไกเดียวกับ `ComboBox typeahead` (cmdk ครอบทั้งช่องและแผง · `PopoverAnchor` · `onClick` ไม่ใช่ `onMouseDown` · `closedByOutsideRef`) ⇒ **ต้องแก้สองที่ให้ตรงกัน** · 🔴 **cmdk บังคับ `id` และ `aria-labelledby` ของ `Command.Input` เองทับของที่ส่ง** ⇒ ชื่อช่องสำหรับ screen reader มาจาก `label` ของ `Command` เท่านั้น (ส่งเป็นข้อความล้วน) · `<label for>` ของ shell จึงไม่ชี้ถึง input (กดป้ายไม่โฟกัส) — `ComboBox typeahead` มีปัญหาเดียวกัน ยังไม่แก้ · ลบที่ช่องว่าง = ถอด chip สุดท้าย (ไม่ถอดตัวที่ล็อก) · เลือกแล้วล้างคำที่พิมพ์ · ⚠️ ไม่ได้ทำ `typeahead` ของโหมดเลือกอันเดียวใน `EntityAutocomplete` |
 ---
 
 ## ค้าง

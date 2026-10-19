@@ -244,3 +244,157 @@ describe("EntityAutocomplete — renderOverflowChip", () => {
   });
 });
 
+
+/* พิมพ์ค้นในช่อง (Figma D2 ของทีมผ่าตัด Mediwork): chip + ช่องพิมพ์อยู่ในกล่องเดียว แผงมีแต่รายการ */
+describe("EntityAutocomplete — typeahead (multiple)", () => {
+  const typeaheadBase = {
+    ...base,
+    multiple: true as const,
+    typeahead: true,
+    debounceMs: 0,
+    placeholder: "ค้นหาชื่อ…",
+  };
+  const field = () => screen.getByRole("combobox", { name: /ทีม/ }) as HTMLInputElement;
+  it("ช่องพิมพ์อยู่ในกล่องเดียวกับ chip และแผงไม่มีช่องค้นหาซ้ำ", async () => {
+    const user = userEvent.setup();
+    render(
+      <EntityAutocomplete<Person> {...typeaheadBase} defaultValue={[alicia]} />,
+    );
+    const input = field();
+    expect(input.tagName).toBe("INPUT");
+    expect(input.parentElement).toHaveTextContent("Alicia");
+    await user.click(input);
+    await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+    expect(screen.getAllByRole("combobox")).toHaveLength(1);
+  });
+
+  it("พิมพ์แล้วเปิดแผงและส่งคำค้นให้ onSearch", async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    render(
+      <EntityAutocomplete<Person> {...typeaheadBase} onSearch={onSearch} />,
+    );
+    await user.type(field(), "be");
+    await waitFor(() => expect(onSearch).toHaveBeenLastCalledWith("be"));
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("เลือกแล้วได้ chip เพิ่ม · ล้างคำที่พิมพ์ · แผงยังเปิดอยู่", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <EntityAutocomplete<Person> {...typeaheadBase} onChange={onChange} />,
+    );
+    await user.type(field(), "be");
+    await user.click(await screen.findByRole("option", { name: "Ben" }));
+    expect(onChange).toHaveBeenLastCalledWith([ben]);
+    expect(field()).toHaveValue("");
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    // คลิกแถวในแผงย้ายโฟกัสออก — ต้องกลับมาที่ช่อง ไม่งั้นพิมพ์คนต่อไปไม่ได้
+    expect(field()).toHaveFocus();
+  });
+
+  it("กด Backspace ตอนช่องว่าง = ถอด chip สุดท้าย แต่ไม่ถอดตัวที่ล็อก", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <EntityAutocomplete<Person>
+        {...typeaheadBase}
+        defaultValue={[alicia, ben]}
+        isOptionLocked={(p) => p.id === "1"}
+        onChange={onChange}
+      />,
+    );
+    await user.click(field());
+    await user.keyboard("{Backspace}");
+    expect(onChange).toHaveBeenLastCalledWith([alicia]);
+    onChange.mockClear();
+    await user.keyboard("{Backspace}");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("Esc ตอนแผงเปิดปิดแค่แผง ไม่ลอยขึ้นไปหาพ่อแม่ (dialog รอบข้างไม่ปิดตาม) · แผงปิดแล้วปล่อยผ่าน", async () => {
+    const user = userEvent.setup();
+    const parentKeyDown = vi.fn();
+    render(
+      <div onKeyDown={(e) => parentKeyDown(e.key)}>
+        <EntityAutocomplete<Person> {...typeaheadBase} />
+      </div>,
+    );
+    await user.click(field());
+    await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+    expect(parentKeyDown).not.toHaveBeenCalledWith("Escape");
+
+    // ปิดแล้ว Esc ต่อไปเป็นของ dialog ตามปกติ
+    await user.keyboard("{Escape}");
+    expect(parentKeyDown).toHaveBeenCalledWith("Escape");
+  });
+
+  it("ปิดแล้วไม่ค้างคำที่พิมพ์ไว้", async () => {
+    const user = userEvent.setup();
+    render(<EntityAutocomplete<Person> {...typeaheadBase} />);
+    await user.type(field(), "be");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+    expect(field()).toHaveValue("");
+  });
+
+  it("โหมดปกติ (ไม่ typeahead) ยังเป็นกล่องที่กดเปิดแผง ไม่มี input ในช่อง", () => {
+    render(<EntityAutocomplete<Person> {...base} multiple />);
+    expect(screen.getByRole("combobox", { name: /ทีม/ }).tagName).toBe("DIV");
+  });
+});
+
+describe("EntityAutocomplete — leadingIcon · listFooter · selectionFooter · panelClassName", () => {
+  const multi = { ...base, multiple: true as const, defaultValue: [alicia] };
+
+  it("selectionFooter ค่าตั้งต้นโชว์ จำนวนที่เลือก · ส่ง false แล้วไม่โชว์", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<EntityAutocomplete<Person> {...multi} />);
+    await open(user);
+    expect(screen.getByText(/1 selected/)).toBeInTheDocument();
+    unmount();
+
+    render(<EntityAutocomplete<Person> {...multi} selectionFooter={false} />);
+    await open(user);
+    expect(screen.queryByText(/selected/)).toBeNull();
+  });
+
+  it("listFooter อยู่ท้ายแผง ไม่ใช่ในลิสต์", async () => {
+    const user = userEvent.setup();
+    render(
+      <EntityAutocomplete<Person>
+        {...multi}
+        selectionFooter={false}
+        listFooter="แสดง 3 จาก 38 แพทย์"
+      />,
+    );
+    await open(user);
+    const footer = screen.getByText("แสดง 3 จาก 38 แพทย์");
+    expect(footer).toBeInTheDocument();
+    expect(screen.getByRole("listbox")).not.toContainElement(footer);
+  });
+
+  it("leadingIcon โชว์หน้าช่องทั้งสองโหมด", () => {
+    const icon = <svg data-testid="lead" />;
+    const { rerender } = render(
+      <EntityAutocomplete<Person> {...multi} leadingIcon={icon} />,
+    );
+    expect(screen.getByTestId("lead")).toBeInTheDocument();
+    rerender(
+      <EntityAutocomplete<Person> {...multi} typeahead leadingIcon={icon} />,
+    );
+    expect(screen.getByTestId("lead")).toBeInTheDocument();
+  });
+
+  it("panelClassName ทับความกว้างตั้งต้นของแผง", async () => {
+    const user = userEvent.setup();
+    render(
+      <EntityAutocomplete<Person> {...multi} panelClassName="min-w-[22rem]" />,
+    );
+    await open(user);
+    expect(screen.getByRole("listbox").closest("[data-radix-popper-content-wrapper] > *")).toHaveClass("min-w-[22rem]");
+  });
+});

@@ -419,3 +419,52 @@ function LockedDemo() {
 export const LockedSelection: Story = {
   render: () => <LockedDemo />,
 };
+
+function TypeaheadDemo() {
+  const [value, setValue] = useState<Person[]>([directory[0]!]);
+  const [options, setOptions] = useState<Person[]>(directory);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  return (
+    <div style={{ width: 260 }}>
+      <EntityAutocomplete<Person>
+        multiple
+        typeahead
+        alwaysFloatLabel
+        label="แพทย์ผู้ผ่าตัด"
+        required
+        placeholder="ค้นหาด้วยชื่อ-นามสกุล…"
+        emptyText="ไม่พบ"
+        leadingIcon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+        }
+        value={value}
+        onChange={setValue}
+        options={options}
+        optionsLoading={optionsLoading}
+        groupBy={(p) => p.department}
+        selectionFooter={false}
+        listFooter={`แสดง ${options.length} จาก ${directory.length} คน · พิมพ์ชื่อเพื่อค้นหา`}
+        panelClassName="min-w-[22rem]"
+        maxVisibleChips={50}
+        getOptionValue={(p) => p.id}
+        getOptionLabel={(p) => p.name}
+        getOptionDescription={(p) => p.department}
+        onSearch={(query) => {
+          setOptionsLoading(true);
+          fakeSearch(query, (people) => {
+            setOptions(people);
+            setOptionsLoading(false);
+          });
+        }}
+      />
+    </div>
+  );
+}
+
+/** Figma D2 (Mediwork team select): search icon, the chosen people as chips and the search box share one field; the panel is wider than the field and ends with a count line. */
+export const TypeaheadMultiple: Story = {
+  render: () => <TypeaheadDemo />,
+};
