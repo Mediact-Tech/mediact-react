@@ -2152,6 +2152,42 @@ type EntityAutocompleteCommonProps<T> = SelectAllProps & {
     renderOverflowChip?: (count: number, hidden: T[]) => React.ReactNode;
     /** Cap selection in multi mode. */
     maxItems?: number;
+    /**
+     * พิมพ์ค้น **ในตัวช่องเอง** โดย chip ที่เลือกไว้อยู่ในช่องเดียวกัน (เฉพาะ `multiple`)
+     *
+     * ปิดเป็นค่าเริ่มต้น — เปิดแล้วโครงของช่องเปลี่ยนจาก `<div role="combobox">` ที่กดเปิดแผง
+     * เป็นกล่องที่มี `<input>` อยู่ข้างใน (โฟกัส · screen reader · การเลือกข้อความเปลี่ยนตาม)
+     * ⇒ ไม่เปลี่ยนให้ผู้เรียกเดิมโดยไม่มีใครสั่ง · โหมดเลือกอันเดียวไม่มีผล
+     *
+     * ที่มา: ช่องเลือกทีมผ่าตัดของ Mediwork (Figma D2) — ไอคอนแว่นขยาย + chip ของคนที่เลือกแล้ว
+     * + ช่องพิมพ์ชื่ออยู่ในกล่องเดียวกัน แผงข้างล่างมีแต่รายชื่อ · `ComboBox typeahead` ทำได้เฉพาะโหมดเดี่ยว
+     *
+     * 🔴 ใช้กลไกเดียวกับ `ComboBox typeahead` (`PopoverAnchor` + cmdk ครอบทั้งช่องและแผง · ตัวกัน
+     * `Maximum update depth` ตอนมีหลายช่องวางข้างกัน) — ห้ามแก้ที่ใดที่หนึ่งโดยไม่ดูอีกที่
+     */
+    typeahead?: boolean;
+    /**
+     * ไอคอนหน้าช่อง (เช่น แว่นขยาย) — วาดที่ `leftAdornment` ของ shell · ป้ายที่ยังไม่ลอยขยับขวาตาม
+     * ใช้ได้ทั้งโหมดปกติและ `typeahead`
+     */
+    leadingIcon?: React.ReactNode;
+    /**
+     * บรรทัดท้ายแผง (พื้นเทาอ่อน ตัวเล็ก) — เช่น "แสดง 4 จาก 38 แพทย์ · พิมพ์ชื่อเพื่อค้นหา"
+     * อยู่ใต้ลิสต์และใต้ footer จำนวนที่เลือก (ถ้ามี) ไม่เลื่อนไปกับลิสต์
+     */
+    listFooter?: React.ReactNode;
+    /**
+     * footer "จำนวนที่เลือก · ล้าง" ของโหมด `multiple` — ค่าตั้งต้น `true`
+     *
+     * ส่ง `false` เมื่อดีไซน์ไม่มีแถบนี้ (ทีมผ่าตัด: chip ในช่องบอกอยู่แล้วว่าเลือกใครบ้าง และ
+     * ข้อความในแถบนี้เป็นภาษาอังกฤษตายตัว ⇒ ไม่ควรโผล่ในจอภาษาไทย)
+     */
+    selectionFooter?: boolean;
+    /**
+     * class เพิ่มของแผง (`PopoverContent`) — รวมกับค่าตั้งต้นด้วย `cn` จึงทับได้
+     * ค่าตั้งต้นกว้างเท่าช่อง · ใส่ `min-w-[22rem]` เมื่อช่องแคบกว่าแถวรายชื่อที่ต้องอ่าน (Figma D2)
+     */
+    panelClassName?: string;
 };
 type EntityAutocompleteSingleProps<T> = EntityAutocompleteCommonProps<T> & {
     multiple?: false;

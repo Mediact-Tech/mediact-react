@@ -6218,8 +6218,10 @@ var SearchSelect = ({
 // src/form/EntityAutocomplete.tsx
 import * as React36 from "react";
 import { Command as CmdkRoot2 } from "cmdk";
-import { Check as Check7, ChevronsUpDown as ChevronsUpDown3, Lock as Lock2, TriangleAlert } from "lucide-react";
+import { Check as Check7, ChevronDown as ChevronDown5, ChevronsUpDown as ChevronsUpDown3, Lock as Lock2, TriangleAlert } from "lucide-react";
 import { Fragment as Fragment12, jsx as jsx44, jsxs as jsxs35 } from "react/jsx-runtime";
+var TYPEAHEAD_GROUP_HEADING_CLASS = "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-caption [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-text-secondary";
+var TYPEAHEAD_PANEL_CLASS = "overflow-hidden rounded-xl shadow-xl";
 var minHeights3 = {
   sm: "min-h-9",
   md: "min-h-11",
@@ -6260,6 +6262,11 @@ function EntityAutocomplete(props) {
     groupOrder,
     maxVisibleChips = 3,
     maxItems,
+    typeahead,
+    leadingIcon,
+    listFooter,
+    selectionFooter = true,
+    panelClassName,
     selectAll,
     selectAllLabel,
     selectAllMatchesLabel,
@@ -6270,10 +6277,32 @@ function EntityAutocomplete(props) {
     onChange
   } = props;
   const isMultiple = multiple === true;
+  const typeaheadLook = Boolean(typeahead) && isMultiple;
   const reactId = React36.useId();
   const triggerId = id ?? reactId;
   const [open, setOpen] = React36.useState(false);
   const [query, setQuery] = React36.useState("");
+  const boxRef = React36.useRef(null);
+  const inputRef = React36.useRef(null);
+  const closedByOutsideRef = React36.useRef(false);
+  const openRef = React36.useRef(false);
+  const escapeOwnedRef = React36.useRef(false);
+  React36.useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+  React36.useEffect(() => {
+    if (!typeahead || !multiple) return;
+    const arm = (e) => {
+      if (e.key !== "Escape" || !openRef.current) return;
+      if (!boxRef.current?.contains(document.activeElement)) return;
+      escapeOwnedRef.current = true;
+      setTimeout(() => {
+        escapeOwnedRef.current = false;
+      }, 0);
+    };
+    document.addEventListener("keydown", arm, true);
+    return () => document.removeEventListener("keydown", arm, true);
+  }, [typeahead, multiple]);
   const keyOf = React36.useCallback(
     (item) => String(getOptionValue(item)),
     [getOptionValue]
@@ -6311,6 +6340,10 @@ function EntityAutocomplete(props) {
       } else {
         if (maxItems != null && selectedItems.length >= maxItems) return;
         setSelectedItems([...selectedItems, item]);
+        if (typeahead) {
+          setQuery("");
+          inputRef.current?.focus();
+        }
       }
     } else {
       const isSame = selectedItems[0] != null && keyOf(selectedItems[0]) === k;
@@ -6355,7 +6388,8 @@ function EntityAutocomplete(props) {
         "aria-disabled": locked || void 0,
         onSelect: () => selectItem(item),
         className: cn(
-          "flex items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-body-sm",
+          "flex items-center justify-between gap-2 px-2 py-1.5 text-body-sm",
+          typeaheadLook ? "rounded-lg" : "rounded-sm",
           locked ? "cursor-default" : "cursor-pointer",
           "data-[selected=true]:bg-brand-subtle",
           "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
@@ -6375,6 +6409,42 @@ function EntityAutocomplete(props) {
       k
     );
   };
+  const chipNodes = /* @__PURE__ */ jsxs35(Fragment12, { children: [
+    visible.map((item) => {
+      const k = keyOf(item);
+      const locked = lockedOf(item);
+      if (renderChip) {
+        return /* @__PURE__ */ jsx44(React36.Fragment, { children: renderChip(item, {
+          locked,
+          onRemove: locked ? void 0 : (e) => {
+            e.stopPropagation();
+            removeItem(item);
+          }
+        }) }, k);
+      }
+      return /* @__PURE__ */ jsx44(
+        Chip,
+        {
+          size: "sm",
+          variant: locked ? "neutral" : "primary",
+          removable: !locked,
+          onRemove: (e) => {
+            e.stopPropagation();
+            removeItem(item);
+          },
+          children: /* @__PURE__ */ jsxs35("span", { className: "inline-flex items-center gap-1", children: [
+            locked && /* @__PURE__ */ jsx44(Lock2, { className: "size-3 shrink-0", "aria-hidden": true }),
+            getOptionLabel(item)
+          ] })
+        },
+        k
+      );
+    }),
+    overflow > 0 && (renderOverflowChip ? renderOverflowChip(overflow, selectedItems.slice(visible.length)) : /* @__PURE__ */ jsxs35(Chip, { size: "sm", variant: "neutral", children: [
+      "+",
+      overflow
+    ] }))
+  ] });
   const selectAllRow = isMultiple && /* @__PURE__ */ jsx44(
     SelectAllRow,
     {
@@ -6390,6 +6460,47 @@ function EntityAutocomplete(props) {
       onChange: setSelectedItems
     }
   );
+  const panelList = /* @__PURE__ */ jsxs35(Fragment12, { children: [
+    selectAllRow,
+    /* @__PURE__ */ jsx44(CmdkRoot2.List, { className: OPTION_LIST_CLASS, children: optionsLoading ? /* @__PURE__ */ jsxs35(CmdkRoot2.Loading, { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
+      /* @__PURE__ */ jsx44(Spinner, { size: "sm" }),
+      loadingText
+    ] }) : searchError ? /* @__PURE__ */ jsxs35("div", { className: "flex items-center justify-center gap-2 px-3 py-6 text-center text-body-sm text-cherry-red-600", children: [
+      /* @__PURE__ */ jsx44(TriangleAlert, { className: "size-4 shrink-0" }),
+      searchError
+    ] }) : /* @__PURE__ */ jsxs35(Fragment12, { children: [
+      /* @__PURE__ */ jsx44(CmdkRoot2.Empty, { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: emptyText }),
+      renderGroups.map((g) => {
+        const rows = g.items.map(renderRow);
+        return g.heading == null ? /* @__PURE__ */ jsx44(React36.Fragment, { children: rows }, "__ungrouped") : /* @__PURE__ */ jsx44(
+          CmdkRoot2.Group,
+          {
+            heading: g.heading,
+            className: typeaheadLook ? TYPEAHEAD_GROUP_HEADING_CLASS : GROUP_HEADING_CLASS,
+            children: rows
+          },
+          g.heading
+        );
+      })
+    ] }) }),
+    isMultiple && selectionFooter && selectedItems.length > 0 && /* @__PURE__ */ jsxs35("div", { className: "flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption", children: [
+      /* @__PURE__ */ jsxs35("span", { className: "text-text-tertiary", children: [
+        selectedItems.length,
+        " selected",
+        maxItems != null && ` / ${maxItems}`
+      ] }),
+      /* @__PURE__ */ jsx44(
+        "button",
+        {
+          type: "button",
+          onClick: clearAll,
+          className: "flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-cherry-red-600 hover:bg-cherry-red-50",
+          children: "Clear"
+        }
+      )
+    ] }),
+    listFooter && /* @__PURE__ */ jsx44("div", { className: "border-t border-border-default bg-bg-surface px-3 py-2 text-caption text-text-tertiary", children: listFooter })
+  ] });
   if (isLoading) {
     return /* @__PURE__ */ jsx44(
       FieldSkeleton,
@@ -6401,6 +6512,139 @@ function EntityAutocomplete(props) {
         size,
         containerClassName
       }
+    );
+  }
+  if (typeahead && isMultiple) {
+    const insideField = (target) => boxRef.current?.contains(target) ?? false;
+    const lastRemovable = [...selectedItems].reverse().find((i) => !lockedOf(i));
+    return (
+      /* 🔴 ชื่อของช่องสำหรับ screen reader มาจาก `label` ของ `Command` เท่านั้น — cmdk บังคับ `id` และ
+       * `aria-labelledby` ของ `Command.Input` เองทับของที่ส่งเข้าไป (ชี้ไปป้ายว่างของ Command) ⇒ ไม่ส่ง `label`
+       * ช่องจะไม่มีชื่อเลย · ป้ายที่ไม่ใช่ข้อความล้วน (ReactNode) บอก screen reader ผ่านทางนี้ไม่ได้ */
+      /* @__PURE__ */ jsx44(
+        CmdkRoot2,
+        {
+          shouldFilter: false,
+          label: typeof label === "string" ? label : void 0,
+          className: "contents",
+          children: /* @__PURE__ */ jsxs35(
+            Popover,
+            {
+              open,
+              onOpenChange: (next) => {
+                if (disabled) return;
+                setOpen(next);
+                if (!next) setQuery("");
+              },
+              children: [
+                /* @__PURE__ */ jsx44(
+                  FloatingFieldShell,
+                  {
+                    disabled,
+                    label,
+                    hint,
+                    error,
+                    required,
+                    hideLabel,
+                    reserveMessageSpace,
+                    htmlFor: triggerId,
+                    size,
+                    floating,
+                    focused: open,
+                    hasError,
+                    containerClassName,
+                    leftAdornment: leadingIcon,
+                    rightAdornment: /* @__PURE__ */ jsx44(
+                      ChevronDown5,
+                      {
+                        className: cn("transition-transform", open && "rotate-180")
+                      }
+                    ),
+                    children: /* @__PURE__ */ jsx44(PopoverAnchor, { asChild: true, children: /* @__PURE__ */ jsxs35(
+                      "div",
+                      {
+                        ref: boxRef,
+                        "aria-disabled": disabled || void 0,
+                        onClick: () => !disabled && inputRef.current?.focus(),
+                        className: cn(
+                          "flex w-full flex-wrap items-center gap-1.5 rounded-sm border bg-bg-default py-1.5 pr-9 font-medium transition-colors cursor-text",
+                          leadingIcon ? "pl-9" : "pl-3",
+                          "focus-within:ring-1",
+                          "aria-disabled:cursor-not-allowed aria-disabled:bg-bg-surface",
+                          minHeights3[size],
+                          hasError ? "border-cherry-red-600 focus-within:border-cherry-red-600 focus-within:ring-cherry-red-600/40" : "border-border-strong focus-within:border-brand focus-within:ring-brand/30",
+                          className
+                        ),
+                        children: [
+                          chipNodes,
+                          /* @__PURE__ */ jsx44(
+                            CmdkRoot2.Input,
+                            {
+                              ref: inputRef,
+                              id: triggerId,
+                              disabled,
+                              placeholder: floating ? placeholder : void 0,
+                              "aria-invalid": hasError || void 0,
+                              value: open ? query : "",
+                              onValueChange: (v) => {
+                                setQuery(v);
+                                if (!open) setOpen(true);
+                              },
+                              onFocus: () => !disabled && setOpen(true),
+                              onClick: () => !disabled && setOpen(true),
+                              onKeyDown: (e) => {
+                                if (e.key === "Escape" && escapeOwnedRef.current) {
+                                  e.stopPropagation();
+                                }
+                                if (e.key === "Backspace" && query === "" && lastRemovable) {
+                                  removeItem(lastRemovable);
+                                }
+                              },
+                              className: "w-full min-w-[8rem] bg-transparent text-body-sm outline-none placeholder:text-text-tertiary disabled:cursor-not-allowed"
+                            }
+                          )
+                        ]
+                      }
+                    ) })
+                  }
+                ),
+                /* @__PURE__ */ jsx44(
+                  PopoverContent,
+                  {
+                    className: cn(
+                      OPTION_PANEL_CLASS,
+                      TYPEAHEAD_PANEL_CLASS,
+                      panelClassName
+                    ),
+                    align: "start",
+                    onOpenAutoFocus: (e) => e.preventDefault(),
+                    onPointerDownOutside: (e) => {
+                      if (insideField(e.target)) {
+                        e.preventDefault();
+                        return;
+                      }
+                      closedByOutsideRef.current = true;
+                    },
+                    onFocusOutside: (e) => {
+                      if (insideField(e.target)) {
+                        e.preventDefault();
+                        return;
+                      }
+                      closedByOutsideRef.current = true;
+                    },
+                    onCloseAutoFocus: (e) => {
+                      if (!closedByOutsideRef.current) return;
+                      closedByOutsideRef.current = false;
+                      e.preventDefault();
+                    },
+                    children: /* @__PURE__ */ jsx44("div", { className: OPTION_ROOT_CLASS, children: panelList })
+                  }
+                )
+              ]
+            }
+          )
+        }
+      )
     );
   }
   return /* @__PURE__ */ jsx44(
@@ -6419,6 +6663,7 @@ function EntityAutocomplete(props) {
       focused: open,
       hasError,
       containerClassName,
+      leftAdornment: leadingIcon,
       rightAdornment: /* @__PURE__ */ jsx44(ChevronsUpDown3, {}),
       children: /* @__PURE__ */ jsxs35(
         Popover,
@@ -6448,6 +6693,7 @@ function EntityAutocomplete(props) {
                 },
                 className: cn(
                   "flex w-full items-center gap-1.5 rounded-sm border bg-bg-default px-3 py-1.5 pr-9 font-medium transition-colors cursor-pointer",
+                  leadingIcon && "pl-9",
                   "focus:outline-none focus:ring-1",
                   /* พื้นตอนปิดใช้งาน — ค่าเดียวกับ `fieldShapeClasses` (เหตุผลอยู่ที่นั่น) */
                   "aria-disabled:cursor-not-allowed aria-disabled:bg-bg-surface",
@@ -6455,42 +6701,7 @@ function EntityAutocomplete(props) {
                   hasError ? "border-cherry-red-600 focus:border-cherry-red-600 focus:ring-cherry-red-600/40" : "border-border-strong focus:border-brand focus:ring-brand/30",
                   className
                 ),
-                children: /* @__PURE__ */ jsx44("span", { className: "flex flex-1 flex-wrap items-center gap-1", children: selectedItems.length === 0 ? /* @__PURE__ */ jsx44("span", { className: "text-body-sm text-text-tertiary", children: floating ? placeholder ?? "" : "" }) : /* @__PURE__ */ jsxs35(Fragment12, { children: [
-                  visible.map((item) => {
-                    const k = keyOf(item);
-                    const locked = lockedOf(item);
-                    if (renderChip) {
-                      return /* @__PURE__ */ jsx44(React36.Fragment, { children: renderChip(item, {
-                        locked,
-                        onRemove: locked ? void 0 : (e) => {
-                          e.stopPropagation();
-                          removeItem(item);
-                        }
-                      }) }, k);
-                    }
-                    return /* @__PURE__ */ jsx44(
-                      Chip,
-                      {
-                        size: "sm",
-                        variant: locked ? "neutral" : "primary",
-                        removable: !locked,
-                        onRemove: (e) => {
-                          e.stopPropagation();
-                          removeItem(item);
-                        },
-                        children: /* @__PURE__ */ jsxs35("span", { className: "inline-flex items-center gap-1", children: [
-                          locked && /* @__PURE__ */ jsx44(Lock2, { className: "size-3 shrink-0", "aria-hidden": true }),
-                          getOptionLabel(item)
-                        ] })
-                      },
-                      k
-                    );
-                  }),
-                  overflow > 0 && (renderOverflowChip ? renderOverflowChip(overflow, selectedItems.slice(visible.length)) : /* @__PURE__ */ jsxs35(Chip, { size: "sm", variant: "neutral", children: [
-                    "+",
-                    overflow
-                  ] }))
-                ] }) })
+                children: /* @__PURE__ */ jsx44("span", { className: "flex flex-1 flex-wrap items-center gap-1", children: selectedItems.length === 0 ? /* @__PURE__ */ jsx44("span", { className: "text-body-sm text-text-tertiary", children: floating ? placeholder ?? "" : "" }) : chipNodes })
               }
             ) : /* @__PURE__ */ jsx44(
               "button",
@@ -6512,7 +6723,7 @@ function EntityAutocomplete(props) {
             /* @__PURE__ */ jsx44(
               PopoverContent,
               {
-                className: OPTION_PANEL_CLASS,
+                className: cn(OPTION_PANEL_CLASS, panelClassName),
                 align: "start",
                 children: /* @__PURE__ */ jsxs35(CmdkRoot2, { shouldFilter: false, className: OPTION_ROOT_CLASS, children: [
                   /* @__PURE__ */ jsx44(
@@ -6524,44 +6735,7 @@ function EntityAutocomplete(props) {
                       className: "border-b border-border-default px-3 py-2 text-body-sm outline-none placeholder:text-text-tertiary"
                     }
                   ),
-                  selectAllRow,
-                  /* @__PURE__ */ jsx44(CmdkRoot2.List, { className: OPTION_LIST_CLASS, children: optionsLoading ? /* @__PURE__ */ jsxs35(CmdkRoot2.Loading, { className: "flex items-center justify-center gap-2 px-3 py-6 text-body-sm text-text-tertiary", children: [
-                    /* @__PURE__ */ jsx44(Spinner, { size: "sm" }),
-                    loadingText
-                  ] }) : searchError ? /* @__PURE__ */ jsxs35("div", { className: "flex items-center justify-center gap-2 px-3 py-6 text-center text-body-sm text-cherry-red-600", children: [
-                    /* @__PURE__ */ jsx44(TriangleAlert, { className: "size-4 shrink-0" }),
-                    searchError
-                  ] }) : /* @__PURE__ */ jsxs35(Fragment12, { children: [
-                    /* @__PURE__ */ jsx44(CmdkRoot2.Empty, { className: "px-3 py-6 text-center text-body-sm text-text-tertiary", children: emptyText }),
-                    renderGroups.map((g) => {
-                      const rows = g.items.map(renderRow);
-                      return g.heading == null ? /* @__PURE__ */ jsx44(React36.Fragment, { children: rows }, "__ungrouped") : /* @__PURE__ */ jsx44(
-                        CmdkRoot2.Group,
-                        {
-                          heading: g.heading,
-                          className: GROUP_HEADING_CLASS,
-                          children: rows
-                        },
-                        g.heading
-                      );
-                    })
-                  ] }) }),
-                  isMultiple && selectedItems.length > 0 && /* @__PURE__ */ jsxs35("div", { className: "flex items-center justify-between border-t border-border-default px-2 py-1.5 text-caption", children: [
-                    /* @__PURE__ */ jsxs35("span", { className: "text-text-tertiary", children: [
-                      selectedItems.length,
-                      " selected",
-                      maxItems != null && ` / ${maxItems}`
-                    ] }),
-                    /* @__PURE__ */ jsx44(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: clearAll,
-                        className: "flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-cherry-red-600 hover:bg-cherry-red-50",
-                        children: "Clear"
-                      }
-                    )
-                  ] })
+                  panelList
                 ] })
               }
             )
@@ -6853,7 +7027,7 @@ function RetryButton({
 }
 
 // src/data/table-groups.tsx
-import { ChevronDown as ChevronDown5 } from "lucide-react";
+import { ChevronDown as ChevronDown6 } from "lucide-react";
 import { jsx as jsx47, jsxs as jsxs37 } from "react/jsx-runtime";
 function resolveGroups(rows, groupBy, groupOrder, collapsedKeys) {
   const collapsed = new Set(collapsedKeys);
@@ -6893,7 +7067,7 @@ function DataTableGroupRow({
           className: "-mx-1 flex cursor-pointer items-center gap-1.5 rounded-sm px-1 py-0.5 hover:bg-overlay-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-brand",
           children: [
             /* @__PURE__ */ jsx47(
-              ChevronDown5,
+              ChevronDown6,
               {
                 "aria-hidden": true,
                 className: cn(
