@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Command as CmdkRoot } from "cmdk";
-import { Check, ChevronsUpDown, Lock, TriangleAlert } from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown, Lock, TriangleAlert } from "lucide-react";
 import { cn } from "../lib/cn";
 import {
   FloatingFieldShell,
@@ -200,6 +200,12 @@ export type EntityAutocompleteProps<T> =
   | EntityAutocompleteSingleProps<T>
   | EntityAutocompleteMultiProps<T>;
 
+/* หน้าตาของแผงในโหมด `typeahead` (Figma D2): หัวกลุ่มหนักกว่าและเข้มกว่าค่าตั้งต้น · แผงมุมโค้งใหญ่ เงาลึก
+ * ⚠️ แยกจาก `GROUP_HEADING_CLASS` โดยเจตนา — ตัวนั้นใช้ร่วมกับ `ComboBox` และผู้เรียกเดิมทุกคน ห้ามเปลี่ยนให้ใคร */
+const TYPEAHEAD_GROUP_HEADING_CLASS =
+  "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-caption [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-text-secondary";
+const TYPEAHEAD_PANEL_CLASS = "overflow-hidden rounded-xl shadow-xl";
+
 const minHeights: Record<FieldSize, string> = {
   sm: "min-h-9",
   md: "min-h-11",
@@ -267,6 +273,7 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
   } = props;
 
   const isMultiple = multiple === true;
+  const typeaheadLook = Boolean(typeahead) && isMultiple;
 
   const reactId = React.useId();
   const triggerId = id ?? reactId;
@@ -422,7 +429,8 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
         aria-disabled={locked || undefined}
         onSelect={() => selectItem(item)}
         className={cn(
-          "flex items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-body-sm",
+          "flex items-center justify-between gap-2 px-2 py-1.5 text-body-sm",
+          typeaheadLook ? "rounded-lg" : "rounded-sm",
           locked ? "cursor-default" : "cursor-pointer",
           "data-[selected=true]:bg-brand-subtle",
           "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
@@ -560,7 +568,11 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
                 <CmdkRoot.Group
                   key={g.heading}
                   heading={g.heading}
-                  className={GROUP_HEADING_CLASS}
+                  className={
+                    typeaheadLook
+                      ? TYPEAHEAD_GROUP_HEADING_CLASS
+                      : GROUP_HEADING_CLASS
+                  }
                 >
                   {rows}
                 </CmdkRoot.Group>
@@ -647,7 +659,11 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
             hasError={hasError}
             containerClassName={containerClassName}
             leftAdornment={leadingIcon}
-            rightAdornment={<ChevronsUpDown />}
+            rightAdornment={
+              <ChevronDown
+                className={cn("transition-transform", open && "rotate-180")}
+              />
+            }
           >
             <PopoverAnchor asChild>
               <div
@@ -667,6 +683,7 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
                 )}
               >
                 {chipNodes}
+                {/* ช่องพิมพ์กินทั้งแถว (`w-full`) ⇒ อยู่บรรทัดของตัวเองใต้ chip เสมอ ตาม Figma D2 (ไม่แย่งแถวกับ chip ตัวสุดท้าย) */}
                 <CmdkRoot.Input
                   ref={inputRef}
                   id={triggerId}
@@ -694,14 +711,18 @@ function EntityAutocomplete<T>(props: EntityAutocompleteProps<T>) {
                       removeItem(lastRemovable);
                     }
                   }}
-                  className="min-w-[8rem] flex-1 bg-transparent text-body-sm outline-none placeholder:text-text-tertiary disabled:cursor-not-allowed"
+                  className="w-full min-w-[8rem] bg-transparent text-body-sm outline-none placeholder:text-text-tertiary disabled:cursor-not-allowed"
                 />
               </div>
             </PopoverAnchor>
           </FloatingFieldShell>
 
           <PopoverContent
-            className={cn(OPTION_PANEL_CLASS, panelClassName)}
+            className={cn(
+              OPTION_PANEL_CLASS,
+              TYPEAHEAD_PANEL_CLASS,
+              panelClassName,
+            )}
             align="start"
             /* โฟกัสต้องอยู่ที่ช่องต่อไป ไม่งั้นพิมพ์ตัวที่สองไม่ได้ */
             onOpenAutoFocus={(e) => e.preventDefault()}
