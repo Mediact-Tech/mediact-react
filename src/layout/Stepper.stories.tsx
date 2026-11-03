@@ -46,6 +46,28 @@ export const FixedConnector: Story = {
   },
 };
 
+/** ป้ายข้างวงกลม — รูปแบบเดิมก่อน 2026-11-03 · ต้องขอเองด้วย `labelPlacement="end"` */
+export const LabelEnd: Story = {
+  args: {
+    steps: [{ label: "ข้อมูลเวร" }, { label: "เตียงและผู้ป่วย" }, { label: "สรุปยอดเวร" }],
+    current: 1,
+    orientation: "horizontal",
+    connector: "fixed",
+    labelPlacement: "end",
+  },
+};
+
+/** โมดัล "เพิ่มยอดเวรใหม่" (Mediwork) — ค่าตั้งต้น ตัวเลขบน ป้ายล่าง */
+export const CensusWizard: Story = {
+  args: {
+    steps: [{ label: "ข้อมูลเวร" }, { label: "เตียงและผู้ป่วย" }, { label: "สรุปยอดเวร" }],
+    current: 1,
+    orientation: "horizontal",
+    connector: "fixed",
+    onStepClick: (index: number) => console.log("go to step", index),
+  },
+};
+
 /** กดย้อนได้เฉพาะขั้นที่ทำเสร็จแล้ว — ขั้นที่กำลังทำอยู่และขั้นข้างหน้ากดไม่ได้ */
 export const Clickable: Story = {
   args: {
