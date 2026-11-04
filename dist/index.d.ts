@@ -2631,11 +2631,18 @@ type StepperProps = {
      *           ที่การยืดเต็มทำให้ป้ายลอยห่างกันจนอ่านเป็นกลุ่มเดียวไม่ได้
      */
     connector?: "fill" | "fixed";
+    /**
+     * ตำแหน่งป้ายเทียบกับวงกลม (แนวนอนเท่านั้น · แนวตั้งวางป้ายข้างวงกลมเสมอ)
+     *
+     * `bottom` — ตัวเลขอยู่บน ป้ายอยู่ใต้ จัดกลาง (ค่าเริ่มต้น · เคาะ 2026-11-03 ให้เป็นแบบเดียวกันทั้งระบบ)
+     * `end` — ป้ายอยู่ข้างวงกลม (รูปแบบเดิมก่อน 2026-11-03 · มาจาก MediHR Figma 114-7410)
+     */
+    labelPlacement?: "bottom" | "end";
     className?: string;
     /** Allow click on completed steps to navigate. */
     onStepClick?: (index: number) => void;
 };
-declare function Stepper({ steps, current, orientation, connector, className, onStepClick, }: StepperProps): React.JSX.Element;
+declare function Stepper({ steps, current, orientation, connector, labelPlacement, className, onStepClick, }: StepperProps): React.JSX.Element;
 
 type SkeletonProps = React.ComponentProps<"div"> & {
     /** Shape preset. `text` defaults to a 1em-height bar. `circle` is square + rounded-full. */

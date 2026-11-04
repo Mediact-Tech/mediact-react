@@ -7991,23 +7991,29 @@ BreadcrumbLink.displayName = "BreadcrumbLink";
 
 // src/layout/Stepper.tsx
 import { Check as Check8 } from "lucide-react";
-import { jsx as jsx52, jsxs as jsxs40 } from "react/jsx-runtime";
+import { Fragment as Fragment15, jsx as jsx52, jsxs as jsxs40 } from "react/jsx-runtime";
+function labelTone(status) {
+  return status === "todo" ? "text-text-tertiary font-normal" : status === "active" ? "text-brand-active font-semibold" : "text-brand-active font-normal";
+}
 function Stepper({
   steps,
   current,
   orientation = "horizontal",
   connector = "fill",
+  labelPlacement = "bottom",
   className,
   onStepClick
 }) {
   const isVertical = orientation === "vertical";
   const isFixed = !isVertical && connector === "fixed";
+  const isBottom = !isVertical && labelPlacement === "bottom";
   return /* @__PURE__ */ jsx52(
     "ol",
     {
       className: cn(
-        "flex",
-        isVertical ? "flex-col gap-4" : isFixed ? "items-center justify-center gap-6 py-1.5" : "items-center gap-3",
+        /* `m-0 p-0 list-none` — DS ห้ามพึ่ง reset ของแอป (ol ดิบมี margin 16 · padding 40 · เลขลำดับ) */
+        "m-0 flex list-none p-0",
+        isVertical ? "flex-col gap-4" : isFixed ? cn("justify-center gap-6 py-1.5", isBottom ? "items-start" : "items-center") : cn("gap-3", isBottom ? "items-start" : "items-center"),
         className
       ),
       children: steps.map((step, i) => {
@@ -8023,80 +8029,97 @@ function Stepper({
               "flex size-6 shrink-0 items-center justify-center rounded-full text-caption font-bold transition-colors",
               status === "todo" ? "bg-gray-200 text-text-tertiary" : "bg-brand-active text-white"
             ),
-            children: showCheck ? /* @__PURE__ */ jsx52(Check8, { className: "size-3.5", strokeWidth: 3 }) : i + 1
+            children: showCheck ? /* @__PURE__ */ jsx52(Check8, { className: "size-3.5", strokeWidth: 3, "aria-hidden": true }) : i + 1
           }
         );
+        if (isVertical) {
+          return /* @__PURE__ */ jsxs40(
+            "li",
+            {
+              "aria-current": status === "active" ? "step" : void 0,
+              className: "flex items-start gap-3",
+              children: [
+                /* @__PURE__ */ jsxs40("div", { className: "flex flex-col items-center", children: [
+                  clickable ? /* @__PURE__ */ jsx52(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => onStepClick?.(i),
+                      "aria-label": typeof step.label === "string" ? step.label : void 0,
+                      className: "cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-brand-active/40",
+                      children: circle
+                    }
+                  ) : circle,
+                  !isLast && /* @__PURE__ */ jsx52(
+                    "div",
+                    {
+                      className: cn(
+                        "mt-1 w-px flex-1 min-h-6",
+                        status === "done" ? "bg-brand-active" : "bg-border-default"
+                      )
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxs40("div", { className: "min-w-0 pb-4", children: [
+                  /* @__PURE__ */ jsx52("div", { className: cn("text-body-sm", labelTone(status)), children: step.label }),
+                  step.description && /* @__PURE__ */ jsx52("div", { className: "text-caption text-text-tertiary", children: step.description })
+                ] })
+              ]
+            },
+            i
+          );
+        }
+        const stepClasses = cn(
+          "flex",
+          isBottom ? "flex-col items-center gap-1.5 text-center" : "items-center gap-2 text-left"
+        );
+        const stepBody = /* @__PURE__ */ jsxs40(Fragment15, { children: [
+          circle,
+          /* @__PURE__ */ jsxs40("div", { className: cn("text-body-sm", labelTone(status), isBottom && "whitespace-nowrap"), children: [
+            step.label,
+            step.description && /* @__PURE__ */ jsx52("div", { className: "text-caption font-normal text-text-tertiary", children: step.description })
+          ] })
+        ] });
         return /* @__PURE__ */ jsxs40(
           "li",
           {
+            "aria-current": status === "active" ? "step" : void 0,
             className: cn(
-              "flex",
-              isVertical ? "items-start gap-3" : "items-center gap-2",
-              !isVertical && !isFixed && !isLast && "flex-1"
+              "flex gap-2",
+              isBottom ? "items-start" : "items-center",
+              !isFixed && !isLast && "flex-1"
             ),
             children: [
-              /* @__PURE__ */ jsxs40(
-                "div",
+              clickable ? /* @__PURE__ */ jsx52(
+                "button",
                 {
+                  type: "button",
+                  onClick: () => onStepClick?.(i),
                   className: cn(
-                    "flex",
-                    isVertical ? "flex-col items-center" : "items-center gap-2"
+                    stepClasses,
+                    "cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-active/40",
+                    /* ป้ายขีดเส้นใต้ตอนชี้ — บอกว่ากดย้อนได้ (วงกลมสีเดียวกับขั้นที่ทำอยู่ ดูอย่างเดียวแยกไม่ออก) */
+                    "hover:[&>div:last-child]:underline"
                   ),
-                  children: [
-                    clickable ? /* @__PURE__ */ jsx52(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: () => onStepClick?.(i),
-                        className: "cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-brand-active/40",
-                        children: circle
-                      }
-                    ) : circle,
-                    isVertical && !isLast && /* @__PURE__ */ jsx52(
-                      "div",
-                      {
-                        className: cn(
-                          "mt-1 w-px flex-1 min-h-6",
-                          status === "done" ? "bg-brand-active" : "bg-border-default"
-                        )
-                      }
-                    ),
-                    !isVertical && /* @__PURE__ */ jsxs40(
-                      "div",
-                      {
-                        className: cn(
-                          "text-body-sm",
-                          status === "todo" ? "text-text-tertiary font-normal" : "text-text-body font-semibold"
-                        ),
-                        children: [
-                          step.label,
-                          step.description && /* @__PURE__ */ jsx52("div", { className: "text-caption font-normal text-text-tertiary", children: step.description })
-                        ]
-                      }
-                    )
-                  ]
+                  children: stepBody
                 }
-              ),
-              isVertical && /* @__PURE__ */ jsxs40("div", { className: "min-w-0 pb-4", children: [
-                /* @__PURE__ */ jsx52(
-                  "div",
-                  {
-                    className: cn(
-                      "text-body-sm",
-                      status === "todo" ? "text-text-tertiary font-normal" : "text-text-body font-semibold"
-                    ),
-                    children: step.label
-                  }
-                ),
-                step.description && /* @__PURE__ */ jsx52("div", { className: "text-caption text-text-tertiary", children: step.description })
-              ] }),
-              !isVertical && !isLast && /* @__PURE__ */ jsx52(
+              ) : /* @__PURE__ */ jsx52("div", { className: stepClasses, children: stepBody }),
+              !isLast && /* ห่อเส้นด้วยกล่องสูงเท่าวงกลม (`h-6`) ⇒ เส้นอยู่กลางวงกลมพอดีทั้งสองแบบ
+               * (ตอนป้ายอยู่ใต้ ก้อนขั้นสูงกว่าวงกลม ⇒ จัดกลางทั้ง li จะได้เส้นตกไปกลางป้าย) */
+              /* @__PURE__ */ jsx52(
                 "div",
                 {
-                  className: cn(
-                    "h-px bg-border-default",
-                    /* `fixed` = เส้น 22×2 ตามที่วัดจาก MediHR — ความยาวคงที่ ไม่ยืดตามพื้นที่ */
-                    isFixed ? "h-0.5 w-5.5 shrink-0" : "flex-1"
+                  "aria-hidden": true,
+                  className: cn("flex h-6 items-center", isFixed ? "shrink-0" : "flex-1"),
+                  children: /* @__PURE__ */ jsx52(
+                    "div",
+                    {
+                      className: cn(
+                        "bg-border-default",
+                        /* `fixed` = เส้น 22×2 ตามที่วัดจาก MediHR — ความยาวคงที่ ไม่ยืดตามพื้นที่ */
+                        isFixed ? "h-0.5 w-5.5" : "h-px w-full"
+                      )
+                    }
                   )
                 }
               )
