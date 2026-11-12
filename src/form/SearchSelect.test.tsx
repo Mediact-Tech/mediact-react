@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { useState } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { Dialog, DialogContent } from "../overlay/Dialog";
@@ -121,6 +121,49 @@ describe("SearchSelect", () => {
 
     await user.click(screen.getByRole("button", { name: "ที่อื่น" }));
     await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+  });
+
+  /**
+   * 🔴 บั๊กจากเบราว์เซอร์จริง (Mediwork จอตารางเวร): เลือกหน่วยงานแล้วแผง **เปิดค้าง**
+   *
+   * วัดแล้ว: หลังเลือก จอโชว์โมดัล "กำลังโหลด" (MUI `Modal`) ซึ่งแย่งโฟกัส แล้ว `FocusTrap` **คืนโฟกัส
+   * ให้ช่องตอนปิด** ⇒ `onFocus` เดิมสั่งเปิดแผง · กล่องยืนยันที่คืนโฟกัสก็เป็นแบบเดียวกัน
+   * ⇒ จำลองด้วย `blur()` + `focus()` จากโค้ด (ไม่ผ่านผู้ใช้) — ต้องไม่เปิดแผง
+   */
+  it("โฟกัสที่ถูกคืนมาจากที่อื่น (โมดัลปิด) ⛔ ไม่เปิดแผงเอง", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<SearchSelect<Person> {...base} value={null} onChange={onChange} />);
+
+    const field = screen.getByRole("combobox");
+    await user.click(field);
+    await user.click(screen.getByRole("option", { name: /Ben/ }));
+    expect(onChange).toHaveBeenCalledWith(ben);
+    expect(screen.queryByRole("listbox")).toBeNull();
+
+    /* โมดัลแย่งโฟกัสไป แล้วคืนให้ช่องตอนปิด */
+    act(() => field.blur());
+    act(() => field.focus());
+    expect(field).toHaveFocus();
+    expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("Tab เข้าช่องไม่เปิดแผง · ลูกศรลง/คลิกเปิดได้ตามปกติ", async () => {
+    const user = userEvent.setup();
+    render(<SearchSelect<Person> {...base} value={null} onChange={() => {}} />);
+
+    const field = screen.getByRole("combobox");
+    await user.tab();
+    expect(field).toHaveFocus();
+    expect(screen.queryByRole("listbox")).toBeNull();
+
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("listbox")).toBeNull();
+    await user.click(field);
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
   });
 
   it("ลูกศรขึ้น/ลง + Enter เลือกได้ด้วยคีย์บอร์ด", async () => {

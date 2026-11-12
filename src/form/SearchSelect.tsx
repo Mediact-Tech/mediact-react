@@ -275,7 +275,14 @@ export const SearchSelect = <T,>({
           disabled={disabled}
           placeholder={placeholder}
           value={shown}
-          onFocus={() => !disabled && setOpen(true)}
+          /* 🔴 **ไม่เปิดแผงตอน `focus`** — เปิดเฉพาะเมื่อผู้ใช้ตั้งใจ: คลิก · พิมพ์ · ลูกศรขึ้น/ลง
+             เดิมมี `onFocus={() => setOpen(true)}` ⇒ **ทุกครั้งที่มีอะไรคืนโฟกัสให้ช่อง แผงเด้งเปิดเอง**:
+             โมดัล "กำลังโหลด" ของ Mediwork (MUI `FocusTrap` คืนโฟกัสตอนปิด) · กล่องยืนยันที่ปิดแล้วคืนโฟกัส
+             ⇒ เลือกหน่วยงานบนจอตารางเวรแล้วแผงเปิดค้างทุกครั้ง (วัดในเบราว์เซอร์: `focus()` มาจาก
+             `FocusTrap.useEffect` ตอน unmount ⛔ ไม่ใช่จาก `commit`)
+             🔑 ตรงกับแบบ combobox ของ WAI-ARIA (แผงเปิดเมื่อพิมพ์/Alt+↓/คลิก ไม่ใช่เมื่อโฟกัส) และตรงกับ
+                MUI `Autocomplete` ที่จอเหล่านี้ใช้มาก่อน (`openOnFocus` ค่าเริ่มต้นปิด)
+             ⚠️ ราคา: Tab เข้าช่องแล้วแผงไม่เปิดเอง ต้องกด ↓ หรือพิมพ์ */
           onClick={() => !disabled && setOpen(true)}
           onChange={(event) => {
             /**
