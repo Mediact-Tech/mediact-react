@@ -6148,7 +6148,6 @@ var SearchSelect = ({
             disabled,
             placeholder,
             value: shown,
-            onFocus: () => !disabled && setOpen(true),
             onClick: () => !disabled && setOpen(true),
             onChange: (event) => {
               const raw = event.target.value;
