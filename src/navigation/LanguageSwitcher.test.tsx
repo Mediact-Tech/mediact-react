@@ -100,3 +100,61 @@ describe("เมนูที่หล่นลงมา", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+describe("แบบ compact (บนแถบ TopNav)", () => {
+  it("ปุ่มโชว์ธง + รหัสสั้น ไม่ใช่ชื่อภาษาเต็ม", () => {
+    const { trigger } = setup({ variant: "compact" });
+    expect(trigger).toHaveTextContent("TH");
+    expect(trigger).not.toHaveTextContent("ไทย");
+    /* ธงในตัวของ DS ตามรหัส `th` — ไม่ใช่ลูกโลก */
+    expect(trigger.querySelectorAll("svg")).toHaveLength(2); // ธง + ลูกศร
+  });
+
+  it("กว้างตามเนื้อ — ไม่ใช้ความกว้างคงที่ของแบบเดิม", () => {
+    const { trigger } = setup({ variant: "compact" });
+    expect(trigger.className).not.toContain("w-30");
+  });
+
+  it("ส่ง `code` มาเองได้ และภาษาที่ DS ไม่รู้จักกลับไปใช้ลูกโลก", () => {
+    const { trigger } = setup({
+      variant: "compact",
+      languages: [{ value: "lo", label: "ລາວ", code: "LA" }],
+      value: "lo",
+    });
+    expect(trigger).toHaveTextContent("LA");
+    expect(trigger.querySelector(".lucide-globe")).not.toBeNull();
+  });
+
+  it("เมนูยังเลือกภาษาได้เหมือนเดิม และโชว์ชื่อเต็มในรายการ", async () => {
+    const { trigger, onChange } = setup({ variant: "compact" });
+    await userEvent.click(trigger);
+    await userEvent.click(await screen.findByRole("menuitemradio", { name: "English" }));
+    expect(onChange).toHaveBeenCalledWith("en-EN");
+  });
+
+  /* ดีไซน์ topbar: บรรทัดที่เลือก = พื้นสีอ่อนของแบรนด์ + แถบแบรนด์ซ้าย + ตัวหนา ไม่ใช่จุดหน้าบรรทัด
+   * (happy-dom ไม่คำนวณสี — สีจริงวัดใน Storybook ทั้ง 4 ธีม ดู LanguageSwitcher.md) */
+  it("ไม่มีจุดหน้าบรรทัด — บรรทัดที่เลือกได้พื้นแบรนด์ แถบซ้าย และตัวหนา", async () => {
+    const { trigger } = setup({ variant: "compact" });
+    await userEvent.click(trigger);
+    const thai = await screen.findByRole("menuitemradio", { name: "ไทย" });
+    const english = screen.getByRole("menuitemradio", { name: "English" });
+    expect(thai).toHaveAttribute("aria-checked", "true");
+    expect(thai.querySelector(".lucide-circle")).toBeNull();
+    expect(thai.className).toContain("data-[state=checked]:font-semibold");
+    expect(thai.className).toContain("data-[state=checked]:bg-brand-subtle");
+    expect(thai.className).toContain("data-[state=checked]:before:bg-brand");
+    /* hover ต้องไม่ใช้สีเดียวกับบรรทัดที่เลือก — ไม่งั้นชี้อีกบรรทัดแล้วดูเหมือนเลือกสองบรรทัด */
+    expect(english.className).toContain("data-[highlighted]:bg-overlay-hover");
+    expect(english.className.split(/\s+/)).not.toContain("data-[highlighted]:bg-brand-subtle");
+    expect(thai).toHaveAttribute("data-state", "checked");
+    expect(english).toHaveAttribute("data-state", "unchecked");
+  });
+
+  it("แบบ default ยังมีจุดหน้าบรรทัดเหมือนเดิม", async () => {
+    const { trigger } = setup();
+    await userEvent.click(trigger);
+    const thai = await screen.findByRole("menuitemradio", { name: "ไทย" });
+    expect(thai.querySelector(".lucide-circle")).not.toBeNull();
+  });
+});

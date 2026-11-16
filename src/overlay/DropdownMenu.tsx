@@ -82,23 +82,33 @@ const DropdownMenuCheckboxItem = React.forwardRef<
 
 const DropdownMenuRadioItem = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RadixMenu.RadioItem>
->(function DropdownMenuRadioItem({ className, children, ...props }, ref) {
+  React.ComponentProps<typeof RadixMenu.RadioItem> & {
+    /**
+     * จุดหน้าบรรทัดที่เลือกอยู่ · `false` = ไม่มีจุดและไม่เว้นช่องซ้ายให้มัน — ผู้เรียกต้องบอก
+     * สถานะเลือกด้วยวิธีอื่นเอง (เช่น `data-[state=checked]:font-semibold`) ·
+     * `aria-checked` ยังอยู่ครบ โปรแกรมอ่านหน้าจอไม่เสียอะไร
+     */
+    indicator?: boolean;
+  }
+>(function DropdownMenuRadioItem({ className, children, indicator = true, ...props }, ref) {
   return (
     <RadixMenu.RadioItem
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-body-sm outline-none",
+        "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pr-2 text-body-sm outline-none",
+        indicator ? "pl-8" : "pl-2",
         "focus:bg-brand-subtle data-[highlighted]:bg-brand-subtle",
         className,
       )}
       {...props}
     >
-      <span className="absolute left-2 flex size-4 items-center justify-center">
-        <RadixMenu.ItemIndicator>
-          <Circle className="size-2 fill-current" />
-        </RadixMenu.ItemIndicator>
-      </span>
+      {indicator && (
+        <span className="absolute left-2 flex size-4 items-center justify-center">
+          <RadixMenu.ItemIndicator>
+            <Circle className="size-2 fill-current" />
+          </RadixMenu.ItemIndicator>
+        </span>
+      )}
       {children}
     </RadixMenu.RadioItem>
   );

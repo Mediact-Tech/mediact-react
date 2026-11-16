@@ -113,6 +113,7 @@ export {
   AppLauncher,
   NotificationBell,
   UserMenu,
+  UserMenuProfileIcon,
   type TopNavProps,
   type TopNavToggleProps,
   type TopNavBrandProps,

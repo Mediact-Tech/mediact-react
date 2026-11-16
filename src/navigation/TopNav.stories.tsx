@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { Globe } from "lucide-react";
 import {
   AppLauncher,
   NotificationBell,
@@ -9,7 +8,9 @@ import {
   TopNavBrand,
   TopNavSpacer,
   UserMenu,
+  UserMenuProfileIcon,
 } from "./TopNav";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const meta = {
   title: "Navigation/TopNav",
@@ -58,32 +59,26 @@ const user = {
   role: "Super Admin",
 };
 
-/** Pill-shaped language switcher, matching portal-web's `LanguageSwitcher`. */
+/** ปุ่มเปลี่ยนภาษาบนแถบ — แบบ `compact` (ธง + รหัสสั้น) ข้าง `AppLauncher` · story ถือ state เอง */
 function LanguageSwitcherDemo() {
+  const [lang, setLang] = useState("th");
   return (
-    <button
-      type="button"
-      className="flex h-9 items-center gap-2 rounded-full border border-[#0000003B] bg-white px-3 text-body-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
-    >
-      <Globe className="size-5 text-gray-700/70" />
-      English
-      <svg
-        viewBox="0 0 24 24"
-        className="size-4 text-gray-500"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
+    <LanguageSwitcher
+      variant="compact"
+      languages={[
+        { value: "en", label: "English" },
+        { value: "th", label: "ไทย" },
+      ]}
+      value={lang}
+      onChange={setLang}
+      label="เปลี่ยนภาษา"
+    />
   );
 }
 
 const userMenuProps = {
   user,
-  items: [{ label: "My Profile", onClick: () => {} }],
-  bottomLeft: <LanguageSwitcherDemo />,
+  items: [{ label: "My Profile", icon: <UserMenuProfileIcon />, onClick: () => {} }],
   onLogout: () => {},
 };
 
@@ -96,6 +91,7 @@ export const Default: Story = {
         <TopNavSpacer />
         <AppLauncher apps={fullCatalog} settingsAction={settingsAction} />
         <NotificationBell hasUnread />
+        <LanguageSwitcherDemo />
         <UserMenu {...userMenuProps} />
       </TopNav>
     </div>
@@ -120,6 +116,7 @@ export const ActiveApp: Story = {
           settingsAction={settingsAction}
         />
         <NotificationBell hasUnread />
+        <LanguageSwitcherDemo />
         <UserMenu {...userMenuProps} />
       </TopNav>
     </div>
@@ -148,6 +145,7 @@ export const TenantWithoutMedimatch: Story = {
           settingsAction={settingsAction}
         />
         <NotificationBell hasUnread />
+        <LanguageSwitcherDemo />
         <UserMenu {...userMenuProps} />
       </TopNav>
     </div>
@@ -200,10 +198,10 @@ export const WithoutAvatarSrc: Story = {
         <TopNavSpacer />
         <AppLauncher apps={fullCatalog} settingsAction={settingsAction} />
         <NotificationBell hasUnread />
+        <LanguageSwitcherDemo />
         <UserMenu
           user={{ name: "admin1 admin1", role: "Super Admin" }}
-          items={[{ label: "My Profile", onClick: () => {} }]}
-          bottomLeft={<LanguageSwitcherDemo />}
+          items={[{ label: "My Profile", icon: <UserMenuProfileIcon />, onClick: () => {} }]}
           onLogout={() => {}}
         />
       </TopNav>
@@ -237,6 +235,7 @@ export const LongTitle: Story = {
         <TopNavSpacer />
         <AppLauncher apps={fullCatalog} settingsAction={settingsAction} />
         <NotificationBell hasUnread />
+        <LanguageSwitcherDemo />
         <UserMenu {...userMenuProps} />
       </TopNav>
     </div>

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, ChevronDown, LogOut, Settings } from "lucide-react";
+import { Bell, CircleUserRound, LogOut, Settings } from "lucide-react";
 import { cn } from "../lib/cn";
 import { Avatar } from "../ui/Avatar";
 import {
@@ -607,6 +607,13 @@ export type UserMenuItem = {
   label: React.ReactNode;
   onClick?: () => void;
   href?: string;
+  /**
+   * ไอคอนหน้าป้าย (20px) — ไม่ส่งก็ไม่มีไอคอน
+   *
+   * รายการ "โปรไฟล์ของฉัน" ใช้ `<UserMenuProfileIcon />` ที่ DS ส่งออกให้ · แอปไม่ต้องมี
+   * `lucide-react` เอง (Mediwork ไม่มี) และทุกแอปได้ไอคอนตัวเดียวกัน
+   */
+  icon?: React.ReactNode;
 };
 
 export type UserMenuProps = {
@@ -622,22 +629,35 @@ export type UserMenuProps = {
      */
     fallback?: React.ReactNode;
   };
-  /** Body items rendered between the role and the bottom row. */
+  /** Body items rendered under the header, above Log Out. */
   items?: UserMenuItem[];
   /** Click handler for the Log Out button. Pass `null` to hide the button. */
   onLogout?: (() => void) | null;
   logoutLabel?: React.ReactNode;
-  /** Slot rendered to the left of the Log Out button — typically a language switcher. */
+  /**
+   * @deprecated ปุ่มเปลี่ยนภาษาย้ายไปอยู่บนแถบแล้ว (`<LanguageSwitcher variant="compact" />`
+   * ข้าง `AppLauncher`) · ยังรับไว้ให้แอปที่ยังไม่ย้าย — ส่งมาเมื่อไหร่จะได้แถวล่างแบบเดิม
+   * (สล็อตซ้าย + ออกจากระบบขวา) ⇒ อัปเดต DS แล้วปุ่มภาษาไม่หายไปเงียบ ๆ
+   */
   bottomLeft?: React.ReactNode;
   /** Tooltip / aria-label for the trigger. Default "Account". */
   label?: string;
   className?: string;
 };
 
+/** ไอคอนโปรไฟล์มาตรฐานของ `UserMenu` — ใส่ใน `items[].icon` ของรายการ "โปรไฟล์ของฉัน" */
+function UserMenuProfileIcon() {
+  return <CircleUserRound />;
+}
+
+/* แถวในเมนู: ไอคอน 20 + ป้าย 16/500 · ระยะ 12 · ทุกแถว (รวมออกจากระบบ) ใช้คลาสเดียวกัน
+ * ⇒ ไอคอนตั้งตรงเป็นเส้นเดียว ต่างกันแค่สี */
+const userMenuRowClass =
+  "flex w-full cursor-pointer items-center gap-3 py-2.5 text-left text-[16px] font-medium transition-colors [&_svg]:size-5 [&_svg]:shrink-0";
+
 /**
- * Profile dropdown — matches `mediact-portal-web/src/components/shared/Sidebar.tsx`'s
- * profile menu: centered avatar + name + role header, full-width menu items, and
- * a bottom row that pairs an optional language switcher with a red Log Out button.
+ * Profile dropdown — ปุ่มบนแถบเป็น **รูปอย่างเดียว** (ไม่มีลูกศร) · กดแล้วได้หัวแนวนอน
+ * (รูปซ้าย · ชื่อ + บทบาทขวา) · เส้นคั่น · รายการ (มีไอคอนได้) · ออกจากระบบสีแดงเป็นแถวสุดท้าย
  */
 function UserMenu({
   user,
@@ -648,6 +668,27 @@ function UserMenu({
   label = "Account",
   className,
 }: UserMenuProps) {
+  const logoutButton =
+    onLogout !== null ? (
+      <PopoverClose asChild>
+        <button
+          type="button"
+          onClick={onLogout ?? undefined}
+          className={cn(
+            userMenuRowClass,
+            "text-cherry-red-600 hover:text-cherry-red-800",
+            /* แถวล่างแบบเดิม (มี `bottomLeft`) — ปุ่มยืนข้างสล็อต ไม่ยืดเต็มแถว */
+            bottomLeft ? "w-auto" : undefined,
+          )}
+        >
+          <LogOut aria-hidden />
+          {logoutLabel}
+        </button>
+      </PopoverClose>
+    ) : null;
+
+  const hasBody = (items?.length ?? 0) > 0 || logoutButton !== null || Boolean(bottomLeft);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -655,75 +696,67 @@ function UserMenu({
           type="button"
           aria-label={label}
           className={cn(
-            "group inline-flex cursor-pointer items-center gap-2 rounded-full p-0.5 pr-1 text-body-sm font-medium text-text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+            "inline-flex shrink-0 cursor-pointer items-center rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
             className,
           )}
         >
           <Avatar
-            size="md"
             src={user.src}
             name={user.name}
             fallback={user.fallback}
-            className="border-2 border-gray-100"
+            className="size-11 border-2 border-gray-100"
           />
-          <ChevronDown className="size-4 text-gray-400 transition-transform group-data-[state=open]:rotate-180 group-hover:text-gray-600" />
         </button>
       </PopoverTrigger>
 
       <PopoverContent
         align="end"
-        sideOffset={16}
-        className="w-[310px] rounded-3xl border border-gray-50 px-6 py-6 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)]"
+        sideOffset={12}
+        className="w-auto min-w-[260px] max-w-[340px] rounded-2xl border border-gray-50 px-5 py-4 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)]"
       >
-        <div className="mb-5 flex flex-col items-center">
+        <div className="flex items-center gap-3 pb-3">
           <Avatar
+            size="lg"
             src={user.src}
             name={user.name}
             fallback={user.fallback}
-            className="mb-3 size-[60px] border-2 border-gray-100"
+            className="shrink-0 border-2 border-gray-100"
           />
-          {user.name && (
-            <h3 className="text-body-lg font-semibold text-text-heading">
-              {user.name}
-            </h3>
-          )}
-          {user.role && (
-            /* ระยะเป็น inline — mediwork มี `p{margin-top:0}` แบบไม่มี layer ที่ชนะ `mt-*`
-               ของ Tailwind (เหตุผลเต็มอยู่ที่ `AppShowcaseDialog`) · 2px จึงหายเงียบที่นั่น */
-            <p
-              className="text-[15px] font-medium text-text-tertiary"
-              style={{ marginTop: 2 }}
-            >
-              {user.role}
-            </p>
-          )}
+          <div className="min-w-0">
+            {user.name && (
+              <p className="truncate text-body-md font-semibold text-text-heading">
+                {user.name}
+              </p>
+            )}
+            {user.role && (
+              /* ระยะเป็น inline — mediwork มี `p{margin-top:0}` แบบไม่มี layer ที่ชนะ `mt-*`
+                 ของ Tailwind (เหตุผลเต็มอยู่ที่ `AppShowcaseDialog`) · 2px จึงหายเงียบที่นั่น */
+              <p
+                className="truncate text-body-sm font-medium text-text-tertiary"
+                style={{ marginTop: 2 }}
+              >
+                {user.role}
+              </p>
+            )}
+          </div>
         </div>
 
-        <hr className="mb-2 border-gray-100" />
+        {hasBody && <hr className="mb-1 border-gray-100" />}
 
         {items?.map((item, idx) => (
           <UserMenuItemButton key={idx} item={item} />
         ))}
 
-        {(bottomLeft || onLogout !== null) && (
+        {bottomLeft ? (
           <>
-            <hr className="mb-5 mt-2 border-gray-100" />
+            <hr className="my-2 border-gray-100" />
             <div className="flex items-center justify-between gap-3">
-              {bottomLeft ?? <span />}
-              {onLogout !== null && (
-                <PopoverClose asChild>
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    className="flex cursor-pointer items-center gap-2 text-[16px] font-medium text-cherry-red-600 transition-colors hover:text-cherry-red-800"
-                  >
-                    <LogOut className="size-5" />
-                    {logoutLabel}
-                  </button>
-                </PopoverClose>
-              )}
+              {bottomLeft}
+              {logoutButton}
             </div>
           </>
+        ) : (
+          logoutButton
         )}
       </PopoverContent>
     </Popover>
@@ -734,13 +767,22 @@ function UserMenu({
  * **นอก** เนื้อหา คลิกรายการข้างในจึงค้างเปิดคาหน้าใหม่ที่เพิ่งเปิดไป
  * (ของเดิมในแอปปิดเองด้วย `setState` ตอนกด — ย้ายมาใช้ `UserMenu` แล้วต้องไม่หายไป) */
 function UserMenuItemButton({ item }: { item: UserMenuItem }) {
-  const className =
-    "block w-full cursor-pointer text-left py-3 text-[16px] font-medium text-text-body transition-colors hover:text-text-primary";
+  const className = cn(userMenuRowClass, "text-text-body hover:text-text-primary");
+  const content = (
+    <>
+      {item.icon && (
+        <span aria-hidden className="inline-flex">
+          {item.icon}
+        </span>
+      )}
+      {item.label}
+    </>
+  );
   if (item.href) {
     return (
       <PopoverClose asChild>
         <a href={item.href} className={className}>
-          {item.label}
+          {content}
         </a>
       </PopoverClose>
     );
@@ -748,7 +790,7 @@ function UserMenuItemButton({ item }: { item: UserMenuItem }) {
   return (
     <PopoverClose asChild>
       <button type="button" onClick={item.onClick} className={className}>
-        {item.label}
+        {content}
       </button>
     </PopoverClose>
   );
@@ -766,4 +808,5 @@ export {
   AppLauncher,
   NotificationBell,
   UserMenu,
+  UserMenuProfileIcon,
 };

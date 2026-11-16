@@ -8,6 +8,7 @@ import {
   TopNavBrand,
   TopNavSpacer,
   UserMenu,
+  UserMenuProfileIcon,
 } from "./TopNav";
 
 const meta = {
@@ -46,13 +47,40 @@ function Demo(props: Partial<React.ComponentProps<typeof LanguageSwitcher>>) {
   );
 }
 
-/** ทรงเดียว — เม็ดยา 120×36 ตามที่วัดจากของจริง */
+/** แบบ `default` — เม็ดยา 120×36 ตามที่วัดจากของจริง · หน้าเข้าสู่ระบบ · 403/404 */
 export const Default: Story = {
   args: { languages: LANGUAGES },
   render: () => <Demo />,
 };
 
-/** ที่อยู่จริงของมัน — **ช่องซ้ายล่างของเมนูโปรไฟล์** (`UserMenu` prop `bottomLeft`)
+/** แบบ `compact` — ธงวงกลม + รหัสสั้น + ลูกศร · ที่อยู่ของมันคือ**บนแถบ** ข้าง `AppLauncher` */
+export const Compact: Story = {
+  args: { languages: LANGUAGES },
+  render: () => <Demo variant="compact" />,
+};
+
+/** แบบ compact บนแถบจริง (ดีไซน์ topbar 2026-11) — ปุ่มภาษาออกจากเมนูโปรไฟล์มาอยู่ข้างลิ้นชักแอป */
+export const OnTopNav: Story = {
+  args: { languages: LANGUAGES },
+  render: () => (
+    <div className="w-[900px]">
+      <TopNav>
+        <TopNavBrand>โรงพยาบาลเมดิแอค</TopNavBrand>
+        <TopNavSpacer />
+        <AppLauncher apps={{ medihr: { active: true } }} label="แอป" />
+        <Demo variant="compact" />
+        <UserMenu
+          user={{ name: "สมชาย ใจดี", role: "ผู้ดูแลระบบ", fallback: <User className="size-[50%]" /> }}
+          items={[{ label: "โปรไฟล์ของฉัน", icon: <UserMenuProfileIcon /> }]}
+          label="บัญชีผู้ใช้"
+          logoutLabel="ออกจากระบบ"
+        />
+      </TopNav>
+    </div>
+  ),
+};
+
+/** ⚠️ แบบเดิม (deprecated) — **ช่องซ้ายล่างของเมนูโปรไฟล์** (`UserMenu` prop `bottomLeft`)
  * คู่กับปุ่มออกจากระบบ · กดปุ่มบัญชีผู้ใช้เพื่อเปิด */
 export const InUserMenu: Story = {
   args: { languages: LANGUAGES },
