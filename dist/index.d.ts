@@ -1119,6 +1119,13 @@ type UserMenuItem = {
     label: React.ReactNode;
     onClick?: () => void;
     href?: string;
+    /**
+     * ไอคอนหน้าป้าย (20px) — ไม่ส่งก็ไม่มีไอคอน
+     *
+     * รายการ "โปรไฟล์ของฉัน" ใช้ `<UserMenuProfileIcon />` ที่ DS ส่งออกให้ · แอปไม่ต้องมี
+     * `lucide-react` เอง (Mediwork ไม่มี) และทุกแอปได้ไอคอนตัวเดียวกัน
+     */
+    icon?: React.ReactNode;
 };
 type UserMenuProps = {
     user: {
@@ -1133,21 +1140,26 @@ type UserMenuProps = {
          */
         fallback?: React.ReactNode;
     };
-    /** Body items rendered between the role and the bottom row. */
+    /** Body items rendered under the header, above Log Out. */
     items?: UserMenuItem[];
     /** Click handler for the Log Out button. Pass `null` to hide the button. */
     onLogout?: (() => void) | null;
     logoutLabel?: React.ReactNode;
-    /** Slot rendered to the left of the Log Out button — typically a language switcher. */
+    /**
+     * @deprecated ปุ่มเปลี่ยนภาษาย้ายไปอยู่บนแถบแล้ว (`<LanguageSwitcher variant="compact" />`
+     * ข้าง `AppLauncher`) · ยังรับไว้ให้แอปที่ยังไม่ย้าย — ส่งมาเมื่อไหร่จะได้แถวล่างแบบเดิม
+     * (สล็อตซ้าย + ออกจากระบบขวา) ⇒ อัปเดต DS แล้วปุ่มภาษาไม่หายไปเงียบ ๆ
+     */
     bottomLeft?: React.ReactNode;
     /** Tooltip / aria-label for the trigger. Default "Account". */
     label?: string;
     className?: string;
 };
+/** ไอคอนโปรไฟล์มาตรฐานของ `UserMenu` — ใส่ใน `items[].icon` ของรายการ "โปรไฟล์ของฉัน" */
+declare function UserMenuProfileIcon(): React.JSX.Element;
 /**
- * Profile dropdown — matches `mediact-portal-web/src/components/shared/Sidebar.tsx`'s
- * profile menu: centered avatar + name + role header, full-width menu items, and
- * a bottom row that pairs an optional language switcher with a red Log Out button.
+ * Profile dropdown — ปุ่มบนแถบเป็น **รูปอย่างเดียว** (ไม่มีลูกศร) · กดแล้วได้หัวแนวนอน
+ * (รูปซ้าย · ชื่อ + บทบาทขวา) · เส้นคั่น · รายการ (มีไอคอนได้) · ออกจากระบบสีแดงเป็นแถวสุดท้าย
  */
 declare function UserMenu({ user, items, onLogout, logoutLabel, bottomLeft, label, className, }: UserMenuProps): React.JSX.Element;
 
@@ -1161,6 +1173,13 @@ type LanguageOption = {
      * เปิดอยู่จึงทำให้เขาหาบรรทัดของตัวเองไม่เจอ
      */
     label: string;
+    /** ป้ายสั้นบนปุ่มแบบ `compact` — ไม่ส่งได้ส่วนหน้าของ `value` ตัวพิมพ์ใหญ่ (`th-TH` → `TH`) */
+    code?: string;
+    /**
+     * ธงวงกลมของแบบ `compact` — ไม่ส่งได้ธงในตัวของ DS ตามรหัสภาษา (`th` · `en`)
+     * · ภาษาที่ DS ไม่รู้จักและไม่ส่งมา = ลูกโลก
+     */
+    flag?: React.ReactNode;
 };
 type LanguageSwitcherProps = {
     languages: LanguageOption[];
@@ -1170,6 +1189,12 @@ type LanguageSwitcherProps = {
     /** `aria-label` ของปุ่ม — DS ไม่มี i18n แอปส่งคำแปลมาเอง */
     label?: string;
     align?: "start" | "center" | "end";
+    /**
+     * - `default` — ลูกโลก + ชื่อภาษาเต็ม กว้างคงที่ 120 (หน้าเข้าสู่ระบบ · 403/404 · ในเมนูโปรไฟล์แบบเดิม)
+     * - `compact` — ธงวงกลม + รหัสสั้น (`TH`) + ลูกศร · กว้างตามเนื้อ · สำหรับ**บนแถบ** `TopNav`
+     *   ข้าง `AppLauncher` (ดีไซน์ topbar 2026-11)
+     */
+    variant?: "default" | "compact";
     className?: string;
 };
 /**
@@ -1183,7 +1208,7 @@ type LanguageSwitcherProps = {
  * เดาเป็นตัวแรกในรายการคือการบอกผู้ใช้ว่ากำลังอยู่ภาษาที่ไม่ได้อยู่จริง
  * (แอปที่ i18n มี fallback ของตัวเองอยู่แล้ว ให้ normalize ก่อนส่งมา)
  */
-declare function LanguageSwitcher({ languages, value, onChange, label, align, className, }: LanguageSwitcherProps): React.JSX.Element;
+declare function LanguageSwitcher({ languages, value, onChange, label, align, variant, className, }: LanguageSwitcherProps): React.JSX.Element;
 declare namespace LanguageSwitcher {
     var displayName: string;
 }
@@ -3047,7 +3072,14 @@ type ItemProps = React.ComponentProps<typeof RadixMenu.Item> & {
 };
 declare const DropdownMenuItem: React.ForwardRefExoticComponent<Omit<ItemProps, "ref"> & React.RefAttributes<HTMLDivElement>>;
 declare const DropdownMenuCheckboxItem: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuCheckboxItemProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
-declare const DropdownMenuRadioItem: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuRadioItemProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuRadioItem: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuRadioItemProps & React.RefAttributes<HTMLDivElement> & {
+    /**
+     * จุดหน้าบรรทัดที่เลือกอยู่ · `false` = ไม่มีจุดและไม่เว้นช่องซ้ายให้มัน — ผู้เรียกต้องบอก
+     * สถานะเลือกด้วยวิธีอื่นเอง (เช่น `data-[state=checked]:font-semibold`) ·
+     * `aria-checked` ยังอยู่ครบ โปรแกรมอ่านหน้าจอไม่เสียอะไร
+     */
+    indicator?: boolean;
+}, "ref"> & React.RefAttributes<HTMLDivElement>>;
 declare const DropdownMenuLabel: React.ForwardRefExoticComponent<Omit<RadixMenu.DropdownMenuLabelProps & React.RefAttributes<HTMLDivElement> & {
     inset?: boolean;
 }, "ref"> & React.RefAttributes<HTMLDivElement>>;
@@ -3234,4 +3266,4 @@ declare const PeriodNavigator: React.ForwardRefExoticComponent<Omit<PeriodNaviga
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, AppMark, type AppMarkFit, type AppMarkProps, type AppMarkTone, AppShowcaseDialog, type AppShowcaseDialogProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, GRID_INK_HEIGHT, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PeriodNavigator, type PeriodNavigatorItem, type PeriodNavigatorLabels, type PeriodNavigatorProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, ProgressBar, type ProgressBarProps, RadioControl, type RadioControlProps, RadioGroup, RadioGroupItem, type RadioGroupProps, RadioGroupRoot, type RadioOption, SHOWCASE_COPY, SHOWCASE_LAYOUT, SearchSelect, type SearchSelectProps, Select, SelectItem, type SelectOption, type SelectProps, type ShowcaseAppKey, type ShowcaseAssets, type ShowcaseLocale, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, type UserMenuProps, appBrandInk, appMarkLabels, appMarks, appWordmarks, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, trackVariants as progressBarVariants, radioDotClasses, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
+export { AddButton, type AddButtonProps, AppLauncher, type AppLauncherProps, AppMark, type AppMarkFit, type AppMarkProps, type AppMarkTone, AppShowcaseDialog, type AppShowcaseDialogProps, Avatar, type AvatarProps, Breadcrumb, type BreadcrumbItem, BreadcrumbLink, type BreadcrumbProps, BreadcrumbRoot, Button, ButtonGroup, type ButtonGroupProps, type ButtonProps, Calendar, type CalendarLabels, type CalendarProps, type CalendarView, Card, CardContent, CardDescription, CardFooter, CardHeader, type CardProps, CardTitle, Checkbox, CheckboxGroup, CheckboxGroupItem, type CheckboxGroupProps, type CheckboxOption, type CheckboxProps, Chip, type ChipProps, type ChipState, ComboBox, type ComboBoxMultiProps, type ComboBoxOption, type ComboBoxOptionGroup, type ComboBoxProps, type ComboBoxSingleProps, ConfirmCancelActions, type ConfirmCancelActionsProps, ConfirmDialog, type ConfirmDialogProps, type ConfirmTone, ContactSupportDialog, type ContactSupportDialogProps, type ContactSupportLabels, type CustomFormat, DataTable, type DataTableGroupLabelContext, DataTableGroupRow, type DataTableGroupingProps, type DataTableLabels, type DataTablePagination, type DataTableProps, DateNavigator, type DateNavigatorProps, type DateNavigatorUnit, DatePicker, type DatePickerProps, DateRangePicker, type DateRangePickerLabels, type DateRangePickerProps, type DateRangeValue, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, EmptyState, type EmptyStateProps, EntityAutocomplete, type EntityAutocompleteMultiProps, type EntityAutocompleteProps, type EntityAutocompleteSingleProps, ErrorState, type ErrorStateProps, FORMAT_PRESETS, FieldIconSlot, type FieldIconSlotProps, type FieldSize, FieldSkeleton, Filter, type FilterProps, FloatingFieldShell, type FloatingFieldShellProps, FormField, type FormFieldProps, FormatInput, type FormatInputProps, type FormatPreset, GRID_INK_HEIGHT, type GroupBy, Heading, type HeadingProps, IconButton, type IconButtonProps, Input, type InputProps, type LanguageOption, LanguageSwitcher, type LanguageSwitcherProps, LoadingScreen, MEDIACT_LINE_HANDLE, MEDIACT_LINE_URL, MEDIACT_SUPPORT_PHONE, type MediactAppConfig, type MediactAppKey, NotificationBell, type NotificationBellProps, NumberStepper, type NumberStepperProps, type OptionRowState, OutlineButton, type OutlineButtonProps, PeriodNavigator, type PeriodNavigatorItem, type PeriodNavigatorLabels, type PeriodNavigatorProps, PillSwitch, type PillSwitchOption, type PillSwitchProps, Popover, PopoverAnchor, PopoverClose, PopoverContent, PopoverTrigger, ProgressBar, type ProgressBarProps, RadioControl, type RadioControlProps, RadioGroup, RadioGroupItem, type RadioGroupProps, RadioGroupRoot, type RadioOption, SHOWCASE_COPY, SHOWCASE_LAYOUT, SearchSelect, type SearchSelectProps, Select, SelectItem, type SelectOption, type SelectProps, type ShowcaseAppKey, type ShowcaseAssets, type ShowcaseLocale, Sidebar, SidebarGroup, type SidebarGroupProps, SidebarItem, type SidebarItemProps, type SidebarProps, Skeleton, SkeletonBox, type SkeletonBoxProps, type SkeletonProps, SolidButton, type SolidButtonProps, Spinner, type SpinnerProps, type StateMediaShape, type StateSize, type StateTone, StatusBadge, type StatusBadgeProps, Stepper, type StepperProps, type StepperStep, Switch, type SwitchProps, type SwitchTone, type SwitchTrackLabels, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Text, type TextProps, Textarea, type TextareaProps, TimePicker, type TimePickerProps, type TimeValue, Toaster, type ToasterProps, type ToggleSize, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, TopNav, TopNavBrand, type TopNavBrandProps, type TopNavProps, TopNavSpacer, TopNavToggle, type TopNavToggleProps, UserMenu, type UserMenuItem, UserMenuProfileIcon, type UserMenuProps, appBrandInk, appMarkLabels, appMarks, appWordmarks, avatarVariants, buttonGroupVariants, buttonVariants, checkboxShapeClasses, chipVariants, cn, dayKey, fieldLabelId, fieldShapeClasses, headingVariants, iconButtonVariants, numberStepperVariants, outlineButtonVariants, trackVariants as progressBarVariants, radioDotClasses, radioShapeClasses, resolveGroups, solidButtonVariants, statusBadgeVariants, switchToneClasses, textVariants, toneIcon, useSidebarState };
